@@ -143,11 +143,9 @@ export class $ { // $ = cash = cache... get it? :D
 			if (_.isObject(thing[key])) {
 				for (const prop in thing[key]) {
 					if (_.isArray(thing[key][prop])) {
-						// @ts-ignore
 						thing[key][prop] = _.compact(_.map(thing[key][prop] as _HasId[],
 														   s => Game.getObjectById(s.id))) as _HasId[];
 					} else {
-						// @ts-ignore
 						thing[key][prop] = Game.getObjectById((<_HasId>thing[key][prop]).id) as undefined | _HasId;
 					}
 				}

@@ -147,7 +147,7 @@ interface Room {
 	_dangerousHostiles: Creep[];
 	_playerHostiles: Creep[];
 	_dangerousPlayerHostiles: Creep[];
-	_fleeDefaults: HasPos[];
+	_fleeDefaults: _HasRoomPosition[];
 	_allStructures: Structure[];
 	_hostileStructures: Structure[];
 	_flags: Flag[];
