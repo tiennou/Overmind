@@ -1,7 +1,7 @@
 import {profile} from '../../profiler/decorator';
 import {Task} from '../Task';
 
-export type dropTargetType = HasRef & _HasRoomPosition; // Currently these are only used with directives
+export type dropTargetType = HasRef & _HasRoomPosition | RoomPosition;
 export const dropTaskName = 'drop';
 
 @profile
@@ -17,7 +17,11 @@ export class TaskDrop extends Task<dropTargetType> {
 				resourceType: ResourceConstant = RESOURCE_ENERGY,
 				amount?: number,
 				options                        = {} as TaskOptions) {
-		super(TaskDrop.taskName, {ref: '', pos: target.pos}, options);
+		if (target instanceof RoomPosition) {
+			super(TaskDrop.taskName, {ref: '', _pos: target}, options);
+		} else {
+			super(TaskDrop.taskName, {ref: target.ref, _pos: target.pos}, options);
+		}
 		// Settings
 		this.settings.targetRange = 0;
 		this.settings.oneShot = true;

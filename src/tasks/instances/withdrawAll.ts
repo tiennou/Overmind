@@ -2,15 +2,13 @@
 
 import {profile} from '../../profiler/decorator';
 import {Task} from '../Task';
-import {withdrawTargetType} from './withdraw';
 
 export type withdrawAllTargetType = AnyStoreStructure;
 
 export const withdrawAllTaskName = 'withdrawAll';
 
 @profile
-export class TaskWithdrawAll extends Task<withdrawTargetType> {
-
+export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
 
 	constructor(target: withdrawAllTargetType, options = {} as TaskOptions) {
 		super(withdrawAllTaskName, target, options);

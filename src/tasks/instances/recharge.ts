@@ -9,8 +9,7 @@ import {TaskHarvest} from './harvest';
 import {pickupTaskName, TaskPickup} from './pickup';
 import {TaskWithdraw, withdrawTaskName} from './withdraw';
 
-export type rechargeTargetType = HasRef & _HasRoomPosition;  // This is handled better in the Tasks.recharge() dispatcher
-// export type rechargeTargetType = null;
+export type rechargeTargetType = null;
 export const rechargeTaskName = 'recharge';
 
 // This is a "dispenser task" which is not itself a valid task, but dispenses a task when assigned to a creep.
@@ -23,7 +22,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 	};
 
 	constructor(minEnergy = 0, options = {} as TaskOptions) {
-		super(rechargeTaskName, {ref: '', pos: {x: -1, y: -1, roomName: ''}}, options);
+		super(rechargeTaskName, null, options);
 		this.data.minEnergy = minEnergy;
 	}
 

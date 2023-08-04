@@ -16,7 +16,7 @@ export const attackTaskName = 'attack';
 export class TaskAttack extends Task<attackTargetType> {
 
 	constructor(target: attackTargetType, options = {} as TaskOptions) {
-		super(attackTaskName, target, options);
+		super(attackTaskName, { ref: target.ref, _pos: target.pos }, options);
 		// Settings
 		this.settings.targetRange = 3;
 	}

@@ -1,16 +1,15 @@
-import {hasPos} from '../../declarations/typeGuards';
 import {profile} from '../../profiler/decorator';
 import {Task} from '../Task';
 
-// export type goToTargetType = { pos: RoomPosition } | RoomPosition;
-export type goToTargetType = HasRef & _HasRoomPosition;  // This is overridden and handled better in the Tasks.goTo() dispatcher
+export type goToTargetType = _HasRoomPosition | RoomPosition;
 export const goToTaskName = 'goTo';
 
 @profile
 export class TaskGoTo extends Task<goToTargetType> {
 
 	constructor(target: goToTargetType, options = {} as TaskOptions) {
-		super(goToTaskName, {ref: '', pos: target.pos}, options);
+		const pos = "pos" in target ? target.pos : target;
+		super(goToTaskName, {ref: '', pos: pos}, options);
 		// Settings
 		this.settings.targetRange = 1;
 	}
