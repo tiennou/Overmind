@@ -238,6 +238,7 @@ export class Movement {
 			}
 		}
 
+		let shouldRepath = false;
 		const state = this.deserializeState(moveData, destination);
 
 		// // verify creep is in the location it thinks it should be in
@@ -267,7 +268,7 @@ export class Movement {
 		}
 		if (state.stuckCount >= opts.stuckValue && Math.random() > .5) {
 			pathOpts.blockCreeps = true;
-			delete moveData.path;
+			shouldRepath = true;
 		}
 
 		// delete path cache if destination is different
@@ -278,14 +279,14 @@ export class Movement {
 				}
 				state.destination = destination;
 			} else {
-				delete moveData.path;
+				shouldRepath = true;
 			}
 		}
 
 
 		// randomly repath with specified probability
 		if (opts.repathChance && Math.random() < opts.repathChance) {
-			delete moveData.path;
+			shouldRepath = true;
 		}
 
 		// TODO: repath if you are not on expected next position
@@ -293,7 +294,7 @@ export class Movement {
 
 		// pathfinding
 		let newPath = false;
-		if (!moveData.path || moveData.path.length == 0) {
+		if (shouldRepath || !moveData.path || moveData.path.length == 0) {
 			newPath = true;
 			if (isStandardZerg(creep) && creep.spawning) {
 				return ERR_BUSY;
@@ -849,6 +850,7 @@ export class Movement {
 			return NO_ACTION;
 		}
 
+		let shouldRepath = false;
 		const state = this.deserializeState(moveData, destination);
 
 		// check if swarm is stuck
@@ -873,21 +875,21 @@ export class Movement {
 		}
 		if (state.stuckCount >= opts.stuckValue && Math.random() > .5) {
 			opts.blockCreeps = true;
-			delete moveData.path;
+			shouldRepath = true;
 		}
 
 		// delete path cache if destination is different
 		if (!destination.isEqualTo(state.destination)) {
-			delete moveData.path;
+			shouldRepath = true;
 		}
 
 		if (opts.repathChance && Math.random() < opts.repathChance) {	// randomly repath with some probability
-			delete moveData.path;
+			shouldRepath = true;
 		}
 
 		// pathfinding
 		let newPath = false;
-		if (!moveData.path) {
+		if (shouldRepath || !moveData.path) {
 			newPath = true;
 			state.destination = destination;
 			const cpu = Game.cpu.getUsed();
@@ -1304,6 +1306,7 @@ export class Movement {
 
 			moveData.fleeWait = 2;
 
+			let shouldRepath = false;
 			// Invalidate path if needed
 			if (moveData.path) {
 				if (moveData.path.length > 0) {
@@ -1312,16 +1315,16 @@ export class Movement {
 					if (!pos.isEdge) {
 						const newClosest = pos.findClosestByRange(avoidGoals);
 						if (newClosest && normalizePos(newClosest).getRangeTo(pos) < rangeToClosest) {
-							delete moveData.path;
+							shouldRepath = true;
 						}
 					}
 				} else {
-					delete moveData.path;
+					shouldRepath = true;
 				}
 			}
 
 			// Re-calculate path if needed
-			if (!moveData.path || !moveData.destination) {
+			if (shouldRepath || !moveData.path || !moveData.destination) {
 				const ret = Pathing.findFleePath(creep.pos, avoidGoals, opts.pathOpts || {});
 				if (ret.path.length == 0) {
 					return NO_ACTION;
