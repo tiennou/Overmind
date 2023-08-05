@@ -58,6 +58,14 @@ export class BunkerQueenOverlord extends Overlord {
 	private numActiveQueens: number;
 	assignments: { [queenName: string]: { [id: string]: boolean } };
 
+	static canFunction(colony: Colony): boolean {
+		return (colony.layout === "bunker"
+			&& insideBunkerBounds(colony.spawns[0].pos, colony)
+			&& (!!colony.storage || !!colony.terminal)
+			&& colony.assets[RESOURCE_ENERGY] > 10000)
+			&& !colony.roomPlanner.memory.misplacedStructures;
+	}
+
 	constructor(hatchery: Hatchery, priority = OverlordPriority.core.queen) {
 		super(hatchery, 'supply', priority);
 		this.queenSetup = Setups.queens.default;
