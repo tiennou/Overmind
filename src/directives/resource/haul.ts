@@ -1,4 +1,3 @@
-import {$} from '../../caching/GlobalCache';
 import {HaulingOverlord} from '../../overlords/situational/hauler';
 import {profile} from '../../profiler/decorator';
 import {Directive} from '../Directive';
@@ -49,7 +48,7 @@ export class DirectiveHaul extends Directive {
 			return <DropContents>{};
 		}
 		if (!this._drops) {
-			const drops = (this.pos.lookFor(LOOK_RESOURCES) || []) as Resource[];
+			const drops = this.pos.lookFor(LOOK_RESOURCES);
 			this._drops = <DropContents>_.groupBy(drops, drop => drop.resourceType);
 		}
 		return this._drops;
@@ -60,14 +59,13 @@ export class DirectiveHaul extends Directive {
 	}
 
 	get storeStructure(): StructureStorage | StructureTerminal | StructureNuker | StructureContainer | Ruin | undefined {
-		// TODO remove me console.log(`Looking for store struct in ${this.pos.roomName}
-		// with ${this.pos.lookForStructure(STRUCTURE_CONTAINER)}`);
 		if (this.pos.isVisible) {
 			return <StructureStorage>this.pos.lookForStructure(STRUCTURE_STORAGE) ||
 				   <StructureTerminal>this.pos.lookForStructure(STRUCTURE_TERMINAL) ||
 				   <StructureNuker>this.pos.lookForStructure(STRUCTURE_NUKER) ||
 				   <StructureContainer>this.pos.lookForStructure(STRUCTURE_CONTAINER) ||
-				   <Ruin>this.pos.lookFor(LOOK_RUINS).filter(ruin => ruin.store.getUsedCapacity() > 0)[0];
+				   this.pos.lookFor(LOOK_RUINS).filter(ruin => ruin.store.getUsedCapacity() > 0)[0] ||
+				   this.pos.lookFor(LOOK_TOMBSTONES).filter(tombstone => tombstone.store.getUsedCapacity() > 0)[0];
 		}
 		return undefined;
 	}
@@ -83,7 +81,7 @@ export class DirectiveHaul extends Directive {
 			}
 			// Merge with drops
 			for (const resourceType of (_.keys(this.drops) as ResourceConstant[])) {
-				const totalResourceAmount = _.sum(this.drops[resourceType] as Resource[], drop => drop.amount);
+				const totalResourceAmount = _.sum(this.drops[resourceType], drop => drop.amount);
 				if (store[resourceType]) {
 					store[resourceType] += totalResourceAmount;
 				} else {
