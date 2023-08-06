@@ -1,5 +1,5 @@
 import {$} from '../../caching/GlobalCache';
-import {Colony, ColonyStage} from '../../Colony';
+import {ColonyStage} from '../../Colony';
 import {log} from '../../console/log';
 import {bodyCost, CreepSetup} from '../../creepSetups/CreepSetup';
 import {Roles, Setups} from '../../creepSetups/setups';
@@ -241,15 +241,39 @@ export class MiningOverlord extends Overlord {
 		$.refresh(this, 'source', 'container', 'link', 'constructionSite');
 	}
 
-	static calculateContainerPos(source: RoomPosition,  dropoffLocation?: RoomPosition): RoomPosition {
-		// log.debug(`Computing container position for mining overlord at ${this.pos.print}...`);
-		if (dropoffLocation) {
-			const path = Pathing.findShortestPath(source, dropoffLocation).path;
+	static calculateContainerPos(source: RoomPosition, dropoffLocation?: RoomPosition): RoomPosition {
+		// log.debug(`Computing container position for mining overlord at ${source.print}...`);
+
+		if (dropoffLocation && source.isVisible) {
+			const neighbors = source.neighbors;
+
+			// We calculate positions that would conflict with our own preferred position
+			const obstacles: RoomPosition[] = [];
+			for (const pos of neighbors) {
+				const structures = pos.lookFor(LOOK_STRUCTURES).filter(s => !s.isWalkable);
+				for (const struct of structures) {
+					const structNeighbors = struct.pos.availableNeighbors(true);
+
+					const sharedNeighbors = structNeighbors.filter(structNeighbor => {
+						return neighbors.some(neighporPos => neighporPos.isEqualTo(structNeighbor))
+					});
+
+					// Only consider the neighboring structure if it would have that one path out
+					if (sharedNeighbors.length === structNeighbors.length) {
+						obstacles.push(...sharedNeighbors);
+					}
+				}
+			}
+
+			const path = Pathing.findShortestPath(source, dropoffLocation, { obstacles: obstacles }).path;
 			const pos = _.find(path, pos => pos.getRangeTo(source) == 1);
 			if (pos) return pos;
 		}
+
 		log.warning(`Last resort container position calculation for ${source.print}!`);
-		return _.first(source.availableNeighbors(true));
+		// A source always have at least one neighbor, force the type
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		return <RoomPosition>_.first(source.availableNeighbors(true));
 	}
 
 	/**
@@ -633,7 +657,7 @@ export class MiningOverlord extends Overlord {
 	 * Move onto harvesting position or near to source
 	 */
 	private goToMiningSite(miner: Zerg, avoidSK = true): boolean {
-		if (this.harvestPos) {
+		if (this.harvestPos && this.harvestPos.isWalkable()) {
 			if (!miner.pos.inRangeToPos(this.harvestPos, 0)) {
 				miner.goTo(this.harvestPos, {range: 0, pathOpts: {avoidSK: avoidSK}});
 				return true;
