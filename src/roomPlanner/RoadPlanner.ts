@@ -340,6 +340,8 @@ export class RoadPlanner {
 		roadPositions = _.sortBy(roadPositions, pos => pos.getMultiRoomRangeTo(origin));
 		let needsRoad = false;
 		for (const pos of roadPositions) {
+			// Skip if we don't have visibility
+			if (!pos.room) continue;
 			const road = pos.lookForStructure(STRUCTURE_ROAD);
 			if (!road) {
 				needsRoad = true;
