@@ -20,6 +20,11 @@ export let OverlordPriority = {
 		rangedDefense: 201,
 	},
 
+	outpostDefense: {
+		outpostDefense: 250,
+		guard         : 251,
+	},
+
 	warSpawnCutoff: 299, 		// Everything past this is non-critical and won't be spawned in case of emergency
 
 	offense: {					// Offensive operations like raids or sieges
@@ -47,11 +52,6 @@ export let OverlordPriority = {
 		mineralRCL8   : 503,
 		transport     : 510,		// Spawn the rest of the transporters
 		mineral       : 520
-	},
-
-	outpostDefense: {
-		outpostDefense: 550,
-		guard         : 551,
 	},
 
 	outpostOffense: {
