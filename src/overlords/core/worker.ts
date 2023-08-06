@@ -348,6 +348,16 @@ export class WorkerOverlord extends Overlord {
 		return true;
 	}
 
+	private bootstrapActions(worker: Zerg): boolean {
+		// Dump energy into the hatchery
+		const target = this.colony.hatchery?.energyStructures.find(struct => struct.store.getFreeCapacity(RESOURCE_ENERGY));
+		if (target && this.colony.state.bootstrapping) {
+			worker.task = Tasks.transfer(target);
+			return true;
+		}
+		return false;
+	}
+
 	private handleWorker(worker: Zerg) {
 		if (worker.store.energy > 0) {
 			// TODO Add high priority to block controller with ramparts/walls in case of downgrade attack
@@ -359,6 +369,10 @@ export class WorkerOverlord extends Overlord {
 				&& (this.colony.controller.ticksToDowngrade <= downgradeLevel
 					|| this.colony.controller.progress > this.colony.controller.progressTotal)) {
 				if (this.upgradeActions(worker)) return;
+			}
+			// Turn into queens until the bootstrap situation gets resolved
+			if (this.colony.state.bootstrapping) {
+				if (this.bootstrapActions(worker)) return;
 			}
 			// Repair damaged non-road non-barrier structures
 			if (this.repairStructures.length > 0 && this.colony.defcon == DEFCON.safe) {
