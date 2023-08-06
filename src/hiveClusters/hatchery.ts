@@ -457,17 +457,15 @@ export class Hatchery extends HiveCluster {
 
 	visuals(coord: Coord): Coord {
 		let {x, y} = coord;
-		const spawning: string[] = [];
-		const spawnProgress: [number, number][] = [];
+		const spawnMap = new Map<string, [number, number]>();
 		_.forEach(this.spawns, function(spawn) {
 			if (spawn.spawning) {
-				spawning.push(spawn.spawning.name.split('_')[0]);
 				const timeElapsed = spawn.spawning.needTime - spawn.spawning.remainingTime;
-				spawnProgress.push([timeElapsed, spawn.spawning.needTime]);
+				spawnMap.set(spawn.spawning.name.split('_')[0], [timeElapsed, spawn.spawning.needTime]);
 			}
 		});
 		const boxCoords = Visualizer.section(`${this.colony.name} Hatchery`, {x, y, roomName: this.room.name},
-											 9.5, 3 + spawning.length + .1);
+											 9.5, 4 + spawnMap.size + .1);
 		const boxX = boxCoords.x;
 		y = boxCoords.y + 0.25;
 
@@ -489,9 +487,14 @@ export class Hatchery extends HiveCluster {
 		Visualizer.barGraph(overload, {x: boxX + 4, y: y, roomName: this.room.name}, 5);
 		y += 1;
 
-		for (const i in spawning) {
-			Visualizer.text(spawning[i], {x: boxX, y: y, roomName: this.room.name});
-			Visualizer.barGraph(spawnProgress[i], {x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		const queue = _.sum(this.productionQueue, q => q.length).toString();
+		Visualizer.text('Queued', {x: boxX, y: y, roomName: this.room.name});
+		Visualizer.text(queue, {x: boxX + 4, y: y, roomName: this.room.name});
+		y += 1;
+
+		for (const [spawning, progress] of spawnMap) {
+			Visualizer.text(spawning, {x: boxX, y: y, roomName: this.room.name});
+			Visualizer.barGraph(progress, {x: boxX + 4, y: y, roomName: this.room.name}, 5);
 			y += 1;
 		}
 		return {x: x, y: y + .25};
