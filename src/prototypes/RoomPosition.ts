@@ -41,8 +41,10 @@ Object.defineProperty(RoomPosition.prototype, 'readableName', { // identifier fo
 // 	configurable: true,
 // });
 
-RoomPosition.prototype.lookForStructure = function(this: RoomPosition, structureType: StructureConstant): Structure | undefined {
-	return _.find(this.lookFor(LOOK_STRUCTURES), s => s.structureType === structureType);
+RoomPosition.prototype.lookForStructure = function<T extends StructureConstant>(
+		this: RoomPosition,
+		structureType: T): ConcreteStructure<T> | undefined {
+	return <ConcreteStructure<T>>_.find(this.lookFor(LOOK_STRUCTURES), s => s.structureType === structureType);
 };
 
 RoomPosition.prototype.getOffsetPos = function(this: RoomPosition, dx: number, dy: number): RoomPosition {

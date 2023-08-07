@@ -303,8 +303,7 @@ export class MiningOverlord extends Overlord {
 				log.error(`${this.print}: can't build container at ${this.room}`);
 				return;
 			}
-			const container = containerPos ? containerPos.lookForStructure(STRUCTURE_CONTAINER) as StructureContainer
-				| undefined : undefined;
+			const container = containerPos ? containerPos.lookForStructure(STRUCTURE_CONTAINER) : undefined;
 			if (container) {
 				log.warning(`${this.print}: this.container out of sync at ${containerPos.print}`);
 				this.container = container;

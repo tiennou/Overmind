@@ -57,7 +57,7 @@ const getDefaultEvolutionChamberMemory: () => EvolutionChamberMemory = () => ({
 });
 
 function neighboringLabs(pos: RoomPosition): StructureLab[] {
-	return _.compact(_.map(pos.neighbors, neighbor => neighbor.lookForStructure(STRUCTURE_LAB))) as StructureLab[];
+	return <StructureLab[]>_.compact(_.map(pos.neighbors, neighbor => neighbor.lookForStructure(STRUCTURE_LAB)));
 }
 
 function labsAreEmpty(labs: StructureLab[]): boolean {

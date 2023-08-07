@@ -192,7 +192,7 @@ interface RoomPosition {
 
 	getOffsetPos(dx: number, dy: number): RoomPosition;
 
-	lookForStructure(structureType: StructureConstant): Structure | undefined;
+	lookForStructure<T extends StructureConstant>(structureType: T): ConcreteStructure<T> | undefined;
 
 	isWalkable(ignoreCreeps?: boolean): boolean;
 

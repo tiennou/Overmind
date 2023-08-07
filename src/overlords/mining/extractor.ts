@@ -43,7 +43,7 @@ export class ExtractorOverlord extends Overlord {
 
 	private populateStructures() {
 		if (Game.rooms[this.pos.roomName]) {
-			this.extractor = this.pos.lookForStructure(STRUCTURE_EXTRACTOR) as StructureExtractor | undefined;
+			this.extractor = this.pos.lookForStructure(STRUCTURE_EXTRACTOR);
 			this.mineral = this.pos.lookFor(LOOK_MINERALS)[0];
 			this.container = this.pos.findClosestByLimitedRange(Game.rooms[this.pos.roomName].containers, 1);
 		}

@@ -494,9 +494,9 @@ export class Colony {
 			// log.debug(JSON.stringify(`spawnPoses: ${rightSpawnPos}, ${topSpawnPos}, ${coreSpawnPos}`));
 			this.bunker = {
 				anchor    : anchor,
-				topSpawn  : topSpawnPos.lookForStructure(STRUCTURE_SPAWN) as StructureSpawn | undefined,
-				coreSpawn : coreSpawnPos.lookForStructure(STRUCTURE_SPAWN) as StructureSpawn | undefined,
-				rightSpawn: rightSpawnPos.lookForStructure(STRUCTURE_SPAWN) as StructureSpawn | undefined,
+				topSpawn  : topSpawnPos.lookForStructure(STRUCTURE_SPAWN),
+				coreSpawn : coreSpawnPos.lookForStructure(STRUCTURE_SPAWN),
+				rightSpawn: rightSpawnPos.lookForStructure(STRUCTURE_SPAWN),
 			};
 		} else {
 			this.layout = 'twoPart';

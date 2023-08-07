@@ -81,7 +81,7 @@ export class DirectivePowerMine extends Directive {
 	get powerBank(): StructurePowerBank | undefined {
 		if (this.pos.isVisible) {
 			this._powerBank = this._powerBank || !!this.flag.room
-							  ? this.flag.pos.lookForStructure(STRUCTURE_POWER_BANK) as StructurePowerBank
+							  ? this.flag.pos.lookForStructure(STRUCTURE_POWER_BANK)
 							  : undefined;
 			return this._powerBank;
 		}

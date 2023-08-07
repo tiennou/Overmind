@@ -48,7 +48,7 @@ export class DirectiveHaul extends Directive {
 			return <DropContents>{};
 		}
 		if (!this._drops) {
-			const drops = (this.pos.lookFor(LOOK_RESOURCES) || []) as Resource[];
+			const drops = this.pos.lookFor(LOOK_RESOURCES);
 			this._drops = <DropContents>_.groupBy(drops, drop => drop.resourceType);
 		}
 		return this._drops;
@@ -58,14 +58,15 @@ export class DirectiveHaul extends Directive {
 		return _.keys(this.drops).length > 0;
 	}
 
-	get storeStructure(): StructureStorage | StructureTerminal | StructureNuker | StructureContainer | Ruin | undefined {
+	get storeStructure():
+		StructureStorage | StructureTerminal | StructureNuker | StructureContainer | Ruin | undefined {
 		if (this.pos.isVisible) {
-			return <StructureStorage>this.pos.lookForStructure(STRUCTURE_STORAGE) ||
-				   <StructureTerminal>this.pos.lookForStructure(STRUCTURE_TERMINAL) ||
-				   <StructureNuker>this.pos.lookForStructure(STRUCTURE_NUKER) ||
-				   <StructureContainer>this.pos.lookForStructure(STRUCTURE_CONTAINER) ||
-				   <Ruin>this.pos.lookFor(LOOK_RUINS).filter(ruin => ruin.store.getUsedCapacity() > 0)[0] ||
-				   <Tombstone>this.pos.lookFor(LOOK_TOMBSTONES).filter(tombstone => tombstone.store.getUsedCapacity() > 0)[0];
+			return this.pos.lookForStructure(STRUCTURE_STORAGE) ||
+				   this.pos.lookForStructure(STRUCTURE_TERMINAL) ||
+				   this.pos.lookForStructure(STRUCTURE_NUKER) ||
+				   this.pos.lookForStructure(STRUCTURE_CONTAINER) ||
+				   this.pos.lookFor(LOOK_RUINS).filter(ruin => ruin.store.getUsedCapacity() > 0)[0] ||
+				   this.pos.lookFor(LOOK_TOMBSTONES).filter(tombstone => tombstone.store.getUsedCapacity() > 0)[0];
 		}
 		return undefined;
 	}
