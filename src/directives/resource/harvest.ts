@@ -94,6 +94,20 @@ export class DirectiveHarvest extends Directive {
 												  CREEP_LIFE_TIME)).toFixed(5);
 	}
 
+	visuals(): void {
+		if (!(this.memory.debug && Memory.settings.enableVisuals)) return;
+
+		const data = [
+			this.name,
+			` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`,
+			` D: ${this.memory[HARVEST_MEM.DOWNTIME].toPercent()}`,
+		];
+		if (this.memory[HARVEST_MEM.PATHING]) {
+			data.push(` P: ${this.memory[HARVEST_MEM.PATHING][MEM.DISTANCE]}`);
+		}
+		const { x, y, roomName } = this.pos;
+		new RoomVisual(roomName).infoBox(data, x, y, { color: '#FFE87B'});
+	}
 }
 
 
