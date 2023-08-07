@@ -71,7 +71,7 @@ export class OvermindConsole {
 		global.info = this.info;
 		global.notifications = this.notifications;
 		global.debug = this.debug;
-		global.stopDebug = this.stopDebug;
+		global.stopDebug = this.debug;
 		global.setMode = this.setMode;
 		global.setSignature = this.setSignature;
 		global.print = this.print;
@@ -254,13 +254,13 @@ export class OvermindConsole {
 	// Debugging methods ===============================================================================================
 
 	static debug(thing: { name?: string, ref?: string, memory: MemoryDebug }): string {
-		thing.memory.debug = true;
-		return `Enabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
-	}
-
-	static stopDebug(thing: { name?: string, ref?: string, memory: MemoryDebug }): string {
-		delete thing.memory.debug;
-		return `Disabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
+		if (thing.memory.debug) {
+			delete thing.memory.debug;
+			return `Disabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
+		} else {
+			thing.memory.debug = true;
+			return `Enabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
+		}
 	}
 
 	static startRemoteDebugSession(): string {
