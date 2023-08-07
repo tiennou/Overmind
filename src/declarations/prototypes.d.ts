@@ -160,6 +160,7 @@ interface Room {
 }
 
 interface RoomObject {
+	print: string;
 	ref: string;
 	targetedBy: string[];
 

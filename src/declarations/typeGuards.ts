@@ -7,46 +7,40 @@ import {NeuralZerg} from '../zerg/NeuralZerg';
 import {PowerZerg} from '../zerg/PowerZerg';
 import {Zerg} from '../zerg/Zerg';
 
-// export interface EnergyStructure extends Structure {
-// 	energy: number;
-// 	energyCapacity: number;
-// }
-
-// export interface StoreStructure extends Structure {
-// 	store: StoreDefinition;
-// 	storeCapacity: number;
-// }
-
-// export function isEnergyStructure(obj: RoomObject): obj is EnergyStructure {
-// 	return (<EnergyStructure>obj).energy != undefined && (<EnergyStructure>obj).energyCapacity != undefined;
-// }
-//
-// export function isStoreStructure(obj: RoomObject): obj is StoreStructure {
-// 	return (<StoreStructure>obj).store != undefined && (<StoreStructure>obj).storeCapacity != undefined;
-// }
-
 export function isStructure(obj: RoomObject): obj is Structure {
-	return (<Structure>obj).structureType != undefined;
+	return obj instanceof Structure;
 }
 
-export function isOwnedStructure(structure: Structure): structure is OwnedStructure {
-	return (<OwnedStructure>structure).owner != undefined;
+export function isOwnedStructure(obj: RoomObject): obj is OwnedStructure {
+	return obj instanceof OwnedStructure;
 }
 
-export function isSource(obj: Source | Mineral): obj is Source {
-	return (<Source>obj).energy != undefined;
+export function isConstructionSite(obj: RoomObject): obj is ConstructionSite {
+	return obj instanceof ConstructionSite;
+}
+
+export function isSource(obj: RoomObject): obj is Source {
+	return obj instanceof Source;
 }
 
 export function isTombstone(obj: RoomObject): obj is Tombstone {
-	return (<Tombstone>obj).deathTime != undefined;
+	return obj instanceof Tombstone;
 }
 
 export function isRuin(obj: RoomObject): obj is Ruin {
-	return (<Ruin>obj).destroyTime != undefined;
+	return obj instanceof Ruin;
 }
 
 export function isResource(obj: RoomObject): obj is Resource {
-	return (<Resource>obj).amount != undefined;
+	return obj instanceof Resource;
+}
+
+export function isMineral(obj: RoomObject): obj is Mineral {
+	return obj instanceof Mineral;
+}
+
+export function isDeposit(obj: RoomObject): obj is Deposit {
+	return obj instanceof Deposit;
 }
 
 export function hasPos(obj: _HasRoomPosition | RoomPosition): obj is _HasRoomPosition {
