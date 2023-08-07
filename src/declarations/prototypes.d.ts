@@ -168,15 +168,28 @@ interface RoomObject {
 }
 
 interface RoomPosition {
+	/** Debug helper to format the object */
 	print: string;
+	/** Debug helper to format the object, without linking */
 	printPlain: string;
+	/**
+	 * The room the position is in
+	 *
+	 * Will be `undefined` if we don't currently have room visibility.
+	 */
 	room: Room | undefined;
+	/** A shortened version of the position, mostly used for cache keys */
 	readableName: string;
 	// coordName: string;
+	/** Whether the position is at the edge of the room */
 	isEdge: boolean;
+	/** Do we have visibility on the room? */
 	isVisible: boolean;
+	/** The distance to the nearest room edge */
 	rangeToEdge: number;
+	/** Position of the room, in world coordinates */
 	roomCoords: Coord;
+	/** All of the (max. 8) positions bordering this one */
 	neighbors: RoomPosition[];
 
 	toCoord(): Coord;
@@ -195,6 +208,11 @@ interface RoomPosition {
 
 	lookForStructure<T extends StructureConstant>(structureType: T): ConcreteStructure<T> | undefined;
 
+	/**
+	 * Can this position be walked on?
+	 *
+	 * @description Note that if the room is not visible, we can't account for creeps.
+	 */
 	isWalkable(ignoreCreeps?: boolean): boolean;
 
 	availableNeighbors(ignoreCreeps?: boolean): RoomPosition[];
@@ -245,6 +263,11 @@ interface OwnedStructure {
 }
 
 interface Structure {
+	/**
+	 * Check if a structure can be walked over
+	 *
+	 * Only true for roads, containers and ramparts.
+	 */
 	isWalkable: boolean;
 }
 

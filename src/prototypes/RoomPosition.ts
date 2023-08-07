@@ -75,14 +75,14 @@ Object.defineProperty(RoomPosition.prototype, 'isEdge', { // if the position is 
 	configurable: true,
 });
 
-Object.defineProperty(RoomPosition.prototype, 'isVisible', { // if the position is in a defined room
+Object.defineProperty(RoomPosition.prototype, 'isVisible', {
 	get: function(this: RoomPosition) {
 		return Game.rooms[this.roomName] != undefined;
 	},
 	configurable: true,
 });
 
-Object.defineProperty(RoomPosition.prototype, 'rangeToEdge', { // range to the nearest room edge
+Object.defineProperty(RoomPosition.prototype, 'rangeToEdge', {
 	get: function(this: RoomPosition) {
 		return _.min([this.x, 49 - this.x, this.y, 49 - this.y]);
 	},
