@@ -414,7 +414,7 @@ export class Pathing {
 			range       : 1,
 			terrainCosts: {plainCost: 1, swampCost: 1}
 		};
-		_.defaults(opts, opts);
+		_.defaults(opts, optDefaults);
 		const ret = this.findPath(startPos, endPos, opts);
 		if (ret.incomplete) log.alert(`Pathing: incomplete path from ${startPos.print} to ${endPos.print}!`);
 		return ret;
