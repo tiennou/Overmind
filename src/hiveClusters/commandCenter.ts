@@ -1,3 +1,4 @@
+import { Roles } from 'creepSetups/setups';
 import {$} from '../caching/GlobalCache';
 import {Colony} from '../Colony';
 import {log} from '../console/log';
@@ -231,11 +232,26 @@ export class CommandCenter extends HiveCluster {
 
 	visuals(coord: Coord): Coord {
 		let {x, y} = coord;
-		const height = this.storage && this.terminal ? 2 : 1;
+		const height = this.storage && this.terminal ? 3 : 2;
 		const titleCoords = Visualizer.section(`${this.colony.name} Command Center`,
 											   {x, y, roomName: this.room.name}, 9.5, height + .1);
 		const boxX = titleCoords.x;
 		y = titleCoords.y + 0.25;
+
+		const c = this.colony;
+		const assetStructures = _.compact([c.storage, c.terminal, c.factory, ...c.labs]);
+		const assetCreeps = [...c.getCreepsByRole(Roles.queen), ...c.getCreepsByRole(Roles.manager)];
+		const assetStores = _.map([...assetStructures, ...assetCreeps], thing => thing!.store);
+
+		const used = _.sum(assetStores, s => s.getUsedCapacity(RESOURCE_ENERGY));
+		const capacity = _.sum(assetStores, s => s.getCapacity(RESOURCE_ENERGY));
+
+		const fmt = (num: number) => `${Math.floor(num / 1000)}K`;
+		Visualizer.text('Energy', {x: boxX, y: y, roomName: this.room.name});
+		Visualizer.barGraph([used, capacity],
+								{x: boxX + 4, y: y, roomName: this.room.name}, 5, undefined, fmt);
+		y += 1;
+
 		if (this.storage) {
 			Visualizer.text('Storage', {x: boxX, y: y, roomName: this.room.name});
 			Visualizer.barGraph(this.storage.store.getUsedCapacity() / this.storage.store.getCapacity(),
