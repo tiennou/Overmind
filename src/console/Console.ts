@@ -1,3 +1,4 @@
+import { ReservingOverlord } from 'overlords/colonization/reserver';
 import {Colony, ColonyMemory, getAllColonies} from '../Colony';
 import {Directive} from '../directives/Directive';
 import {RoomIntel} from '../intel/RoomIntel';
@@ -10,6 +11,8 @@ import {color, printRoomName, toColumns} from '../utilities/utils';
 import {asciiLogoRL, asciiLogoSmall} from '../visuals/logos';
 import {DEFAULT_OVERMIND_SIGNATURE, MY_USERNAME, USE_SCREEPS_PROFILER} from '../~settings';
 import {log} from './log';
+import {DirectiveOutpost} from 'directives/colony/outpost';
+import {TaskSignController} from 'tasks/instances/signController';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
 
@@ -222,6 +225,24 @@ export class OvermindConsole {
 			throw new Error(`Invalid signature: ${signature}; length is over 100 chars.`);
 		} else if (sig.toLowerCase().includes('overmind') || sig.includes(DEFAULT_OVERMIND_SIGNATURE)) {
 			Memory.settings.signature = sig;
+
+			_.each(Overmind.colonies, colony => {
+				const signer = _.sample(colony.getZergByRole("worker"));
+				if (!signer) {
+					log.warning(`${colony.print}: unable to find a random worker to re-sign the controller`);
+					return;
+				}
+				signer.task = new TaskSignController(colony.controller);
+			})
+
+			_.filter(Overmind.directives, directive => directive instanceof DirectiveOutpost)
+				.forEach(directive => {
+					const overlord = <ReservingOverlord>directive.overlords.reserve;
+					overlord.settings.resetSignature = true;
+					if (overlord.reservers[0]) {
+						overlord.reservers[0].task = null;
+					}
+				});
 			return `Controller signature set to ${sig}`;
 		} else {
 			throw new Error(`Invalid signature: ${signature}; must contain the string "Overmind" or ` +
