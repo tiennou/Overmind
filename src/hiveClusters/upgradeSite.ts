@@ -1,3 +1,4 @@
+import { Visualizer } from 'visuals/Visualizer';
 import {$} from '../caching/GlobalCache';
 import {Colony, ColonyStage} from '../Colony';
 import {log} from '../console/log';
@@ -199,16 +200,35 @@ export class UpgradeSite extends HiveCluster {
 		}
 	}
 
-	visuals() {
-		// let info = [];
-		// if (this.controller.level != 8) {
-		// 	let progress = `${Math.floor(this.controller.progress / 1000)}K`;
-		// 	let progressTotal = `${Math.floor(this.controller.progressTotal / 1000)}K`;
-		// 	let percent = `${Math.floor(100 * this.controller.progress / this.controller.progressTotal)}`;
-		// 	info.push(`Progress: ${progress}/${progressTotal} (${percent}%)`);
-		//
-		// }
-		// info.push(`Downtime: ${this.memory.stats.downtime.toPercent()}`);
-		// Visualizer.showInfo(info, this);
+	private drawUpgradeReport(coord: Coord) {
+		let { x, y } = coord;
+		const height = this.controller.level !== 8 ? 2 : 1;
+		const titleCoords = Visualizer.section(`${this.colony.name} Upgrade Site (${this.controller.level})`,
+			{ x, y, roomName: this.room.name }, 9.5, height + 0.1
+		);
+
+		const boxX = titleCoords.x;
+		y = titleCoords.y + 0.25;
+
+		if (this.controller.level != 8) {
+			Visualizer.text(`Progress`, { x: boxX, y: y, roomName: this.room.name });
+			const fmt = (num: number) => `${Math.floor(num / 1000)}K`;
+			Visualizer.barGraph([this.controller.progress, this.controller.progressTotal],
+				{ x: boxX + 4, y: y, roomName: this.room.name }, 5, 1, fmt);
+			y += 1;
+		}
+
+		Visualizer.text(`Downtime`,
+				{ x: boxX, y: y, roomName: this.room.name});
+		Visualizer.barGraph(this.memory.stats.downtime,
+				{ x: boxX + 4, y: y, roomName: this.room.name}, 5);
+
+		y += 1;
+
+		return { x, y };
+	}
+
+	visuals(coord: Coord): Coord {
+		return this.drawUpgradeReport(coord);
 	}
 }

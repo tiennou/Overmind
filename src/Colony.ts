@@ -712,17 +712,17 @@ export class Colony {
 	}
 
 	visuals(): void {
-		let x = 1;
-		let y = 11.5;
-		let coord: Coord;
-		coord = this.drawCreepReport({x, y});
-		x = coord.x;
-		y = coord.y;
+		let coord: Coord = {x: 1, y: 11.5};
+		coord = this.drawCreepReport(coord);
 
-		for (const hiveCluster of _.compact([this.hatchery, this.commandCenter, this.evolutionChamber])) {
-			coord = hiveCluster!.visuals({x, y});
-			x = coord.x;
-			y = coord.y;
+		const overlords = [
+			this.hatchery,
+			this.commandCenter,
+			this.evolutionChamber,
+			this.upgradeSite,
+		];
+		for (const hiveCluster of _.compact(overlords)) {
+			coord = hiveCluster!.visuals(coord);
 		}
 	}
 }

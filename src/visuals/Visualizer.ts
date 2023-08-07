@@ -186,7 +186,7 @@ export class Visualizer {
 	}
 
 	static barGraph(progress: number | [number, number], pos: { x: number, y: number, roomName?: string },
-					width = 7, scale = 1): void {
+					width = 7, scale = 1, fmt?: (num: number) => string): void {
 		const vis = new RoomVisual(pos.roomName);
 		let percent: number;
 		let mode: 'percent' | 'fraction';
@@ -206,11 +206,14 @@ export class Visualizer {
 		});
 		// Draw text
 		if (mode == 'percent') {
-			vis.text(`${Math.round(100 * percent)}%`, pos.x + width / 2, pos.y - .1 * CHAR_HEIGHT,
+			const str = fmt ? fmt(percent) : `${Math.round(100 * percent)}%`;
+			vis.text(str, pos.x + width / 2, pos.y - .1 * CHAR_HEIGHT,
 					 this.textStyle(1, {align: 'center'}));
 		} else {
 			const [num, den] = <[number, number]>progress;
-			vis.text(`${num}/${den}`, pos.x + width / 2, pos.y - .1 * CHAR_HEIGHT,
+			const nStr = fmt ? fmt(num) : `${num}`;
+			const dStr = fmt ? fmt(den) : `${den}`;
+			vis.text(`${nStr}/${dStr}`, pos.x + width / 2, pos.y - .1 * CHAR_HEIGHT,
 					 this.textStyle(1, {align: 'center'}));
 		}
 
