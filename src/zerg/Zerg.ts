@@ -1,3 +1,4 @@
+import { TaskRetire } from 'tasks/instances/retire';
 import {log} from '../console/log';
 import {isCreep, isPowerCreep, isStandardZerg} from '../declarations/typeGuards';
 import {CombatIntel} from '../intel/CombatIntel';
@@ -334,10 +335,6 @@ export class Zerg extends AnyZerg {
 		return result;
 	}
 
-	// suicide() {
-	// 	return this.creep.suicide();
-	// }
-
 	upgradeController(controller: StructureController) {
 		const result = this.creep.upgradeController(controller);
 		if (!this.actionLog.upgradeController) this.actionLog.upgradeController = (result == OK);
@@ -529,7 +526,17 @@ export class Zerg extends AnyZerg {
 	 * For now, that means RIP
 	 */
 	retire() {
-		this.say('💀 RIP 💀', true);
+		const colonySpawns = this.colony?.hatchery?.spawns;
+		if (colonySpawns) {
+			const nearbySpawn = this.pos.findClosestByMultiRoomRange(colonySpawns);
+			log.info(`${this.print} is retiring to closest spawn: ${nearbySpawn?.pos}`);
+			if (nearbySpawn) {
+				this.task = new TaskRetire(nearbySpawn);
+				return;
+			}
+		}
+
+		log.warning(`${this.name} is committing suicide!`);
 		return this.suicide();
 	}
 

@@ -21,6 +21,7 @@ import {rangedAttackTargetType, rangedAttackTaskName, TaskRangedAttack} from './
 import {rechargeTaskName, TaskRecharge} from './instances/recharge';
 import {repairTargetType, repairTaskName, TaskRepair} from './instances/repair';
 import {reserveTargetType, reserveTaskName, TaskReserve} from './instances/reserve';
+import {retireTaskName, TaskRetire} from './instances/retire';
 import {signControllerTargetType, signControllerTaskName, TaskSignController} from './instances/signController';
 import {TaskTransfer, transferTargetType, transferTaskName} from './instances/transfer';
 // import {fleeTargetType, fleeTaskName, TaskFlee} from './instances/flee';
@@ -119,6 +120,9 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 			break;
 		case generateSafeModeTaskName:
 			task = new TaskGenerateSafeMode(target as generateSafeModeTargetType);
+			break;
+		case retireTaskName:
+			task = new TaskRetire(target as StructureSpawn);
 			break;
 		default:
 			log.error(`Invalid task name: ${taskName}! task.creep: ${protoTask._creep.name}. Deleting from memory!`);

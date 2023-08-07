@@ -64,7 +64,7 @@ export class ClaimingOverlord extends Overlord {
 		this.autoRun(this.claimers, claimer => this.handleClaimer(claimer));
 		if (this.room && this.room.controller && this.room.controller.my && this.room.controller.signedByMe) {
 			for (const claimer of this.claimers) {
-				claimer.suicide();
+				claimer.retire();
 			}
 		}
 	}

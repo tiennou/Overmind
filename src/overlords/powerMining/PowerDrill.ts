@@ -68,7 +68,6 @@ export class PowerDrillOverlord extends CombatOverlord {
 				// If power bank is dead
 				if (this.directive.powerBank == undefined && this.directive.memory.state < 2) {
 					Game.notify(`Power bank in ${this.room.print} is dead.`);
-					drill.say('💀 RIP 💀');
 					const result = drill.retire();
 					if (result == ERR_BUSY) {
 						// drill spawning, find something else to do with them
@@ -114,7 +113,6 @@ export class PowerDrillOverlord extends CombatOverlord {
 		} else if (!this.directive.powerBank) {
 			// If power bank is dead
 			Game.notify('Power bank in ' + this.room + ' is dead.');
-			coolant.say('💀 RIP 💀');
 			coolant.retire();
 			return;
 		}

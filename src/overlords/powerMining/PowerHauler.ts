@@ -48,8 +48,7 @@ export class PowerHaulingOverlord extends Overlord {
 		if (hauler.store.getUsedCapacity() === 0) {
 			if (this.directive.memory.state >= 4) {
 				// FIXME: Maybe ditch this and put it as a separate on-finishing method to reassign
-				hauler.say('💀 RIP 💀', true);
-				log.warning(`${hauler.name} is committing suicide as directive is done!`);
+				log.warning(`${hauler.name} is retiring as directive is done!`);
 				this.numHaulers = 0;
 				hauler.retire();
 			}
@@ -82,8 +81,6 @@ export class PowerHaulingOverlord extends Overlord {
 						hauler.task = Tasks.pickup(drop);
 						return;
 					} else {
-						hauler.say('💀 RIP 💀', true);
-						log.warning(`${hauler.name} is committing suicide!`);
 						hauler.retire();
 						return;
 					}

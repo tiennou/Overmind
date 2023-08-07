@@ -413,7 +413,7 @@ export class MiningOverlord extends Overlord {
 				const oldestMiner = minBy(minersNearSource, miner => miner.ticksToLive || 9999);
 				if (oldestMiner && (oldestMiner.ticksToLive || 9999) < MINER_SUICIDE_THRESHOLD) {
 					// if the oldest miner will die sufficiently soon
-					oldestMiner.suicide();
+					oldestMiner.retire();
 					return true;
 				}
 			}

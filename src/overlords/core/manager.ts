@@ -460,12 +460,7 @@ export class CommandCenterOverlord extends Overlord {
 			if (manager.store.getUsedCapacity() > 0) {
 				this.unloadCarry(manager);
 			} else {
-				const nearbySpawn = _.first(manager.pos.findInRange(manager.room.spawns, 1));
-				if (nearbySpawn) {
-					nearbySpawn.recycleCreep(manager.creep);
-				} else {
-					manager.suicide();
-				}
+				manager.retire();
 			}
 			return true;
 		}

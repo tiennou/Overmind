@@ -232,6 +232,7 @@ export abstract class AnyZerg {
 	}
 
 	suicide() {
+		this.say('💀 RIP 💀', true);
 		return this.creep.suicide();
 	}
 
