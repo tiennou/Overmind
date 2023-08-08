@@ -1,3 +1,4 @@
+import columnify from 'columnify';
 import {log} from '../../console/log';
 import {isResource} from '../../declarations/typeGuards';
 import {profile} from '../../profiler/decorator';
@@ -25,12 +26,14 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 	}
 
 	private rechargeRateForCreep(creep: Zerg, obj: rechargeObjectType): number | false {
+		log.debugCreep(creep, () => `checking recharge rate of ${creep.print} against ${obj.print}`);
 		if (creep.colony && creep.colony.hatchery && creep.colony.hatchery.battery
 			&& obj.id == creep.colony.hatchery.battery.id && creep.roleName != 'queen') {
+			log.debugCreep(creep, `\t is not a queen, can't use hatchery battery`);
 			return false; // only queens can use the hatchery battery
 		}
-		let amount = isResource(obj) ? obj.amount : obj.store[RESOURCE_ENERGY];
-		if (amount < this.data.minEnergy) {
+		const amountAvailable = isResource(obj) ? obj.amount : obj.store[RESOURCE_ENERGY];
+		if (amountAvailable < this.data.minEnergy) {
 			return false;
 		}
 		const otherTargeters = _.filter(_.map(obj.targetedBy, name => Overmind.zerg[name]),
@@ -38,8 +41,14 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 												&& (zerg.task.name == withdrawTaskName
 													|| zerg.task.name == pickupTaskName));
 		const resourceOutflux = _.sum(_.map(otherTargeters, other => other.store.getFreeCapacity()));
-		amount = minMax(amount - resourceOutflux, 0, creep.store.getCapacity());
-		const effectiveAmount = amount / (creep.pos.getMultiRoomRangeTo(obj.pos) + 1);
+		const amountGrabbed = minMax(amountAvailable - resourceOutflux, 0, creep.store.getCapacity());
+		const effectiveAmount = amountGrabbed / (creep.pos.getMultiRoomRangeTo(obj.pos) + 1);
+
+		log.debugCreep(creep, () => `\tother targeters are ${columnify(otherTargeters.map(creep => {
+			return { creep: creep.print, free: creep.store.getFreeCapacity(), task: creep.task?.name };
+		}))}`);
+		log.debugCreep(creep, () => `\tavailable: ${amountAvailable} resourceOutFlux: ${resourceOutflux}, `
+			+ `grabbed: ${amountGrabbed}, effective: ${effectiveAmount}`);
 		if (effectiveAmount <= 0) {
 			return false;
 		} else {
@@ -58,6 +67,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 																   : creep.room.rechargeables;
 
 		const target = maxBy(possibleTargets, o => this.rechargeRateForCreep(creep, o));
+		log.debugCreep(creep, `selected ${target?.print} from targets ${possibleTargets.map(t => t.print).join(", ")}`);
 		if (!target || creep.pos.getMultiRoomRangeTo(target.pos) > 40) {
 			// workers shouldn't harvest; let drones do it (disabling this check can destabilize early economy)
 			const canHarvest = creep.getActiveBodyparts(WORK) > 0 && creep.roleName != 'worker';
@@ -78,15 +88,17 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		}
 		if (target) {
 			if (isResource(target)) {
+				log.debugCreep(creep, `selected pickup target ${target.print} for ${creep.print}`);
 				creep.task = new TaskPickup(target);
 				return;
 			} else {
+				log.debugCreep(creep, `selected withdraw target ${target.print} for ${creep.print}`);
 				creep.task = new TaskWithdraw(target);
 				return;
 			}
 		} else {
 			// if (creep.roleName == 'queen') {
-			log.debug(`No valid withdraw target for ${creep.print}!`);
+			log.debugCreep(creep, `No valid withdraw target!`);
 			// }
 			creep.task = null;
 		}
