@@ -231,6 +231,7 @@ export class WorkerOverlord extends Overlord {
 	private repairActions(worker: Zerg): boolean {
 		const target = worker.pos.findClosestByMultiRoomRange(this.repairStructures);
 		if (target) {
+			this.debug(`${worker.print} repairing ${target.print}`);
 			worker.task = Tasks.repair(target);
 			return true;
 		} else {
@@ -244,6 +245,7 @@ export class WorkerOverlord extends Overlord {
 			if (groupedSites[structureType]) {
 				const target = worker.pos.findClosestByMultiRoomRange(groupedSites[structureType]);
 				if (target) {
+					this.debug(`${worker.print} heading to build ${target.print} from ${this.constructionSites.length} sites`);
 					worker.task = Tasks.build(target);
 					return true;
 				}
@@ -257,6 +259,7 @@ export class WorkerOverlord extends Overlord {
 		const target = worker.pos.findClosestByMultiRoomRange(targets);
 		if (target) {
 			_.remove(this.dismantleStructures, s => s == target);
+			this.debug(`${worker.print} dismantling ${target.print}`);
 			worker.task = Tasks.dismantle(target);
 			return true;
 		} else {
@@ -271,6 +274,7 @@ export class WorkerOverlord extends Overlord {
 		// Build a paving manifest
 		const pavingManifest = this.colony.roadLogistics.buildPavingManifest(worker, roomToRepave);
 		if (pavingManifest) {
+			this.debug(`${worker.print} repaving ${roomToRepave.name}`);
 			worker.task = pavingManifest;
 			return true;
 		} else {
@@ -300,6 +304,7 @@ export class WorkerOverlord extends Overlord {
 		const lowBarriers = this.findLowBarriers(fortifyStructures);
 		const target = worker.pos.findClosestByMultiRoomRange(lowBarriers);
 		if (target) {
+			this.debug(`${worker.print} fortifying ${target.print}`);
 			worker.task = Tasks.fortify(target);
 			return true;
 		} else {
@@ -331,6 +336,7 @@ export class WorkerOverlord extends Overlord {
 		});
 
 		if (target) {
+			this.debug(`${worker.print} fortifying ${target.print} against nukes`);
 			worker.task = Tasks.fortify(target);
 			return true;
 		} else {
@@ -341,9 +347,11 @@ export class WorkerOverlord extends Overlord {
 	private upgradeActions(worker: Zerg): boolean {
 		// Sign controller if needed
 		if ((!this.colony.controller.signedByMe && !this.colony.controller.signedByScreeps)) {
+			this.debug(`${worker.print} signing controller ${this.colony.controller.ref}`);
 			worker.task = Tasks.signController(this.colony.controller);
 			return true;
 		}
+		this.debug(`${worker.print} upgrading ${this.colony.controller.ref}`);
 		worker.task = Tasks.upgrade(this.room.controller!);
 		return true;
 	}
@@ -352,6 +360,7 @@ export class WorkerOverlord extends Overlord {
 		// Dump energy into the hatchery
 		const target = this.colony.hatchery?.energyStructures.find(struct => struct.store.getFreeCapacity(RESOURCE_ENERGY));
 		if (target && this.colony.state.bootstrapping) {
+			this.debug(`${worker.print} bootstraping ${target.print}`);
 			worker.task = Tasks.transfer(target);
 			return true;
 		}
@@ -359,6 +368,7 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private handleWorker(worker: Zerg) {
+		// this.debug(`${worker.print} looking for work`);
 		if (worker.store.energy > 0) {
 			// TODO Add high priority to block controller with ramparts/walls in case of downgrade attack
 			// FIXME workers get stalled at controller in case of downgrade attack
@@ -368,6 +378,7 @@ export class WorkerOverlord extends Overlord {
 			if ((!this.colony.controller.upgradeBlocked || this.colony.controller.upgradeBlocked < 30)
 				&& (this.colony.controller.ticksToDowngrade <= downgradeLevel
 					|| this.colony.controller.progress > this.colony.controller.progressTotal)) {
+				this.debug(`${worker.print} emergency upgrade!`);
 				if (this.upgradeActions(worker)) return;
 			}
 			// Turn into queens until the bootstrap situation gets resolved
@@ -411,7 +422,9 @@ export class WorkerOverlord extends Overlord {
 			// Acquire more energy
 			const workerWithdrawLimit = this.colony.stage == ColonyStage.Larva ? 750 : 100;
 			worker.task = Tasks.recharge(workerWithdrawLimit);
+			return;
 		}
+		// this.debug(`${worker.print} no work to do!`);
 	}
 
 	run() {
