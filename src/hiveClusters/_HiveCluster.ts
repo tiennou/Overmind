@@ -30,7 +30,7 @@ export abstract class HiveCluster {
 	}
 
 	protected debug(...args: any[]) {
-		if (this.memory.debug) {
+		if (this.memory?.debug) {
 			log.alert(this.print, args);
 		}
 	}
