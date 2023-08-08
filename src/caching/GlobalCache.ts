@@ -6,6 +6,11 @@ const SHORT_CACHE_TIMEOUT = 10;
 const COSTMATRIX_TIMEOUT = 20;
 const PATH_TIMEOUT = 1000;
 
+const STRUCTURE_KEY = 's';
+const NUMBER_KEY = '#';
+const POSITION_KEY = 'p';
+const LIST_KEY = 'l';
+const COSTMATRIX_KEY = 'm';
 
 /**
  * The GlobalCache ($) module saves frequently accessed deserialized objects in temporary, volatile global memory
@@ -15,7 +20,7 @@ export class $ { // $ = cash = cache... get it? :D
 
 	static structures<T extends Structure>(saver: { ref: string }, key: string, callback: () => T[],
 										   timeout = CACHE_TIMEOUT): T[] {
-		const cacheKey = saver.ref + 's' + key;
+		const cacheKey = saver.ref + STRUCTURE_KEY + key;
 		if (!_cache.structures[cacheKey] || Game.time > _cache.expiration[cacheKey]) {
 			// Recache if new entry or entry is expired
 			_cache.structures[cacheKey] = callback();
@@ -32,7 +37,7 @@ export class $ { // $ = cash = cache... get it? :D
 	}
 
 	static number(saver: { ref: string }, key: string, callback: () => number, timeout = SHORT_CACHE_TIMEOUT): number {
-		const cacheKey = saver.ref + '#' + key;
+		const cacheKey = saver.ref + NUMBER_KEY + key;
 		if (_cache.numbers[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
 			// Recache if new entry or entry is expired
 			_cache.numbers[cacheKey] = callback();
@@ -42,14 +47,14 @@ export class $ { // $ = cash = cache... get it? :D
 	}
 
 	static numberRecall(saver: { ref: string }, key: string): number | undefined {
-		const cacheKey = saver.ref + '#' + key;
+		const cacheKey = saver.ref + NUMBER_KEY + key;
 		return _cache.numbers[cacheKey] as number | undefined;
 	}
 
 	// static pos(saver: { ref: string }, key: string, callback: () => RoomPosition, timeout ?: number): RoomPosition;
 	static pos(saver: { ref: string }, key: string, callback: () => RoomPosition | undefined, timeout?: number):
 		RoomPosition | undefined {
-		const cacheKey = saver.ref + 'p' + key;
+		const cacheKey = saver.ref + POSITION_KEY + key;
 		if (_cache.roomPositions[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
 			// Recache if new entry or entry is expired
 			_cache.roomPositions[cacheKey] = callback();
@@ -60,7 +65,7 @@ export class $ { // $ = cash = cache... get it? :D
 	}
 
 	static list<T>(saver: { ref: string }, key: string, callback: () => T[], timeout = CACHE_TIMEOUT): T[] {
-		const cacheKey = saver.ref + 'l' + key;
+		const cacheKey = saver.ref + LIST_KEY + key;
 		if (_cache.lists[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
 			// Recache if new entry or entry is expired
 			_cache.lists[cacheKey] = callback();
@@ -75,7 +80,7 @@ export class $ { // $ = cash = cache... get it? :D
 	 */
 	static costMatrix(roomName: string, key: string, callback: () => CostMatrix,
 					  timeout = COSTMATRIX_TIMEOUT): CostMatrix {
-		const cacheKey = roomName + 'm' + key;
+		const cacheKey = roomName + COSTMATRIX_KEY + key;
 		if (_cache.costMatrices[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
 			// Recache if new entry or entry is expired
 			_cache.costMatrices[cacheKey] = callback();
@@ -88,7 +93,7 @@ export class $ { // $ = cash = cache... get it? :D
 	 * Returns the value of a previously cached CostMatrix without triggering a cache expiration and recalc
 	 */
 	static costMatrixRecall(roomName: string, key: string): CostMatrix | undefined {
-		const cacheKey = roomName + ':' + key;
+		const cacheKey = roomName + COSTMATRIX_KEY + key;
 		return _cache.costMatrices[cacheKey];
 	}
 
