@@ -169,8 +169,8 @@ export class DirectivePowerMine extends Directive {
 		} else if (currentState == 4 && this.overlords.powerHaul && (this.overlords.powerHaul as PowerHaulingOverlord)
 			.checkIfStillCarryingPower() == undefined) {
 			// TODO Doesn't give enough time to pick up power
-			log.notify(`Hauling complete for ${this.print} at time ${Game.time}. Final power collected was 
-			${this.memory.totalCollected} out of ${this.memory.totalResources}`);
+			log.notify(`Hauling complete for ${this.print} at time ${Game.time}. Final power collected was `
+				+ `${this.memory.totalCollected} out of ${this.memory.totalResources}`);
 			this.remove();
 		} else {
 			log.debug(`Power mining ${this.print} is in state ${currentState}`);
