@@ -379,6 +379,10 @@ export class LogisticsNetwork {
 		let targetCapacity: number;
 		if (isResource(request.target)) {
 			targetCapacity = request.target.amount;
+		} else if (isTombstone(request.target)) {
+			targetCapacity = request.resourceType === "all"
+				? _.sum(request.target.store.contents)
+				: request.target.store[request.resourceType] ?? 0;
 		} else {
 			targetCapacity = request.resourceType === "all"
 				? request.target.store.getCapacity() ?? 0
@@ -395,8 +399,7 @@ export class LogisticsNetwork {
 			// }
 
 			if (!isResource(request.target)) {
-				// @ts-ignore
-				predictedAmount = minMax(predictedAmount, 0, request.target.store.getCapacity(request.resourceType));
+				predictedAmount = minMax(predictedAmount, 0, targetCapacity);
 			}
 			this.debug(() => `${prefix} predicted amount after drop off: ${predictedAmount}`);
 			const resourceInflux = _.sum(_.map(otherTargetingTransporters,
@@ -413,8 +416,7 @@ export class LogisticsNetwork {
 			// 	predictedAmount = Math.min(predictedAmount, -1 * request.target.energyCapacity);
 			// }
 			if (!isResource(request.target)) {
-				// @ts-ignore
-				predictedAmount = minMax(predictedAmount, -1 * request.target.store.getCapacity(request.resourceType), 0);
+				predictedAmount = minMax(predictedAmount, -1 * targetCapacity, 0);
 			}
 			this.debug(() => `${prefix} predicted amount after pickup: ${predictedAmount}`);
 			const resourceOutflux = _.sum(_.map(otherTargetingTransporters,
