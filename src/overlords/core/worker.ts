@@ -421,7 +421,13 @@ export class WorkerOverlord extends Overlord {
 			}
 		} else {
 			// Acquire more energy
-			const workerWithdrawLimit = this.colony.stage == ColonyStage.Larva ? 750 : 100;
+			let workerWithdrawLimit = 100;
+			// The minimum is intentionally raised on low-level colonies to keep the hatchery from being starved
+			if (this.colony.stage == ColonyStage.Larva &&
+				this.colony.hatchery?.getWaitTimeForPriority(OverlordPriority.throttleThreshold) !== 0) {
+				workerWithdrawLimit = 750;
+			}
+			// this.debug(`${worker.print} going for a refill`);
 			worker.task = Tasks.recharge(workerWithdrawLimit);
 			return;
 		}
