@@ -1,3 +1,4 @@
+import columnify from 'columnify';
 import {$} from '../../caching/GlobalCache';
 import {Colony} from '../../Colony';
 import {log} from '../../console/log';
@@ -147,6 +148,7 @@ export class BunkerQueenOverlord extends Overlord {
 
 	// Builds a series of tasks to empty unnecessary carry contents, withdraw required resources, and supply structures
 	private buildSupplyTaskManifest(queen: Zerg): Task<any> | null {
+		this.debug(`${queen.print} generating supply tasks`)
 		let tasks: (TaskWithdraw | TaskWithdrawAll | TaskTransfer | TaskTransferAll)[] = [];
 		// Step 1: figure out which requests we can supply
 		const queenCarry = <StoreContents>{};
@@ -158,18 +160,24 @@ export class BunkerQueenOverlord extends Overlord {
 			for (const request of this.colony.transportRequests.supply[priority]) {
 				// Check if queen is assigned to this quadrant
 				if (!this.assignments[queen.name][request.target.id]) {
+					this.debug(`${queen.print} not assigned there, ignoring`);
 					continue;
 				}
 
 				// Check that the requests stay in the same quadrant
 				if (!firstQuadrant) {
 					firstQuadrant = this.getStructureQuadrant(request.target);
+					this.debug(`${queen.print} first quadrant is ${firstQuadrant}`);
 				} else if (firstQuadrant !== this.getStructureQuadrant(request.target)) {
+					this.debug(`${queen.print} quadrant mismatch: `
+						+ `${firstQuadrant} !== ${this.getStructureQuadrant(request.target)}`);
 					continue;
 				}
 				supplyRequests.push(request);
 			}
 		}
+		this.debug(() => `${queen.print} ${supplyRequests.length} requests to fulfill: \n`
+			+ columnify(supplyRequests));
 		// Step 2: calculate the total amount of needed resources to supply
 		const supplyTasks: TaskTransfer[] = [];
 		for (const request of supplyRequests) {
@@ -195,6 +203,8 @@ export class BunkerQueenOverlord extends Overlord {
 		// Step 3: account for what we're carrying already and store the excess back
 		let queenPos = queen.pos;
 		if (queen.store.getUsedCapacity() > 0) {
+			this.debug(`${queen.print} not empty, checking for overfill`);
+
 			type TransferTarget = StructureTerminal | StructureStorage | StructureContainer;
 			const overfillTargets = _.sortBy(
 				_.compact<TransferTarget>([
@@ -219,6 +229,8 @@ export class BunkerQueenOverlord extends Overlord {
 					return null;
 				}
 
+				this.debug(`${queen.print} carrying excess ${res}, dropping off at ${target.print}`);
+
 				tasks.push(Tasks.transfer(target, res, exceedAmount));
 				queenPos = target.pos;
 			}
@@ -232,6 +244,8 @@ export class BunkerQueenOverlord extends Overlord {
 		const withdrawTarget = minBy(targets, target => Pathing.distance(queenPos, target.pos) || Infinity);
 		if (withdrawTarget) {
 			for (const resourceType of neededResources) {
+				this.debug(`${queen.print} ${withdrawTarget.print} contains more than needed `
+					+ `(${queenCarry[resourceType]})`);
 				withdrawTasks.push(Tasks.withdraw(withdrawTarget, resourceType, queenCarry[resourceType]));
 			}
 		} else {
@@ -242,6 +256,8 @@ export class BunkerQueenOverlord extends Overlord {
 			} else {
 				for (const resourceType of neededResources) {
 					if (closestTarget.store[resourceType] >= queenCarry[resourceType]) {
+						this.debug(`${queen.print} ${closestTarget.print} contains more than needed `
+							+ `(${queenCarry[resourceType]})`);
 						withdrawTasks.push(Tasks.withdraw(closestTarget, resourceType, queenCarry[resourceType]));
 					} else {
 						// TODO ordering tasks for fastest route, maybe a sortby for withdraw targets?
@@ -251,6 +267,7 @@ export class BunkerQueenOverlord extends Overlord {
 						let collected = 0;
 						for (const storeLoc of hasResource) {
 							// Might be bug in overwithdrawing
+							this.debug(`${queen.print} ${storeLoc.print} has only ${storeLoc.store[resourceType]}`);
 							withdrawTasks.push(Tasks.withdraw(storeLoc, resourceType,
 															  Math.min(queenCarry[resourceType] - collected,
 																	   storeLoc.store[resourceType])));
@@ -271,6 +288,15 @@ export class BunkerQueenOverlord extends Overlord {
 		}
 		// Step 4: put all the tasks in the correct order, set nextPos for each, and chain them together
 		tasks = tasks.concat(withdrawTasks, supplyTasks);
+		this.debug(`${queen.print} complete supply task manifest:\n`
+			+ columnify(tasks.map(t => {
+				return { name: t.name,
+					target: t.target.print,
+					resource: (<TaskWithdraw>t).data.resourceType,
+					amount: (<TaskWithdraw>t).data.amount,
+				};
+			}))
+		);
 		return Tasks.chain(tasks);
 	}
 
@@ -394,6 +420,7 @@ export class BunkerQueenOverlord extends Overlord {
 		}
 		// Otherwise do idle actions
 		if (queen.isIdle) {
+			// log.debug(`${queen.print}: idle`);
 			// this.idleActions(queen);
 			delete queen.memory._go;
 		}
