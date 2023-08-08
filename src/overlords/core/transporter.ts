@@ -1,8 +1,9 @@
+import columnify from 'columnify';
 import {Colony} from '../../Colony';
 import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {isResource, isRuin, isTombstone} from '../../declarations/typeGuards';
-import {ALL_RESOURCE_TYPE_ERROR, BufferTarget, LogisticsRequest} from '../../logistics/LogisticsNetwork';
+import {ALL_RESOURCE_TYPE_ERROR, BufferTarget, LogisticsNetwork, LogisticsRequest} from '../../logistics/LogisticsNetwork';
 import {Pathing} from '../../movement/Pathing';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
@@ -78,16 +79,19 @@ export class TransportOverlord extends Overlord {
 	}
 
 	private handleTransporter(transporter: Zerg, request: LogisticsRequest | undefined) {
+		let prefix = `${transporter.print}`;
 		if (request) {
 			const choices = this.colony.logisticsNetwork.bufferChoices(transporter, request);
 			const bestChoice = _.last(_.sortBy(choices, choice => request.multiplier * choice.dQ
 																  / Math.max(choice.dt, 0.1)));
 			let task = null;
 			const amount = this.colony.logisticsNetwork.predictedRequestAmount(transporter, request);
+			prefix = `${transporter.print}: request ${LogisticsNetwork.logRequest(request)}, predicted: ${amount}`;
+			this.debug(() => `${prefix} buffer choices:\n` + + columnify(choices));
 			// Target is requesting input
 			if (amount > 0) {
 				if (isResource(request.target) || isTombstone(request.target) || isRuin(request.target)) {
-					log.warning(`Improper logistics request: should not request input for resource or tombstone!`);
+					log.warning(`Improper logistics request: should not request input for resource, tombstone or ruin!`);
 					return;
 				} else if (request.resourceType == 'all') {
 					log.error(`${this.print}: cannot request 'all' as input!`);
@@ -100,6 +104,7 @@ export class TransportOverlord extends Overlord {
 					const buffer = deref(bestChoice.targetRef) as BufferTarget;
 					const withdrawAmount = Math.min(buffer.store[request.resourceType] || 0,
 													transporter.store.getFreeCapacity(request.resourceType), amount);
+					this.debug(() => `${prefix}: going to ${buffer.print} to collect before dropping off`);
 					task = task.fork(Tasks.withdraw(buffer, request.resourceType, withdrawAmount));
 					if (transporter.hasMineralsInCarry && request.resourceType == RESOURCE_ENERGY) {
 						task = task.fork(Tasks.transferAll(buffer));
@@ -109,6 +114,7 @@ export class TransportOverlord extends Overlord {
 			// Target is requesting output
 			else if (amount < 0) {
 				if (isResource(request.target)) {
+					this.debug(() => `${prefix}: picking up resource`);
 					task = Tasks.pickup(request.target);
 				} else {
 					if (request.resourceType == 'all') {
@@ -116,18 +122,21 @@ export class TransportOverlord extends Overlord {
 							log.error(this.print + ALL_RESOURCE_TYPE_ERROR);
 							return;
 						}
+						this.debug(() => `${prefix}: withdrawing everything`);
 						task = Tasks.withdrawAll(request.target);
 					} else {
+						this.debug(() => `${prefix}: withdrawing`);
 						task = Tasks.withdraw(request.target, request.resourceType);
 					}
 				}
 				if (task && bestChoice.targetRef != request.target.ref) {
 					// If we need to go to a buffer first to deposit stuff
 					const buffer = deref(bestChoice.targetRef) as BufferTarget;
+					this.debug(() => `${prefix}: needs a buffer first, using ${buffer.print}`);
 					task = task.fork(Tasks.transferAll(buffer));
 				}
 			} else {
-				// console.log(`${transporter.name} chooses a store with 0 amount!`);
+				this.debug(() => `${prefix}: no resources expected, parking`);
 				transporter.park();
 			}
 			// Assign the task to the transporter
@@ -139,6 +148,8 @@ export class TransportOverlord extends Overlord {
 				if (transporter.hasMineralsInCarry) {
 					const target = this.colony.terminal || this.colony.storage;
 					if (target) {
+						this.debug(() => `${prefix}: nothing to do, dropping off `
+							+ `everything to ${target}@${target.pos.print}`);
 						transporter.task = Tasks.transferAll(target);
 					}
 				} else {
@@ -154,9 +165,14 @@ export class TransportOverlord extends Overlord {
 					// 	}
 					// });
 
-					const bestDropoffPoint = transporter.pos.findClosestByMultiRoomRange(dropoffPoints);
+					const bestDropoffPoint: StructureLink | StructureStorage | undefined
+						= transporter.pos.findClosestByMultiRoomRange(dropoffPoints);
 
-					if (bestDropoffPoint) transporter.task = Tasks.transfer(bestDropoffPoint);
+					if (bestDropoffPoint) {
+						this.debug(() => `${prefix}: nothing to do, dropping off to `
+							+ `${bestDropoffPoint}@${bestDropoffPoint.pos.print}`);
+						transporter.task = Tasks.transfer(bestDropoffPoint);
+					}
 				}
 			} else {
 				let parkingSpot = transporter.pos;
@@ -165,10 +181,10 @@ export class TransportOverlord extends Overlord {
 				} else if (this.colony.roomPlanner.storagePos) {
 					parkingSpot = this.colony.roomPlanner.storagePos;
 				}
+				this.debug(() => `${prefix}: nothing to do and empty, parking to ${parkingSpot}`);
 				transporter.park(parkingSpot);
 			}
 		}
-		// console.log(JSON.stringify(transporter.memory.task));
 	}
 
 	private handleBigTransporter(bigTransporter: Zerg) {
