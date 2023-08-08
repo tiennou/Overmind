@@ -382,7 +382,8 @@ export class WorkerOverlord extends Overlord {
 				if (this.upgradeActions(worker)) return;
 			}
 			// Turn into queens until the bootstrap situation gets resolved
-			if (this.colony.state.bootstrapping) {
+			const hatcheryIsOverloaded = this.colony.hatchery && this.colony.hatchery.memory.stats.overload >= 0.1;
+			if (this.colony.state.bootstrapping || hatcheryIsOverloaded) {
 				if (this.bootstrapActions(worker)) return;
 			}
 			// Repair damaged non-road non-barrier structures
