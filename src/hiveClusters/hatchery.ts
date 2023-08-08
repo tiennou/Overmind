@@ -350,6 +350,10 @@ export class Hatchery extends HiveCluster {
 		return protoCreep;
 	}
 
+	private logRequest(request: SpawnRequest) {
+		return `${request.setup.role}@${request.priority}`;
+	}
+
 	/**
 	 * Enqueues a spawn request to the hatchery production queue
 	 */
@@ -380,24 +384,32 @@ export class Hatchery extends HiveCluster {
 			if (request) {
 				// Generate a protocreep from the request
 				const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
+				const preLog = `request ${this.logRequest(request)}, needed ${bodyCost(protoCreep.body)}, `
+					+ `stored: ${this.room.energyCapacityAvailable}`;
 				if (this.canSpawn(protoCreep.body) && protoCreep.body.length > 0) {
 					// Try to spawn the creep
 					const result = this.spawnCreep(protoCreep, request.options);
 					if (result == OK) {
+						this.debug(`${preLog}: spawn successful`);
 						return result;
 					} else if (result == ERR_SPECIFIED_SPAWN_BUSY) {
+						this.debug(`${preLog}: requested spawn is busy`);
 						return result; // continue to spawn other things while waiting on specified spawn
 					} else {
 						// If there's not enough energyCapacity to spawn, ignore and move on, otherwise block and wait
 						if (result != ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH) {
+							this.debug(`${preLog}: failed to spawn ${request.setup.role}, requeuing: ${result}`);
 							this.productionQueue[priority].unshift(request);
 							return result;
 						}
+						this.debug(`${preLog}: not enough energy`);
 					}
 				} else {
 					log.debug(`${this.room.print}: cannot spawn creep ${protoCreep.name} with body ` +
 							  `${JSON.stringify(protoCreep.body)}!`);
 				}
+			} else {
+				this.debug(`no request at priority ${priority}`);
 			}
 		}
 	}
@@ -410,6 +422,19 @@ export class Hatchery extends HiveCluster {
 	run(): void {
 		// Handle spawning
 		if (!this.settings.suppressSpawning) {
+
+			if (true || this.spawns.some(s => !s.spawning)) {
+				const requests: SpawnRequest[] = [];
+				const sortedKeys = _.sortBy(this.productionPriorities);
+				for (const priority of sortedKeys) {
+					const prioReqs = this.productionQueue[priority];
+					if (prioReqs) requests.push(...prioReqs);
+				}
+
+				if (requests.length) {
+					this.debug(() => `queued: ${requests.map(request => this.logRequest(request)).join(', ')}`);
+				}
+			}
 
 			// Spawn all queued creeps that you can
 			while (this.availableSpawns.length > 0) {
