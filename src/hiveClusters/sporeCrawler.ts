@@ -54,10 +54,12 @@ export class SporeCrawler extends HiveCluster {
 
 	private attack(target: Creep): void {
 		for (const tower of this.towers) {
+			const predictedDamage = CombatIntel.singleTowerDamage(target.pos.getRangeTo(tower));
+			this.debug(`${tower.print} attacking ${target} for ${predictedDamage}`);
 			const result = tower.attack(target);
 			if (result == OK) {
 				if (target.hitsPredicted == undefined) target.hitsPredicted = target.hits;
-				target.hitsPredicted -= CombatIntel.singleTowerDamage(target.pos.getRangeTo(tower));
+				target.hitsPredicted -= predictedDamage;
 			}
 		}
 	}
@@ -65,10 +67,12 @@ export class SporeCrawler extends HiveCluster {
 	private scatterShot(targets: Creep[]): void {
 		for (const tower of this.towers) {
 			const target = _.sample(targets);
+			const predictedDamage = CombatIntel.singleTowerDamage(target.pos.getRangeTo(tower));
+			this.debug(`${tower.print} scattershotting ${target} for ${predictedDamage}`);
 			const result = tower.attack(target);
 			if (result == OK) {
 				if (target.hitsPredicted == undefined) target.hitsPredicted = target.hits;
-				target.hitsPredicted -= CombatIntel.singleTowerDamage(target.pos.getRangeTo(tower));
+				target.hitsPredicted -= predictedDamage;
 			}
 		}
 	}
@@ -106,7 +110,9 @@ export class SporeCrawler extends HiveCluster {
 				&& this.colony.roomPlanner.barrierPlanner.barrierShouldBeHere(rampart.pos));
 			if (dyingRamparts.length > 0) {
 				for (const tower of this.towers) {
-					tower.repair(tower.pos.findClosestByRange(dyingRamparts)!);
+					const rampart = tower.pos.findClosestByRange(dyingRamparts)!;
+					this.debug(`${tower.print} repairing rampart ${rampart.print}`)
+					tower.repair(rampart);
 				}
 				return;
 			}
@@ -116,8 +122,9 @@ export class SporeCrawler extends HiveCluster {
 				if (decayingRoads.length > 0) {
 					const roadsToRepair = _.sample(decayingRoads, this.towers.length);
 					// ^ if |towers| > |roads| then this will have length of |roads|
-					for (const i in roadsToRepair) {
-						this.towers[i].repair(roadsToRepair[i]);
+					for (const [i, road] of roadsToRepair.entries()) {
+						this.debug(`${this.towers[i].print} repairing road ${road.print}`)
+						this.towers[i].repair(road);
 					}
 				}
 			}
@@ -137,6 +144,7 @@ export class SporeCrawler extends HiveCluster {
 
 	run() {
 		if (this.room.hostiles.length > 0) {
+			this.debug(`${this.room.hostiles} hostiles detected!`);
 			const myDefenders = _.filter(this.room.creeps, creep => creep.getActiveBodyparts(ATTACK) > 1);
 			const myRangedDefenders = _.filter(this.room.creeps, creep => creep.getActiveBodyparts(RANGED_ATTACK) > 1);
 			const myCreepDamage = ATTACK_POWER * _.sum(myDefenders, creep => CombatIntel.getAttackPotential(creep)) +
