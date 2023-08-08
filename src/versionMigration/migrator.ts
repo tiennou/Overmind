@@ -414,11 +414,6 @@ export class VersionMigration {
 		delete Memory.zoneRooms;
 		Memory.roomIntel = {}; // reset this
 
-		// @ts-expect-error migrated
-		delete Memory.stats.persistent.terminalNetwork?.transfers;
-		// @ts-expect-error migrated
-		delete Memory.stats.persistent.terminalNetwork?.costs;
-
 		const mem = Memory as any;
 
 		delete mem.pathing.paths; // not used
