@@ -367,17 +367,20 @@ export class BunkerQueenOverlord extends Overlord {
 		// Does something need withdrawing?
 		if (this.colony.transportRequests.needsWithdrawing() &&
 			_.any(_.keys(this.assignments[queen.name]), id => this.colony.transportRequests.withdrawByID[id])) {
+			this.debug(`${queen.print}: should withdraw`);
 			queen.task = this.buildWithdrawTaskManifest(queen);
 		}
 		// Does something need supplying?
 		else if (this.colony.transportRequests.needsSupplying() &&
 				 _.any(_.keys(this.assignments[queen.name]), id => this.colony.transportRequests.supplyByID[id])) {
+			this.debug(`${queen.print}: should supply`);
 			queen.task = this.buildSupplyTaskManifest(queen);
 		}
 		// Do we need safemodes?
 		else if (this.colony.level > 5 && this.colony.controller.safeModeAvailable < 3 &&
 				 this.colony.terminal && this.colony.terminal.store[RESOURCE_GHODIUM] >= 1000 &&
 				 queen.store.getCapacity() >= 1000) {
+			this.debug(`${queen.print}: should safemode`);
 			// Only use 1 queen to avoid adding 2 safemodes
 			if (queen.name == _.first(_.sortBy(this.queens, q => q.name)).name) {
 				queen.task = Tasks.chain([

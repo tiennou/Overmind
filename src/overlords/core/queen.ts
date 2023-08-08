@@ -46,6 +46,7 @@ export class QueenOverlord extends Overlord {
 		// Select the closest supply target out of the highest priority and refill it
 		const request = this.hatchery.transportRequests.getPrioritizedClosestRequest(queen.pos, 'supply');
 		if (request) {
+			this.debug(`${queen.print} transferring from ${request.target.structureType}@${request.target.pos}`)
 			queen.task = Tasks.transfer(request.target);
 		} else {
 			this.rechargeActions(queen); // if there are no targets, refill yourself
@@ -54,10 +55,13 @@ export class QueenOverlord extends Overlord {
 
 	private rechargeActions(queen: Zerg): void {
 		if (this.hatchery.link && !this.hatchery.link.isEmpty) {
+			this.debug(`${queen.print} recharging from link`);
 			queen.task = Tasks.withdraw(this.hatchery.link);
 		} else if (this.hatchery.battery && this.hatchery.battery.energy > 0) {
+			this.debug(`${queen.print} recharging from battery`);
 			queen.task = Tasks.withdraw(this.hatchery.battery);
 		} else {
+			this.debug(`${queen.print} recharging`);
 			queen.task = Tasks.recharge();
 		}
 	}
@@ -94,6 +98,7 @@ export class QueenOverlord extends Overlord {
 		} else {
 			this.rechargeActions(queen);
 		}
+		this.debug(`${queen.print}: isIdle? ${queen.isIdle}, ${queen.task ? queen.task.name : null}`);
 		// If there aren't any tasks that need to be done, recharge the battery from link
 		if (queen.isIdle) {
 			this.idleActions(queen);
@@ -120,6 +125,7 @@ export class QueenOverlord extends Overlord {
 			if (queen.hasValidTask) {
 				queen.run();
 			} else {
+				this.debug(`${queen.print} going back to idling`);
 				if (this.queens.length > 1) {
 					queen.goTo(this.hatchery.idlePos, {range: 1});
 				} else {
