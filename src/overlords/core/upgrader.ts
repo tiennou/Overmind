@@ -1,3 +1,4 @@
+import { CreepSetup } from 'creepSetups/CreepSetup';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {UpgradeSite} from '../../hiveClusters/upgradeSite';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
@@ -29,24 +30,29 @@ export class UpgradingOverlord extends Overlord {
 		if (this.colony.level < 3) { // can't spawn upgraders at early levels
 			return;
 		}
+		let setup = "default";
+		let upgradersNeeded = 0;
 		if (this.colony.assets.energy > UpgradeSite.settings.energyBuffer
 			|| this.upgradeSite.controller.ticksToDowngrade < 500) {
-			let setup = Setups.upgraders.default;
 			if (this.colony.level == 8) {
-				setup = Setups.upgraders.rcl8;
+				upgradersNeeded = 1;
+				setup = "rcl8";
 				if (this.colony.labs.length == 10 &&
 					this.colony.assets[RESOURCE_CATALYZED_GHODIUM_ACID] >= 4 * LAB_BOOST_MINERAL) {
-					setup = Setups.upgraders.rcl8_boosted;
+					setup = "rcl8_boosted";
 				}
-			}
-
-			if (this.colony.level == 8) {
-				this.wishlist(1, setup);
 			} else {
-				const upgradePowerEach = setup.getBodyPotential(WORK, this.colony);
-				const upgradersNeeded = Math.ceil(this.upgradeSite.upgradePowerNeeded / upgradePowerEach);
-				this.wishlist(upgradersNeeded, setup);
+				const upgradePowerEach = _.get<CreepSetup>(Setups.upgraders, setup)
+					.getBodyPotential(WORK, this.colony);
+				upgradersNeeded = Math.ceil(this.upgradeSite.upgradePowerNeeded / upgradePowerEach);
 			}
+		} else {
+			this.debug(`no upgraders needed`);
+		}
+
+		if (upgradersNeeded > 0) {
+			this.debug(`need ${upgradersNeeded} ${setup} upgraders`);
+			this.wishlist(upgradersNeeded, _.get(Setups.upgraders, setup));
 		}
 	}
 
