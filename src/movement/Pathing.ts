@@ -16,6 +16,7 @@ export const FIND_EXIT_PORTAL: FIND_EXIT_PORTAL = 42;
 export type AnyExitConstant = FIND_EXIT_TOP | FIND_EXIT_RIGHT | FIND_EXIT_BOTTOM | FIND_EXIT_LEFT | FIND_EXIT_PORTAL;
 
 const DEFAULT_MAXOPS = 20000; // default timeout for pathfinding
+const DEFAULT_FLEE_RANGE = 5;
 
 export type Route = { exit: AnyExitConstant, room: string }[];
 
@@ -472,7 +473,7 @@ export class Pathing {
 	static findKitingPath(creepPos: RoomPosition, fleeFrom: (RoomPosition | _HasRoomPosition)[],
 						  opts: PathOptions = {}): PathFinderPath {
 		_.defaults(opts, {
-			fleeRange   : 5,
+			fleeRange   : DEFAULT_FLEE_RANGE,
 			terrainCosts: {plainCost: 1, swampCost: 5},
 		});
 		const fleeFromPos = _.map(fleeFrom, flee => normalizePos(flee));

@@ -376,9 +376,6 @@ export abstract class AnyZerg {
 	 */
 	kite(avoidGoals: (RoomPosition | _HasRoomPosition)[] = this.room.hostiles,
 		options: MoveOptions = {}): number | undefined {
-		_.defaults(options, {
-			fleeRange: 5
-		});
 		return Movement.kite(this, avoidGoals, options);
 	}
 
