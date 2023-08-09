@@ -13,6 +13,7 @@ import {DEFAULT_OVERMIND_SIGNATURE, MY_USERNAME, USE_SCREEPS_PROFILER} from '../
 import {log} from './log';
 import {DirectiveOutpost} from 'directives/colony/outpost';
 import {TaskSignController} from 'tasks/instances/signController';
+import columnify from 'columnify';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
 
@@ -55,6 +56,7 @@ declare global {
 	var listPortals: () => string;
 	var evaluateOutpostEfficiencies: () => string;
 	var evaluatePotentialOutpostEfficiencies: () => string;
+	var showRoomSafety: (roomName: string) => string;
 }
 
 interface MemoryDebug {
@@ -107,6 +109,7 @@ export class OvermindConsole {
 		global.listPortals = this.listPortals;
 		global.evaluateOutpostEfficiencies = this.evaluateOutpostEfficiencies;
 		global.evaluatePotentialOutpostEfficiencies = this.evaluatePotentialOutpostEfficiencies;
+		global.showRoomSafety = this.showRoomSafety;
 	}
 
 	// Help, information, and operational changes ======================================================================
@@ -157,6 +160,7 @@ export class OvermindConsole {
 		descr['getPortals(rangeFromColonies)'] = 'returns active portals within colony range';
 		descr['evaluateOutpostEfficiencies()'] = 'prints all colony outposts efficiency';
 		descr['evaluatePotentialOutpostEfficiencies()'] = 'prints all nearby unmined outposts';
+		descr['showRoomSafety(roomName?)'] = 'show gathered safety data about rooms';
 
 		// Console list
 		const descrMsg = toColumns(descr, {justify: true, padChar: '.'});
@@ -711,4 +715,49 @@ export class OvermindConsole {
 		return `Canceled ${_.values(ordersToCancel).length} orders.`;
 	}
 
+	static showRoomSafety(roomName?: string): string {
+		const names = roomName ? [roomName] : Object.keys(Memory.rooms);
+
+		let msg = `Room Intelligence data for ${roomName? `room ${roomName}` : "all rooms"}:\n`;
+		const roomData = _.sortBy(names.map(n => {
+			const {
+				threatLevel,
+				safeFor,
+				unsafeFor,
+				invisibleFor,
+				combatPotentials,
+				numHostiles,
+				numBoostedHostiles,
+			} = RoomIntel.getSafetyData(n);
+
+			function fmtThreat(lvl: number): string {
+				let suffix = "";
+				if (lvl < 0.1) suffix = "---";
+				else if (lvl < 0.2) suffix = " --";
+				else if (lvl < 0.4) suffix = "  -";
+				else if (lvl < 0.6) suffix = "   ";
+				else if (lvl < 0.8) suffix = "  +";
+				else if (lvl < 0.9) suffix = " ++";
+				else suffix = "+++";
+				return lvl.toFixed(4) + " " + suffix;
+			};
+
+			const obj = {
+				room: n,
+				threatlevel: fmtThreat(threatLevel),
+				safeFor: safeFor ?? 0,
+				unsafeFor: unsafeFor ?? 0,
+				invisibleFor: invisibleFor ?? 0,
+				hostiles: numHostiles ?? 0,
+				boostedHostiles: numBoostedHostiles ?? 0,
+				ranged: combatPotentials?.r ?? 0,
+				heal: combatPotentials?.h ?? 0,
+				dismantle: combatPotentials?.d ?? 0,
+			}
+			return obj;
+		}), data => data.room);
+
+		msg += columnify(roomData);
+		return msg;
+	}
 }
