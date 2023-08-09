@@ -75,7 +75,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 			}
 		}
 		const possibleBestExpansions = _.compact(_.map(possibleColonizers, col => this.getBestExpansionRoomFor(col)));
-		log.debug(JSON.stringify(possibleBestExpansions));
+		log.debug("bestExpansions: " + JSON.stringify(possibleBestExpansions));
 		const bestExpansion = maxBy(possibleBestExpansions, choice => choice!.score);
 		if (bestExpansion) {
 			log.alert(`Next expansion chosen: ${bestExpansion.roomName} with score ${bestExpansion.score}`);
