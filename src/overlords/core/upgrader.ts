@@ -52,8 +52,8 @@ export class UpgradingOverlord extends Overlord {
 
 		if (upgradersNeeded > 0) {
 			this.debug(`need ${upgradersNeeded} ${setup} upgraders`);
-			this.wishlist(upgradersNeeded, _.get(Setups.upgraders, setup));
 		}
+		this.wishlist(upgradersNeeded, _.get(Setups.upgraders, setup));
 	}
 
 	private handleUpgrader(upgrader: Zerg): void {
