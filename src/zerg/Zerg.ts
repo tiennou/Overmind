@@ -8,6 +8,8 @@ import {initializeTask} from '../tasks/initializer';
 import {MIN_LIFETIME_FOR_BOOST} from '../tasks/instances/getBoosted';
 import {Task} from '../tasks/Task';
 import {AnyZerg} from './AnyZerg';
+import {Visualizer} from 'visuals/Visualizer';
+import {Pathing} from 'movement/Pathing';
 
 
 export function normalizeStandardZerg(creep: Zerg | Creep): Zerg | Creep {
@@ -601,9 +603,51 @@ export class Zerg extends AnyZerg {
 	 * Execute the task you currently have.
 	 */
 	run(): number | undefined {
+		let res;
 		if (this.task) {
-			return this.task.run();
+			res = this.task.run();
 		}
+
+		if (this.memory.debug) {
+			const data = [
+				this.name,
+			];
+
+			if (this.task) {
+				data.push(`task: ${this.task.name}`);
+				data.push(`pos: ${this.task.targetPos.printPlain}`);
+			} else {
+				data.push(`idle`);
+			}
+
+			new RoomVisual(this.room.name).infoBox(data, this.pos.x, this.pos.y, {
+				opacity: 0.9,
+			});
+
+			// Current path
+			if (this.memory._go && this.memory._go?.path) {
+				// log.debug(`${this.creep}: ${this.nextPos.print} ${this.pos.print}`);
+				const serialPath = this.memory._go?.path.substring(1);
+				const path = Pathing.deserializePath(this.nextPos, serialPath);
+				// log.debug(`${this.print} has path: ${path.length}, ${path.map(p => p.print).join(" > ")}`);
+				Visualizer.drawPath(path, { fill: 'red', lineStyle: 'dashed'});
+
+				const lastStep = _.last(path);
+				if (lastStep) {
+					if (lastStep.roomName !== this.pos.roomName || true) {
+						const lastData = [
+							this.name,
+							`eta: ${this.task?.eta ?? NaN}`,
+						];
+						new RoomVisual(lastStep.roomName).infoBox(lastData, lastStep.x, lastStep.y, {
+							color: 'red',
+							opacity: 0.6
+						});
+					}
+				}
+			}
+		}
+		return res;
 	}
 
 	// Colony association ----------------------------------------------------------------------------------------------

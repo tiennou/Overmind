@@ -1001,6 +1001,29 @@ export class Pathing {
 		return serializedPath;
 	}
 
+	static deserializePath(startPos: RoomPosition, path: string) {
+		if (typeof path !== "string") return [];
+		const positions: RoomPosition[] = [];
+		let lastPosition = startPos;
+		const pathDirs = path.split("");
+		let dirStr;
+		while ((dirStr = pathDirs.shift())) {
+			const dir = <DirectionConstant>parseInt(dirStr, 10)
+			const pos = this.positionAtDirection(lastPosition, dir);
+			if (!pos) {
+				log.warning(`path cutoff?`);
+				break;
+			}
+			if (pos.roomName !== lastPosition.roomName) {
+				lastPosition = pos;
+				continue;
+			}
+			positions.push(pos);
+			lastPosition = pos;
+		}
+		return positions;
+	}
+
 	static nextDirectionInPath(creep: AnyZerg): number | undefined {
 		const moveData = creep.memory._go as MoveData;
 		if (!moveData || !moveData.path || moveData.path.length == 0) {
@@ -1044,12 +1067,8 @@ export class Pathing {
 	static positionAtDirection(origin: RoomPosition, direction: number): RoomPosition | undefined {
 		const offsetX = [0, 0, 1, 1, 1, 0, -1, -1, -1];
 		const offsetY = [0, -1, -1, 0, 1, 1, 1, 0, -1];
-		const x = origin.x + offsetX[direction];
-		const y = origin.y + offsetY[direction];
-		if (x > 49 || x < 0 || y > 49 || y < 0) {
-			return;
-		}
-		return new RoomPosition(x, y, origin.roomName);
+
+		return origin.getOffsetPos(offsetX[direction], offsetY[direction]);
 	}
 
 	// static savePath(path: RoomPosition[]): void {

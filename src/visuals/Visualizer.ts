@@ -92,9 +92,17 @@ export class Visualizer {
 	}
 
 	static drawPath(path: RoomPosition[], style?: PolyStyle): void {
-		const pointsByRoom = _.groupBy(path, pos => pos.roomName);
-		for (const roomName in pointsByRoom) {
-			new RoomVisual(roomName).poly(pointsByRoom[roomName], style);
+		for (let i = 0; i < path.length; i++) {
+			const nextPos = path[i + 1]
+			if (!nextPos) break
+			const pos = path[i]
+			if (nextPos.roomName !== pos.roomName) continue
+
+			new RoomVisual(pos.roomName).line(pos, nextPos, {
+				color: style?.fill,
+				opacity: style?.opacity ?? 0.2,
+				lineStyle: style?.lineStyle ?? 'dashed',
+			})
 		}
 	}
 
