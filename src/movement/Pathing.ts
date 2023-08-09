@@ -99,6 +99,14 @@ export const getDefaultPathOptions: () => PathOptions = () => ({
 	ensurePath          : false,
 });
 
+export const pathOptionsToPathFinderOptions: (opts: PathOptions) => PathFinderOpts = (o) => ({
+	plainCost: o.terrainCosts?.plainCost,
+	swampCost: o.terrainCosts?.swampCost,
+	flee: !!o.fleeRange,
+	maxOps: o.maxOps,
+	maxRooms: o.maxRooms,
+});
+
 /**
  * Selects the properties of PathOptions that are also on MatrixOptions.
  */
@@ -152,6 +160,8 @@ export class Pathing {
 
 		const destinationGoal: PathFinderGoal | PathFinderGoal[] = {pos: destination, range: opts.range!};
 		const callback = (roomName: string) => Pathing.roomCallback(roomName, origin, destination, route, opts);
+		const pfOptions = pathOptionsToPathFinderOptions(opts);
+		pfOptions.roomCallback = callback;
 		let ret: PathFinderPath;
 
 		// Did the route use portals?
@@ -168,13 +178,7 @@ export class Pathing {
 
 			const portals = RoomIntel.getPortalInfo(portalEntraceRoom);
 			const portalGoals = _.map(portals, portal => ({pos: portal.pos, range: 0}));
-			const path1ret = PathFinder.search(origin, portalGoals, {
-				maxOps      : opts.maxOps,
-				maxRooms    : opts.maxRooms,
-				plainCost   : opts.terrainCosts!.plainCost,
-				swampCost   : opts.terrainCosts!.swampCost,
-				roomCallback: callback,
-			});
+			const path1ret = PathFinder.search(origin, portalGoals, pfOptions);
 			// if the path is incomplete then we'll let it get handled at the end of this method
 			if (!path1ret.incomplete) {
 				const lastPosInPath = _.last(path1ret.path);
@@ -182,13 +186,7 @@ export class Pathing {
 				if (usedPortal) {
 					portalUsed = usedPortal;
 					const portalDest = usedPortal.destination;
-					const path2ret = PathFinder.search(portalDest, destinationGoal, {
-						maxOps      : opts.maxOps,
-						maxRooms    : opts.maxRooms,
-						plainCost   : opts.terrainCosts!.plainCost,
-						swampCost   : opts.terrainCosts!.swampCost,
-						roomCallback: callback,
-					});
+					const path2ret = PathFinder.search(portalDest, destinationGoal, pfOptions);
 					ret = {
 						path      : path1ret.path.concat([usedPortal.destination]).concat(path2ret.path),
 						ops       : path1ret.ops + path2ret.ops,
@@ -204,13 +202,7 @@ export class Pathing {
 				ret = path1ret;
 			}
 		} else {
-			ret = PathFinder.search(origin, destinationGoal, {
-				maxOps      : opts.maxOps,
-				maxRooms    : opts.maxRooms,
-				plainCost   : opts.terrainCosts!.plainCost,
-				swampCost   : opts.terrainCosts!.swampCost,
-				roomCallback: callback,
-			});
+			ret = PathFinder.search(origin, destinationGoal, pfOptions);
 		}
 
 		if (ret.incomplete && opts.ensurePath && linearDistance <= 3 && !opts.route) {
@@ -375,13 +367,9 @@ export class Pathing {
 		// Make copies of the destination offset for where anchor could be
 		const destinations = this.getPosWindow(destination, -width, -height);
 		const callback = (roomName: string) => this.swarmRoomCallback(roomName, width, height, options);
-		return PathFinder.search(origin, _.map(destinations, pos => ({pos: pos, range: options.range!})), {
-			maxOps      : options.maxOps,
-			maxRooms    : options.maxRooms,
-			plainCost   : 1,
-			swampCost   : 5,
-			roomCallback: callback,
-		});
+		const pfOptions = pathOptionsToPathFinderOptions(options);
+		pfOptions.roomCallback = callback;
+		return PathFinder.search(origin, _.map(destinations, pos => ({pos: pos, range: options.range!})), pfOptions);
 	}
 
 	/**
@@ -491,14 +479,11 @@ export class Pathing {
 		const avoidGoals = _.map(fleeFromPos, pos => {
 			return {pos: pos, range: opts.fleeRange!};
 		});
-		return PathFinder.search(creepPos, avoidGoals,
-								 {
-									 plainCost   : opts.terrainCosts!.plainCost,
-									 swampCost   : opts.terrainCosts!.swampCost,
-									 flee        : true,
-									 roomCallback: (room) => Pathing.kitingRoomCallback(room),
-									 maxRooms    : 1
-								 });
+		const pfOptions = pathOptionsToPathFinderOptions(opts);
+		pfOptions.roomCallback = (room) => Pathing.kitingRoomCallback(room);
+		pfOptions.maxRooms = 1;
+
+		return PathFinder.search(creepPos, avoidGoals, pfOptions);
 	}
 
 	/**
@@ -528,13 +513,9 @@ export class Pathing {
 				return matrix;
 			}
 		};
-		return PathFinder.search(creepPos, avoidGoals,
-								 {
-									 plainCost   : opts.terrainCosts!.plainCost,
-									 swampCost   : opts.terrainCosts!.swampCost,
-									 flee        : true,
-									 roomCallback: callback,
-								 });
+		const pfOptions = pathOptionsToPathFinderOptions(opts);
+		pfOptions.roomCallback = callback;
+		return PathFinder.search(creepPos, avoidGoals, pfOptions);
 	}
 
 	// Cost matrix retrieval functions =================================================================================
@@ -1172,13 +1153,10 @@ export class Pathing {
 			}
 		});
 		const callback = (roomName: string) => roomName == endPos.roomName ? matrix : false;
-		const ret = PathFinder.search(startPos, {pos: endPos, range: options.range!}, {
-			maxOps      : options.maxOps,
-			plainCost   : 1,
-			swampCost   : 5,
-			maxRooms    : 1,
-			roomCallback: callback,
-		});
+		const pfOptions = pathOptionsToPathFinderOptions(options);
+		pfOptions.maxRooms = 1;
+		pfOptions.roomCallback = callback;
+		const ret = PathFinder.search(startPos, {pos: endPos, range: options.range!}, pfOptions);
 		if (ret.incomplete) {
 			return false;
 		} else {
@@ -1204,11 +1182,7 @@ export class Pathing {
 		});
 		if (startPos.roomName !== endPos.roomName) {
 			// Start and end aren't in the same room.
-			const pathToEnd = this.findPath(startPos, endPos, {
-				range: options.range!,
-				roadCost: "auto",
-				terrainCosts: { plainCost: 1, swampCost: 5 },
-			});
+			const pathToEnd = this.findPath(startPos, endPos, options);
 
 			const newStartPos = pathToEnd.path.find(step => step.roomName === endPos.roomName);
 			if (!newStartPos) {
@@ -1227,13 +1201,9 @@ export class Pathing {
 			}
 		});
 		const callback = (roomName: string) => roomName == endPos.roomName ? matrix : false;
-		const ret = PathFinder.search(startPos, {pos: endPos, range: options.range!}, {
-			maxOps      : options.maxOps,
-			plainCost   : 1,
-			swampCost   : 5,
-			maxRooms    : 1,
-			roomCallback: callback,
-		});
+		const pfOpts = pathOptionsToPathFinderOptions(options);
+		pfOpts.roomCallback = callback;
+		const ret = PathFinder.search(startPos, {pos: endPos, range: options.range!}, pfOpts);
 
 		for (const pos of ret.path) {
 			if (matrix.get(pos.x, pos.y) > 100) {
