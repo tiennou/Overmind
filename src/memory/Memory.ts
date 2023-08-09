@@ -202,6 +202,9 @@ export class Mem {
 					maxRange     : 4,
 					maxConcurrent: 1,
 				},
+				attitude: {
+					brazenness: 0.5,
+				}
 			},
 		};
 	}

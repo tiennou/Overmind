@@ -12,7 +12,7 @@ import {
 	unpackCoordListAsPosList,
 	unpackPos
 } from '../utilities/packrat';
-import {ema, getCacheExpiration} from '../utilities/utils';
+import {ema, getCacheExpiration, isAlly, minMax} from '../utilities/utils';
 import {CombatIntel} from './CombatIntel';
 
 const RECACHE_TIME = 5000;
@@ -840,6 +840,26 @@ export class RoomIntel {
 	static getMyZoneStatus(): 'normal' | 'novice' | 'respawn' {
 		const oneOfMyColonies = _.first(_.values(Overmind.colonies)) as any;
 		return RoomIntel.getRoomStatus(oneOfMyColonies.name).status as 'normal' | 'novice' | 'respawn';
+	}
+
+	/**
+	 * Returns whether the room should be considered hostile
+	 */
+	static isConsideredHostile(roomName: string, cutoffOrBrazen?: boolean | number) {
+		const roomD = this.getAllRoomObjectInfo(roomName);
+		const safety = this.getSafetyData(roomName);
+
+		if (cutoffOrBrazen === true) {
+			cutoffOrBrazen = 1.0;
+		} else if (cutoffOrBrazen === false) {
+			cutoffOrBrazen = Memory.settings.attitude.brazenness ?? 0.5;
+		} else if (typeof cutoffOrBrazen === "number") {
+			cutoffOrBrazen = minMax(cutoffOrBrazen, 0, 1)
+		} else {
+			cutoffOrBrazen = Memory.settings.attitude.brazenness ?? 0.5
+		}
+
+		return !isAlly(roomD?.controller?.owner ?? '') && safety.threatLevel > cutoffOrBrazen;
 	}
 
 	/**

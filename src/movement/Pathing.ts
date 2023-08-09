@@ -4,7 +4,7 @@ import {PortalInfo, RoomIntel} from '../intel/RoomIntel';
 import {getDefaultMatrixOptions, MatrixLib, MatrixOptions, VolatileMatrixOptions} from '../matrix/MatrixLib';
 import {profile} from '../profiler/decorator';
 import {packPos, packPosList} from '../utilities/packrat';
-import {isAlly, minBy} from '../utilities/utils';
+import {minBy} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {AnyZerg} from '../zerg/AnyZerg';
 import {normalizePos} from './helpers';
@@ -58,8 +58,14 @@ export interface PathOptions {
 	blockCreeps?: boolean;
 	/** ignore pathing around structures */
 	ignoreStructures?: boolean;
-	/** allow to path through hostile rooms; origin/destination room excluded */
-	allowHostile?: boolean;
+	/**
+	 * Allow to path through hostile rooms; origin/destination room excluded
+	 *
+	 * `true` means we'll ignore the safe level of the room, `false` we'll consider it,
+	 * and a number acts as a cutoff for how safe we want to be
+	 * (see {@link SafetyData.threatLevel})
+	 */
+	allowHostile?: boolean | number;
 	/** avoid walking within range 4 of source keepers */
 	avoidSK?: boolean;
 	/** allow pathing through portals */
@@ -121,31 +127,6 @@ function pathOptsToMatrixAndVolatileOpts(opts: PathOptions): [Partial<MatrixOpti
  */
 @profile
 export class Pathing {
-
-	// Room avoidance methods ==========================================================================================
-
-	/**
-	 * Check if the room should be avoiding when calculating routes
-	 */
-	static shouldAvoid(roomName: string) {
-		return Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.AVOID];
-		// TODO - make more sophisticated, move to RoomIntel
-	}
-
-	/**
-	 * Update memory on whether a room should be avoided based on controller owner
-	 */
-	static updateRoomStatus(room: Room) {
-		if (!room) {
-			return;
-		}
-		if (!room.my && room.towers.length > 0 && !isAlly(room.owner || '')) {
-			room.memory[RMEM.AVOID] = true;
-		} else {
-			delete room.memory[RMEM.AVOID];
-			// if (room.memory.expansionData == false) delete room.memory.expansionData;
-		}
-	}
 
 	// Pathfinding and room callback methods ===========================================================================
 
@@ -299,7 +280,7 @@ export class Pathing {
 			if (rangeToRoom > maxRooms) { // room is too far out of the way
 				return Infinity;
 			}
-			if (!opts.allowHostile && this.shouldAvoid(roomName) &&
+			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName) &&
 				roomName !== destination && roomName !== origin) { // room is marked as "avoid" in room memory
 				return Infinity;
 			}
@@ -331,7 +312,7 @@ export class Pathing {
 
 			// Figure out which portal room is the best one to use
 			const portalCallback = (roomName: string) => {
-				if (!opts.allowHostile && this.shouldAvoid(roomName) &&
+				if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName) &&
 					roomName !== destination && roomName !== origin) { // room is marked as "avoid" in room memory
 					return Infinity;
 				}
@@ -457,7 +438,7 @@ export class Pathing {
 			if (route && !_.any(route, routePart => routePart.room == roomName)) {
 				return false; // only allowed to visit these rooms if route is specified
 			}
-			if (!opts.allowHostile && this.shouldAvoid(roomName)) {
+			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName)) {
 				return false; // don't go through hostile rooms
 			}
 		}
@@ -540,7 +521,7 @@ export class Pathing {
 			return {pos: pos, range: opts.fleeRange!};
 		});
 		const callback = (roomName: string) => {
-			if (!opts.allowHostile && this.shouldAvoid(roomName) && roomName != creepPos.roomName) {
+			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName) && roomName != creepPos.roomName) {
 				return false;
 			}
 

@@ -244,7 +244,7 @@ export class RoadPlanner {
 			if (!this.colony.roomNames.includes(roomName)) { // only route through colony rooms
 				return false;
 			}
-			if (Pathing.shouldAvoid(roomName) && roomName != origin.roomName && roomName != destination.roomName) {
+			if (RoomIntel.isConsideredHostile(roomName) && roomName != origin.roomName && roomName != destination.roomName) {
 				return false;
 			}
 			if (!this.costMatrices[roomName]) {

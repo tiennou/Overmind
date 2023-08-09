@@ -154,8 +154,6 @@ export class Movement {
 		// 	destination = this.getDestination(destination, opts.waypoints, moveData);
 		// }
 
-		Pathing.updateRoomStatus(creep.room);
-
 		// Fixes bug that causes creeps to idle on the other side of a room
 		if (opts.range != undefined && destination.rangeToEdge <= opts.range) {
 			opts.range = Math.min(Math.abs(destination.rangeToEdge - 1), 0);
@@ -1089,7 +1087,7 @@ export class Movement {
 				}
 				return matrix;
 			} else {
-				if (Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.AVOID]) return false;
+				if (RoomIntel.isConsideredHostile(roomName)) return false;
 				return matrix;
 			}
 		};

@@ -77,6 +77,13 @@ interface Memory {
 			maxRange: number;
 			maxConcurrent: number;
 		},
+		attitude: {
+			/**
+			 * How aggressive the AI is
+			 * Only used in room hostility checks for now.
+			 */
+			brazenness: number;
+		}
 	};
 
 	[otherProperty: string]: any;

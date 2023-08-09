@@ -6,7 +6,6 @@ interface RoomMemory {
 	spawnGroup?: any;
 	[MEM.EXPIRATION]?: number;
 	[MEM.TICK]?: number;
-	[RMEM.AVOID]?: boolean;
 	[RMEM.ROOM_STATUS]?: RoomStatusCompressed;
 	[RMEM.SOURCES]?: SavedSource[];
 	[RMEM.CONTROLLER]?: SavedController;
@@ -39,7 +38,7 @@ interface RoomMemory {
 
 
 declare const enum RMEM {
-	AVOID                = 'a',
+	// AVOID                = 'a',
 	SOURCES              = 's',
 	CONTROLLER           = 'c',
 	MINERAL              = 'm',
@@ -219,6 +218,11 @@ interface SavedSafetyData {
 }
 
 interface SafetyData {
+	/**
+	 * Represents how safe the room is, from 0.0 to 1.0
+	 * A value of 0 means perfectly safe, 0.5 is normal/unknown,
+	 * and 1.0 is definitely unsafe.
+	 */
 	threatLevel: number;
 	safeFor: number;
 	unsafeFor: number;
