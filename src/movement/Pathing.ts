@@ -20,10 +20,22 @@ const DEFAULT_FLEE_RANGE = 5;
 
 export type Route = { exit: AnyExitConstant, room: string }[];
 
+
+export const TERRAIN_PLAIN_DEFAULT_COST = 1;
+export const TERRAIN_SWAMP_DEFAULT_COST = 5;
+
 export interface TerrainCosts {
 	plainCost: number;
 	swampCost: number;
+	/** road costs; 'auto' = set to ceil(plain/2); unset = ignore roads */
+	roadCost?: number | 'auto';
 }
+
+export const getDefaultTerrainCosts: () => TerrainCosts = () => ({
+	plainCost: TERRAIN_PLAIN_DEFAULT_COST,
+	swampCost: TERRAIN_SWAMP_DEFAULT_COST,
+	roadCost: 'auto',
+});
 
 export interface PathingReturn extends PathFinderPath {
 	route: Route | undefined;
@@ -46,8 +58,6 @@ export interface PathOptions {
 	fleeRange?: number;
 	/** terrain costs, determined automatically for creep body if unspecified */
 	terrainCosts?: TerrainCosts;
-	/** road costs; 'auto' = set to ceil(plain/2); 'ignore' = ignore roads */
-	roadCost?: number | 'auto' | 'ignore';
 	/** don't path through these room positions */
 	obstacles?: RoomPosition[];
 	/** ensures you stay in the room you're currently in */
@@ -88,8 +98,7 @@ export interface PathOptions {
 
 export const getDefaultPathOptions: () => PathOptions = () => ({
 	range               : 1,
-	terrainCosts        : {plainCost: 1, swampCost: 5},
-	roadCost            : 'auto',
+	terrainCosts        : getDefaultTerrainCosts(),
 	ignoreCreeps        : true,
 	maxOps              : DEFAULT_MAXOPS,
 	maxRooms            : 20,
@@ -394,7 +403,7 @@ export class Pathing {
 		const optDefaults: PathOptions = {
 			blockCreeps : false,
 			range       : 1,
-			terrainCosts: {plainCost: 1, swampCost: 1}
+			terrainCosts: {plainCost: 1, swampCost: 1, roadCost: 1}
 		};
 		_.defaults(opts, optDefaults);
 		const ret = this.findPath(startPos, endPos, opts);
@@ -474,7 +483,6 @@ export class Pathing {
 						  opts: PathOptions = {}): PathFinderPath {
 		_.defaults(opts, {
 			fleeRange   : DEFAULT_FLEE_RANGE,
-			terrainCosts: {plainCost: 1, swampCost: 5},
 		});
 		const fleeFromPos = _.map(fleeFrom, flee => normalizePos(flee));
 		const avoidGoals = _.map(fleeFromPos, pos => {
@@ -493,7 +501,7 @@ export class Pathing {
 	static findFleePath(creepPos: RoomPosition, fleeFrom: (RoomPosition | _HasRoomPosition)[],
 						opts: PathOptions = {}): PathFinderPath {
 		_.defaults(opts, {
-			terrainCosts: {plainCost: 1, swampCost: 5},
+			terrainCosts: getDefaultTerrainCosts(),
 		});
 		if (opts.fleeRange == undefined) opts.fleeRange = opts.terrainCosts!.plainCost > 1 ? 20 : 10;
 		const fleeFromPos = _.map(fleeFrom, flee => normalizePos(flee));

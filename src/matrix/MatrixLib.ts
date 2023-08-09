@@ -22,8 +22,6 @@ export interface MatrixOptions {
 	explicitTerrainCosts: boolean;
 	/** terrain costs, determined automatically for creep body if unspecified */
 	terrainCosts: TerrainCosts;
-	/** road costs; 'auto' = set to ceil(plain/2); 'ignore' = ignore roads */
-	roadCost: number | 'auto' | 'ignore';
 	/** Whether to block the exits; shouldn't be used with exitCosts */
 	blockExits: boolean;
 	/** Avoid getting near source keepers */
@@ -48,7 +46,6 @@ export const getDefaultMatrixOptions: () => MatrixOptions = () => ({
 		plainCost: 1,
 		swampCost: 5,
 	},
-	roadCost            : 'auto',
 	blockExits          : false,
 	avoidSK             : true,
 	allowPortals        : false,
@@ -235,18 +232,32 @@ export class MatrixLib {
 
 		const matrix = new PathFinder.CostMatrix();
 
+		// Set road costs, usually to plainCost / 2
+		if (opts.terrainCosts.roadCost) {
+			if (opts.terrainCosts.roadCost == 'auto') {
+				opts.terrainCosts.roadCost = Math.ceil(opts.terrainCosts.plainCost / 2);
+				const { plainCost: p, swampCost: s, roadCost: r } = opts.terrainCosts;
+				if (r === p && r === s
+					|| r === p && p + 1 === s
+					|| r === s && p === s + 1) {
+					opts.terrainCosts.plainCost++;
+					opts.terrainCosts.swampCost++;
+				} else if (r === p) {
+					opts.terrainCosts.plainCost++;
+				} else if (r === s) {
+					opts.terrainCosts.swampCost++;
+				}
+			}
+		}
+
 		// Explicitly specify the terrain costs if needed
 		if (opts.explicitTerrainCosts) {
 			MatrixLib.addTerrainCosts(matrix, room.name, opts.terrainCosts);
 		}
 
-		// Set road costs, usually to plainCost / 2
-		if (opts.roadCost != 'ignore') {
-			if (opts.roadCost == 'auto') {
-				opts.roadCost = Math.ceil(opts.terrainCosts.plainCost / 2);
-			}
+		if (opts.terrainCosts.roadCost) {
 			for (const road of room.roads) {
-				matrix.set(road.pos.x, road.pos.y, opts.roadCost);
+				matrix.set(road.pos.x, road.pos.y, opts.terrainCosts.roadCost);
 			}
 		}
 
@@ -323,7 +334,7 @@ export class MatrixLib {
 		}
 
 		// Set road costs, usually to plainCost / 2
-		if (opts.roadCost !== undefined) {
+		if (opts.terrainCosts.roadCost !== undefined) {
 			// Can't do anything here // TODO: maybe I should track road positions?
 		}
 
@@ -716,7 +727,7 @@ export class MatrixLib {
 	 * you are doing, you can set skipClone=true.
 	 */
 	static getTerrainMatrix(roomName: string, terrainCosts: TerrainCosts, skipClone = false): CostMatrix {
-		const key = `${roomName}_${terrainCosts.plainCost}_${terrainCosts.swampCost}`;
+		const key = `${roomName}_${terrainCosts.plainCost}_${terrainCosts.swampCost}_${terrainCosts.roadCost}`;
 		if (PERMACACHE.terrainMatrices[key] === undefined) {
 			// This takes about 0.2 to 0.4 CPU to generate
 			const matrix = new PathFinder.CostMatrix();
