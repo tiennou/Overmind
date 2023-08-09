@@ -176,6 +176,7 @@ export class Movement {
 			if (creep.pos.isEdge) { // move the creep off the edge tiles to prevent it bouncing
 				return creep.moveOffExit(destination);
 			} else {
+				log.debugCreep(creep, `near destination`);
 				delete creep.memory._go;
 				return NO_ACTION;
 			}
@@ -231,15 +232,21 @@ export class Movement {
 
 		// // verify creep is in the location it thinks it should be in
 		// if (state.currentXY) {
-		// 	let {x, y} = state.currentXY;
+		// 	const {x, y} = state.currentXY;
 		// 	if (!(creep.pos.x == x && creep.pos.y == y)) { // creep thought it would move last tick but didn't
 		// 		log.debug(`${creep.print} has gotten off track; deleting path!`);
-		// 		delete moveData.path;
+		// 		shouldRepath = true;
 		// 	}
 		// }
 
 		// uncomment to visualize destination
-		// this.circle(destination, "orange");
+		this.circle(destination, "orange");
+		if (creep.memory.debug) {
+			new RoomVisual(destination.roomName).infoBox([creep.name], destination.x, destination.y, {
+				color: "orange",
+				opacity: 0.8,
+			});
+		}
 
 		// check if creep is stuck
 		if (this.isStuck(creep, state)) {
@@ -255,6 +262,7 @@ export class Movement {
 			opts.stuckValue = DEFAULT_STUCK_VALUE;
 		}
 		if (state.stuckCount >= opts.stuckValue && Math.random() > .5) {
+			log.debugCreep(creep, `stuck for too long trying to get to ${destination.print}, repathing`);
 			pathOpts.blockCreeps = true;
 			shouldRepath = true;
 		}
@@ -265,6 +273,8 @@ export class Movement {
 				moveData.path += state.destination.getDirectionTo(destination);
 				state.destination = destination;
 			} else {
+				log.debugCreep(creep, `destination mismatch: `
+					+ `${destination.print} != ${state.destination.print}, repathing`);
 				shouldRepath = true;
 			}
 		}
@@ -272,6 +282,7 @@ export class Movement {
 
 		// randomly repath with specified probability
 		if (opts.repathChance && Math.random() < opts.repathChance) {
+			log.debugCreep(creep, `random repathing`);
 			shouldRepath = true;
 		}
 
@@ -281,6 +292,10 @@ export class Movement {
 		// pathfinding
 		let newPath = false;
 		if (shouldRepath || !moveData.path || moveData.path.length == 0) {
+			if (!moveData.path || moveData.path.length === 0) {
+				// log.warning(`${creep.print} no path or path of length 0 (${moveData.path?.length ?? NaN}), `
+				// 	+ `repathing to ${destination.print}`);
+			}
 			newPath = true;
 			if (isStandardZerg(creep) && creep.spawning) {
 				return ERR_BUSY;
