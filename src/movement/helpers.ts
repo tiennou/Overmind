@@ -1,3 +1,7 @@
+import { isPowerZerg, isStandardZerg } from "declarations/typeGuards";
+import { AnyZerg } from "zerg/AnyZerg";
+import { getDefaultTerrainCosts } from "./Pathing";
+
 /**
  * Returns destination.pos if destination has a position, or destination if destination is a RoomPosition
  */
@@ -43,12 +47,17 @@ export function getCreepWeightInfo(creep: Creep, analyzeCarry = true): { move: n
 /**
  * Get terrain costs which take into account a creep's individual fatigue stats
  */
-export function getTerrainCosts(creep: Creep): { plainCost: number, swampCost: number } {
-	const data = getCreepWeightInfo(creep);
-	const fatigueRatio = data.weighted / data.move;
-	return {
-		plainCost: Math.max(Math.ceil(fatigueRatio), 1),
-		swampCost: Math.max(Math.ceil(5 * fatigueRatio), 1),
-	};
+export function getTerrainCosts(creep: AnyCreep | AnyZerg): { plainCost: number, swampCost: number } {
+	if (isStandardZerg(creep)) {
+		const data = getCreepWeightInfo(creep.creep);
+		const fatigueRatio = data.weighted / data.move;
+		return {
+			plainCost: Math.max(Math.ceil(fatigueRatio), 1),
+			swampCost: Math.max(Math.ceil(5 * fatigueRatio), 1),
+		};
+	} else if (isPowerZerg(creep)) {
+		return { plainCost: 1, swampCost: 1 };
+	}
+	return getDefaultTerrainCosts();
 }
 

@@ -136,6 +136,8 @@ export class Movement {
 		// Set default options
 		const opts = _.defaultsDeep<MoveOptions, MoveOptions>({}, moveOpts, getDefaultMoveOptions());
 		const pathOpts = _.cloneDeep(opts.pathOpts) ?? {};
+		// Compute terrain costs
+		pathOpts.terrainCosts = getTerrainCosts(creep);
 		if (opts.movingTarget) {
 			opts.range = 0;
 		}
@@ -301,19 +303,7 @@ export class Movement {
 				return ERR_BUSY;
 			}
 			state.destination = destination;
-			// Compute terrain costs
-			if (isPowerZerg(creep)) {
-				if (pathOpts.terrainCosts) {
-					log.error(`${creep.print}: MoveOptions.terrainCosts not supported by PowerZerg`);
-				}
-				pathOpts.terrainCosts = {plainCost: 1, swampCost: 1};
-			} else if (isStandardZerg(creep)) {
-				if (!pathOpts.terrainCosts) {
-					pathOpts.terrainCosts = getTerrainCosts(creep.creep);
-				}
-			} else {
-				log.error(`${creep.print} is not Zerg or PowerZerg!`);
-			}
+
 			const cpu = Game.cpu.getUsed();
 
 			// creep.debug(`Pathfinding from ${creep.pos} to ${destination} with opts ${JSON.stringify(pathOpts)}`);
@@ -1221,11 +1211,10 @@ export class Movement {
 	static kite(creep: AnyZerg,
 		avoidGoals: (RoomPosition | _HasRoomPosition)[],
 		options: MoveOptions = {}): number | undefined {
-		_.defaults(options, {
-			fleeRange   : 5,
-			terrainCosts: isPowerZerg(creep) ? {plainCost: 1, swampCost: 1} : getTerrainCosts((<Creep>creep.creep)),
+		const opts = _.defaults({}, options.pathOpts ?? {}, {
+			terrainCosts: getTerrainCosts(creep),
 		});
-		const nextPos = _.first(Pathing.findKitingPath(creep.pos, avoidGoals, options.pathOpts || {}).path);
+		const nextPos = _.first(Pathing.findKitingPath(creep.pos, avoidGoals, opts).path);
 		if (nextPos) {
 			return creep.move(creep.pos.getDirectionTo(nextPos));
 		}
@@ -1243,7 +1232,7 @@ export class Movement {
 		if (avoidGoals.length == 0) {
 			return; // nothing to flee from
 		}
-		const terrainCosts = isPowerZerg(creep) ? {plainCost: 1, swampCost: 1} : getTerrainCosts((<Creep>creep.creep));
+		const terrainCosts = getTerrainCosts(creep);
 		const fleeDefaultOpts: MoveOptions = {pathOpts: {terrainCosts: terrainCosts}};
 		_.defaults(opts, fleeDefaultOpts);
 
