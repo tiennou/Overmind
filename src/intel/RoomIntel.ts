@@ -695,16 +695,16 @@ export class RoomIntel {
 
 	}
 
-	static getSafetyData(roomName: string): SafetyData {
-		const data = Memory.rooms[roomName][RMEM.SAFETY] as SavedSafetyData;
-		return {
-			threatLevel       : data[RMEM_SAFETY.THREAT_LEVEL],
-			safeFor           : data[RMEM_SAFETY.SAFE_FOR],
-			unsafeFor         : data[RMEM_SAFETY.UNSAFE_FOR],
-			invisibleFor      : data[RMEM_SAFETY.INVISIBLE_FOR],
-			combatPotentials  : data[RMEM_SAFETY.COMBAT_POTENTIALS],
-			numHostiles       : data[RMEM_SAFETY.NUM_HOSTILES],
-			numBoostedHostiles: data[RMEM_SAFETY.NUM_BOOSTED_HOSTILES],
+	static getSafetyData(roomName: string) {
+		const data = <SavedSafetyData>(Memory.rooms[roomName]?.[RMEM.SAFETY] ?? {});
+		return <SafetyData>{
+			threatLevel       : data[RMEM_SAFETY.THREAT_LEVEL] ?? 0.5,
+			safeFor           : data[RMEM_SAFETY.SAFE_FOR] ?? NaN,
+			unsafeFor         : data[RMEM_SAFETY.UNSAFE_FOR] ?? NaN,
+			invisibleFor      : data[RMEM_SAFETY.INVISIBLE_FOR] ?? NaN,
+			combatPotentials  : data[RMEM_SAFETY.COMBAT_POTENTIALS] ?? NaN,
+			numHostiles       : data[RMEM_SAFETY.NUM_HOSTILES] ?? NaN,
+			numBoostedHostiles: data[RMEM_SAFETY.NUM_BOOSTED_HOSTILES] ?? NaN,
 		};
 	}
 
