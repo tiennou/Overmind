@@ -172,6 +172,7 @@ export class TraderJoe implements ITradeNetwork {
 
 	private notify(msg: string): void {
 		this.notifications.push(bullet + msg);
+		Game.notify(msg);
 	}
 
 	/**
