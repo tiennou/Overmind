@@ -12,6 +12,7 @@
  * If you use Travler, change all occurrences of creep.moveTo() to creep.goTo()
  */
 
+import {MoveOptions} from 'movement/Movement';
 import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
 import {Zerg} from '../zerg/Zerg';
@@ -287,7 +288,8 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	 * Move to within range of the target
 	 */
 	moveToTarget(range = this.settings.targetRange): number {
-		return this.creep.goTo(this.targetPos, {range: range});
+		const moveOpts: MoveOptions = _.defaultsDeep(this.options.moveOptions, { range: range });
+		return this.creep.goTo(this.targetPos, moveOpts);
 	}
 
 	/**

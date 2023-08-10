@@ -1,3 +1,4 @@
+import {MoveOptions} from 'movement/Movement';
 import {Colony} from '../../Colony';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
@@ -33,6 +34,12 @@ export class RandomWalkerScoutOverlord extends Overlord {
 		// 	return;
 		// }
 
+		const moveOptions: MoveOptions = {
+			pathOpts: {
+				allowHostile: true,
+			},
+		};
+
 		// Check if room might be connected to newbie/respawn zone
 		const indestructibleWalls = _.filter(scout.room.walls, wall => wall.hits == undefined);
 		if (indestructibleWalls.length > 0) { // go back to origin colony if you find a room near newbie zone
@@ -54,13 +61,13 @@ export class RandomWalkerScoutOverlord extends Overlord {
 				continue;
 			}
 
-			scout.task = Tasks.goToRoom(neighboringRoom);
+			scout.task = Tasks.goToRoom(neighboringRoom, { moveOptions });
 			break;
 		}
 
 		// Just move back to the colony and start over
 		if (!scout.task) {
-			scout.task = Tasks.goToRoom(this.colony.room.name);
+			scout.task = Tasks.goToRoom(this.colony.room.name, { moveOptions });
 		}
 	}
 

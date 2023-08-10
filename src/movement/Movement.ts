@@ -127,9 +127,9 @@ export class Movement {
 	/**
 	 * Move a creep to a destination
 	 */
-	static goTo(creep: AnyZerg, destination: _HasRoomPosition | RoomPosition, opts: MoveOptions = {}): number {
+	static goTo(creep: AnyZerg, destination: _HasRoomPosition | RoomPosition, moveOpts: MoveOptions = {}): number {
 
-		if (creep.blockMovement && !opts.force) {
+		if (creep.blockMovement && !moveOpts.force) {
 			return ERR_BUSY;
 		}
 		if (isStandardZerg(creep)) {
@@ -142,13 +142,12 @@ export class Movement {
 			}
 		}
 
+		// Set default options
+		const opts = _.defaultsDeep<MoveOptions, MoveOptions>({}, moveOpts, getDefaultMoveOptions());
+		const pathOpts = _.cloneDeep(opts.pathOpts) ?? {};
 		if (opts.movingTarget) {
 			opts.range = 0;
 		}
-
-		// Set default options
-		_.defaultsDeep(opts, getDefaultMoveOptions());
-		const pathOpts = opts.pathOpts as PathOptions; // modifications to pathOpts show up on opts.pathOpts
 
 		// initialize data object
 		if (!creep.memory._go) {

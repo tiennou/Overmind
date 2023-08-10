@@ -9,7 +9,7 @@ interface TaskSettings {
 interface TaskOptions {
 	blind?: boolean;
 	nextPos?: ProtoPos;
-	// moveOptions?: MoveOptions;
+	moveOptions?: import('movement/Movement').MoveOptions;
 }
 
 interface TaskData {
