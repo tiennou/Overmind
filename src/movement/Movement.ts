@@ -261,7 +261,7 @@ export class Movement {
 		if (!opts.stuckValue) {
 			opts.stuckValue = DEFAULT_STUCK_VALUE;
 		}
-		if (state.stuckCount >= opts.stuckValue && Math.random() > .5) {
+		if (state.stuckCount >= opts.stuckValue) {
 			log.debugCreep(creep, `stuck for too long trying to get to ${destination.print}, repathing`);
 			pathOpts.blockCreeps = true;
 			shouldRepath = true;
@@ -855,7 +855,7 @@ export class Movement {
 		if (!opts.stuckValue) {
 			opts.stuckValue = DEFAULT_STUCK_VALUE;
 		}
-		if (state.stuckCount >= opts.stuckValue && Math.random() > .5) {
+		if (state.stuckCount >= opts.stuckValue) {
 			opts.blockCreeps = true;
 			shouldRepath = true;
 		}
