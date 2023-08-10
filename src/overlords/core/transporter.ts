@@ -10,6 +10,7 @@ import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
+import { minBy } from 'utilities/utils';
 
 /**
  * The transport overlord handles energy transport throughout a colony
@@ -115,20 +116,18 @@ export class TransportOverlord extends Overlord {
 				if (isResource(request.target)) {
 					this.debug(() => `${prefix}: picking up resource`);
 					task = Tasks.pickup(request.target);
-				} else {
-					if (request.resourceType == 'all') {
-						if (isResource(request.target)) {
-							log.error(this.print + ALL_RESOURCE_TYPE_ERROR);
-							return;
-						}
-						this.debug(() => `${prefix}: withdrawing everything`);
-						task = Tasks.withdrawAll(request.target);
-					} else {
-						this.debug(() => `${prefix}: withdrawing`);
-						task = Tasks.withdraw(request.target, request.resourceType);
+				} else if (request.resourceType == 'all') {
+					if (isResource(request.target)) {
+						log.error(`${this.print} ${ALL_RESOURCE_TYPE_ERROR}`);
+						return;
 					}
+					this.debug(() => `${prefix}: withdrawing everything`);
+					task = Tasks.withdrawAll(request.target);
+				} else {
+					this.debug(() => `${prefix}: withdrawing`);
+					task = Tasks.withdraw(request.target, request.resourceType);
 				}
-				if (task && bestChoice.targetRef != request.target.ref) {
+				if (bestChoice.targetRef != request.target.ref) {
 					// If we need to go to a buffer first to deposit stuff
 					const buffer = deref(bestChoice.targetRef) as BufferTarget;
 					this.debug(() => `${prefix}: needs a buffer first, using ${buffer.print}`);
@@ -152,20 +151,19 @@ export class TransportOverlord extends Overlord {
 						transporter.task = Tasks.transferAll(target);
 					}
 				} else {
-					const dropoffPoints: (StructureLink | StructureStorage)[] = _.compact([this.colony.storage!]);
-					// , ...this.colony.dropoffLinks]);
+					const dropoffPoints = _.compact<StructureLink | StructureStorage>([this.colony.storage!, ...this.colony.links]);
 
-					// let bestDropoffPoint = minBy(dropoffPoints, function(dropoff: StructureLink | StructureStorage) {
-					// 	let range = transporter.pos.getMultiRoomRangeTo(dropoff.pos);
-					// 	if (dropoff instanceof StructureLink) {
-					// 		return Math.max(range, this.colony.linkNetwork.getDropoffAvailability(dropoff));
-					// 	} else {
-					// 		return range;
-					// 	}
-					// });
+					const bestDropoffPoint = minBy(dropoffPoints, (dropoff) => {
+						const range = transporter.pos.getMultiRoomRangeTo(dropoff.pos);
+						if (dropoff instanceof StructureLink) {
+							return Math.max(range, this.colony.linkNetwork.getDropoffAvailability(dropoff));
+						} else {
+							return range;
+						}
+					});
 
-					const bestDropoffPoint: StructureLink | StructureStorage | undefined
-						= transporter.pos.findClosestByMultiRoomRange(dropoffPoints);
+					// const bestDropoffPoint: StructureLink | StructureStorage | undefined
+					// 	= transporter.pos.findClosestByMultiRoomRange(dropoffPoints);
 
 					if (bestDropoffPoint) {
 						this.debug(() => `${prefix}: nothing to do, dropping off to `

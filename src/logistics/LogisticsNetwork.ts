@@ -511,19 +511,19 @@ export class LogisticsNetwork {
 								 targetRef: buffer.ref
 							 });
 			}
-			// if (store.resourceType == RESOURCE_ENERGY) {
+			// if (carry[RESOURCE_ENERGY]) {
 			// 	// Only for when you're picking up more energy: check to see if you can put to available links
-			// 	for (let link of this.colony.dropoffLinks) {
-			// 		let linkDeltaResource = Math.min(Math.abs(amount), transporter.carryCapacity,
+			// 	for (const link of this.colony.links) {
+			// 		const linkDeltaResource = Math.min(Math.abs(amount), transporter.store.getCapacity(),
 			// 			2 * link.energyCapacity);
-			// 		let ticksUntilDropoff = Math.max(Pathing.distance(newPos, link.pos),
+			// 		const ticksUntilDropoff = Math.max(Pathing.distance(newPos, link.pos) || Infinity,
 			// 										 this.colony.linkNetwork.getDropoffAvailability(link));
-			// 		let linkDistance = ticksUntilDropoff +
-			// 						   Pathing.distance(link.pos, store.target.pos) + ticksUntilFree;
+			// 		const linkDistance = ticksUntilDropoff +
+			// 						   (Pathing.distance(link.pos, newPos) || Infinity) + ticksUntilFree;
 			// 		choices.push({
-			// 						 deltaResource: linkDeltaResource,
-			// 						 deltaTicks   : linkDistance,
-			// 						 targetRef    : link.ref
+			// 						 dQ: linkDeltaResource,
+			// 						 dt: linkDistance,
+			// 						 targetRef: link.ref
 			// 					 });
 			// 	}
 			// }
