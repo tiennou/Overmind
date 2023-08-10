@@ -235,22 +235,31 @@ interface RoomPosition {
 	findClosestByRangeThenPath<T extends _HasRoomPosition>(objects: T[]): T | undefined;
 }
 
+interface RoomVisualOptions {
+	color?: string;
+	opacity?: number;
+	textfont?: string;
+	textsize?: number;
+	textstyle?: string;
+	textcolor?: string;
+}
+
 interface RoomVisual {
 	roads: Point[];
 
 	box(x: number, y: number, w: number, h: number, style?: LineStyle): RoomVisual;
 
-	infoBox(info: string[], x: number, y: number, opts?: { [option: string]: any }): RoomVisual;
+	infoBox(info: string[], x: number, y: number, opts?: RoomVisualOptions): RoomVisual;
 
-	multitext(textLines: string[], x: number, y: number, opts?: { [option: string]: any }): RoomVisual;
+	multitext(textLines: string[], x: number, y: number, opts?: RoomVisualOptions): RoomVisual;
 
-	structure(x: number, y: number, type: string, opts?: { [option: string]: any }): RoomVisual;
+	structure(x: number, y: number, type: string, opts?: RoomVisualOptions): RoomVisual;
 
-	connectRoads(opts?: { [option: string]: any }): RoomVisual | void;
+	connectRoads(opts?: RoomVisualOptions): RoomVisual | void;
 
-	speech(text: string, x: number, y: number, opts?: { [option: string]: any }): RoomVisual;
+	speech(text: string, x: number, y: number, opts?: RoomVisualOptions & { background?: string }): RoomVisual;
 
-	animatedPosition(x: number, y: number, opts?: { [option: string]: any }): RoomVisual;
+	animatedPosition(x: number, y: number, opts?: RoomVisualOptions & { radius?: number, frames?: number }): RoomVisual;
 
 	resource(type: ResourceConstant, x: number, y: number, size?: number, opacity?: number): number;
 

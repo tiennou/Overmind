@@ -1,7 +1,8 @@
 type Point = [number, number];
 type Points = Point[] | RoomPosition[];
 
-RoomVisual.prototype.infoBox = function(this: RoomVisual, info: string[], x: number, y: number, opts = {}): RoomVisual {
+RoomVisual.prototype.infoBox = function(this: RoomVisual,
+	info: string[], x: number, y: number, opts: RoomVisualOptions = {}): RoomVisual {
 	_.defaults(opts, {
 		color    : colors.infoBoxGood,
 		textstyle: false,
@@ -42,8 +43,8 @@ RoomVisual.prototype.infoBox = function(this: RoomVisual, info: string[], x: num
 
 	// Draw vertical bar
 	const x0 = x + 0.9;
-	const y0 = y - 0.8 * opts.textsize;
-	this.line(x0, y0, x0, y0 + info.length * opts.textsize, {
+	const y0 = y - 0.8 * opts.textsize!;
+	this.line(x0, y0, x0, y0 + info.length * opts.textsize!, {
 		color: opts.color,
 	});
 
@@ -51,20 +52,21 @@ RoomVisual.prototype.infoBox = function(this: RoomVisual, info: string[], x: num
 	let dy = 0;
 	for (const line of info) {
 		this.text(line, x + 1, y + dy, {
-			color            : opts.color,
+			color            : opts.textcolor ?? opts.color,
 			// backgroundColor  : opts.background,
 			backgroundPadding: 0.1,
 			opacity          : opts.opacity,
 			font             : fontstring,
 			align            : 'left',
 		});
-		dy += opts.textsize;
+		dy += opts.textsize!;
 	}
 
 	return this;
 };
 
-RoomVisual.prototype.multitext = function(this: RoomVisual, textLines: string[], x: number, y: number, opts = {}): RoomVisual {
+RoomVisual.prototype.multitext = function(this: RoomVisual,
+	textLines: string[], x: number, y: number, opts: RoomVisualOptions = {}): RoomVisual {
 	_.defaults(opts, {
 		color    : colors.infoBoxGood,
 		textstyle: false,
@@ -97,13 +99,14 @@ RoomVisual.prototype.multitext = function(this: RoomVisual, textLines: string[],
 			font             : fontstring,
 			align            : 'left',
 		});
-		dy += opts.textsize;
+		dy += opts.textsize!;
 	}
 
 	return this;
 };
 
-RoomVisual.prototype.box = function(this: RoomVisual, x: number, y: number, w: number, h: number, style?: LineStyle): RoomVisual {
+RoomVisual.prototype.box = function(this: RoomVisual,
+	x: number, y: number, w: number, h: number, style?: LineStyle): RoomVisual {
 	return this.line(x, y, x + w, y, style)
 			   .line(x + w, y, x + w, y + h, style)
 			   .line(x + w, y + h, x, y + h, style)
@@ -130,7 +133,8 @@ const colors = {
 const speechSize = 0.5;
 const speechFont = 'Times New Roman';
 
-RoomVisual.prototype.structure = function(this: RoomVisual, x: number, y: number, type: string, opts = {}): RoomVisual {
+RoomVisual.prototype.structure = function(this: RoomVisual,
+	x: number, y: number, type: string, opts: RoomVisualOptions = {}): RoomVisual {
 	_.defaults(opts, {opacity: 0.5});
 	switch (type) {
 		case STRUCTURE_EXTENSION:
@@ -429,7 +433,7 @@ const dirs = [
 	[-1, -1]
 ];
 
-RoomVisual.prototype.connectRoads = function(this: RoomVisual, opts = {}): RoomVisual | void {
+RoomVisual.prototype.connectRoads = function(this: RoomVisual, opts: RoomVisualOptions = {}): RoomVisual | void {
 	_.defaults(opts, {opacity: 0.5});
 	const color = opts.color || colors.road || 'white';
 	if (!this.roads) return;
@@ -455,10 +459,10 @@ RoomVisual.prototype.connectRoads = function(this: RoomVisual, opts = {}): RoomV
 };
 
 
-RoomVisual.prototype.speech = function(this: RoomVisual, text: string, x: number, y: number, opts = {}): RoomVisual {
+RoomVisual.prototype.speech = function(this: RoomVisual,
+	text: string, x: number, y: number, opts: RoomVisualOptions & { background?: string } = {}): RoomVisual {
 	const background = !!opts.background ? opts.background : colors.speechBackground;
 	const textcolor = !!opts.textcolor ? opts.textcolor : colors.speechText;
-	// noinspection PointlessBooleanExpressionJS
 	const textstyle = !!opts.textstyle ? opts.textstyle : false;
 	const textsize = !!opts.textsize ? opts.textsize : speechSize;
 	const textfont = !!opts.textfont ? opts.textfont : speechFont;
@@ -497,7 +501,8 @@ RoomVisual.prototype.speech = function(this: RoomVisual, text: string, x: number
 };
 
 
-RoomVisual.prototype.animatedPosition = function(this: RoomVisual, x: number, y: number, opts = {}): RoomVisual {
+RoomVisual.prototype.animatedPosition = function(this: RoomVisual,
+	x: number, y: number, opts: RoomVisualOptions & { radius?: number, frames?: number } = {}): RoomVisual {
 
 	const color = !!opts.color ? opts.color : 'blue';
 	const opacity = !!opts.opacity ? opts.opacity : 0.5;
