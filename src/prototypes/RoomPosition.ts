@@ -252,7 +252,6 @@ RoomPosition.prototype.getPositionAtDirection = function(this: RoomPosition, dir
 // 	}
 // });
 
-// Get an estimate for the distance to another room position in a possibly different room
 RoomPosition.prototype.getMultiRoomRangeTo = function(this: RoomPosition, pos: RoomPosition): number {
 	if (this.roomName == pos.roomName) {
 		return this.getRangeTo(pos);

@@ -31,10 +31,17 @@ export class UpgradeSite extends HiveCluster {
 	// energyPerTick: number;
 
 	static settings = {
-		energyBuffer     : 100000,	// Number of upgrader parts scales with energy minus this value
-		energyPerBodyUnit: 20000,	// Scaling factor: this much excess energy adds one extra body repetition // TODO: scaling needs to increase with new storage/terminal system
-		minLinkDistance  : 10,		// Required distance to build link
-		linksRequestBelow: 200,		// Links request energy when less than this amount
+		/** Number of upgrader parts scales with energy minus this value */
+		energyBuffer     : 100000,
+		/**
+		 * Scaling factor: this much excess energy adds one extra body repetition
+		 * TODO: scaling needs to increase with new storage/terminal system
+		 */
+		energyPerBodyUnit: 20000,
+		/** Required distance to build link */
+		minLinkDistance  : 10,
+		/** Links request energy when less than this amount */
+		linksRequestBelow: 200,
 	};
 
 	constructor(colony: Colony, controller: StructureController) {

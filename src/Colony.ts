@@ -123,19 +123,27 @@ const getDefaultColonyMemory: () => ColonyMemory = () => ({
 @profile
 @assimilationLocked
 export class Colony {
-	// Colony memory
-	memory: ColonyMemory;								// Memory.colonies[name]
-	// Room associations
-	name: string;										// Name of the primary colony room
-	room: Room;											// Primary (owned) room of the colony
+	/** Colony memory */
+	memory: ColonyMemory;
+	/** Room associations */
+	/** Name of the primary colony room */
+	name: string;
+	/** Primary (owned) room of the colony */
+	room: Room;
 	ref: string;
-	id: number; 										// Order in which colony is instantiated from Overmind
-	roomNames: string[];								// The names of all rooms including the primary room
-	outposts: Room[];									// Rooms for remote resource collection
-	// abandonedOutposts: AbandonedOutpost[];				// Outposts that are not currently maintained, not used for now
-	rooms: Room[];										// All rooms including the primary room
+	/** Order in which colony is instantiated from Overmind */
+	id: number;
+	/** The names of all rooms including the primary room */
+	roomNames: string[];
+	/** Rooms for remote resource collection */
+	outposts: Room[];
+	/** Outposts that are not currently maintained, not used for now */
+	// abandonedOutposts: AbandonedOutpost[];
+	/** All rooms including the primary room */
+	rooms: Room[];
 	pos: RoomPosition;
 	assets: StoreContents;
+
 	// Physical colony structures and roomObjects
 	controller: StructureController;					// These are all duplicated from room properties
 	spawns: StructureSpawn[];							// |
@@ -150,48 +158,77 @@ export class Colony {
 	powerSpawn: StructurePowerSpawn | undefined;		// |
 	nuker: StructureNuker | undefined;					// |
 	observer: StructureObserver | undefined;			// |
-	tombstones: Tombstone[]; 							// | Tombstones in all colony rooms
-	drops: { [resourceType: string]: Resource[] }; 		// | Dropped resources in all colony rooms
-	ruins: Ruin[];										// | Ruins in all colony rooms
-	sources: Source[];									// | Sources in all colony rooms
-	extractors: StructureExtractor[];					// | All extractors in owned and remote rooms
-	flags: Flag[];										// | Flags assigned to the colony
-	constructionSites: ConstructionSite[];				// | Construction sites in all colony rooms
-	repairables: Structure[];							// | Repairable structures, discounting barriers and roads
-	rechargeables: rechargeObjectType[];				// | Things that can be recharged from
-	// obstacles: RoomPosition[]; 							// | List of other obstacles, e.g. immobile creeps
+	/** Tombstones in all colony rooms */
+	tombstones: Tombstone[];
+	/** Dropped resources in all colony rooms */
+	drops: { [resourceType: string]: Resource[] };
+	/** Ruins in all colony rooms */
+	ruins: Ruin[];
+	/** Sources in all colony rooms */
+	sources: Source[];
+	/** All extractors in owned and remote rooms */
+	extractors: StructureExtractor[];
+	/** Flags assigned to the colony */
+	flags: Flag[];
+	/** Construction sites in all colony rooms */
+	constructionSites: ConstructionSite[];
+	/** Repairable structures, discounting barriers and roads */
+	repairables: Structure[];
+	/** Things that can be recharged from */
+	rechargeables: rechargeObjectType[];
 	destinations: { pos: RoomPosition, order: number }[];
+
 	// Hive clusters
-	hiveClusters: HiveCluster[];						// List of all hive clusters
-	commandCenter: CommandCenter | undefined;			// Component with logic for non-spawning structures
-	hatchery: Hatchery | undefined;						// Component to encapsulate spawner logic
+	/** List of all hive clusters */
+	hiveClusters: HiveCluster[];
+	/** Component with logic for non-spawning structures */
+	commandCenter: CommandCenter | undefined;
+	/** Component to encapsulate spawner logic */
+	hatchery: Hatchery | undefined;
+	/** Temporary spawn group to use when colonizing */
 	spawnGroup: SpawnGroup | undefined;
-	evolutionChamber: EvolutionChamber | undefined; 	// Component for mineral processing
-	upgradeSite: UpgradeSite;							// Component to provide upgraders with uninterrupted energy
+	/** Component for mineral processing */
+	evolutionChamber: EvolutionChamber | undefined;
+	/** Component to provide upgraders with uninterrupted energy */
+	upgradeSite: UpgradeSite;
+	/** Component to defend the colony */
 	sporeCrawler: SporeCrawler;
-	// miningSites: { [sourceID: string]: MiningSite };	// Component with logic for mining and hauling
-	// extractionSites: { [extractorID: string]: ExtractionSite };
-	miningSites: { [flagName: string]: DirectiveHarvest };	// Component with logic for mining and hauling
+	/** Component with logic for mining and hauling */
+	miningSites: { [flagName: string]: DirectiveHarvest };
+	/** Component with logic for resouce extraction */
 	extractionSites: { [flagName: string]: DirectiveExtract };
-	// praiseSite: PraiseSite | undefined;
+
 	// Operational state
-	level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; 				// Level of the colony's main room
-	stage: ColonyStage;									// The stage of the colony "lifecycle"
-	defcon: DEFCON;										//
+	/** Level of the colony's main room */
+	level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+	/** The stage of the colony "lifecycle" */
+	stage: ColonyStage;
+	/** The military alert state of the colony */
+	defcon: DEFCON;
+	/** Various flags tracking the colony's state */
 	state: {
-		bootstrapping?: boolean; 						// Whether colony is bootstrapping or recovering from crash
-		isIncubating?: boolean;							// If the colony is incubating
-		lowPowerMode?: boolean; 						// Activate if RCL8 and full energy
-		isRebuilding?: boolean;							// If colony is doing major reconstruction (e.g. moving in room)
-		isEvacuating?: boolean;							// If we're clearing the terminal if colony is about to fail
+		/** Whether colony is bootstrapping or recovering from crash */
+		bootstrapping?: boolean;
+		/** If the colony is incubating */
+		isIncubating?: boolean;
+		/** Activate if RCL8 and full energy */
+		lowPowerMode?: boolean;
+		/** If colony is doing major reconstruction (e.g. moving in room) */
+		isRebuilding?: boolean;
+		/** If we're clearing the terminal if colony is about to fail */
+		isEvacuating?: boolean;
+		/** If the colony is currently targetted by a nuke */
 		isBeingNuked?: boolean;
 	};
-	// terminalState: TerminalState | undefined;
-	layout: 'twoPart' | 'bunker';						// Which room design colony uses
-	bunker: BunkerData | undefined;						// The center tile of the bunker, else undefined
+	/** Which room design colony uses */
+	layout: 'twoPart' | 'bunker';
+	/** The center tile of the bunker, else undefined */
+	bunker: BunkerData | undefined;
 	// Creeps and subsets
-	creeps: Creep[];										// Creeps bound to the colony
-	creepsByRole: { [roleName: string]: Creep[] };		// Creeps hashed by their role name
+	/** Creeps bound to the colony */
+	creeps: Creep[];
+	/** Creeps hashed by their role name */
+	creepsByRole: { [roleName: string]: Creep[] };
 	// Resource requests
 	linkNetwork: LinkNetwork;
 	logisticsNetwork: LogisticsNetwork;

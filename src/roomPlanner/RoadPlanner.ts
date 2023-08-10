@@ -45,8 +45,10 @@ export class RoadPlanner {
 
 	static settings = {
 		encourageRoadMerging          : true,
-		recalculateRoadNetworkInterval: onPublicServer() ? 1000 : 250, // recalculate road networks this often
-		recomputeCoverageInterval     : onPublicServer() ? 1000 : 500,	// recompute coverage to each destination this often
+		/** recalculate road networks this often */
+		recalculateRoadNetworkInterval: onPublicServer() ? 1000 : 250,
+		/** recompute coverage to each destination this often */
+		recomputeCoverageInterval     : onPublicServer() ? 1000 : 500,
 		buildRoadsAtRCL               : 4,
 	};
 

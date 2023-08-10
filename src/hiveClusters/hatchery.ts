@@ -23,16 +23,26 @@ const ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH = -20;
 const ERR_SPECIFIED_SPAWN_BUSY = -21;
 
 export interface SpawnRequest {
-	setup: CreepSetup | CombatCreepSetup;					// creep body generator to use
-	overlord: Overlord;								// overlord requesting the creep
-	priority: number;					// priority of the request
-	partners?: (CreepSetup | CombatCreepSetup)[];			// partners to spawn along with the creep
-	options?: SpawnRequestOptions;		// options
+	/** creep body generator to use */
+	setup: CreepSetup | CombatCreepSetup;
+	/** overlord requesting the creep */
+	overlord: Overlord;
+	/** priority of the request */
+	priority: number;
+	/** partners to spawn along with the creep */
+	partners?: (CreepSetup | CombatCreepSetup)[];
+	/** options */
+	options?: SpawnRequestOptions;
 }
 
 export interface SpawnRequestOptions {
-	spawn?: StructureSpawn;				// allows you to specify which spawn to use; only use for high priority
-	directions?: DirectionConstant[];	// StructureSpawn.spawning.directions
+	/** Use a specific spawn to fulfill the request; only use for high priority */
+	spawn?: StructureSpawn;
+	/**
+	 * The direction in which the creep should move after spawning
+	 * See {@link StructureSpawn.spawning.directions}
+	 */
+	directions?: DirectionConstant[];
 }
 
 // interface SpawnOrder {

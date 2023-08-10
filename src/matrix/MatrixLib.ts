@@ -11,19 +11,32 @@ import {color, isAlly, rgbToHex} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 
 // Properties and sub-properties here shouldn't be undefined
-export interface MatrixOptions {			// Listed in the order they are processed in
-	roomName: string;						// Name of the room
-	roomVisibile: boolean;					// Whether the room is visible
-	explicitTerrainCosts: boolean;			// If true, call MatrixLib.addTerrainCosts(matrix, roomName, terrainCosts)
-	terrainCosts: TerrainCosts;				// terrain costs, determined automatically for creep body if unspecified
-	roadCost: number | 'auto' | 'ignore';	// road costs; 'auto' = set to ceil(plain/2); 'ignore' = ignore roads
-	blockExits: boolean;					// Whether to block the exits; shouldn't be used with exitCosts
-	avoidSK: boolean;						// Avoid getting near source keepers
-	allowPortals: boolean;					// Portals are hard-blocked if false; soft-blocked if true
-	ignoreStructures: boolean;				// Ignore structures (excluding roads) and impassible construction sites
-	obstacles: string;						// Obstacles packed as packPos (not packCoord!); should rarely change
-	swarmWidth: number;						// The width of the squad (if any); >1 calls MatrixLib.applyMovingMaxPool()
-	swarmHeight: number;					// The height of the squad (if any); >1 calls MatrixLib.applyMovingMaxPool()
+// Listed in the order they are processed in
+export interface MatrixOptions {
+	/** Name of the room */
+	roomName: string;
+	/** Whether the room is visible */
+	roomVisibile: boolean;
+	/** If true, call MatrixLib.addTerrainCosts(matrix, roomName, terrainCosts) */
+	explicitTerrainCosts: boolean;
+	/** terrain costs, determined automatically for creep body if unspecified */
+	terrainCosts: TerrainCosts;
+	/** road costs; 'auto' = set to ceil(plain/2); 'ignore' = ignore roads */
+	roadCost: number | 'auto' | 'ignore';
+	/** Whether to block the exits; shouldn't be used with exitCosts */
+	blockExits: boolean;
+	/** Avoid getting near source keepers */
+	avoidSK: boolean;
+	/** Portals are hard-blocked if false; soft-blocked if true */
+	allowPortals: boolean;
+	/** Ignore structures (excluding roads) and impassible construction sites */
+	ignoreStructures: boolean;
+	/** Obstacles packed as packPos (not packCoord!); should rarely change */
+	obstacles: string;
+	/** The width of the squad (if any); >1 calls MatrixLib.applyMovingMaxPool() */
+	swarmWidth: number;
+	/** The height of the squad (if any); >1 calls MatrixLib.applyMovingMaxPool() */
+	swarmHeight: number;
 }
 
 export const getDefaultMatrixOptions: () => MatrixOptions = () => ({

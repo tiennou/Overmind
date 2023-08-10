@@ -219,6 +219,7 @@ interface RoomPosition {
 
 	getPositionAtDirection(direction: DirectionConstant, range?: number): RoomPosition;
 
+	/** Get an estimate for the distance to another room position in a possibly different room */
 	getMultiRoomRangeTo(pos: RoomPosition): number;
 
 	findClosestByLimitedRange<T extends _HasRoomPosition | RoomPosition>(this: RoomPosition,

@@ -44,24 +44,42 @@ export const MatrixTypes = {
 
 export interface PathOptions {
 	range?: number;
-	fleeRange?: number;							// range to flee from targets
-	terrainCosts?: TerrainCosts;				// terrain costs, determined automatically for creep body if unspecified
-	roadCost?: number | 'auto' | 'ignore';		// road costs; 'auto' = set to ceil(plain/2); 'ignore' = ignore roads
-	obstacles?: RoomPosition[];					// don't path through these room positions
-	blockExits?: boolean;						// ensures you stay in the room you're currently in
-	blockCreeps?: boolean;						// ignore pathing around creeps
-	ignoreStructures?: boolean;					// ignore pathing around structures
-	allowHostile?: boolean;						// allow to path through hostile rooms; origin/destination room excluded
-	avoidSK?: boolean;							// avoid walking within range 4 of source keepers
-	allowPortals?: boolean;						// allow pathing through portals
-	usePortalThreshold?: number;				// skip portal search unless desination is at least this many rooms away
-	portalsMustBeInRange?: number | undefined;	// portals must be within this many rooms to be considered for search
-	route?: Route;								// manually supply the map route to take
-	maxRooms?: number;							// maximum number of rooms to path through
-	useFindRoute?: boolean;						// whether to use the route finder; determined automatically otherwise
-	maxOps?: number;							// pathfinding times out after this many operations
-	ensurePath?: boolean;						// can be useful if route keeps being found as incomplete
-	modifyRoomCallback?: (r: Room, m: CostMatrix) => CostMatrix; // modifications to default cost matrix calculations
+	/** range to flee from targets */
+	fleeRange?: number;
+	/** terrain costs, determined automatically for creep body if unspecified */
+	terrainCosts?: TerrainCosts;
+	/** road costs; 'auto' = set to ceil(plain/2); 'ignore' = ignore roads */
+	roadCost?: number | 'auto' | 'ignore';
+	/** don't path through these room positions */
+	obstacles?: RoomPosition[];
+	/** ensures you stay in the room you're currently in */
+	blockExits?: boolean;
+	/** ignore pathing around creeps */
+	blockCreeps?: boolean;
+	/** ignore pathing around structures */
+	ignoreStructures?: boolean;
+	/** allow to path through hostile rooms; origin/destination room excluded */
+	allowHostile?: boolean;
+	/** avoid walking within range 4 of source keepers */
+	avoidSK?: boolean;
+	/** allow pathing through portals */
+	allowPortals?: boolean;
+	/** skip portal search unless desination is at least this many rooms away */
+	usePortalThreshold?: number;
+	/** portals must be within this many rooms to be considered for search */
+	portalsMustBeInRange?: number | undefined;
+	/** manually supply the map route to take */
+	route?: Route;
+	/** maximum number of rooms to path through */
+	maxRooms?: number;
+	/** whether to use the route finder; determined automatically otherwise */
+	useFindRoute?: boolean;
+	/** pathfinding times out after this many operations */
+	maxOps?: number;
+	/** can be useful if route keeps being found as incomplete */
+	ensurePath?: boolean;
+	/** modifications to default cost matrix calculations */
+	modifyRoomCallback?: (r: Room, m: CostMatrix) => CostMatrix;
 }
 
 export const getDefaultPathOptions: () => PathOptions = () => ({
