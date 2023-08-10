@@ -179,7 +179,7 @@ export class Overseer implements IOverseer {
 				for (const drop of room.drops[resourceType]) {
 					if (drop.amount > LogisticsNetwork.settings.droppedEnergyThreshold
 						|| drop.resourceType != RESOURCE_ENERGY) {
-						colony.logisticsNetwork.requestOutput(drop);
+						colony.logisticsNetwork.requestOutput(drop, {dAmountdt: 1});
 					}
 				}
 			}
