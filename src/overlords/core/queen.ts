@@ -7,13 +7,6 @@ import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {DEFAULT_PRESPAWN, Overlord} from '../Overlord';
 
-type rechargeObjectType = StructureStorage
-	| StructureTerminal
-	| StructureContainer
-	| StructureLink
-	| Tombstone
-	| Resource;
-
 /**
  * Spawns a dedicated hatchery attendant to refill spawns and extensions
  */
@@ -103,7 +96,7 @@ export class QueenOverlord extends Overlord {
 		if (queen.isIdle) {
 			this.idleActions(queen);
 		}
-		// // If all of the above is done and hatchery is not in emergencyMode, move to the idle point and renew as needed
+		// If all of the above is done and hatchery is not in emergencyMode, move to the idle point and renew as needed
 		// if (!this.emergencyMode && queen.isIdle) {
 		// 	if (queen.pos.isEqualTo(this.idlePos)) {
 		// 		// If queen is at idle position, renew her as needed

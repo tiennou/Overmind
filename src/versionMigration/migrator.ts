@@ -1,4 +1,8 @@
-/* tslint:disable:no-string-literal */
+// Disable a whole lot of things since this migrates deleted or renamed properties
+/* eslint @typescript-eslint/no-unsafe-assignment: "off" */
+/* eslint @typescript-eslint/no-unsafe-call: "off" */
+/* eslint @typescript-eslint/no-unsafe-argument: "off" */
+/* eslint @typescript-eslint/dot-notation: "off" */
 
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
@@ -412,11 +416,14 @@ export class VersionMigration {
 		log.alert(`Cleaning memory...`);
 		delete Memory.strategist;
 		delete Memory.zoneRooms;
-		Memory.roomIntel = {}; // reset this
+		// @ts-expect-error reset this
+		Memory.roomIntel = {};
 
-		const mem = Memory as any;
+		const mem = Memory;
 
-		delete mem.pathing.paths; // not used
+		// @ts-expect-error not used
+		delete mem.pathing.paths;
+		// @ts-expect-error not used
 		delete mem.pathing.weightedDistances;
 
 		// Changes will need repathing

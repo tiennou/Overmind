@@ -46,9 +46,9 @@ export class Graph {
 
 	constructor(totalVertices: number) {
 		this.totalVertices = totalVertices;
-		this.level = Array(totalVertices);
+		this.level = Array<number>(totalVertices);
 		// An array of edges for each vertex
-		this.edges = Array(totalVertices).fill(0).map((x) => []);
+		this.edges = Array<number>(totalVertices).fill(0).map(() => []);
 	}
 
 	/**
@@ -177,7 +177,7 @@ export class Graph {
 		let count = [];
 		let flow = 0;
 		while (this.createLevelGraph(source, sink)) {
-			count = Array(this.totalVertices + 1).fill(0);
+			count = Array<number>(this.totalVertices + 1).fill(0);
 			do {
 				flow = this.calcFlow(source, sink, Number.MAX_VALUE, count);
 				if (flow > 0) {
@@ -195,7 +195,7 @@ export class Graph {
  */
 export function get2DArray(roomName: string, bounds: Rectangle = {x1: 0, y1: 0, x2: 49, y2: 49}) {
 
-	const room2D = Array(50).fill(NORMAL).map((d) => Array(50).fill(NORMAL)); // Array for room tiles
+	const room2D = Array(50).fill(NORMAL).map(() => Array<number>(50).fill(NORMAL)); // Array for room tiles
 	let x: number;
 	let y: number;
 

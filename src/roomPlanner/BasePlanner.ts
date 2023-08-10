@@ -1,5 +1,4 @@
 import {distanceTransform} from '../algorithms/distanceTransform';
-import {Colony} from '../Colony';
 import {Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
 import {packCoord} from '../utilities/packrat';
@@ -13,7 +12,7 @@ const MAX_TOTAL_PATH_LENGTH = 25 * 3;
 export class BasePlanner {
 
 	static getBunkerLocation(room: Room, visualize = true): RoomPosition | undefined {
-		const colony = Overmind.colonies[room.name] as Colony;
+		const colony = Overmind.colonies[room.name];
 		if (colony && colony.bunker && colony.bunker.anchor) {
 			return colony.bunker.anchor;
 		}

@@ -33,7 +33,7 @@ export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
 			}
 		}
 		if (!!resourceTransferType) {
-			return this.creep.withdraw(this.target, <ResourceConstant>resourceTransferType);
+			return this.creep.withdraw(this.target, resourceTransferType);
 		}
 		return -1;
 	}

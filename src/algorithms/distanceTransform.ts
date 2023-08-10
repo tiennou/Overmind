@@ -108,7 +108,7 @@ function wallOrAdjacentToExit(x: number, y: number, roomName: string): boolean {
 }
 
 // Compute positions where you can build movement-blocking structures in a room
-function blockablePixelsForRoom(roomName: string): CostMatrix {
+function _blockablePixelsForRoom(roomName: string): CostMatrix {
 	const costMatrix = new PathFinder.CostMatrix();
 	for (let y = 0; y < 50; ++y) {
 		for (let x = 0; x < 50; ++x) {

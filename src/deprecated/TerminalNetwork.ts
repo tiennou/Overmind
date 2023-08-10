@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-ignore deprecated
 import {assimilationLocked} from '../assimilation/decorator';
 import {$} from '../caching/GlobalCache';
 import {Colony, getAllColonies} from '../Colony';
@@ -111,6 +113,7 @@ export class TerminalNetwork /*implements ITerminalNetwork*/ {
 		this.terminals = _.clone(terminals);
 		this.readyTerminals = _.filter(terminals, t => t.cooldown == 0);
 		this.memory = Mem.wrap(Memory.Overmind, 'terminalNetwork', getDefaultTerminalNetworkMemory);
+		// @ts-expect-error deprecated
 		this.stats = Mem.wrap(Memory.stats.persistent, 'terminalNetwork', getDefaultTerminalNetworkStats);
 		this.alreadyReceived = [];
 		this.alreadySent = [];
@@ -125,6 +128,7 @@ export class TerminalNetwork /*implements ITerminalNetwork*/ {
 		this.terminals = _.clone(this.allTerminals);
 		this.readyTerminals = _.filter(this.terminals, t => t.cooldown == 0);
 		this.memory = Mem.wrap(Memory.Overmind, 'terminalNetwork', getDefaultTerminalNetworkMemory);
+		// @ts-expect-error deprecated
 		this.stats = Mem.wrap(Memory.stats.persistent, 'terminalNetwork', getDefaultTerminalNetworkStats);
 		this.alreadyReceived = [];
 		this.alreadySent = [];

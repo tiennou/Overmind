@@ -1,7 +1,9 @@
+import { SourceMapConsumer } from 'source-map';
 import {profile} from '../profiler/decorator';
 import {color} from '../utilities/utils';
 
 export enum LogLevel {
+	FATAL = -1, // Only used for thrown exceptions
 	ERROR,		// log.level = 0
 	WARNING,	// log.level = 1
 	ALERT,		// log.level = 2
@@ -50,7 +52,6 @@ export const LOG_VSC_URL_TEMPLATE = (path: string, line: string) => {
 
 // <caller> (<source>:<line>:<column>)
 const stackLineRe = /([^ ]*) \(([^:]*):([0-9]*):([0-9]*)\)/;
-const FATAL = -1;
 const fatalColor = '#d65156';
 
 interface SourcePos {
@@ -76,9 +77,9 @@ export function resolve(fileLine: string): SourcePos {
 		caller  : split[1],
 		compiled: fileLine,
 		final   : line,
-		line    : original.line,
+		line    : original.line ?? undefined,
 		original: line,
-		path    : original.source,
+		path    : original.source ?? undefined,
 	};
 
 	return out;
@@ -110,7 +111,7 @@ function time(): string {
 
 export function debug(thing: { name: string, memory: any, pos: RoomPosition }, ...args: any[]) {
 	if (thing.memory && thing.memory.debug) {
-		this.debug(`${thing.name} @ ${thing.pos.print}: `, args);
+		log.debug(`${thing.name} @ ${thing.pos.print}: `, args);
 	}
 }
 
@@ -128,19 +129,9 @@ export type LogMessage = (string | object | (() => string))
 @profile
 export class Log {
 
-	constructor() {
-		_.defaultsDeep(Memory, {
-			settings: {
-				log: {
-					level     : LOG_LEVEL,
-					showSource: LOG_PRINT_LINES,
-					showTick  : LOG_PRINT_TICK,
-				}
-			}
-		});
-	}
+	constructor() {}
 
-	static sourceMap: any;
+	static sourceMap: SourceMapConsumer;
 
 	static loadSourceMap() {
 		// try {
@@ -154,8 +145,8 @@ export class Log {
 		// }
 	}
 
-	get level(): number {
-		return Memory.settings.log.level;
+	get level(): LogLevel {
+		return Memory.settings.log.level ?? LOG_LEVEL;
 	}
 
 	setLogLevel(value: number) {
@@ -188,7 +179,7 @@ export class Log {
 	}
 
 	get showSource(): boolean {
-		return Memory.settings.log.showSource;
+		return Memory.settings.log.showSource ?? LOG_PRINT_LINES;
 	}
 
 	set showSource(value: boolean) {
@@ -196,7 +187,7 @@ export class Log {
 	}
 
 	get showTick(): boolean {
-		return Memory.settings.log.showTick;
+		return Memory.settings.log.showTick ?? LOG_PRINT_TICK;
 	}
 
 	set showTick(value: boolean) {
@@ -214,7 +205,7 @@ export class Log {
 	}
 
 	throw(e: Error) {
-		console.log.apply(this, this.buildArguments(FATAL).concat([color(e.toString(), fatalColor)]));
+		console.log.apply(this, this.buildArguments(LogLevel.FATAL).concat([color(e.toString(), fatalColor)]));
 	}
 
 	private _log(level: LogLevel, args: LogMessage[]) {
@@ -318,7 +309,7 @@ export class Log {
 			case LogLevel.DEBUG:
 				out.push(color('DEBUG  ', 'gray'));
 				break;
-			case FATAL:
+			case LogLevel.FATAL:
 				out.push(color('FATAL  ', fatalColor));
 				break;
 			default:

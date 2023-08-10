@@ -206,7 +206,7 @@ export class CombatZerg extends Zerg {
 	/**
 	 * Navigate to a room, then engage hostile creeps there, perform medic actions, etc.
 	 */
-	autoSkirmish(roomName: string, verbose = false) {
+	autoSkirmish(roomName: string, _verbose = false) {
 
 		// Do standard melee, ranged, and heal actions
 		if (this.getActiveBodyparts(ATTACK) > 0) {
@@ -240,7 +240,7 @@ export class CombatZerg extends Zerg {
 	/**
 	 * Navigate to a room, then engage hostile creeps there, perform medic actions, etc.
 	 */
-	autoCombat(roomName: string, verbose = false, preferredRange?: number, options?: CombatMoveOptions) {
+	autoCombat(roomName: string, _verbose = false, preferredRange?: number, options?: CombatMoveOptions) {
 
 		// Do standard melee, ranged, and heal actions
 		if (this.getActiveBodyparts(ATTACK) > 0) {
@@ -287,7 +287,7 @@ export class CombatZerg extends Zerg {
 
 	}
 
-	autoBunkerCombat(roomName: string, verbose = false) {
+	autoBunkerCombat(roomName: string, _verbose = false) {
 		if (this.getActiveBodyparts(ATTACK) > 0) {
 			this.autoMelee(); // Melee should be performed first
 		}

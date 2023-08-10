@@ -315,6 +315,9 @@ interface StructureSpawn extends _StoreLike {
 interface StructureTerminal extends _StoreLike {
 	isReady: boolean;
 	hasReceived: boolean;
+
+	// private
+	_hasReceived: boolean;
 }
 
 interface StructureTower extends _StoreLike {
@@ -330,13 +333,14 @@ interface StructureTower extends _StoreLike {
 }
 
 
-
+// eslint-disable-next-line
 interface String {
 	padRight(length: number, char?: string): string;
 
 	padLeft(length: number, char?: string): string;
 }
 
+// eslint-disable-next-line
 interface Number {
 	toPercent(decimals?: number): string;
 

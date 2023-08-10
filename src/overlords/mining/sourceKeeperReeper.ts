@@ -3,7 +3,7 @@ import {CombatSetups, Roles} from '../../creepSetups/setups';
 import {DirectiveSKOutpost} from '../../directives/colony/outpostSK';
 import {RoomIntel} from '../../intel/RoomIntel';
 import {Mem} from '../../memory/Memory';
-import {Movement} from '../../movement/Movement';
+import {MoveOptions, Movement} from '../../movement/Movement';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {CombatTargeting} from '../../targeting/CombatTargeting';
@@ -70,7 +70,7 @@ export class SourceReaperOverlord extends CombatOverlord {
 
 	private handleReaper(reaper: CombatZerg) {
 
-		const moveOpts: any = {pathOpts: {avoidSK: false}};
+		const moveOpts: MoveOptions = {pathOpts: {avoidSK: false}};
 
 		// Go to keeper room
 		if (!this.targetLair || !this.room || reaper.room != this.room || reaper.pos.isEdge) {
@@ -81,7 +81,7 @@ export class SourceReaperOverlord extends CombatOverlord {
 		}
 
 		// Once you're safely in the room, block off the exits
-		moveOpts.pathOpts.blockExits = true;
+		moveOpts.pathOpts!.blockExits = true;
 
 		const nonStrongholdInvaders = this.room.invaders.filter(creep => !creep.inRampart);
 		if (nonStrongholdInvaders.length > 0) {
@@ -98,9 +98,8 @@ export class SourceReaperOverlord extends CombatOverlord {
 			if (this.room.invaders.length > 2 && _.filter(this.defenders, def => def.room == this.room).length == 0) {
 				reaper.kite(_.filter(this.room.hostiles, h => h.getActiveBodyparts(RANGED_ATTACK) > 0), moveOpts);
 				reaper.healSelfIfPossible();
-			}
-			// If defender is already here or a small invasion
-			else {
+			} else {
+				// If defender is already here or a small invasion
 				const target = CombatTargeting.findTarget(reaper, this.room.invaders);
 				if (target) {
 					Movement.invasionMove(reaper, target);

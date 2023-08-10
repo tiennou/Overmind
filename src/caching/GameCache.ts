@@ -33,7 +33,7 @@ export class GameCache implements ICache {
 		// keys: overlordRef, value: creepNames[]
 		const creepNamesByOverlord = _.groupBy(_.keys(Game.creeps),
 											   name => Game.creeps[name].memory[MEM.OVERLORD]);
-		const powerCreepNamesByOverlord = _.groupBy(_.keys(Game.powerCreeps),
+		const _powerCreepNamesByOverlord = _.groupBy(_.keys(Game.powerCreeps),
 													name => Game.powerCreeps[name].memory[MEM.OVERLORD]);
 		for (const ref in creepNamesByOverlord) {
 			// keys: roleName, value: creepNames[]

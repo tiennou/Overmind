@@ -80,12 +80,13 @@ export class WorkerOverlord extends Overlord {
 		const homeRoomName = this.colony.room.name;
 		const defcon = this.colony.defcon;
 		// Filter constructionSites to only build valid ones
-		const room = this.colony.room as any;
+		const room = this.colony.room;
 		const level = this.colony.controller.level;
 		this.constructionSites = _.filter(this.colony.constructionSites, function(site) {
 			// If site will be more than max amount of a structure at current level, ignore (happens after downgrade)
-			const structureAmount = room[site.structureType + 's'] ? room[site.structureType + 's'].length :
-									(room[site.structureType] ? 1 : 0);
+			const structureAmount = _.get(room, site.structureType + 's')
+				? _.get<any[]>(room, site.structureType + 's').length
+				: (_.get<any[]>(room, site.structureType) ? 1 : 0);
 			if (structureAmount >= CONTROLLER_STRUCTURES[site.structureType][level]) {
 				return false;
 			}
@@ -142,7 +143,7 @@ export class WorkerOverlord extends Overlord {
 			return this.nukeDefenseHitsNeeded[rampart.id]
 		}
 		let neededHits = 0;
-		for (const nuke of rampart.pos.lookFor(LOOK_NUKES)) {
+		for (const _nuke of rampart.pos.lookFor(LOOK_NUKES)) {
 			neededHits += 10e6;
 		}
 		for (const nuke of rampart.pos.findInRange(FIND_NUKES, 2)) {
@@ -313,9 +314,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private nukeFortifyActions(worker: Zerg, fortifyStructures = this.nukeDefenseRamparts): boolean {
-		var self = this;
-		const adaptedHits = _.reduce(fortifyStructures, function(obj,structure: StructureWall|StructureRampart) {
-			obj[structure.id] = structure.hits - self.neededNukeHits(structure);
+		const adaptedHits = _.reduce(fortifyStructures, (obj, structure: StructureWall | StructureRampart) => {
+			obj[structure.id] = structure.hits - this.neededNukeHits(structure);
 			return obj;
 		}, {} as {[key: string]: number});
 
@@ -358,7 +358,8 @@ export class WorkerOverlord extends Overlord {
 
 	private bootstrapActions(worker: Zerg): boolean {
 		// Dump energy into the hatchery
-		const target = this.colony.hatchery?.energyStructures.find(struct => struct.store.getFreeCapacity(RESOURCE_ENERGY));
+		const target = this.colony.hatchery?.energyStructures.find(struct =>
+			struct.store.getFreeCapacity(RESOURCE_ENERGY));
 		if (target && this.colony.state.bootstrapping) {
 			this.debug(`${worker.print} bootstraping ${target.print}`);
 			worker.task = Tasks.transfer(target);

@@ -16,9 +16,6 @@ export const FIND_EXIT_PORTAL: FIND_EXIT_PORTAL = 42;
 export type AnyExitConstant = FIND_EXIT_TOP | FIND_EXIT_RIGHT | FIND_EXIT_BOTTOM | FIND_EXIT_LEFT | FIND_EXIT_PORTAL;
 
 const DEFAULT_MAXOPS = 20000; // default timeout for pathfinding
-const CREEP_COST = 0xfe;
-const SK_COST = 10; // add this cost time (range-5) to approaching SK lairs if avoidSK is true
-const PORTAL_COST = 25; // don't want to set this too high or it'll spend a bunch of time searching around it
 
 export type Route = { exit: AnyExitConstant, room: string }[];
 
@@ -270,7 +267,7 @@ export class Pathing {
 			const bestPortalDest = _(portalInfo)
 				.map(portal => portal.destination.roomName)
 				.unique()
-				.min(portalDest => Game.map.getRoomLinearDistance(portalDest, destination)) as string;
+				.min(portalDest => Game.map.getRoomLinearDistance(portalDest, destination));
 			return bestPortalDest;
 		};
 
@@ -351,9 +348,6 @@ export class Pathing {
 					route = [...originToPortalRoute,
 							 {exit: FIND_EXIT_PORTAL, room: portalDest},
 							 ...portalToDestinationRoute];
-
-					// if (origin == 'E26S47') console.log('PORTAL ROUTE:', print(route));
-
 				}
 
 			}
@@ -502,7 +496,7 @@ export class Pathing {
 									 plainCost   : opts.terrainCosts!.plainCost,
 									 swampCost   : opts.terrainCosts!.swampCost,
 									 flee        : true,
-									 roomCallback: Pathing.kitingRoomCallback,
+									 roomCallback: (room) => Pathing.kitingRoomCallback(room),
 									 maxRooms    : 1
 								 });
 	}
@@ -1197,9 +1191,10 @@ export class Pathing {
 				terrainCosts: { plainCost: 1, swampCost: 5 },
 			});
 
-			let newStartPos = pathToEnd.path.find(step => step.roomName === endPos.roomName);
-			if (!newStartPos)
+			const newStartPos = pathToEnd.path.find(step => step.roomName === endPos.roomName);
+			if (!newStartPos) {
 				return undefined;
+			}
 
 			startPos = newStartPos;
 		}

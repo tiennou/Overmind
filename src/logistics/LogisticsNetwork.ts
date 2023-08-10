@@ -1,5 +1,3 @@
-/* tslint:disable:variable-name */
-
 import columnify from 'columnify';
 import {Matcher} from '../algorithms/galeShapley';
 import {Colony} from '../Colony';
@@ -49,7 +47,7 @@ interface RequestOptions {
 	multiplier?: number;
 }
 
-interface LogisticsNetworkMemory {
+export interface LogisticsNetworkMemory {
 	debug?: boolean;
 	transporterCache: {
 		[transporterName: string]: {
@@ -280,8 +278,6 @@ export class LogisticsNetwork {
 			}
 			return [approximateDistance, pos];
 		} else {
-			// Report the transporter as being near a logistics target so that Pathing.distance() won't waste CPU
-			// let nearbyLogisticPositions = transporter.pos.findInRange(this.logisticPositions[transporter.room.name], 2);
 			return [0, transporter.pos];
 		}
 	}
@@ -325,7 +321,8 @@ export class LogisticsNetwork {
 							return <StoreContents>{energy: 0};
 						}
 						for (const [resourceType, storeAmt] of request.target.store.contents) {
-							const resourceFraction = storeAmt / (request.target.store.getUsedCapacity(resourceType) || storeAmt);
+							const resourceFraction = storeAmt
+								/ (request.target.store.getUsedCapacity(resourceType) || storeAmt);
 							if (carry[resourceType]) {
 								carry[resourceType] += resourceAmount * resourceFraction;
 								carry[resourceType] = minMax(carry[resourceType]!, 0, remainingCapacity);
@@ -395,11 +392,6 @@ export class LogisticsNetwork {
 		this.debug(() => `${prefix} target capacity: ${targetCapacity}, ${otherTargetingTransporters.length} transporters also heading there`);
 		if (request.amount > 0) { // input state, resources into target
 			let predictedAmount = request.amount + predictedDifference;
-			// if (isStoreStructure(request.target)) { 	// cap predicted amount at storeCapacity
-			// 	predictedAmount = Math.min(predictedAmount, request.target.storeCapacity);
-			// } else if (isEnergyStructure(request.target)) {
-			// 	predictedAmount = Math.min(predictedAmount, request.target.energyCapacity);
-			// }
 
 			if (!isResource(request.target)) {
 				predictedAmount = minMax(predictedAmount, 0, targetCapacity);
@@ -413,11 +405,6 @@ export class LogisticsNetwork {
 			return predictedAmount;
 		} else { // output state, resources withdrawn from target
 			let predictedAmount = request.amount + predictedDifference;
-			// if (isStoreStructure(request.target)) { 	// cap predicted amount at -1 * storeCapacity
-			// 	predictedAmount = Math.max(predictedAmount, -1 * request.target.storeCapacity);
-			// } else if (isEnergyStructure(request.target)) {
-			// 	predictedAmount = Math.min(predictedAmount, -1 * request.target.energyCapacity);
-			// }
 			if (!isResource(request.target)) {
 				predictedAmount = minMax(predictedAmount, -1 * targetCapacity, 0);
 			}
@@ -472,9 +459,11 @@ export class LogisticsNetwork {
 			}
 			// Change in resources if transporter picks up resources from a buffer first
 			for (const buffer of this.buffers) {
-				const dQ_buffer = Math.min(amount, transporter.store.getCapacity(), buffer.store[request.resourceType] || 0);
-				const dt_buffer = newPos.getMultiRoomRangeTo(buffer.pos) * LogisticsNetwork.settings.rangeToPathHeuristic
-								  + (Pathing.distance(buffer.pos, request.target.pos) || Infinity) + ticksUntilFree;
+				const dQ_buffer = Math.min(amount, transporter.store.getCapacity(),
+					buffer.store[request.resourceType] || 0);
+				const dt_buffer = newPos.getMultiRoomRangeTo(buffer.pos)
+					* LogisticsNetwork.settings.rangeToPathHeuristic
+					+ (Pathing.distance(buffer.pos, request.target.pos) || Infinity) + ticksUntilFree;
 				choices.push({
 								 dQ       : dQ_buffer,
 								 dt       : dt_buffer,
@@ -492,15 +481,17 @@ export class LogisticsNetwork {
 							 dt       : dt_direct,
 							 targetRef: request.target.ref
 						 });
-			if (remainingCarryCapacity >= Math.abs(amount) || remainingCarryCapacity == transporter.store.getCapacity()) {
+			if (remainingCarryCapacity >= Math.abs(amount)
+				|| remainingCarryCapacity == transporter.store.getCapacity()) {
 				return choices; // Return early you have sufficient free space or are empty
 			}
 			// Change in resources if transporter drops off resources at a buffer first
 			for (const buffer of this.buffers) {
 				const dQ_buffer = Math.min(Math.abs(amount), transporter.store.getCapacity(),
 										   buffer.store.getFreeCapacity());
-				const dt_buffer = newPos.getMultiRoomRangeTo(buffer.pos) * LogisticsNetwork.settings.rangeToPathHeuristic
-								  + (Pathing.distance(buffer.pos, request.target.pos) || Infinity) + ticksUntilFree;
+				const dt_buffer = newPos.getMultiRoomRangeTo(buffer.pos)
+					* LogisticsNetwork.settings.rangeToPathHeuristic
+					+ (Pathing.distance(buffer.pos, request.target.pos) || Infinity) + ticksUntilFree;
 				choices.push({
 								 dQ       : dQ_buffer,
 								 dt       : dt_buffer,
@@ -578,17 +569,17 @@ export class LogisticsNetwork {
 		const unmatchedRequests = _.remove(requests, request => !_.values(this._matching).includes(request));
 		console.log(`Stable matching for ${this.colony.name} at ${Game.time}`);
 		for (const transporter of transporters) {
-			const transporterStr = transporter.name + ' ' + transporter.pos;
+			const transporterStr = transporter.name + ' ' + transporter.pos.print;
 			const request = this._matching![transporter.name]!;
 			const requestStr = request.target.ref + ' ' + request.target.pos.print;
 			console.log(`${transporterStr.padRight(35)} : ${requestStr}`);
 		}
 		for (const transporter of unmatchedTransporters) {
-			const transporterStr = transporter.name + ' ' + transporter.pos;
+			const transporterStr = transporter.name + ' ' + transporter.pos.print;
 			console.log(`${transporterStr.padRight(35)} : ${''}`);
 		}
 		for (const request of unmatchedRequests) {
-			const requestStr = request.target.ref + ' ' + request.target.pos;
+			const requestStr = request.target.ref + ' ' + request.target.pos.print;
 			console.log(`${''.padRight(35)} : ${requestStr}`);
 		}
 		console.log();
@@ -682,7 +673,8 @@ export class LogisticsNetwork {
 			rPrefs[request.id] = _.map(this.requestPreferences(request, transporters), transporter => transporter.name);
 		}
 		const stableMatching = new Matcher(tPrefs, rPrefs).match();
-		const requestMatch = _.mapValues(stableMatching, reqID => _.find(this.requests, request => request.id == reqID));
+		const requestMatch = _.mapValues(stableMatching,
+			reqID => _.find(this.requests, request => request.id == reqID));
 		return requestMatch;
 	}
 

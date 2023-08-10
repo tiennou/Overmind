@@ -1,3 +1,4 @@
+import { RoomIntelMemory } from 'intel/RoomIntel';
 import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
 import {Stats} from '../stats/stats';
@@ -9,6 +10,10 @@ import {
 	PROFILER_COLONY_LIMIT,
 	USE_SCREEPS_PROFILER
 } from '../~settings';
+import { SegmenterMemory } from './Segmenter';
+import { DebuggerMemory } from 'debug/remoteDebugger';
+import { CombatPlannerMemory } from 'strategy/CombatPlanner';
+import { NukePlannerMemory } from 'strategy/NukePlanner';
 
 export enum Autonomy {
 	Manual        = 0,
@@ -16,7 +21,7 @@ export enum Autonomy {
 	Automatic     = 2,
 }
 
-export function getAutonomyLevel(): number {
+export function getAutonomyLevel(): Autonomy {
 	switch (Memory.settings.operationMode) {
 		case ('manual'):
 			return Autonomy.Manual;
@@ -127,7 +132,9 @@ export class Mem {
 	/**
 	 * Wrap a parent memory object with a key name and set the default properties for the child memory object if needed
 	 */
-	static wrap(memory: any, memName: string, getDefaults: () => ({ [key: string]: any }) = () => ({})) {
+	static wrap<T extends object, D extends T[keyof T]>(memory: T,
+			memName: keyof T,
+			getDefaults: () => D = () => (<D>{})): D {
 		if (memory[memName] === undefined) {
 			memory[memName] = getDefaults();
 		} else if (Game.time == LATEST_GLOBAL_RESET_TICK) { // mem defaults would only change with a global reset
@@ -145,6 +152,7 @@ export class Mem {
 		const key = _.first(keys);
 		keys = _.drop(keys);
 		if (keys.length == 0) { // at the end of the recursion
+			// eslint-disable-next-line
 			object[key] = value;
 			return;
 		} else {
@@ -170,11 +178,11 @@ export class Mem {
 			build             : 0,
 			assimilator       : {},
 			Overmind          : {},
-			combatPlanner     : {},
+			combatPlanner     : <CombatPlannerMemory>{},
 			profiler          : {},
 			overseer          : {},
-			segmenter         : {},
-			roomIntel         : {},
+			segmenter         : <SegmenterMemory>{},
+			roomIntel         : <RoomIntelMemory>{},
 			colonies          : {},
 			rooms             : {},
 			creeps            : {},
@@ -185,6 +193,8 @@ export class Mem {
 			constructionSites : {},
 			stats             : {persistent:{}},
 			playerCreepTracker: {},
+			remoteDebugger    : <DebuggerMemory>{},
+			nukePlanner       : <NukePlannerMemory>{},
 			settings          : {
 				signature             : DEFAULT_OVERMIND_SIGNATURE,
 				operationMode         : DEFAULT_OPERATION_MODE,
@@ -330,7 +340,7 @@ export class Mem {
 		const CLEAN_FREQUENCY = 5;
 		if (Game.time % CLEAN_FREQUENCY == 0) {
 			const distanceCleanProbability = 0.001 * CLEAN_FREQUENCY;
-			const weightedDistanceCleanProbability = 0.01 * CLEAN_FREQUENCY;
+			const _weightedDistanceCleanProbability = 0.01 * CLEAN_FREQUENCY;
 
 			// Randomly clear some cached path lengths
 			for (const pos1Name in Memory.pathing.distances) {

@@ -73,14 +73,14 @@ export class DirectiveHarass extends Directive {
 		}
 		const whitelist = Memory.settings.allies;
 		const reservedByTargetPlayer: string[] = [];
-		const adjacentRooms = _.values(Game.map.describeExits(roomName)) as string[];
+		const adjacentRooms = _.values<string>(Game.map.describeExits(roomName));
 		adjacentRooms.forEach(room => {
 			const reservation = RoomIntel.roomReservedBy(room);
 			console.log('Checking for harass in room ' + room);
 			if (reservation && this.memory.aggressive ? !whitelist.includes(reservation) : reservation == playerName) {
 				reservedByTargetPlayer.push(room);
 				// TODO This will double add rooms next to owned rooms, making it more likely to harass them, reconsider
-				(_.values(Game.map.describeExits(room)) as string[]).forEach(room => {
+				(_.values<string>(Game.map.describeExits(room))).forEach(room => {
 					if (RoomIntel.roomReservedBy(room) == playerName) {
 						reservedByTargetPlayer.push(room);
 					}

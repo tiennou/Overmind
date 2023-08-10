@@ -40,7 +40,7 @@ export class ActionParser {
 	private static parseAction(actor: NeuralZerg, action: RLAction, autoEngage = true): boolean {
 
 		const command: string = action[0];
-		const predicate: any = action[1];
+		const predicate = action[1];
 		const targ: _HasId | null = typeof predicate == 'string' ? Game.getObjectById(predicate) : null;
 
 		switch (command) {
@@ -82,8 +82,8 @@ export class ActionParser {
 				actor.avoidAllies();
 				break;
 			case 'maneuver':
-				const approachNames: string[] = predicate[0];
-				const avoidNames: string[] = predicate[1];
+				const approachNames = (<string[]><unknown>predicate ?? [])[0];
+				const avoidNames = (<string[]><unknown>predicate ?? [])[1];
 				const approachTargs = _.map(approachNames, name => Game.creeps[name]);
 				const avoidTargs = _.map(avoidNames, name => Game.creeps[name]);
 				actor.maneuver(approachTargs, avoidTargs);
@@ -106,7 +106,7 @@ export class ActionParser {
 	private static parseActions(actors: { [creepName: string]: NeuralZerg },
 								serializedActions: { [creepName: string]: RLAction[] }) {
 
-		const receivedOrders: { [creepName: string]: boolean } = _.mapValues(actors, actor => false);
+		const receivedOrders: { [creepName: string]: boolean } = _.mapValues(actors, () => false);
 
 		// Deserialize the actions for each actor
 		for (const creepName in serializedActions) {
@@ -140,7 +140,7 @@ export class ActionParser {
 	 * Periodic logging functions that are used to describe state of training map and identify bugs
 	 */
 	private static logState(contents: string) {
-		console.log(`[${Game.time}] My creeps: `, _.map(Game.creeps, creep => creep.name + ' ' + creep.pos));
+		console.log(`[${Game.time}] My creeps: `, _.map(Game.creeps, creep => `${creep.name} ${creep.pos}`));
 		if (Memory.reinforcementLearning) {
 			console.log(`[${Game.time}] RL Segment: ${contents}`);
 		}
@@ -176,7 +176,7 @@ export class ActionParser {
 		// Parse memory and relay actions to controllable actors
 		const raw = RawMemory.segments[SEGMENTS.reinforcementLearning];
 		if (raw != undefined && raw != '') {
-			const actions = JSON.parse(raw);
+			const actions = <{ [creepName: string]: RLAction[] }>JSON.parse(raw);
 			ActionParser.parseActions(controllableActors, actions);
 		} else {
 			if (_.size(controllableActors) > 0) {

@@ -1,5 +1,3 @@
-/* tslint:disable */
-
 import {Colony} from '../../Colony';
 import {packCoord} from '../../utilities/packrat';
 import {getAllStructureCoordsFromLayout, StructureLayout} from '../RoomPlanner';
@@ -464,8 +462,8 @@ export const bunkerLayout: StructureLayout = {
 	}
 };
 
-let _allBunkerCoords: { [rcl: number]: Coord[] } = {};
-for (let rcl of [1, 2, 3, 4, 5, 6, 7, 8]) {
+const _allBunkerCoords: { [rcl: number]: Coord[] } = {};
+for (const rcl of [1, 2, 3, 4, 5, 6, 7, 8]) {
 	if (bunkerLayout[rcl]!.buildings) {
 		_allBunkerCoords[rcl] = getAllStructureCoordsFromLayout(bunkerLayout, rcl);
 	}
@@ -495,8 +493,8 @@ export function insideBunkerBounds(pos: RoomPosition, colony: Colony): boolean {
 
 export function getPosFromBunkerCoord(coord: Coord, colony: Colony): RoomPosition {
 	if (colony.roomPlanner.memory.bunkerData && colony.roomPlanner.memory.bunkerData.anchor) {
-		let dx = colony.roomPlanner.memory.bunkerData.anchor.x - bunkerLayout.data.anchor.x;
-		let dy = colony.roomPlanner.memory.bunkerData.anchor.y - bunkerLayout.data.anchor.y;
+		const dx = colony.roomPlanner.memory.bunkerData.anchor.x - bunkerLayout.data.anchor.x;
+		const dy = colony.roomPlanner.memory.bunkerData.anchor.y - bunkerLayout.data.anchor.y;
 		return new RoomPosition(coord.x + dx, coord.y + dy, colony.room.name);
 	}
 	console.log('getPosFromBunkerCoord: shouldn\'t reach here! Unprotected call from non-bunker?');

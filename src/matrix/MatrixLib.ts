@@ -1,4 +1,5 @@
-/* tslint:disable:no-bitwise prefer-for-of */
+/* eslint no-bitwise: "off" */
+/* eslint @typescript-eslint/prefer-for-of: "off" */
 
 import {log} from '../console/log';
 import {RoomIntel} from '../intel/RoomIntel';
@@ -286,7 +287,7 @@ export class MatrixLib {
 			const alliedConstructionSites = _.filter(room.hostileConstructionSites, c => isAlly(c.owner.username));
 			const blockPositions = _.map([...impassibleStructures,
 										  ...impassibleConstructionSites,
-										  ...alliedConstructionSites], s => s.pos) as RoomPosition[];
+										  ...alliedConstructionSites], s => s.pos);
 			MatrixLib.block(matrix, blockPositions);
 		}
 
@@ -888,7 +889,7 @@ export class MatrixLib {
 
 		if (!matrix) {
 			matrix = new PathFinder.CostMatrix();
-			MatrixLib.fillMatrix(matrix, 0xff);
+			MatrixLib.fillMatrix(matrix, value);
 			const ramparts = onlyMy ? _.filter(room.ramparts, rampart => rampart.my) : room.ramparts;
 			for (const rampart of ramparts) {
 				matrix.set(rampart.pos.x, rampart.pos.y, 0);

@@ -60,7 +60,7 @@ export abstract class CombatOverlord extends Overlord {
 	/**
 	 * Contains logic for shutting down the overlord
 	 */
-	finish(successful: boolean): void {
+	finish(_successful: boolean): void {
 		for (const zerg of this.getAllZerg()) {
 			zerg.reassign(this.colony.overlords.default);
 		}

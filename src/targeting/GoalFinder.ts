@@ -132,14 +132,14 @@ export class GoalFinder {
 
 		const preferCloseCombat = myAttack > myRangedAttack;
 
-		const myRating = _.sum(swarm.creeps, creep => CombatIntel.rating(creep));
+		const _myRating = _.sum(swarm.creeps, creep => CombatIntel.rating(creep));
 
 		const hostileSwarms = Swarm.findEnemySwarms(room, {pos: swarm.anchor});
 
 		// Analyze capabilities of hostile creeps in the room
-		for (const i in hostileSwarms) {
+		for (const swarms of hostileSwarms) {
 
-			const hostiles = hostileSwarms[i].creeps as Creep[];
+			const hostiles = swarms.creeps as Creep[];
 
 			const attack = _.sum(hostiles, creep => CombatIntel.getAttackDamage(creep));
 			const rangedAttack = _.sum(hostiles, creep => CombatIntel.getRangedAttackDamage(creep));
@@ -273,7 +273,7 @@ export class GoalFinder {
 		return {approach, avoid};
 	}
 
-	static structureGoals(creep: CombatZerg): { approach: PathFinderGoal[], avoid: PathFinderGoal[] } {
+	static structureGoals(_creep: CombatZerg): { approach: PathFinderGoal[], avoid: PathFinderGoal[] } {
 		const approach: PathFinderGoal[] = [];
 
 		// // TODO: finish this

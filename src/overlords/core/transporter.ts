@@ -110,9 +110,8 @@ export class TransportOverlord extends Overlord {
 						task = task.fork(Tasks.transferAll(buffer));
 					}
 				}
-			}
-			// Target is requesting output
-			else if (amount < 0) {
+			} else if (amount < 0) {
+				// Target is requesting output
 				if (isResource(request.target)) {
 					this.debug(() => `${prefix}: picking up resource`);
 					task = Tasks.pickup(request.target);
@@ -212,7 +211,7 @@ export class TransportOverlord extends Overlord {
 		const tombstone = transporter.pos.lookFor(LOOK_TOMBSTONES)[0];
 		if (tombstone) {
 			const resourceType = _.last(_.sortBy(_.keys(tombstone.store),
-												 resourceType => (tombstone.store[<ResourceConstant>resourceType] || 0)));
+				resourceType => (tombstone.store[<ResourceConstant>resourceType] || 0)));
 			transporter.withdraw(tombstone, <ResourceConstant>resourceType);
 		}
 	}

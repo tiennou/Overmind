@@ -144,7 +144,7 @@ export class Movement {
 		if (!creep.memory._go) {
 			creep.memory._go = {} as MoveData;
 		}
-		const moveData = creep.memory._go as MoveData;
+		const moveData = creep.memory._go;
 
 		// set destination according to waypoint specifications; finalDestination is the true destination
 		destination = normalizePos(destination);
@@ -527,7 +527,7 @@ export class Movement {
 		if (!otherCreep.memory) return false;
 		otherCreep = normalizeAnyZerg(otherCreep);
 		const pushDirection = this.getPushDirection(creep, otherCreep);
-		const otherData = otherCreep.memory._go as MoveData | undefined;
+		const otherData = otherCreep.memory._go;
 
 		// Push the creep and update the state
 		const outcome = otherCreep.move(pushDirection);
@@ -567,7 +567,7 @@ export class Movement {
 	static vacatePos(pos: RoomPosition, suicide = false): boolean {
 		// prevent creeps from moving onto pos
 		const nearbyCreeps = _.compact(_.map(pos.findInRange(FIND_MY_CREEPS, 2),
-											 creep => Overmind.zerg[creep.name])) as Zerg[];
+											 creep => Overmind.zerg[creep.name]));
 		_.forEach(nearbyCreeps, creep => creep.blockMovement = true);
 		// recurively move creeps off of the position
 		const creep = pos.lookFor(LOOK_CREEPS)[0];
@@ -807,7 +807,7 @@ export class Movement {
 		if (!swarm.memory._go) {
 			swarm.memory._go = {} as MoveData;
 		}
-		const moveData = swarm.memory._go as MoveData;
+		const moveData = swarm.memory._go;
 
 		// manage case where creep is nearby destination
 		if (opts.range != undefined && swarm.minRangeTo(destination) <= opts.range &&
@@ -987,7 +987,6 @@ export class Movement {
 
 		// Flee from bad things that that you're too close to
 		if (avoid.length > 0) {
-			const size = Math.max(swarm.width, swarm.height);
 			if (_.any(avoid, goal => swarm.minRangeTo(goal) <= goal.range)) {
 				const allAvoid = _.flatten(_.map(avoid, goal =>
 					_.map(Pathing.getPosWindow(goal.pos, -swarm.width, -swarm.height), pos => ({
@@ -1193,9 +1192,9 @@ export class Movement {
 			opts.movingTarget = true;
 		}
 		if (creep.room.name == dest.roomName) {
-			_.defaults(opts.pathOpts!, {
+			_.defaults(opts.pathOpts!, <PathOptions>{
 				maxRooms          : 1,
-				modifyRoomCallback: Movement.invasionMoveCallbackModifier,
+				modifyRoomCallback: (room, matrix) => Movement.invasionMoveCallbackModifier(room, matrix),
 			});
 		}
 		return creep.goTo(dest, opts);
@@ -1204,7 +1203,9 @@ export class Movement {
 	/**
 	 * Kite around enemies in a single room, repathing every tick. More expensive than flee().
 	 */
-	static kite(creep: AnyZerg, avoidGoals: (RoomPosition | _HasRoomPosition)[], options: MoveOptions = {}): number | undefined {
+	static kite(creep: AnyZerg,
+		avoidGoals: (RoomPosition | _HasRoomPosition)[],
+		options: MoveOptions = {}): number | undefined {
 		_.defaults(options, {
 			fleeRange   : 5,
 			terrainCosts: isPowerZerg(creep) ? {plainCost: 1, swampCost: 1} : getTerrainCosts((<Creep>creep.creep)),
@@ -1221,6 +1222,9 @@ export class Movement {
 	static flee(creep: AnyZerg, avoidGoals: (RoomPosition | _HasRoomPosition)[],
 				dropEnergy = false, opts: MoveOptions = {}): number | undefined {
 
+		if (dropEnergy) {
+			log.warning("TODO: dropEnergy");
+		}
 		if (avoidGoals.length == 0) {
 			return; // nothing to flee from
 		}
@@ -1248,7 +1252,7 @@ export class Movement {
 			}
 
 			// wait until safe
-			const moveData = creep.memory._go as MoveData;
+			const moveData = creep.memory._go;
 			if (moveData.fleeWait != undefined) {
 				if (moveData.fleeWait <= 0) {
 					// you're safe now
@@ -1269,7 +1273,7 @@ export class Movement {
 			if (!creep.memory._go) {
 				creep.memory._go = {} as MoveData;
 			}
-			const moveData = creep.memory._go as MoveData;
+			const moveData = creep.memory._go;
 
 			moveData.fleeWait = 2;
 

@@ -24,7 +24,7 @@ Object.defineProperty(Structure.prototype, 'isWalkable', {
 
 // monkey-patch OwnedStructure.isActive to include some caching since it's actually pretty expensive
 // const _OwnedStructureIsActive = OwnedStructure.prototype.isActive;
-OwnedStructure.prototype._isActive = OwnedStructure.prototype.isActive;
+// OwnedStructure.prototype._isActive = OwnedStructure.prototype.isActive;
 // OwnedStructure.prototype.isActive = function() {
 // 	// Do a quick check to see if the room is owned by same owner of structure and/or if it's RCL 8
 // 	if (this.room.controller) {
@@ -145,12 +145,13 @@ Object.defineProperty(StructureTerminal.prototype, 'isReady', { // the terminal 
 });
 
 Object.defineProperty(StructureTerminal.prototype, 'hasReceived', { // terminal received this tick via send/deal
-	get() {
+	get(this: StructureTerminal) {
 		return this._hasReceived;
 	},
 	configurable: true,
 });
 
+// eslint-disable-next-line @typescript-eslint/unbound-method
 const _terminalSend = StructureTerminal.prototype.send;
 StructureTerminal.prototype.send = function(resourceType: ResourceConstant, amount: number, destination: string,
 											description?: string): ScreepsReturnCode {

@@ -26,13 +26,13 @@ interface MarketCache {
 	tick: number;
 }
 
-interface TraderMemory {
+export interface TraderMemory {
 	debug?: boolean;
 	cache: MarketCache;
 	canceledOrders: Order[];
 }
 
-interface TraderStats {
+export interface TraderStats {
 	credits: number;
 	bought: {
 		[resourceType: string]: {
@@ -116,7 +116,8 @@ export class TraderJoe implements ITradeNetwork {
 		},
 		market: {
 			resources: {
-				allowBuyT1T2boosts: false, // the market for T1/T2 boosts is unstable; disallow buying this by default
+				/** the market for T1/T2 boosts is unstable; disallow buying this by default */
+				allowBuyT1T2boosts: false,
 			},
 			credits  : {
 				mustSellDirectBelow    : 5000,
@@ -127,8 +128,10 @@ export class TraderJoe implements ITradeNetwork {
 				canBuyEnergyAbove      : 10 * Math.max(RESERVE_CREDITS, 1e5),
 			},
 			orders   : {
-				timeout               : 500000, // Remove orders after this many ticks if remaining amount < cleanupAmount
-				cleanupAmount         : 100,	  // RemainingAmount threshold to remove expiring orders
+				/** Remove orders after this many ticks if remaining amount < cleanupAmount */
+				timeout               : 500000,
+				/** RemainingAmount threshold to remove expiring orders */
+				cleanupAmount         : 100,
 				maxEnergySellOrders   : 5,
 				maxEnergyBuyOrders    : 5,
 				maxOrdersPlacedPerTick: 7,
@@ -194,8 +197,9 @@ export class TraderJoe implements ITradeNetwork {
 		this.debug('Building market cache');
 		this.invalidateMarketCache();
 		const myActiveOrderIDs = _.map(_.filter(Game.market.orders, order => order.active), order => order.id);
+		// don't include tiny orders
 		const allOrders = Game.market.getAllOrders(order => !myActiveOrderIDs.includes(order.id) &&
-															order.amount >= orderThreshold); // don't include tiny orders
+			order.amount >= orderThreshold);
 		const groupedBuyOrders = _.groupBy(_.filter(allOrders, o => o.type == ORDER_BUY), o => o.resourceType);
 		const groupedSellOrders = _.groupBy(_.filter(allOrders, o => o.type == ORDER_SELL), o => o.resourceType);
 		for (const resourceType in groupedBuyOrders) {
@@ -229,7 +233,7 @@ export class TraderJoe implements ITradeNetwork {
 		// Compute stats for each resource
 		for (const resource in historyByResource) {
 			const resourceHistory = _.sortBy(historyByResource[resource], hist => hist.date); // oldest to newest
-			const prices = _.map(resourceHistory, hist => hist.avgPrice);
+			const _prices = _.map(resourceHistory, hist => hist.avgPrice);
 
 			// Get average price and standard deviation for today
 			const avg = _.last(resourceHistory).avgPrice;
@@ -261,10 +265,12 @@ export class TraderJoe implements ITradeNetwork {
 
 		for (const colony of _.sample(getAllColonies(), 5)) {
 			const room = colony.room.name;
-			const sellDirectPrice = maxBy(buyOrders, order => order.price - this.marginalTransactionPrice(order, room));
-			const buyDirectPrice = minBy(sellOrders, order => order.price + this.marginalTransactionPrice(order, room));
-			const sellOrderPrice = this.computeCompetitivePrice(ORDER_SELL, RESOURCE_ENERGY, room);
-			const buyOrderPrice = this.computeCompetitivePrice(ORDER_BUY, RESOURCE_ENERGY, room);
+			const _sellDirectPrice = maxBy(buyOrders,
+				order => order.price - this.marginalTransactionPrice(order, room));
+			const _buyDirectPrice = minBy(sellOrders,
+				order => order.price + this.marginalTransactionPrice(order, room));
+			const _sellOrderPrice = this.computeCompetitivePrice(ORDER_SELL, RESOURCE_ENERGY, room);
+			const _buyOrderPrice = this.computeCompetitivePrice(ORDER_BUY, RESOURCE_ENERGY, room);
 		}
 
 		// TODO: this implicitly requires knonwledge of energy price for this.marginalTransactionPrice() -> problematic?
@@ -351,7 +357,7 @@ export class TraderJoe implements ITradeNetwork {
 	 * Could be more optimized to include stuff like energy transfer cost, etc.
 	 * Returns Infinity if insufficient market data is present.
 	 */
-	private getPriceForBaseIngredients(resource: ResourceConstant/*, colony?: Colony*/): number {
+	private getPriceForBaseIngredients(resource: ResourceConstant): number {
 		const ingredients = Abathur.enumerateReactionBaseIngredients(resource);
 		if (ingredients.length > 0) { // a synthesizeable compound
 			return _.sum(ingredients, res =>
@@ -506,9 +512,8 @@ export class TraderJoe implements ITradeNetwork {
 
 			// No action needed
 			return OK;
-		}
-		// Create a new order
-		else {
+		} else {
+			// Create a new order
 			// Put a cap on the number of orders you can create per tick
 			if (this.ordersPlacedThisTick > TraderJoe.settings.market.orders.maxOrdersPlacedPerTick) {
 				return NO_ACTION;
@@ -881,9 +886,8 @@ export class TraderJoe implements ITradeNetwork {
 					} else {
 						msg += `(sold to: ???)`;
 					}
-				}
-				// Someone else is buying from by sell order
-				else {
+				} else {
+					// Someone else is buying from by sell order
 					const coststr = `[+${cost}c]`.padRight('[-10000.00c]'.length);
 					msg = coststr + ` sell order: ${printRoomName(transaction.from, true)} ${rightArrow} ` +
 						  `${transaction.amount} ${transaction.resourceType} ${rightArrow} ` +
@@ -920,9 +924,8 @@ export class TraderJoe implements ITradeNetwork {
 					} else {
 						msg += `(bought from: ???)`;
 					}
-				}
-				// Another person is selling to my buy order
-				else {
+				} else {
+					// Another person is selling to my buy order
 					const coststr = `[-${cost}c]`.padRight('[-10000.00c]'.length);
 					msg = coststr + ` buy order: ${printRoomName(transaction.from, true)} ${rightArrow} ` +
 						  `${transaction.amount} ${transaction.resourceType} ${rightArrow} ` +

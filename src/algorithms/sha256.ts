@@ -1,4 +1,4 @@
-/* tslint:disable:no-bitwise */
+/* eslint no-bitwise: "off" */
 
 const digestLength: number = 32;
 const blockSize: number = 64;

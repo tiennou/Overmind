@@ -215,7 +215,7 @@ export class RemoteUpgradingOverlord extends Overlord {
 			// Otherwise go to the dropoff point
 			const range = firstCarrierInQueue && carrier == firstCarrierInQueue ? 0 : 3;
 			if (!carrier.pos.inRangeToPos(depositPos, range)) {
-				const ret = carrier.goTo(depositPos);
+				const _ret = carrier.goTo(depositPos);
 				return;
 			}
 

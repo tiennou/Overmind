@@ -2,7 +2,7 @@ import {profile} from '../profiler/decorator';
 
 const MAX_ACTIVE_SEGMENTS = 10;
 
-interface SegmenterMemory {
+export interface SegmenterMemory {
 	activeSegments: number[];
 	activeForeignSegment: {
 		username: string,
@@ -11,8 +11,10 @@ interface SegmenterMemory {
 	publicSegments: number[];
 }
 
+type Segment = { [prop: string]: any };
+
 interface SegmenterCache {
-	segments: { [id: number]: { [prop: string]: any }; };
+	segments: { [id: number]: Segment; };
 	lastAccessed: { [id: number]: number | undefined };
 	lastModified: { [id: number]: number | undefined };
 }
@@ -29,10 +31,7 @@ export const SEGMENTS = {
 	assimilator          : 98,
 };
 
-if (!Memory.segmenter) {
-	Memory.segmenter = {};
-}
-_.defaultsDeep(Memory.segmenter, DefaultSegmenterMemory);
+Memory.segmenter = _.defaultsDeep(Memory.segmenter, DefaultSegmenterMemory);
 
 /**
  * The segmenter module controls public and private segment memory access
@@ -62,15 +61,15 @@ export class Segmenter {
 		}
 	}
 
-	static getSegment(id: number): { [prop: string]: any } {
+	static getSegment<T extends Segment>(id: number): T {
 		if ((this.cache.lastAccessed[id] || 0) > (this.cache.lastModified[id] || 0)) {
-			return this.cache.segments[id];
+			return <T>this.cache.segments[id];
 		}
 
 		const str = RawMemory.segments[id];
-		let segment: { [prop: string]: any };
+		let segment: Segment;
 		try {
-			segment = JSON.parse(str);
+			segment = <Segment>JSON.parse(str);
 		} catch (e) {
 			console.log(`Creating new object for RawMemory.segments[${id}].`);
 			segment = {};
@@ -81,21 +80,24 @@ export class Segmenter {
 		this.cache.segments[id] = segment;
 		this.cache.lastAccessed[id] = Game.time;
 
-		return this.cache.segments[id];
+		return <T>this.cache.segments[id];
 	}
 
-	static getSegmentProperty(id: number, key: string): any | undefined {
-		const segment = this.getSegment(id);
-		return segment[key];
+	static getSegmentProperty<T extends Segment>(id: number, key: keyof T): T[keyof T] | undefined {
+		const segment = this.getSegment<T>(id);
+		const obj = segment[key];
+		// eslint-disable-next-line
+		return obj;
 	}
 
-	static setSegment(id: number, value: { [prop: string]: any }): void {
+	static setSegment<T extends Segment>(id: number, value: T): void {
 		this.cache.segments[id] = value;
 		this.cache.lastModified[id] = Game.time;
 	}
 
-	static setSegmentProperty(id: number, key: string, value: any): void {
-		const segment = this.getSegment(id);
+	static setSegmentProperty<T extends Segment>(id: number,
+			key: keyof T, value: T[keyof T]): void {
+		const segment = this.getSegment<T>(id);
 		segment[key] = value;
 		this.cache.lastModified[id] = Game.time;
 	}
@@ -115,30 +117,33 @@ export class Segmenter {
 		}
 	}
 
-	static getForeignSegment(): { [prop: string]: any } | undefined {
+	static getForeignSegment<T extends Segment>(): T | undefined {
 		if (RawMemory.foreignSegment) {
-			let segment: { [prop: string]: any };
+			let segment: Segment;
 			try {
-				segment = JSON.parse(RawMemory.foreignSegment.data);
-				return segment;
+				segment = <Segment>JSON.parse(RawMemory.foreignSegment.data);
+				return <T>segment;
 			} catch (e) {
 				console.log(`Could not parse RawMemory.foreignSegment.data!`);
 			}
 		}
 	}
 
-	static getForeignSegmentProperty(key: string): any | undefined {
-		if (RawMemory.foreignSegment) {
-			let segment: { [prop: string]: any };
-			try {
-				segment = JSON.parse(RawMemory.foreignSegment.data);
-			} catch (e) {
-				segment = {};
-				console.log(`Could not parse RawMemory.foreignSegment.data!`);
+static getForeignSegmentProperty<T extends Segment>(key: keyof T): T[typeof key] | undefined {
+	if (RawMemory.foreignSegment) {
+		let segment: T;
+		try {
+			segment = <T>JSON.parse(RawMemory.foreignSegment.data);
+			if (segment) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return segment[key];
 			}
-			return segment[key];
+		} catch (e) {
+			console.log(`Could not parse RawMemory.foreignSegment.data!`);
 		}
 	}
+	return undefined;
+}
 
 	static run() {
 		// Set active, public, and foreign segments

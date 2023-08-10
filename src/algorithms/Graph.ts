@@ -1,38 +1,38 @@
-export class Vertex {
+export class Vertex<T> {
 	id: number | undefined;
-	value?: any;
-	edges: Edge[];
-	neighbors: Vertex[];
+	value?: T;
+	edges: Edge<T>[];
+	neighbors: Vertex<T>[];
 	data: { [property: string]: any };
 
-	constructor(value?: any) {
+	constructor(value?: T) {
 		this.value = value;
 		this.edges = [];
 		this.neighbors = [];
 		this.data = {};
 	}
 
-	adjacentTo(vertex: Vertex) {
+	adjacentTo(vertex: Vertex<T>) {
 		return this.neighbors.includes(vertex);
 	}
 }
 
-export class Edge {
-	vertices: [Vertex, Vertex];
+export class Edge<T> {
+	vertices: [Vertex<T>, Vertex<T>];
 	weight: number;
 	directional?: boolean;
 
-	constructor(vertex1: Vertex, vertex2: Vertex, weight?: number, directional?: boolean) {
+	constructor(vertex1: Vertex<T>, vertex2: Vertex<T>, weight?: number, directional?: boolean) {
 		this.vertices = [vertex1, vertex2];
 		this.weight = weight ? weight : 1;
 		this.directional = directional ? directional : false;
 	}
 }
 
-export class Graph {
+export class Graph<T> {
 
-	vertices: Vertex[];
-	edges: Edge[];
+	vertices: Vertex<T>[];
+	edges: Edge<T>[];
 	directed: boolean;
 	simple: boolean;
 	connected: boolean;
@@ -40,8 +40,8 @@ export class Graph {
 	private counter: number;
 
 	constructor(initializer: {
-		V?: Vertex[],
-		E?: Edge[],
+		V?: Vertex<T>[],
+		E?: Edge<T>[],
 		directed?: boolean,
 		simple?: boolean,
 		connected?: boolean
@@ -61,13 +61,13 @@ export class Graph {
 		this.counter = 0;
 	}
 
-	addVertex(vertex: Vertex) {
+	addVertex(vertex: Vertex<T>) {
 		this.vertices.push(vertex);
 		vertex.id = this.counter;
 		this.counter++;
 	}
 
-	removeVertex(vertex: Vertex) {
+	removeVertex(vertex: Vertex<T>) {
 		// Remove vertex from all of its neighbors
 		for (const neighbor of vertex.neighbors) {
 			_.remove(neighbor.neighbors, vertex);
@@ -78,7 +78,7 @@ export class Graph {
 		_.remove(this.vertices, vertex);
 	}
 
-	addEdge(edge: Edge) {
+	addEdge(edge: Edge<T>) {
 		const [vertex1, vertex2] = edge.vertices;
 		if (this.simple) {
 			if (vertex1.neighbors.includes(vertex2) || vertex2.neighbors.includes(vertex1)) {
@@ -94,7 +94,7 @@ export class Graph {
 		this.edges.push(edge);
 	}
 
-	removeEdge(edge: Edge) {
+	removeEdge(edge: Edge<T>) {
 		// Remove neighbors connected by this edge
 		const [vertex1, vertex2] = edge.vertices;
 		_.remove(vertex1.neighbors, vertex2);
@@ -106,15 +106,15 @@ export class Graph {
 		_.remove(this.edges, edge);
 	}
 
-	connect(vertex1: Vertex, vertex2: Vertex, weight?: number, directional?: boolean) {
+	connect(vertex1: Vertex<T>, vertex2: Vertex<T>, weight?: number, directional?: boolean) {
 		const edge = new Edge(vertex1, vertex2, weight, directional);
 		this.addEdge(edge);
 	}
 
-	disconnect(vertex1: Vertex, vertex2: Vertex) {
-		let edge = _.find(vertex1.edges, edge => _.includes(edge.vertices, vertex2));
+	disconnect(vertex1: Vertex<T>, vertex2: Vertex<T>) {
+		let edge = _.find<Edge<T>>(vertex1.edges, edge => _.includes(edge.vertices, vertex2));
 		if (!edge) {
-			edge = _.find(vertex2.edges, edge => _.includes(edge.vertices, vertex1));
+			edge = _.find<Edge<T>>(vertex2.edges, edge => _.includes(edge.vertices, vertex1));
 		}
 		if (!edge) {
 			throw new Error(`Could not find edge connecting vertices ${vertex1.id} and ${vertex2.id}!`);
@@ -124,8 +124,8 @@ export class Graph {
 	}
 }
 
-export class CompleteGraph extends Graph {
-	constructor(V: Vertex[]) {
+export class CompleteGraph<T> extends Graph<T> {
+	constructor(V: Vertex<T>[]) {
 		super({V: V, simple: true, connected: true});
 		for (const v1 of this.vertices) {
 			for (const v2 of this.vertices) {

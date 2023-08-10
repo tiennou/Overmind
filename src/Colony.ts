@@ -6,16 +6,16 @@ import {Roles} from './creepSetups/setups';
 import {DirectiveExtract} from './directives/resource/extract';
 import {DirectiveHarvest, HARVEST_MEM} from './directives/resource/harvest';
 import {HiveCluster} from './hiveClusters/_HiveCluster';
-import {CommandCenter} from './hiveClusters/commandCenter';
+import {CommandCenter, CommandCenterMemory} from './hiveClusters/commandCenter';
 import {EvolutionChamber} from './hiveClusters/evolutionChamber';
-import {Hatchery} from './hiveClusters/hatchery';
+import {Hatchery, HatcheryMemory} from './hiveClusters/hatchery';
 // import {PraiseSite} from './hiveClusters/praiseSite';
 import {SporeCrawler} from './hiveClusters/sporeCrawler';
 import {UpgradeSite} from './hiveClusters/upgradeSite';
 import {CombatIntel} from './intel/CombatIntel';
 import {Energetics} from './logistics/Energetics';
 import {LinkNetwork} from './logistics/LinkNetwork';
-import {LogisticsNetwork} from './logistics/LogisticsNetwork';
+import {LogisticsNetwork, LogisticsNetworkMemory} from './logistics/LogisticsNetwork';
 import {RoadLogistics} from './logistics/RoadLogistics';
 import {SpawnGroup} from './logistics/SpawnGroup';
 import {TransportRequestGroup} from './logistics/TransportRequestGroup';
@@ -45,8 +45,8 @@ export enum DEFCON {
 	safe               = 0,
 	invasionNPC        = 1,
 	boostedInvasionNPC = 2,
-	playerInvasion     = 2,
-	bigPlayerInvasion  = 3,
+	playerInvasion     = 3,
+	bigPlayerInvasion  = 4,
 }
 
 export function getAllColonies(): Colony[] {
@@ -85,7 +85,11 @@ export interface ColonyMemory {
 	};
 	barrierPlanner?: {
 		barrierCoordsPacked: string;
-	}
+	};
+	hatchery?: HatcheryMemory;
+	commandCenter?: CommandCenterMemory;
+	upgradeSite?: any;
+	logisticsNetwork?: LogisticsNetworkMemory;
 }
 
 // Outpost that is currently not being maintained
@@ -417,7 +421,8 @@ export class Colony {
 		$.set(this, 'spawns', () => _.sortBy(_.filter(this.room.spawns,
 													  spawn => spawn.my && spawn.isActive()), spawn => spawn.ref));
 		$.set(this, 'storage', () => this.room.storage && this.room.storage.isActive() ? this.room.storage : undefined);
-		$.set(this, 'terminal', () => this.room.terminal && this.room.terminal.isActive() ? this.room.terminal : undefined);
+		$.set(this, 'terminal',
+			() => this.room.terminal && this.room.terminal.isActive() ? this.room.terminal : undefined);
 		$.set(this, 'factory', () => this.room.factory && this.room.factory.isActive() ? this.room.factory : undefined);
 		$.set(this, 'labs', () => _.sortBy(_.filter(this.room.labs, lab => lab.my && lab.isActive()),
 										   lab => 50 * lab.pos.y + lab.pos.x));

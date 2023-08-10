@@ -1,4 +1,3 @@
-import {Colony} from '../../Colony';
 import {log} from '../../console/log';
 import {profile} from '../../profiler/decorator';
 import {Directive} from '../Directive';

@@ -68,7 +68,7 @@ export class DirectivePowerMine extends Directive {
 			return {};
 		}
 		if (!this._drops || _.keys(this._drops).length == 0) {
-			const drops = (this.pos.lookFor(LOOK_RESOURCES) || []) as Resource[];
+			const drops = this.pos.lookFor(LOOK_RESOURCES);
 			this._drops = _.groupBy(drops, drop => drop.resourceType);
 		}
 		return this._drops;

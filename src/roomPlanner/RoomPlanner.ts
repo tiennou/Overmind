@@ -259,7 +259,7 @@ export class RoomPlanner {
 		this.map[type].push(pos);
 	}
 
-	addComponent(componentName: 'hatchery' | 'commandCenter' | 'bunker', pos: RoomPosition, rotation = 0): void {
+	addComponent(componentName: 'hatchery' | 'commandCenter' | 'bunker', pos: RoomPosition, _rotation = 0): void {
 		this.placements[componentName] = pos;
 	}
 
@@ -290,7 +290,7 @@ export class RoomPlanner {
 				if (!pos) continue;
 				// let rotation: number = pos!.lookFor(LOOK_FLAGS)[0]!.memory.rotation || 0;
 				const componentMap = this.parseLayout(layout, level);
-				this.translateComponent(componentMap, anchor, pos!);
+				this.translateComponent(componentMap, anchor, pos);
 				// if (rotation != 0) this.rotateComponent(componentMap, pos!, rotation);
 				plan[name] = {
 					map     : componentMap,
@@ -538,7 +538,7 @@ export class RoomPlanner {
 																this.colony.room.mineral!,
 																this.colony.controller], thing => thing.pos);
 				const maxRange = 4;
-				return pos.findInRange(thingsBuildingLinksAndContainers, 4).length > 0;
+				return pos.findInRange(thingsBuildingLinksAndContainers, maxRange).length > 0;
 			}
 		}
 		return false;
@@ -599,7 +599,7 @@ export class RoomPlanner {
 		}
 
 		// Max buildings that can be placed each tick
-		const count = RoomPlanner.settings.maxSitesPerColony - this.colony.constructionSites.length;
+		const _count = RoomPlanner.settings.maxSitesPerColony - this.colony.constructionSites.length;
 
 		// Recall the appropriate map
 		this.recallMap();

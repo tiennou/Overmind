@@ -2,12 +2,11 @@ import {Colony} from '../Colony';
 import {log} from '../console/log';
 import {PowerCreepSetup} from '../creepSetups/powerSetups';
 import {profile} from '../profiler/decorator';
-import {getOverlord, setOverlord} from '../zerg/AnyZerg';
 import {CombatZerg} from '../zerg/CombatZerg';
 import {PowerZerg} from '../zerg/PowerZerg';
 import {PowerZergOperator} from '../zerg/PowerZergOperator';
 import {Zerg} from '../zerg/Zerg';
-import {MAX_SPAWN_REQUESTS, Overlord, OverlordInitializer, OverlordMemory, ZergOptions} from './Overlord';
+import {Overlord, OverlordInitializer, OverlordMemory, ZergOptions} from './Overlord';
 
 
 export interface PowerOverlordMemory extends OverlordMemory {
@@ -62,12 +61,12 @@ export abstract class PowerOverlord extends Overlord {
 		}
 	}
 
-	protected zerg(role: string, opts: ZergOptions = {}): Zerg[] {
+	protected zerg(_role: string, _opts: ZergOptions = {}): Zerg[] {
 		log.error(`${this.print}: cannot call PowerOverlord.zerg()!`);
 		return [];
 	}
 
-	protected combatZerg(role: string, opts: ZergOptions = {}): CombatZerg[] {
+	protected combatZerg(_role: string, _opts: ZergOptions = {}): CombatZerg[] {
 		log.error(`${this.print}: cannot call PowerOverlord.combatZerg()!`);
 		return [];
 	}
@@ -96,10 +95,10 @@ export abstract class PowerOverlord extends Overlord {
 
 	private synchronizePowerZerg(role: string, notifyWhenAttacked?: boolean): void {
 		// Synchronize the corresponding sets of Zerg
-		const zergNames = _.zipObject(_.map(this._powerZerg[role] || [],
-											zerg => [zerg.name, true])) as { [name: string]: boolean };
-		const creepNames = _.zipObject(_.map(this._powerCreeps[role] || [],
-											 creep => [creep.name, true])) as { [name: string]: boolean };
+		const zergNames = _.zipObject<Record<string, boolean>>(_.map(this._powerZerg[role] || [],
+											zerg => [zerg.name, true]));
+		const creepNames = _.zipObject<Record<string, boolean>>(_.map(this._powerCreeps[role] || [],
+											 creep => [creep.name, true]));
 		// Add new creeps which aren't in the _zerg record
 		for (const creep of this._powerCreeps[role] || []) {
 			if (!zergNames[creep.name]) {
@@ -131,14 +130,14 @@ export abstract class PowerOverlord extends Overlord {
 	/**
 	 * Requests a power creep
 	 */
-	protected requestPowerCreep(setup: PowerCreepSetup) {
+	protected requestPowerCreep(_setup: PowerCreepSetup) {
 		// TODO
 	}
 
 	/**
 	 * Wishlist of creeps to simplify spawning logic; includes automatic reporting
 	 */
-	protected wishlistPC(setup: PowerCreepSetup, quantity = 1): void {
+	protected wishlistPC(_setup: PowerCreepSetup, _quantity = 1): void {
 		// TODO
 	}
 

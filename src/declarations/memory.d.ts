@@ -16,12 +16,16 @@ interface RawMemory {
 interface Memory {
 	tick: number;
 	build: number;
-	assimilator: { users?: any };
-	Overmind: {};
+	Overmind: {
+		terminalNetwork?: import('logistics/TerminalNetwork_v2').TerminalNetworkMemory;
+		trader?: import('logistics/TradeNetwork').TraderMemory;
+		versionMigrator?: { versions: {} };
+		versionUpdater?: any;
+	};
 	profiler: any;
 	overseer: any;
-	segmenter: any;
-	roomIntel: any;
+	segmenter: import('memory/Segmenter').SegmenterMemory;
+	roomIntel: import('intel/RoomIntel').RoomIntelMemory
 	colonies: { [name: string]: import("Colony").ColonyMemory };
 	creeps: { [name: string]: CreepMemory; };
 	powerCreeps: {[name: string]: PowerCreepMemory};
@@ -34,11 +38,14 @@ interface Memory {
 		persistent:{
 			lastGlobalReset?: number;
 			lastMemoryReset?: number;
+			lastErrorTick?: number;
 			globalAge?: number;
 			avgCPU?: number;
 			empireAge?: number;
 			build?: number;
 			lastBucket?: number;
+			terminalNetwork?: import('logistics/TerminalNetwork_v2').TerminalNetworkStats;
+			trader?: import('logistics/TradeNetwork').TraderStats;
 		};
 		"cpu.heapStatistics"?: HeapStatistics;
 	};
@@ -46,7 +53,7 @@ interface Memory {
 	// suspend?: number;
 	resetBucket?: boolean;
 	haltTick?: number;
-	combatPlanner: any;
+	combatPlanner: import('strategy/CombatPlanner').CombatPlannerMemory;
 	playerCreepTracker: { // TODO revisit for a better longterm solution
 		[playerName: string]: CreepTracker
 	};
@@ -63,7 +70,7 @@ interface Memory {
 	settings: {
 		signature: string;
 		operationMode: operationMode;
-		log: any;
+		log: import('console/log').LogSettings;
 		enableVisuals: boolean;
 		allies: string[];
 		resourceCollectionMode: resourceCollectionMode;
@@ -86,6 +93,8 @@ interface Memory {
 		}
 	};
 
+	remoteDebugger: import('debug/remoteDebugger').DebuggerMemory;
+	nukePlanner: import('strategy/NukePlanner').NukePlannerMemory;
 	[otherProperty: string]: any;
 }
 
@@ -154,7 +163,17 @@ interface CreepMemory {
 }
 
 interface MoveData {
-	state: any[];
+	state: [
+		STATE_PREV_X: number,
+		STATE_PREV_Y: number,
+		STATE_CPU: number,
+		STATE_STUCK: number,
+		STATE_DEST_X: number,
+		STATE_DEST_Y: number,
+		STATE_DEST_ROOMNAME: string,
+		STATE_CURRENT_X?: number,
+		STATE_CURRENT_Y?: number,
+	];
 	path: string;
 	roomVisibility: { [roomName: string]: boolean };
 	delay?: number;
@@ -211,6 +230,10 @@ interface FlagMemory {
 	// waypoints?: string[];
 	allowPortals?: boolean;
 	recalcColonyOnTick?: number;
+
+	combatIntel?: any;
+	sourceReaper?: any;
+	powerDrill?: any;
 }
 
 // Room memory key aliases to minimize memory size

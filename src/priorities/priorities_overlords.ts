@@ -1,7 +1,7 @@
 /**
  * Default ordering for processing spawning requests and prioritizing overlords
  */
-export let OverlordPriority = {
+export const OverlordPriority = {
 	emergency: {				// Colony-wide emergencies such as a catastrohic crash
 		bootstrap: 0
 	},

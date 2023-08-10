@@ -3,13 +3,12 @@
 import {log} from '../console/log';
 import {Segmenter, SEGMENTS} from '../memory/Segmenter';
 import {alignedNewline} from '../utilities/stringConstants';
-import {color} from '../utilities/utils';
 import {MUON, MY_USERNAME} from '../~settings';
 
 const DEBUG_TIMEOUT = 1000;
 const NO_COMMAND = 'No command';
 
-interface DebuggerMemory {
+export interface DebuggerMemory {
 	username: string | undefined;
 	enabled: boolean;
 	expiration: number;
@@ -25,7 +24,10 @@ const defaultDebuggerMemory: DebuggerMemory = {
 	response  : undefined,
 };
 
-const DEBUGGER = color('[DEBUGGER]', '#ff00ff');
+interface DebuggerSegment {
+	command?: string;
+	response?: string;
+}
 
 /**
  * Debugging tool which lets me remotely debug other Overmind players' code by communicating through public memory
@@ -34,10 +36,7 @@ const DEBUGGER = color('[DEBUGGER]', '#ff00ff');
 export class RemoteDebugger {
 
 	constructor() {
-		if (!Memory.remoteDebugger) {
-			Memory.remoteDebugger = {};
-		}
-		_.defaultsDeep(Memory.remoteDebugger, defaultDebuggerMemory);
+		Memory.remoteDebugger = _.defaultsDeep({}, Memory.remoteDebugger, defaultDebuggerMemory);
 	}
 
 	private get memory(): DebuggerMemory {
@@ -59,7 +58,7 @@ export class RemoteDebugger {
 	 * Fetch the response from the debugee
 	 */
 	private fetchResponse_master(): string | undefined {
-		const response = Segmenter.getForeignSegmentProperty('response');
+		const response = Segmenter.getForeignSegmentProperty<DebuggerSegment>('response');
 		return response;
 	}
 
@@ -67,9 +66,10 @@ export class RemoteDebugger {
 	 * Execute the commands you are given
 	 */
 	private fetchCommands_slave(): void {
-		const cmd = Segmenter.getForeignSegmentProperty('command');
+		const cmd = Segmenter.getForeignSegmentProperty<DebuggerSegment>('command');
 		if (cmd) {
 			log.info(`[DEBUGGER] Executing command: ${cmd}`);
+			// eslint-disable-next-line
 			const response = eval(cmd);
 			log.info(`[DEBUGGER] Relaying response: ${response}`);
 			this.memory.response = JSON.stringify(response);

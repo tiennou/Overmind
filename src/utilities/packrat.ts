@@ -37,7 +37,8 @@
  *
  */
 
-/* tslint:disable no-bitwise prefer-for-of */
+/* eslint no-bitwise: "off" */
+/* eslint @typescript-eslint/prefer-for-of: "off" */
 
 
 /**
@@ -208,7 +209,6 @@ export function unpackCoordListAsPosList(packedCoords: string, roomName: string)
 	return positions;
 }
 
-
 PERMACACHE._packedRoomNames = PERMACACHE._packedRoomNames || {};
 PERMACACHE._unpackedRoomNames = PERMACACHE._unpackedRoomNames || {};
 
@@ -335,43 +335,27 @@ export function unpackPosList(chars: string): RoomPosition[] {
 	return posList;
 }
 
-declare global {
-	var packId: any;
-	var unpackId: any;
-	var packIdList: any;
-	var unpackIdList: any;
-	var packCoord: any;
-	var unpackCoord: any;
-	var unpackCoordAsPos: any;
-	var packCoordList: any;
-	var unpackCoordList: any;
-	var unpackCoordListAsPosList: any;
-	var packPos: any;
-	var unpackPos: any;
-	var packPosList: any;
-	var unpackPosList: any;
-}
-
-
 // Useful to register these functions on global
-global.packId = packId;
-global.unpackId = unpackId;
-global.packIdList = packIdList;
-global.unpackIdList = unpackIdList;
-global.packCoord = packCoord;
-global.unpackCoord = unpackCoord;
-global.unpackCoordAsPos  = unpackCoordAsPos;
-global.packCoordList = packCoordList;
-global.unpackCoordList = unpackCoordList;
-global.unpackCoordListAsPosList  = unpackCoordListAsPosList;
-global.packPos = packPos;
-global.unpackPos = unpackPos;
-global.packPosList = packPosList;
-global.unpackPosList = unpackPosList;
-
-
-
-
+const globalFuncs = [
+	packId,
+	unpackId,
+	packIdList,
+	unpackIdList,
+	packCoord,
+	unpackCoord,
+	unpackCoordAsPos,
+	packCoordList,
+	unpackCoordList,
+	unpackCoordListAsPosList,
+	packPos,
+	unpackPos,
+	packPosList,
+	unpackPosList,
+];
+for (const func of globalFuncs) {
+	// @ts-expect-error global definition
+	global[func.name] = func;
+}
 export class PackratTests {
 
 	static testIdPacker() {
@@ -635,7 +619,3 @@ export class PackratTests {
 }
 
 global.PackratTests = PackratTests;
-
-
-
-

@@ -163,7 +163,8 @@ export class Hatchery extends HiveCluster {
 			// Add in expected time for whatever else needs to be spawned, cumulative up to each priority
 			for (const priority of _.sortBy(this.productionPriorities)) {
 				for (const request of this.productionQueue[priority]) {
-					const {body, boosts} = request.setup.create(this.colony, true); // use cached setup as estimate
+					// use cached setup as estimate
+					const {body, boosts: _boosts} = request.setup.create(this.colony, true);
 					waitTime += CREEP_SPAWN_TIME * body.length / this.spawns.length;
 				}
 				waitTimes[priority] = waitTime;
@@ -307,8 +308,8 @@ export class Hatchery extends HiveCluster {
 
 			if (result == OK) {
 				// Creep has been successfully spawned; add cost into profiling
-				const overlordRef = protoCreep.memory[MEM.OVERLORD];
-				const overlord = Overmind.overlords[overlordRef] as Overlord | undefined;
+				const overlordRef = <string>protoCreep.memory[MEM.OVERLORD];
+				const overlord = Overmind.overlords[overlordRef];
 				if (overlord) {
 					if (overlord.memory[MEM.STATS]) {
 						overlord.memory[MEM.STATS]!.spawnCost += bodyCost(protoCreep.body);

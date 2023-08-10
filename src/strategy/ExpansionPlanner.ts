@@ -86,13 +86,13 @@ export class ExpansionPlanner implements IExpansionPlanner {
 	}
 
 	private getBestExpansionRoomFor(colony: Colony): { roomName: string, score: number } | undefined {
-		const allColonyRooms = _.zipObject(_.map(getAllColonies(),
-												 col => [col.room.name, true])) as { [roomName: string]: boolean };
-		const allOwnedMinerals = _.map(getAllColonies(), col => col.room.mineral!.mineralType) as MineralConstant[];
+		const allColonyRooms = _.zipObject<Record<string, Colony>>(_.map(getAllColonies(),
+												 col => [col.room.name, true]));
+		const allOwnedMinerals = _.map(getAllColonies(), col => col.room.mineral!.mineralType);
 		let bestRoom: string = '';
 		let bestScore: number = -Infinity;
 		for (const roomName in colony.memory.expansionData.possibleExpansions) {
-			let score = colony.memory.expansionData.possibleExpansions[roomName] as number | boolean;
+			let score = colony.memory.expansionData.possibleExpansions[roomName];
 			if (typeof score != 'number') continue;
 			// Compute modified score
 			if (score + MAX_SCORE_BONUS > bestScore) {
@@ -124,7 +124,8 @@ export class ExpansionPlanner implements IExpansionPlanner {
 				}
 
 				// Update best choices
-				if (score > bestScore && Game.map.getRoomStatus(roomName).status === Game.map.getRoomStatus(colony.room.name).status) {
+				if (score > bestScore &&
+					Game.map.getRoomStatus(roomName).status === Game.map.getRoomStatus(colony.room.name).status) {
 					bestScore = score;
 					bestRoom = roomName;
 				}

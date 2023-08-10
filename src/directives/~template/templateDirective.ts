@@ -99,7 +99,7 @@ export class DirectiveTemplate extends Directive {
 	 * is used elsewhere, make it a static method. Helper methods should be placed above the phase in which they are
 	 * called. (So if it is called in run(), it should go between init and run)
 	 */
-	static shouldDoSomethingToPos(pos: RoomPosition): boolean {
+	static shouldDoSomethingToPos(_pos: RoomPosition): boolean {
 		return false;
 	}
 

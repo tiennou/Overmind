@@ -17,8 +17,8 @@ export class Matcher {
 		this.womenPrefs = womenPrefs;
 		this.men = _.keys(menPrefs);
 		this.women = _.keys(womenPrefs);
-		this.menFree = _.zipObject(this.men, _.map(this.men, man => true));
-		this.womenFree = _.zipObject(this.women, _.map(this.women, woman => true));
+		this.menFree = _.zipObject(this.men, _.map(this.men, () => true));
+		this.womenFree = _.zipObject(this.women, _.map(this.women, () => true));
 		this.couples = {};
 	}
 

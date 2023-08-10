@@ -229,7 +229,7 @@ export class Visualizer {
 		const style = this.textStyle();
 
 		// Determine column locations
-		const columns = Array(_.first(data).length).fill(0);
+		const columns = <number[]>Array(_.first(data).length).fill(0);
 		for (const entries of data) {
 			for (let i = 0; i < entries.length - 1; i++) {
 				columns[i] = Math.max(columns[i], entries[i].length);
@@ -248,7 +248,7 @@ export class Visualizer {
 		let dy = 0;
 		for (const entries of data) {
 			let dx = 0;
-			for (const i in entries) {
+			for (let i = 0; i < entries.length ; i++) {
 				vis.text(entries[i], pos.x + dx, pos.y + dy, style);
 				dx += CHAR_WIDTH * (columns[i] + colPadding);
 			}

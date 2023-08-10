@@ -2,7 +2,7 @@
  * Returns destination.pos if destination has a position, or destination if destination is a RoomPosition
  */
 export function normalizePos(destination: _HasRoomPosition | RoomPosition): RoomPosition {
-	return (<any>destination).pos || destination;
+	return (<_HasRoomPosition>destination).pos || destination;
 }
 
 /**
@@ -34,7 +34,7 @@ export function getCreepWeightInfo(creep: Creep, analyzeCarry = true): { move: n
 	// Account for boosts
 	for (const part of creep.body) {
 		if (part.type == MOVE && part.boost) {
-			bodyParts.move += (BOOSTS.move[<'ZO' | 'ZHO2' | 'XZHO2'>part.boost].fatigue - 1);
+			bodyParts.move += (BOOSTS.move[part.boost].fatigue - 1);
 		}
 	}
 	return bodyParts as { move: number, weighted: number, [other: string]: number };

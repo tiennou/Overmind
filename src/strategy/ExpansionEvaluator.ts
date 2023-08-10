@@ -1,7 +1,7 @@
 import {log} from '../console/log';
 import {bodyCost} from '../creepSetups/CreepSetup';
 import {CombatSetups, Setups} from '../creepSetups/setups';
-import {RoomIntel, SourceInfo} from '../intel/RoomIntel';
+import {RoomIntel} from '../intel/RoomIntel';
 import {Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
 import {BasePlanner} from '../roomPlanner/BasePlanner';
@@ -13,8 +13,6 @@ import {
 	ROOMTYPE_CROSSROAD,
 	ROOMTYPE_SOURCEKEEPER
 } from '../utilities/Cartographer';
-import set = Reflect.set;
-import { OvermindConsole } from 'console/Console';
 import { MiningOverlord } from 'overlords/mining/miner';
 
 export const EXPANSION_EVALUATION_FREQ = 500;
@@ -86,7 +84,7 @@ export class ExpansionEvaluator {
 	 */
 	static computeTheoreticalMiningEfficiency(dropoffLocation: RoomPosition, room: string) {
 		const type = Cartographer.roomType(room);
-		const upkeepEnergyCost = 0; // todo later can factor in road damage from all creeps moving
+		const _upkeepEnergyCost = 0; // todo later can factor in road damage from all creeps moving
 
 		const data : ExpansionEvaluatorRoomEfficiency = {
 			room: room,
@@ -157,7 +155,8 @@ export class ExpansionEvaluator {
 					data.unreachableController = true;
 				} else {
 					const claimPower = _.filter(setup, (part: BodyPartConstant) => part == CLAIM).length;
-					const effectiveLifetimeReservationGeneration = (CREEP_CLAIM_LIFE_TIME - controllerPath.path.length) * claimPower;
+					const effectiveLifetimeReservationGeneration =
+						(CREEP_CLAIM_LIFE_TIME - controllerPath.path.length) * claimPower;
 					data.creepEnergyCost += bodyCost(setup)/effectiveLifetimeReservationGeneration;
 					data.spawnTimeCost += setup.length*CREEP_SPAWN_TIME/effectiveLifetimeReservationGeneration;
 					data.cpuCost += 0.2 * CREEP_CLAIM_LIFE_TIME / effectiveLifetimeReservationGeneration;
@@ -175,7 +174,8 @@ export class ExpansionEvaluator {
 				const effectiveCreepUptime = (CREEP_LIFE_TIME - skPath.path.length);
 				data.creepEnergyCost += bodyCost(setup)/effectiveCreepUptime;
 				data.spawnTimeCost += setup.length*CREEP_SPAWN_TIME/effectiveCreepUptime;
-				//  Increased cost, always moving, frequent attack/move+heal intents, and during overlap 2nd creep moving to room
+				// Increased cost, always moving, frequent attack/move+heal intents,
+				// and during overlap 2nd creep moving to room
 				data.cpuCost += 0.2 + 0.15 + 0.2*(1-effectiveCreepUptime/CREEP_LIFE_TIME);
 				// TODO examine for accuracy Increased cost, frequent attack/move+heal intents
 			}
@@ -278,8 +278,8 @@ export class ExpansionEvaluator {
 		let sourceCount = 0;
 		const roomsByScore = _.sortBy(_.keys(outpostScores), roomName => -1 * outpostScores[roomName]);
 		for (const roomName of roomsByScore) {
-			if (sourceCount > 9 /*Colony.settings.remoteSourcesByLevel[8]*/) break;
-			const factor = roomName == room.name ? 2 : 1; // weight owned room scores more heavily
+			if (sourceCount > 9 /* Colony.settings.remoteSourcesByLevel[8]*/) break;
+			const _factor = roomName == room.name ? 2 : 1; // weight owned room scores more heavily
 			totalScore += outpostScores[roomName];
 			sourceCount += outpostSourcePositions[roomName].length;
 		}

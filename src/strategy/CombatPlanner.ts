@@ -35,7 +35,7 @@ export interface EnemyProfile {
 
 }
 
-const THREAT_EXPIRATION = 100;
+const _THREAT_EXPIRATION = 100;
 const THREAT_DECAY_TIMESCALE = 100;
 const SIEGE_ANALYSIS_EXPIRATION = 2500;
 
@@ -53,7 +53,7 @@ export interface SiegeAnalysis {
 	expiration: number;
 }
 
-interface CombatPlannerMemory {
+export interface CombatPlannerMemory {
 
 	threats: {
 		[directiveRef: string]: Threat
@@ -97,7 +97,7 @@ export class CombatPlanner {
 		return Memory.combatPlanner;
 	}
 
-	private static computeHitsToSpawn(room: Room): number {
+	private static computeHitsToSpawn(_room: Room): number {
 		// TODO
 		return 0;
 	}
@@ -216,14 +216,14 @@ export class CombatPlanner {
 	}
 
 	static getRoomLayout(room: Room): RoomLayout {
-		let isBunker, isExposed, isInnerWall, isEdgeWall = false;
+		let isExposed, isInnerWall, isEdgeWall = false;
 		const exitPositions = RoomIntel.getExitPositions(room.name);
 		const terrain = Game.map.getRoomTerrain(room.name);
 
 		// Room is bunker if >80% of hostile structures are covered by ramparts
 		const hostileStructures = room.find(FIND_HOSTILE_STRUCTURES);
 		const hostileStructuresInRampart = _.filter(hostileStructures, s => s.pos.lookForStructure(STRUCTURE_RAMPART));
-		isBunker = (hostileStructuresInRampart.length / hostileStructures.length >= 0.8);
+		const isBunker = (hostileStructuresInRampart.length / hostileStructures.length >= 0.8);
 
 		// Room is edgewall if every exit tile has wall or barrier at 2 range to left/right/top/bottom
 		const walledOffExitTiles = _.filter(exitPositions, pos => {
@@ -298,7 +298,7 @@ export class CombatPlanner {
 		const owner = room.owner;
 		const level = room.controller ? room.controller.level : 0;
 		const towerDamageSamplePositions = _.map(_.range(20),
-												 i => new RoomPosition(_.random(1, 48), _.random(1, 48), room.name));
+												 () => new RoomPosition(_.random(1, 48), _.random(1, 48), room.name));
 		const maxTowerDamage = _.max(_.map(towerDamageSamplePositions,
 										   pos => CombatIntel.towerDamageAtPos(pos, true)));
 		const minBarrierHits = room.barriers.length > 0 ? _.min(_.map(room.barriers, b => b.hits)) : 0;

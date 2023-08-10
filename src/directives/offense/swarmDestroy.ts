@@ -4,6 +4,11 @@ import {profile} from '../../profiler/decorator';
 import {Visualizer} from '../../visuals/Visualizer';
 import {Directive} from '../Directive';
 
+export interface DirectiveSwarmDestroyMemory extends FlagMemory {
+	amount: number;
+	[swarmName: string]: any;
+}
+
 /**
  * Spawns a 2x2 squad of coordinated creeps to destroy a room
  */
@@ -15,6 +20,7 @@ export class DirectiveSwarmDestroy extends Directive {
 	static secondaryColor = COLOR_RED;
 	static requiredRCL = 6;
 
+	memory: DirectiveSwarmDestroyMemory;
 	overlords: {
 		destroy: SwarmDestroyerOverlord;
 	};

@@ -1,5 +1,3 @@
-import {log} from '../../console/log';
-import {CombatCreepSetup} from '../../creepSetups/CombatCreepSetup';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
 import {DirectiveInvasionDefense} from '../../directives/defense/invasionDefense';
 import {OverlordPriority} from '../../priorities/priorities_overlords';

@@ -1,4 +1,3 @@
-import {CombatCreepSetup} from '../../creepSetups/CombatCreepSetup';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
 import {DirectiveOutpostDefense} from '../../directives/defense/outpostDefense';
 import {CombatIntel, CombatPotentials} from '../../intel/CombatIntel';

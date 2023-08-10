@@ -49,7 +49,7 @@ export class RandomWalkerScoutOverlord extends Overlord {
 
 		const roomStatus = Game.map.getRoomStatus(scout.room.name);
 
-		let neighboringRooms = <string[]>_.values(Game.map.describeExits(scout.pos.roomName));
+		let neighboringRooms = _.values<string>(Game.map.describeExits(scout.pos.roomName));
 		neighboringRooms = _.shuffle(neighboringRooms);
 
 		// Pick a new random room from the neighboring rooms, making sure they have compatible room status

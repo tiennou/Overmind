@@ -221,7 +221,7 @@ export class Abathur {
 	 * e.g. Abathur.enumerateReactionBaseIngredients("XGH2O") = Z,K,U,L,H,O,H,X
 	 */
 	static enumerateReactionBaseIngredients(mineral: ResourceConstant): ResourceConstant[] {
-		if ((<ResourceConstant[]>BASE_RESOURCES).includes(mineral)) {
+		if ((BASE_RESOURCES).includes(mineral)) {
 			return [mineral];
 		} else if (REAGENTS[mineral]) {
 			return Abathur.enumerateReactionBaseIngredients(REAGENTS[mineral][0])
@@ -306,7 +306,7 @@ export class Abathur {
 	}
 
 	private static canReceiveBasicMineralsForReaction(mineralQuantities: { [resourceType: string]: number },
-													  amount: number): boolean {
+													  _amount: number): boolean {
 		for (const mineral in mineralQuantities) {
 			if (!Abathur.someColonyHasExcess(<ResourceConstant>mineral, mineralQuantities[mineral])) {
 				return false;
@@ -332,8 +332,9 @@ export class Abathur {
 		return true;
 	}
 
-	private static stockAmount(resource: ResourceConstant): number {
-		return 0; // (wantedStockAmounts[resource] || priorityStockAmounts[resource] || baseStockAmounts[resource] || 0);
+	private static stockAmount(_resource: ResourceConstant): number {
+		return 0;
+		// (wantedStockAmounts[resource] || priorityStockAmounts[resource] || baseStockAmounts[resource] || 0);
 	}
 
 	private static hasExcess(colony: Colony, mineralType: ResourceConstant, excessAmount = 0): boolean {
@@ -355,7 +356,7 @@ export class Abathur {
 				const amountOwned = colony.assets[resourceType];
 				const amountNeeded = stocks[resourceType];
 				if (amountOwned < amountNeeded) { // if there is a shortage of this resource
-					const reactionQueue = Abathur.buildReactionQueue(colony, <ResourceConstant>resourceType,
+					const reactionQueue = Abathur.buildReactionQueue(colony, resourceType,
 																	 amountNeeded - amountOwned, verbose);
 
 					const missingBaseMinerals = Abathur.getMissingBasicMinerals(colony, reactionQueue);
@@ -364,7 +365,10 @@ export class Abathur {
 						|| this.canBuyBasicMineralsForReaction(missingBaseMinerals)) {
 						return reactionQueue;
 					} else {
-						if (verbose) console.log(`Missing minerals for ${resourceType}: ${JSON.stringify(missingBaseMinerals)}`);
+						if (verbose) {
+							console.log(`Missing minerals for ${resourceType}: `
+								+ `${JSON.stringify(missingBaseMinerals)}`);
+						}
 					}
 				}
 			}
@@ -379,7 +383,8 @@ export class Abathur {
 	 */
 	private static buildReactionQueue(colony: Colony, mineral: ResourceConstant, amount: number,
 									  verbose = false): Reaction[] {
-		amount = Abathur.settings.batchSize; // minMax(amount, Abathur.settings.minBatchSize, Abathur.settings.maxBatchSize);
+		// amount = minMax(amount, Abathur.settings.minBatchSize, Abathur.settings.maxBatchSize);
+		amount = Abathur.settings.batchSize;
 		if (verbose) console.log(`Abathur@${colony.room.print}: building reaction queue for ${amount} ${mineral}`);
 		let reactionQueue: Reaction[] = [];
 		for (const ingredient of Abathur.enumerateReactionProducts(mineral)) {

@@ -1,3 +1,5 @@
+/* eslint no-var: "off" */
+
 declare const require: (module: string) => any;
 
 declare const MARKET_FEE = 300; // missing in the typed-screeps declarations
@@ -21,7 +23,15 @@ declare function gc(quick?: boolean): void;
 
 declare var _cache: IGlobalCache;
 
-declare var PERMACACHE: { [key: string]: any };
+declare var PERMACACHE: {
+	bodypartCounts: { [creep: Id<Creep>]: Record<BodyPartConstant, number> };
+	terrainMatrices: { [key: string]: CostMatrix };
+	isPlayer: { [id: Id<Creep>]: boolean };
+	structureWalkability: { [id: Id<ConstructionSite<BuildableStructureConstant>>]: boolean };
+	cartographerRoomTypes: { [roomName: string]: import('utilities/Cartographer').RoomType };
+	_packedRoomNames: { [roomName: string]: string };
+	_unpackedRoomNames: { [roomName: string]: string };
+};
 
 declare var __DEFAULT_OVERMIND_SIGNATURE__: string;
 
@@ -31,6 +41,9 @@ declare var Overmind: IOvermind;
 
 declare var Memory: Memory;
 declare var Assimilator: IAssimilator;
+
+declare var TerminalNetwork: import('logistics/TerminalNetwork_v2').TerminalNetworkV2;
+declare var TradeNetwork: import('logistics/TradeNetwork').TraderJoe;
 
 declare var Cartographer: import('utilities/Cartographer').Cartographer;
 declare var Pathing: import('movement/Pathing').Pathing;
@@ -273,7 +286,7 @@ interface PathFinderGoal {
 interface ProtoCreep {
 	body: BodyPartConstant[];
 	name: string;
-	memory: any;
+	memory: CreepMemory;
 }
 
 interface ProtoCreepOptions {

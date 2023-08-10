@@ -178,11 +178,11 @@ export abstract class Overlord {
 			}
 			if (this.memory.suspend.condition) {
 				log.error('NOT IMPLEMENTED'); // TODO
-				const {fn, freq} = this.memory.suspend.condition;
-				if (Game.time % freq == 0) {
-					const condition = new Function(fn);
-					// TODO - finish this
-				}
+				// const {fn, freq} = this.memory.suspend.condition;
+				// if (Game.time % freq == 0) {
+				// 	const condition = new Function(fn);
+				// 	// TODO - finish this
+				// }
 			}
 		}
 		return false;
@@ -206,7 +206,7 @@ export abstract class Overlord {
 	get profilingActive(): boolean {
 		if (this.memory[MEM.STATS]) {
 			if (this.memory[MEM.STATS]!.end) {
-				if (Game.time > this.memory[MEM.STATS]!.end!) {
+				if (Game.time > this.memory[MEM.STATS]!.end) {
 					this.finishProfiling();
 					return false;
 				}
@@ -263,11 +263,11 @@ export abstract class Overlord {
 	}
 
 	private synchronizeZerg(role: string, notifyWhenAttacked?: boolean): void {
-		// Synchronize the corresponding sets of Zerg
-		const zergNames = _.zipObject(_.map(this._zerg[role] || [],
-											zerg => [zerg.name, true])) as { [name: string]: boolean };
-		const creepNames = _.zipObject(_.map(this._creeps[role] || [],
-											 creep => [creep.name, true])) as { [name: string]: boolean };
+		// Synchronize the corresponding sets of Zerg;
+		const zergNames = _.zipObject<Record<string, boolean>>(_.map(this._zerg[role] || [],
+											zerg => [zerg.name, true]));
+		const creepNames = _.zipObject<Record<string, boolean>>(_.map(this._creeps[role] || [],
+											 creep => [creep.name, true]));
 		// Add new creeps which aren't in the _zerg record
 		for (const creep of this._creeps[role] || []) {
 			if (!zergNames[creep.name]) {
@@ -307,10 +307,10 @@ export abstract class Overlord {
 
 	private synchronizeCombatZerg(role: string, notifyWhenAttacked?: boolean): void {
 		// Synchronize the corresponding sets of CombatZerg
-		const zergNames = _.zipObject(_.map(this._combatZerg[role] || [],
-											zerg => [zerg.name, true])) as { [name: string]: boolean };
-		const creepNames = _.zipObject(_.map(this._creeps[role] || [],
-											 creep => [creep.name, true])) as { [name: string]: boolean };
+		const zergNames = _.zipObject<Record<string, boolean>>(_.map(this._combatZerg[role] || [],
+											zerg => [zerg.name, true]));
+		const creepNames = _.zipObject<Record<string, boolean>>(_.map(this._creeps[role] || [],
+											 creep => [creep.name, true]));
 		// Add new creeps which aren't in the _combatZerg record
 		for (const creep of this._creeps[role] || []) {
 			if (!zergNames[creep.name]) {
@@ -517,7 +517,7 @@ export abstract class Overlord {
 	/**
 	 * Contains logic for shutting down the overlord
 	 */
-	finish(successful: boolean): void {
+	finish(_successful: boolean): void {
 		for (const zerg of this.getAllZerg()) {
 			zerg.reassign(this.colony.overlords.default);
 		}
@@ -541,9 +541,10 @@ export abstract class Overlord {
 			const neededBoostResources = _.keys(neededBoosts);
 
 			const [moveBoosts, nonMoveBoosts] = _.partition(neededBoostResources,
-															resource => Abathur.isMoveBoost(<ResourceConstant>resource));
+				resource => Abathur.isMoveBoost(<ResourceConstant>resource));
 
-			for (const boost of [...moveBoosts, ...nonMoveBoosts]) { // try to get move boosts first if they're available
+			// try to get move boosts first if they're available
+			for (const boost of [...moveBoosts, ...nonMoveBoosts]) {
 				const boostLab = _.find(evolutionChamber.boostingLabs, lab => lab.mineralType == boost);
 				if (boostLab) {
 					zerg.task = Tasks.getBoosted(boostLab, <ResourceConstant>boost);

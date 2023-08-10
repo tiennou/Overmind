@@ -11,6 +11,7 @@ global.derefRoomPosition = function(protoPos: ProtoPos): RoomPosition {
 
 global.NO_ACTION = 1;
 
+// @ts-expect-error partial initialization
 global.PERMACACHE = {};
 
 // // Assign values to the memory key aliases declared in memory.d.ts

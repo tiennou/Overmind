@@ -26,18 +26,7 @@ const ACTION_PIPELINES: string[][] = [
 	// ['upgradeController', 'build', 'repair', 'withdraw', 'transfer', 'drop'],
 ];
 
-interface ParkingOptions {
-	range: number;
-	exactRange: boolean;
-	offroad: boolean;
-}
-
-interface FleeOptions {
-	dropEnergy?: boolean;
-	invalidateTask?: boolean;
-}
-
-const RANGES = {
+const _RANGES = {
 	BUILD   : 3,
 	REPAIR  : 3,
 	TRANSFER: 1,
@@ -249,9 +238,11 @@ export class Zerg extends AnyZerg {
 	}
 
 	goDismantle(target: Structure) {
-		if (this.dismantle(target) == ERR_NOT_IN_RANGE) {
-			this.goTo(target);
+		const res = this.dismantle(target);
+		if (res == ERR_NOT_IN_RANGE) {
+			return this.goTo(target);
 		}
+		return res;
 	}
 
 	// drop(resourceType: ResourceConstant, amount?: number) {

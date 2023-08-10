@@ -197,6 +197,3 @@ Object.defineProperty(Room.prototype, 'walls', {
 	},
 	configurable: true,
 });
-
-
-

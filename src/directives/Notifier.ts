@@ -1,8 +1,8 @@
-import {log} from '../console/log';
 import {printRoomName} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 
 export enum NotifierPriority {
+	Fatal    = -1,
 	Critical = 0,
 	High     = 1,
 	Normal   = 2,
@@ -52,9 +52,9 @@ export class Notifier {
 	}
 
 	// TODO: finish
-	email(message: string, roomName: string, duration = 100, email = false) {
-		log.alert(printRoomName(roomName) + ': ' + message);
-	}
+	// email(message: string, roomName: string, duration = 100, email = false) {
+	// 	log.alert(printRoomName(roomName) + ': ' + message);
+	// }
 
 	// init() {
 	//

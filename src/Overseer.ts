@@ -92,10 +92,10 @@ export class Overseer implements IOverseer {
 			} catch (e) {
 				if (e instanceof Error) {
 					if (identifier) {
-						e.name = `Caught unhandled exception at ${'' + callback} (identifier: ${identifier}): \n`
-								+ e.name + '\n' + e.stack;
+						e.name = `Caught unhandled exception at ${callback} (identifier: ${identifier}): \n`
+						+ e.name + '\n' + e.stack;
 					} else {
-						e.name = `Caught unhandled exception at ${'' + callback}: \n` + e.name + '\n' + e.stack;
+						e.name = `Caught unhandled exception at ${callback}: \n` + e.name + '\n' + e.stack;
 					}
 					Overmind.exceptions.push(e);
 				} else {
@@ -272,12 +272,11 @@ export class Overseer implements IOverseer {
 			if (!colony.isRoomActive(room.name)) {
 				continue;
 			}
-			// Handle player defense
 			if (room.dangerousPlayerHostiles.length > 0) {
+				// Handle player defense
 				DirectiveOutpostDefense.createIfNotPresent(Pathing.findPathablePosition(room.name), 'room');
-			}
-			// Handle NPC invasion directives
-			else if (Cartographer.roomType(room.name) != ROOMTYPE_SOURCEKEEPER) { // SK rooms can fend for themselves
+			} else if (Cartographer.roomType(room.name) != ROOMTYPE_SOURCEKEEPER) { // SK rooms can fend for themselves
+				// Handle NPC invasion directives
 				if (room.invaders.length > 0 || (room.invaderCore && room.invaderCore.level == 0)) {
 					const defenseDirectives = [...DirectiveGuard.find(room.flags),
 											   ...DirectiveOutpostDefense.find(room.flags)];
@@ -328,7 +327,7 @@ export class Overseer implements IOverseer {
 	private handleNukeResponse(colony: Colony) {
 		// Place nuke response directive if there is a nuke present in colony room
 		if (colony.room && colony.level >= DirectiveNukeResponse.requiredRCL) {
-			for (const nuke of colony.room.find(FIND_NUKES)) {
+			for (const _nuke of colony.room.find(FIND_NUKES)) {
 				DirectiveNukeResponse.createIfNotPresent(colony.controller.pos, 'room');
 			}
 		}
@@ -392,7 +391,7 @@ export class Overseer implements IOverseer {
 			if (alreadyOwned || (alreadyReserved && !disregardReservations) || isBlocked) {
 				return false;
 			}
-			const neighboringRooms = _.values(Game.map.describeExits(roomName)) as string[];
+			const neighboringRooms = _.values<string>(Game.map.describeExits(roomName));
 			const isReachableFromColony = _.any(neighboringRooms, r => colony.roomNames.includes(r));
 			return isReachableFromColony && Game.map.getRoomStatus(roomName).status === colonyRoomStatus;
 		});

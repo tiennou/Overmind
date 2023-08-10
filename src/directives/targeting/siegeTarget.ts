@@ -22,7 +22,7 @@ export class DirectiveTargetSiege extends Directive {
 	}
 
 	getTarget(): Structure | undefined {
-		const targetedStructures = this.pos.lookFor(LOOK_STRUCTURES) as Structure[];
+		const targetedStructures = this.pos.lookFor(LOOK_STRUCTURES);
 		for (const structure of targetedStructures) {
 			for (const structureType of AttackStructurePriorities) {
 				if (structure.structureType == structureType) {

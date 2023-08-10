@@ -14,7 +14,7 @@ import {HiveCluster} from './_HiveCluster';
 
 export const MAX_OBSERVE_DISTANCE = 4;
 
-interface CommandCenterMemory {
+export interface CommandCenterMemory {
 	idlePos?: ProtoPos;
 }
 
@@ -152,7 +152,8 @@ export class CommandCenter extends HiveCluster {
 				this.transportRequests.requestInput(this.powerSpawn, Priority.NormalLow);
 			} else if (this.powerSpawn.power < this.powerSpawn.powerCapacity * .5 && this.terminal
 					   && this.terminal.store.power && this.terminal.store.power >= 100) {
-				this.transportRequests.requestInput(this.powerSpawn, Priority.NormalLow, {resourceType: RESOURCE_POWER});
+				this.transportRequests.requestInput(this.powerSpawn, Priority.NormalLow,
+					{resourceType: RESOURCE_POWER});
 			}
 		}
 		// Refill nuker with low priority

@@ -51,8 +51,9 @@ export class UpgradeSite extends HiveCluster {
 		this.upgradePowerNeeded = this.getUpgradePowerNeeded();
 		// Register bettery
 		$.set(this, 'battery', () => {
+			// only count containers that aren't near sources
 			const allowableContainers = _.filter(this.room.containers, container =>
-				container.pos.findInRange(FIND_SOURCES, 1).length == 0); // only count containers that aren't near sources
+				container.pos.findInRange(FIND_SOURCES, 1).length == 0);
 			return this.pos.findClosestByLimitedRange(allowableContainers, 3);
 		});
 		this.batteryPos = $.pos(this, 'batteryPos', () => {
@@ -116,7 +117,9 @@ export class UpgradeSite extends HiveCluster {
 					}
 				} else if (this.controller.level >= 6) {
 					// Can set a room to upgrade at an accelerated rate manually
-					upgradePower = this.memory.speedFactor != undefined ? upgradePower * this.memory.speedFactor : upgradePower;
+					upgradePower = this.memory.speedFactor != undefined
+						? upgradePower * this.memory.speedFactor
+						: upgradePower;
 				}
 				return upgradePower;
 			} else {

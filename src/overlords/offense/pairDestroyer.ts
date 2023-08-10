@@ -1,4 +1,3 @@
-import {CombatCreepSetup} from '../../creepSetups/CombatCreepSetup';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
 import {DirectivePairDestroy} from '../../directives/offense/pairDestroy';
 import {DirectiveTargetSiege} from '../../directives/targeting/siegeTarget';
@@ -79,9 +78,8 @@ export class PairDestroyerOverlord extends Overlord {
 			} else {
 				attacker.park();
 			}
-		}
-		// Case 2: you have an active healer
-		else {
+		} else {
+			// Case 2: you have an active healer
 			// Activate retreat condition if necessary
 			// Handle recovery if low on HP
 			if (attacker.needsToRecover(PairDestroyerOverlord.settings.retreatHitsPercent) ||
@@ -117,9 +115,8 @@ export class PairDestroyerOverlord extends Overlord {
 			} else {
 				healer.park();
 			}
-		}
-		// Case 2: you have an attacker partner
-		else {
+		} else {
+			// Case 2: you have an attacker partner
 			if (attacker.hitsMax - attacker.hits > healer.hitsMax - healer.hits) {
 				healer.heal(attacker);
 			} else {

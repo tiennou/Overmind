@@ -125,7 +125,7 @@ export class RoadPlanner {
 			if (ignoreInactiveRooms && !this.colony.isRoomActive(destPos.roomName)) {
 				continue;
 			}
-			const {roadCount, length, exp} = this.memory.roadCoverages[destName];
+			const {roadCount, length} = this.memory.roadCoverages[destName];
 			totalRoadCount += roadCount;
 			totalPathLength += length;
 		}
@@ -282,7 +282,7 @@ export class RoadPlanner {
 		// Remove any roads duplicated in this.map
 		const roomPlannerRoads = this.roomPlanner.plannedStructurePositions(STRUCTURE_ROAD);
 		if (roomPlannerRoads != undefined) {
-			_.remove(this.roadPositions, pos => roomPlannerRoads!.includes(pos));
+			_.remove(this.roadPositions, pos => roomPlannerRoads.includes(pos));
 		}
 	}
 
@@ -401,7 +401,7 @@ export class RoadPlanner {
 
 	/* Clean up leftover road coverage locations from remotes that aren't mined or old structures */
 	private cleanRoadCoverage() {
-		const colonyDestinations = this.colony.destinations.map(dest => `${dest.pos.roomName}:${dest.pos.x}:${dest.pos.y}`);
+		const colonyDestinations = this.colony.destinations.map(dest => dest.pos.readableName);
 		log.debug(`Colony ${this.colony.print} has destinations of ${JSON.stringify(colonyDestinations)}`);
 
 		for (const roadCoverageKey of Object.keys(this.memory.roadCoverages)) {

@@ -107,12 +107,11 @@ export class MiningOverlord extends Overlord {
 		} else if (this.colony.room.energyCapacityAvailable < StandardMinerSetupCost) {
 			this.mode = 'early';
 			this.setup = Setups.drones.miners.default;
-		}
-			// else if (this.isDoubleSource() && this.colony.room.energyCapacityAvailable > DoubleMinerSetupCost) {
-			// 	this.mode = 'double';
-			// 	this.setup = Setups.drones.miners.double;
+		// } else if (this.isDoubleSource() && this.colony.room.energyCapacityAvailable > DoubleMinerSetupCost) {
+		// 	this.mode = 'double';
+		// 	this.setup = Setups.drones.miners.double;
 		// }
-		else if (this.link) {
+		} else if (this.link) {
 			this.mode = 'link';
 			if (this.colony.assets.energy >= 100000) {
 				this.setup = Setups.drones.miners.linkOptimized;
@@ -558,7 +557,7 @@ export class MiningOverlord extends Overlord {
 		// Link mining
 		if (this.link) {
 			if (this.source && this.source.energy > 0) {
-				miner.harvest(this.source!);
+				miner.harvest(this.source);
 			} else {
 				miner.harvest(this.secondSource!);
 			}
@@ -576,7 +575,7 @@ export class MiningOverlord extends Overlord {
 				&& miner.store.energy >= Math.min(miner.store.getCapacity(), REPAIR_POWER * miner.getActiveBodyparts(WORK))) {
 				return miner.repair(this.container);
 			} else if (this.source && this.source.energy > 0) {
-				return miner.harvest(this.source!);
+				return miner.harvest(this.source);
 			} else {
 				return miner.harvest(this.secondSource!);
 			}
@@ -610,7 +609,7 @@ export class MiningOverlord extends Overlord {
 	/**
 	 * Actions for handling mining at RCL high enough to spawn ideal miner body to saturate source
 	 */
-	private dismantleActions(miner: Zerg): any {
+	private dismantleActions(miner: Zerg): number {
 
 		// Go to the room
 		if (!miner.safelyInRoom(this.pos.roomName)) {
@@ -623,7 +622,7 @@ export class MiningOverlord extends Overlord {
 			delete this.memory.dismantleNeeded;
 			this.memory[DISMANTLE_CHECK] = getCacheExpiration(DISMANTLE_CHECK_FREQUENCY,
 															  DISMANTLE_CHECK_FREQUENCY / 5);
-			return;
+			return OK;
 		}
 
 		// Find the first reachable position to dismantle stuff
@@ -640,16 +639,15 @@ export class MiningOverlord extends Overlord {
 					log.alert(`${miner.print} attempting to dismantle large structure!`);
 				}
 				return miner.goDismantle(dismantleTarget);
-			}
-			// Otherwise reclaculate dismantle positions and call again to get next target
-			else {
+			} else {
+				// Otherwise recalculate dismantle positions and call again to get next target
 				this.dismantlePositions = this.getDismantlePositions();
 				return this.dismantleActions(miner);
 			}
 		} else {
 			log.warning(`No reachable dismantle positions for ${miner.print}!`);
 		}
-
+		return ERR_INVALID_TARGET;
 	}
 
 	/**

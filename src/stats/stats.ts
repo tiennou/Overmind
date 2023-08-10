@@ -50,8 +50,9 @@ export class Stats {
 	static run() {
 		if (Game.time % LOG_STATS_INTERVAL == 0) {
 			// Record IVM heap statistics
-			if (Game.cpu.getHeapStatistics)
+			if (Game.cpu.getHeapStatistics) {
 				Memory.stats['cpu.heapStatistics'] = Game.cpu.getHeapStatistics();
+			}
 			// Log GCL
 			this.log('gcl.progress', Game.gcl.progress);
 			this.log('gcl.progressTotal', Game.gcl.progressTotal);

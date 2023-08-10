@@ -262,7 +262,8 @@ export class CombatTargeting {
 		// let approach = _.map(unprotectedRepairables, structure => {
 		// 	return {pos: structure.pos, range: 0};
 		// }) as PathFinderGoal[];
-		// if (room.barriers.length == 0 && unprotectedRepairables.length == 0) return; // if there's nothing in the room
+		// // if there's nothing in the room
+		// if (room.barriers.length == 0 && unprotectedRepairables.length == 0) return;
 		//
 		// // Try to find a reachable unprotected structure
 		// if (approach.length > 0) {

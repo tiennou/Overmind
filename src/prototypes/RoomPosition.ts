@@ -197,7 +197,8 @@ RoomPosition.prototype.availableNeighbors = function(this: RoomPosition, ignoreC
 	return _.filter(this.neighbors, pos => pos.isWalkable(ignoreCreeps));
 };
 
-RoomPosition.prototype.getPositionAtDirection = function(this: RoomPosition, direction: DirectionConstant, range = 1): RoomPosition {
+RoomPosition.prototype.getPositionAtDirection =
+	function(this: RoomPosition, direction: DirectionConstant, range = 1): RoomPosition {
 	let dx = 0;
 	let dy = 0;
 	switch (direction) {
@@ -272,13 +273,15 @@ RoomPosition.prototype.findClosestByLimitedRange =
 	return this.findClosestByRange(objectsInRange, opts) || undefined;
 };
 
-RoomPosition.prototype.findClosestByMultiRoomRange = function <T extends _HasRoomPosition>(this: RoomPosition, objects: T[]):
+RoomPosition.prototype.findClosestByMultiRoomRange =
+	function <T extends _HasRoomPosition>(this: RoomPosition, objects: T[]):
 	T | undefined {
 	return minBy(objects, (obj: T) => this.getMultiRoomRangeTo(obj.pos));
 };
 
 // This should only be used within a single room
-RoomPosition.prototype.findClosestByRangeThenPath = function <T extends _HasRoomPosition>(this: RoomPosition, objects: T[]): T | undefined {
+RoomPosition.prototype.findClosestByRangeThenPath =
+	function <T extends _HasRoomPosition>(this: RoomPosition, objects: T[]): T | undefined {
 	const distances = _.map(objects, obj => this.getRangeTo(obj));
 	const minDistance = _.min(distances);
 	if (minDistance > 4) {

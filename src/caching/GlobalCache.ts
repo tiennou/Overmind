@@ -4,7 +4,7 @@ import {getCacheExpiration} from '../utilities/utils';
 const CACHE_TIMEOUT = 50;
 const SHORT_CACHE_TIMEOUT = 10;
 const COSTMATRIX_TIMEOUT = 20;
-const PATH_TIMEOUT = 1000;
+// const PATH_TIMEOUT = 1000;
 
 const STRUCTURE_KEY = 's';
 const NUMBER_KEY = '#';
@@ -98,10 +98,10 @@ export class $ { // $ = cash = cache... get it? :D
 		return _cache.costMatrices[cacheKey];
 	}
 
-	static path(fromPos: RoomPosition, toPos: RoomPosition, opts: any /*todo*/): RoomPosition[] {
-		// TODO
-		return [];
-	}
+	// static path(fromPos: RoomPosition, toPos: RoomPosition, opts: any /*todo*/): RoomPosition[] {
+	// 	// TODO
+	// 	return [];
+	// }
 
 	static set<T extends HasRef, K extends keyof T>(thing: T, key: K,
 													callback: () => (T[K] & (undefined | _HasId | _HasId[])),
@@ -144,11 +144,11 @@ export class $ { // $ = cash = cache... get it? :D
 			if (_.isObject(thing[key])) {
 				for (const prop in thing[key]) {
 					if (_.isArray(thing[key][prop])) {
-						// @ts-expect-error
+						// @ts-expect-error type mismatch
 						thing[key][prop] = <_HasId[]>_.compact(_.map(thing[key][prop] as _HasId[],
 														   s => Game.getObjectById(s.id)));
 					} else {
-						// @ts-expect-error
+						// @ts-expect-error type mismatch somewhere
 						thing[key][prop] = <_HasId>Game.getObjectById((<_HasId>thing[key][prop]).id);
 					}
 				}

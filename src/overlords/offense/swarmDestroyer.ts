@@ -1,7 +1,7 @@
 import {$} from '../../caching/GlobalCache';
 import {log} from '../../console/log';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectiveSwarmDestroy} from '../../directives/offense/swarmDestroy';
+import {DirectiveSwarmDestroy, DirectiveSwarmDestroyMemory} from '../../directives/offense/swarmDestroy';
 import {CombatIntel} from '../../intel/CombatIntel';
 import {RoomIntel} from '../../intel/RoomIntel';
 import {Mem} from '../../memory/Memory';
@@ -20,7 +20,7 @@ const DEBUG = false;
 @profile
 export class SwarmDestroyerOverlord extends SwarmOverlord {
 
-	memory: any;
+	memory: DirectiveSwarmDestroyMemory;
 	directive: DirectiveSwarmDestroy;
 	fallback: RoomPosition;
 	assemblyPoints: RoomPosition[];
@@ -124,14 +124,16 @@ export class SwarmDestroyerOverlord extends SwarmOverlord {
 			numSwarms = 0;
 		}
 
-		const zerglingPriority = this.zerglings.length <= this.healers.length ? this.priority - 0.1 : this.priority + 0.1;
+		const zerglingPriority = this.zerglings.length <= this.healers.length
+			? this.priority - 0.1 : this.priority + 0.1;
 		const zerglingSetup = CombatSetups.zerglings.boosted.armored;
 
 		const healerPriority = this.healers.length < this.zerglings.length ? this.priority - 0.1 : this.priority + 0.1;
 		const healerSetup = CombatSetups.transfusers.boosted.armored;
 
-		const hydraliskPriority = this.healers.length < this.zerglings.length ? this.priority - 0.1 : this.priority + 0.1;
-		const hydraliskSetup = CombatSetups.hydralisks.boosted.armored;
+		const _hydraliskPriority = this.healers.length < this.zerglings.length
+			? this.priority - 0.1 : this.priority + 0.1;
+		const _hydraliskSetup = CombatSetups.hydralisks.boosted.armored;
 
 		const swarmConfig = [{setup: zerglingSetup, amount: 2, priority: zerglingPriority},
 							 {setup: healerSetup, amount: 2, priority: healerPriority}];
@@ -143,8 +145,8 @@ export class SwarmDestroyerOverlord extends SwarmOverlord {
 	}
 
 	run() {
-		this.autoRun(this.zerglings, zergling => undefined); // zergling => undefined is to handle boosting
-		this.autoRun(this.healers, healer => undefined);
+		this.autoRun(this.zerglings, _zergling => undefined); // zergling => undefined is to handle boosting
+		this.autoRun(this.healers, _healer => undefined);
 		// this.autoRun(this.hydralisks, hydralisk => undefined);
 		// Run swarms in order
 		const refs = _.keys(this.swarms).sort();

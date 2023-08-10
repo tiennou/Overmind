@@ -1,5 +1,6 @@
 // Room intel - provides information related to room structure and occupation
 
+import { Colony } from 'Colony';
 import {profile} from '../profiler/decorator';
 import {ExpansionEvaluator} from '../strategy/ExpansionEvaluator';
 import {Cartographer, ROOMTYPE_CORE} from '../utilities/Cartographer';
@@ -17,7 +18,6 @@ import {CombatIntel} from './CombatIntel';
 
 const RECACHE_TIME = 5000;
 const OWNED_RECACHE_TIME = 1000;
-const ROOM_CREEP_HISTORY_TICKS = 25;
 const SCORE_RECALC_PROB = 0.05;
 const FALSE_SCORE_RECALC_PROB = 0.01;
 
@@ -89,7 +89,7 @@ export interface RoomInfo {
 }
 
 
-interface RoomIntelMemory {
+export interface RoomIntelMemory {
 	portalRooms: string[];
 }
 
@@ -269,11 +269,9 @@ export class RoomIntel {
 	static getAllRoomObjectInfo(roomName: string): RoomInfo | undefined {
 		const mem = Memory.rooms[roomName];
 		if (mem) {
-			const savedController = mem[RMEM.CONTROLLER];
 			const savedSources = mem[RMEM.SOURCES] || [];
 			const savedMineral = mem[RMEM.MINERAL];
 			const savedSkLairs = mem[RMEM.SKLAIRS] || [];
-			const savedImportantStructures = mem[RMEM.IMPORTANT_STRUCTURES];
 
 			const returnObject: RoomInfo = {
 				controller         : this.getControllerInfo(roomName),
@@ -380,7 +378,7 @@ export class RoomIntel {
 																	: Game.time + 1000000;
 				return {c: packCoord(portal.pos), dest: dest, [MEM.EXPIRATION]: expiration};
 			});
-			const uniquePortals = _.unique(room.portals, portal =>
+			const _uniquePortals = _.unique(room.portals, portal =>
 				portal.destination instanceof RoomPosition ? packPos(portal.destination)
 														   : portal.destination);
 			if (!this.memory.portalRooms.includes(room.name)) {
@@ -749,7 +747,8 @@ export class RoomIntel {
 	static roomReservationRemaining(roomName: string): number {
 		if (Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.CONTROLLER] &&
 			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]) {
-			const ticksToEnd = Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]![RMEM_CTRL.RES_TICKSTOEND];
+			const ticksToEnd =
+				Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]![RMEM_CTRL.RES_TICKSTOEND];
 			const timeSinceLastSeen = Game.time - (Memory.rooms[roomName][MEM.TICK] || 0);
 			return ticksToEnd - timeSinceLastSeen;
 		}
@@ -760,7 +759,7 @@ export class RoomIntel {
 	 * Returns the portals that are within a specified range of a colony indexed by their room
 	 */
 	static findPortalsInRange(roomName: string, range: number,
-							  includeIntershard = false): { [roomName: string]: SavedPortal[] } {
+							  _includeIntershard = false): { [roomName: string]: SavedPortal[] } {
 
 		const potentialPortalRooms = Cartographer.findRoomsInRange(roomName, range)
 												 .filter(roomName => Cartographer.roomType(roomName) == ROOMTYPE_CORE);
@@ -838,7 +837,7 @@ export class RoomIntel {
 	 * Returns the type of zone that your empire is in
 	 */
 	static getMyZoneStatus(): 'normal' | 'novice' | 'respawn' {
-		const oneOfMyColonies = _.first(_.values(Overmind.colonies)) as any;
+		const oneOfMyColonies = _.first<Colony>(_.values(Overmind.colonies)) ;
 		return RoomIntel.getRoomStatus(oneOfMyColonies.name).status as 'normal' | 'novice' | 'respawn';
 	}
 

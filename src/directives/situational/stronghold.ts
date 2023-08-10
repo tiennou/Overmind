@@ -1,8 +1,6 @@
 import {log} from '../../console/log';
 import {StrongholdOverlord} from '../../overlords/situational/stronghold';
 import {profile} from '../../profiler/decorator';
-import {getCacheExpiration} from '../../utilities/utils';
-import {Visualizer} from '../../visuals/Visualizer';
 import {Directive} from '../Directive';
 import {DirectiveHaul} from '../resource/haul';
 import {DirectiveModularDismantle} from '../targeting/modularDismantle';
@@ -76,8 +74,9 @@ export class DirectiveStronghold extends Directive {
 
 	get core(): StructureInvaderCore | undefined {
 		if (this.room) {
-			return <StructureInvaderCore>this._core || this.room.find(FIND_HOSTILE_STRUCTURES)
-														   .filter(struct => struct.structureType == STRUCTURE_INVADER_CORE)[0];
+			return <StructureInvaderCore>this._core
+				|| this.room.find(FIND_HOSTILE_STRUCTURES)
+					.filter(struct => struct.structureType == STRUCTURE_INVADER_CORE)[0];
 		}
 	}
 
@@ -87,11 +86,14 @@ export class DirectiveStronghold extends Directive {
 			const containers = this.room.containers;
 			const ruins = this.room.ruins;
 			if (containers) {
-				returns = returns.concat(containers.filter(container =>
-															   container.pos.getRangeTo(this.pos) < 5 && container.store.getUsedCapacity() > 0));
+				returns = returns.concat(
+					containers.filter(container =>
+						container.pos.getRangeTo(this.pos) < 5 && container.store.getUsedCapacity() > 0));
 			}
 			if (ruins) {
-				returns = returns.concat(ruins.filter(ruin => ruin.pos.getRangeTo(this.pos) <= 3 && ruin.store.getUsedCapacity() > 0));
+				returns = returns.concat(
+					ruins.filter(ruin =>
+						ruin.pos.getRangeTo(this.pos) <= 3 && ruin.store.getUsedCapacity() > 0));
 			}
 			return returns;
 		}
@@ -148,7 +150,7 @@ export class DirectiveStronghold extends Directive {
 		}
 	}
 
-	checkStrongholdUnitComposition(defenders: Creep[]) {
+	checkStrongholdUnitComposition(_defenders: Creep[]) {
 
 	}
 
@@ -185,9 +187,10 @@ export class DirectiveStronghold extends Directive {
 		} else {
 			const strongholdDefenders = this.core.pos.findInRange(FIND_HOSTILE_CREEPS, 4);
 			const reinforcers = strongholdDefenders.filter(creep =>
-															   creep.body.find(bodyPart => bodyPart.type == WORK) != undefined);
+				creep.body.find(bodyPart => bodyPart.type == WORK) != undefined);
 			if (reinforcers.length >= nukes.length - 1) {
-				log.alert(`Launching additional nuke against Stronghold with reinforcers ${reinforcers.length}! ${this.print}`);
+				log.alert(`Launching additional nuke against Stronghold `
+					+ `with reinforcers ${reinforcers.length}! ${this.print}`);
 				return DirectiveNukeTarget.create(bestTarget, {memory: {maxLinearRange: 11, pathNotRequired: true}});
 			}
 		}
@@ -202,9 +205,7 @@ export class DirectiveStronghold extends Directive {
 	}
 
 	init(): void {
-		let alert;
-		alert = `Stronghold ${this.memory.strongholdLevel} is state ${this.memory.state}`;
-		this.alert(alert);
+		this.alert(`Stronghold ${this.memory.strongholdLevel} is state ${this.memory.state}`);
 	}
 
 	run(): void {
@@ -216,7 +217,8 @@ export class DirectiveStronghold extends Directive {
 
 		const duration = Game.time - (this.memory[MEM.TICK] || Game.time);
 		if (duration % 50000 == 0) {
-			log.notify(`DirectiveStronghold ${this.print} in ${this.pos.roomName} has been active for ${duration} ticks`);
+			log.notify(`DirectiveStronghold ${this.print} in ${this.pos.roomName} `
+				+ `has been active for ${duration} ticks`);
 		}
 
 		this.manageState();

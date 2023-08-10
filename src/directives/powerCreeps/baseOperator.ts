@@ -102,7 +102,7 @@ export class DirectiveBaseOperator extends Directive {
 
 	runPowers(powerCreep: PowerCreep) {
 		const priorities = this.memory.powerPriorities;
-		for (const powerId in priorities) {
+		for (const powerId of priorities) {
 			const powerToUse = this.usePower(powerCreep, priorities[powerId]);
 			if (powerToUse && powerToUse.operatePower()) {
 				break;
@@ -127,7 +127,7 @@ export class DirectiveBaseOperator extends Directive {
 		}
 
 		// For the power creeps that just sit on power spawn
-		const isStationary = powerCreep.name.toLowerCase().indexOf(types.basedefender.toString());
+		const _isStationary = powerCreep.name.toLowerCase().indexOf(types.basedefender.toString());
 		if (powerCreep.name == 'activate') {
 			console.log('Power creep move is ' + JSON.stringify(powerCreep.memory));
 		}
@@ -148,7 +148,7 @@ export class DirectiveBaseOperator extends Directive {
 			const res = this.renew(powerCreep, this.room.powerSpawn);
 			log.alert(`Running ${powerCreep} with renew of ${res}`);
 		} else {
-			const res = this.runPowers(powerCreep);
+			const _res = this.runPowers(powerCreep);
 			// log.alert(`Running ${powerCreep} with power of ${res}`);
 		}
 

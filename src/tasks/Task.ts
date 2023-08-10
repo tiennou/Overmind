@@ -26,15 +26,15 @@ interface AbstractTaskTarget {
 type ConcreteTaskTarget = HasRef | _HasRoomPosition | RoomPosition;
 
 function isAbstractTarget(target: any): target is AbstractTaskTarget {
-	return target && (<AbstractTaskTarget>target)._pos !== undefined;
+	return !!target && (<AbstractTaskTarget>target)._pos !== undefined;
 }
 
 function isRoomRefTarget(target: any): target is HasRef & _HasRoomPosition {
-	return target && (<HasRef>target).ref !== undefined;
+	return !!target && (<HasRef>target).ref !== undefined;
 }
 
 function isRoomObjectTarget(target: any): target is RoomObject {
-	return target && (<RoomObject>target).pos !== undefined;
+	return !!target && (<RoomObject>target).pos !== undefined;
 }
 
 /**

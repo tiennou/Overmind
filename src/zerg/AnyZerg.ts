@@ -49,7 +49,7 @@ export function normalizeAnyZerg(creep: AnyZerg | AnyCreep): AnyZerg | AnyCreep 
 	return Overmind.zerg[creep.name] || Overmind.powerZerg[creep.name] || creep;
 }
 
-interface ParkingOptions {
+interface _ParkingOptions {
 	range: number;
 	exactRange: boolean;
 	offroad: boolean;

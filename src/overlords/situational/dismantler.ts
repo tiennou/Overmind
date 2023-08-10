@@ -4,7 +4,6 @@ import {DirectiveModularDismantle} from '../../directives/targeting/modularDisma
 import {Pathing} from '../../movement/Pathing';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
-import {BOOST_TIERS} from '../../resources/map_resources';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
 
@@ -31,13 +30,13 @@ export class DismantleOverlord extends Overlord {
 		// Spawn a number of dismantlers, up to a max
 		const MAX_DISMANTLERS = 2;
 		let setup;
-		if (!!this.directive.memory.attackInsteadOfDismantle) { // TODO: need to move this to the new CombatCreepSetup system
+		// TODO: need to move this to the new CombatCreepSetup system
+		if (!!this.directive.memory.attackInsteadOfDismantle) {
 			setup = CombatSetups.dismantlers.attackDismantlers;
-		}
-		// else if (this.canBoostSetup(CombatSetups.dismantlers.boosted_T3)) {
+		// } else if (this.canBoostSetup(CombatSetups.dismantlers.boosted_T3)) {
 		// 	setup = CombatSetups.dismantlers.boosted_T3;
 		// }
-		else {
+		} else {
 			setup = CombatSetups.dismantlers.default;
 		}
 		setup = CombatSetups.dismantlers.default;
@@ -78,7 +77,7 @@ export class DismantleOverlord extends Overlord {
 				const res = !!this.directive.memory.attackInsteadOfDismantle ? dismantler.attack(this.target)
 																			 : dismantler.dismantle(this.target);
 				if (res == ERR_NOT_IN_RANGE) {
-					const ret = dismantler.goTo(this.target, {});
+					const _ret = dismantler.goTo(this.target, {});
 					// TODO this is shit ⬇
 				} else if (res == ERR_NO_BODYPART) {
 					// dismantler.suicide();

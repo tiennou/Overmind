@@ -80,7 +80,7 @@ export class SpawnGroup {
 			avgDistance: (_.sum(this.memory.distances) / _.keys(this.memory.distances).length) || 100,
 		};
 		this.requests = [];
-		this.settings = _.defaults(settings, defaultSettings) as SpawnGroupSettings;
+		this.settings = _.defaults(settings, defaultSettings);
 		if (Game.time >= this.memory.expiration) {
 			this.recalculateColonies();
 		}
@@ -157,7 +157,7 @@ export class SpawnGroup {
 	init(): void {
 
 		// Most initialization needs to be done at init phase because colonies are still being constructed earlier
-		const colonies = _.compact(_.map(this.colonyNames, name => Overmind.colonies[name])) as Colony[];
+		const colonies = _.compact(_.map(this.colonyNames, name => Overmind.colonies[name]));
 		const hatcheries = _.compact(_.map(colonies, colony => colony.hatchery)) as Hatchery[];
 		const distanceTo = (hatchery: Hatchery) => this.memory.distances[hatchery.pos.roomName] + 25;
 

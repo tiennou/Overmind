@@ -60,7 +60,7 @@ function neighboringLabs(pos: RoomPosition): StructureLab[] {
 	return <StructureLab[]>_.compact(_.map(pos.neighbors, neighbor => neighbor.lookForStructure(STRUCTURE_LAB)));
 }
 
-function labsAreEmpty(labs: StructureLab[]): boolean {
+function _labsAreEmpty(labs: StructureLab[]): boolean {
 	return _.all(labs, lab => lab.mineralAmount == 0);
 }
 
@@ -277,7 +277,7 @@ export class EvolutionChamber extends HiveCluster {
 
 	private registerProductLabRequests(labs: StructureLab[]): void {
 		if (this.memory.activeReaction) {
-			const {mineralType, amount} = this.memory.activeReaction;
+			const {mineralType, amount: _amount} = this.memory.activeReaction;
 			for (const lab of labs) {
 				const labHasWrongMineral = lab.mineralType != mineralType && lab.mineralAmount > 0;
 				const labIsFull = lab.mineralAmount == lab.mineralCapacity;
@@ -626,7 +626,8 @@ export class EvolutionChamber extends HiveCluster {
 		y += 1;
 		if (this.memory.status == LabStatus.Synthesizing && activeReaction) {
 			const amountDone = _.sum(_.map(this.productLabs,
-										   lab => lab.mineralType == activeReaction!.mineralType ? lab.mineralAmount : 0));
+										   lab => lab.mineralType ==
+												activeReaction.mineralType ? lab.mineralAmount : 0));
 			Visualizer.text(activeReaction.mineralType, {x: boxX, y: y, roomName: this.room.name});
 			Visualizer.barGraph([amountDone, activeReaction.amount],
 								{x: boxX + 4, y: y, roomName: this.room.name}, 5);
@@ -651,7 +652,6 @@ export class EvolutionChamber extends HiveCluster {
 	}
 
 	private stats(): void {
-		// Stats.log(`colonies.${this.colony.name}.evolutionChamber.totalProduction`, this.memory.stats.totalProduction);
 		const labUsage = _.sum(this.productLabs, lab => lab.cooldown > 0 ? 1 : 0) / this.productLabs.length;
 		this.memory.stats.avgUsage = ema(labUsage, this.memory.stats.avgUsage, LAB_USAGE_WINDOW);
 		Stats.log(`colonies.${this.colony.name}.evolutionChamber.avgUsage`, this.memory.stats.avgUsage);

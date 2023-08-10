@@ -124,11 +124,11 @@ export class CombatIntel {
 				// const heal = CombatIntel.getHealPotential(creep);
 				if (meleeAttack > 0) {
 					creep.pos.neighbors.forEach(pos =>
-													matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + meleeAttack * ATTACK_POWER / 100));
+						matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + meleeAttack * ATTACK_POWER / 100));
 				}
 				if (rangedAttack > 0) {
 					creep.pos.getPositionsInRange(3).forEach(pos =>
-																 matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + rangedAttack * RANGED_ATTACK_POWER / 100));
+						matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + rangedAttack * RANGED_ATTACK_POWER / 100));
 				}
 			});
 
@@ -157,11 +157,11 @@ export class CombatIntel {
 				// const heal = CombatIntel.getHealPotential(creep);
 				if (meleeAttack > 0) {
 					creep.pos.neighbors.forEach(pos =>
-													matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + meleeAttack * ATTACK_POWER / 100));
+						matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + meleeAttack * ATTACK_POWER / 100));
 				}
 				if (rangedAttack > 0) {
 					creep.pos.getPositionsInRange(3).forEach(pos =>
-																 matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + rangedAttack * RANGED_ATTACK_POWER / 100));
+						matrix.set(pos.x, pos.y, matrix.get(pos.x, pos.y) + rangedAttack * RANGED_ATTACK_POWER / 100));
 				}
 			});
 
@@ -175,7 +175,7 @@ export class CombatIntel {
 	// Fallback and exit calculations ==================================================================================
 
 	private findBestExit(matrix: CostMatrix, towers: StructureTower[],
-						 spawns: StructureSpawn[]): RoomPosition | undefined {
+						 _spawns: StructureSpawn[]): RoomPosition | undefined {
 		if (!this.room) {
 			return;
 		}
@@ -318,7 +318,7 @@ export class CombatIntel {
 	static getFallbackFrom(pos: RoomPosition, fallbackDistance = 2): RoomPosition {
 		let {x, y, roomName} = pos;
 		const rangesToExit = [[x, 'left'], [49 - x, 'right'], [y, 'top'], [49 - y, 'bottom']];
-		const [range, direction] = _.first(_.sortBy(rangesToExit, pair => pair[0]));
+		const [_range, direction] = _.first(_.sortBy(rangesToExit, pair => pair[0]));
 		switch (direction) {
 			case 'left':
 				x = 49 - fallbackDistance;
@@ -407,7 +407,6 @@ export class CombatIntel {
 	 * If a creep appears to primarily be a healer
 	 */
 	static isHealer(zerg: Creep | Zerg): boolean {
-		const creep = toCreep(zerg);
 		const healParts = _.filter(zerg.body, part => part.type == HEAL).length;
 		const attackParts = _.filter(zerg.body, part => part.type == ATTACK).length;
 		const rangedAttackParts = _.filter(zerg.body, part => part.type == RANGED_ATTACK).length;
@@ -626,7 +625,8 @@ export class CombatIntel {
 		} else if (range == 3) {
 			rangedMassAttackPower = 1;
 		}
-		return rangedMassAttackPower * this.getRangedAttackPotential(isStandardZerg(attacker) ? attacker.creep : attacker);
+		return rangedMassAttackPower
+			* this.getRangedAttackPotential(isStandardZerg(attacker) ? attacker.creep : attacker);
 	}
 
 	/**
@@ -814,7 +814,7 @@ export class CombatIntel {
 	/**
 	 * This method is probably expensive; use sparingly
 	 */
-	static isEdgeDancing(creep: Creep, reentryThreshold = 3): boolean {
+	static isEdgeDancing(creep: Creep, _reentryThreshold = 3): boolean {
 		return false;
 		// TODO: rewrite this
 

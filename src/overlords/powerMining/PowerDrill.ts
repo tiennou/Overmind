@@ -72,8 +72,7 @@ export class PowerDrillOverlord extends CombatOverlord {
 					if (result == ERR_BUSY) {
 						// drill spawning, find something else to do with them
 					}
-					log.notify('FINISHED POWER MINING IN ' + this.room + ' DELETING CREEP at time: ' +
-							   Game.time.toString() + ' result: ' + result);
+					log.notify(`FINISHED POWER MINING IN ${this.room.name} DELETING CREEP at time: ${Game.time}: ${result}.`);
 					return;
 				}
 			}
@@ -112,7 +111,7 @@ export class PowerDrillOverlord extends CombatOverlord {
 			return;
 		} else if (!this.directive.powerBank) {
 			// If power bank is dead
-			Game.notify('Power bank in ' + this.room + ' is dead.');
+			Game.notify(`Power bank in ${this.room.name} is dead.`);
 			coolant.retire();
 			return;
 		}

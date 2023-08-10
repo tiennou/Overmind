@@ -16,13 +16,13 @@ import {alignedNewline, bullet, leftArrow, rightArrow} from '../utilities/string
 import {ema, maxBy, mergeSum, minBy, printRoomName} from '../utilities/utils';
 import {TraderJoe} from './TradeNetwork';
 
-interface TerminalNetworkMemory {
+export interface TerminalNetworkMemory {
 	debug?: boolean;
 }
 
 const getDefaultTerminalNetworkMemory: () => TerminalNetworkMemory = () => ({});
 
-interface TerminalNetworkStats {
+export interface TerminalNetworkStats {
 	assets: { [resource: string]: number };
 	fractionalEnergyTransferCost: number;
 	incomingResources: { [resource: string]: { [colony: string]: number } };
@@ -127,10 +127,7 @@ const THRESHOLDS_OPS: Thresholds = { // might need to come back to this when I a
 };
 
 function getThresholds(resource: _ResourceConstantSansEnergy): Thresholds {
-	/*// Energy gets special treatment - see TradeNetwork.getEnergyThresholds()
-	if (resource == RESOURCE_ENERGY) {
-		return THRESHOLDS_DONT_CARE;
-	}*/
+	// Energy gets special treatment - see TradeNetwork.getEnergyThresholds()
 	// Power and ops get their own treatment
 	if (resource == RESOURCE_POWER) {
 		return THRESHOLDS_POWER;
@@ -212,8 +209,8 @@ const _resourceExchangePrioritiesLookup: { [resource: string]: number } =
 		  _.zipObject(RESOURCE_EXCHANGE_ORDER,
 					  _.map(RESOURCE_EXCHANGE_ORDER, res => _.indexOf(RESOURCE_EXCHANGE_ORDER, res)));
 
-const EMPTY_COLONY_TIER: { [resourceType: string]: Colony[] } =
-		  _.zipObject(RESOURCES_ALL, _.map(RESOURCES_ALL, i => []));
+const _EMPTY_COLONY_TIER: { [resourceType: string]: Colony[] } =
+		  _.zipObject(RESOURCES_ALL, _.map(RESOURCES_ALL, () => []));
 
 
 interface RequestOpts {
@@ -233,24 +230,6 @@ interface ProvideOpts {
 	complainIfUnfulfilled?: boolean;
 	dryRun?: boolean;
 }
-
-// const defaultRequestOpts: Full<RequestOpts> = {
-// 	allowDivvying              : false,
-// 	takeFromColoniesBelowTarget: false,
-// 	sendTargetPlusTolerance    : false,
-// 	allowMarketBuy             : Game.market.credits > TraderJoe.settings.market.credits.canBuyAbove,
-// 	receiveOnlyOncePerTick     : false,
-// 	complainIfUnfulfilled      : true,
-// 	dryRun                     : false,
-// };
-//
-// const defaultProvideOpts: Full<ProvideOpts> = {
-// 	allowPushToOtherRooms: true,
-// 	allowMarketSell      : true,
-// 	complainIfUnfulfilled: true,
-// 	dryRun               : false,
-// };
-
 
 /**
  * The TerminalNetwork manages internal resource transfers between owned colonies and tries to get resources where
@@ -383,7 +362,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	 */
 	private transfer(sender: StructureTerminal, receiver: StructureTerminal, resourceType: ResourceConstant,
 					 amount: number, description: string): ScreepsReturnCode {
-		const cost = Game.market.calcTransactionCost(amount, sender.room.name, receiver.room.name);
+		const _cost = Game.market.calcTransactionCost(amount, sender.room.name, receiver.room.name);
 		const response = sender.send(resourceType, amount, receiver.room.name, description);
 		if (response == OK) {
 			let msg;
@@ -771,7 +750,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 		// If no colony is sufficient to send you the resources, try to divvy it up among several colonies
 		if (opts.allowDivvying) {
 			const MAX_SEND_REQUESTS = 3;
-			const allPartners = _.flatten(partnerSets) as Colony[];
+			const allPartners = _.flatten(partnerSets);
 			// find all colonies that have more than target amt of resource and pick 3 with the most amt
 			let validPartners: Colony[] = _(allPartners)
 				.filter(partner => partner.assets[resource] - this.lockedAmount(partner, resource)
@@ -993,7 +972,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 				}
 
 				// Compute the request amount
-				const {target, surplus, tolerance} = this.thresholds(colony, resource);
+				const {target} = this.thresholds(colony, resource);
 				const requestAmount = target - colony.assets[resource];
 				// if (opts.sendTargetPlusTolerance) {
 				// 	requestAmount += tolerance;
@@ -1193,7 +1172,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 		let info: string = '\nTerminalNetwork Summary: \n';
 
 		if (resourceOrColony && resourceOrColony instanceof Colony) {
-			const colony = resourceOrColony as Colony;
+			const colony = resourceOrColony;
 			info += `${colony.print} actively providing -----------------------------------------------------\n` +
 					`${bullet}${activeProviders[colony.name] || '(None)'}\n` +
 					`${colony.print} passively providing ----------------------------------------------------\n` +

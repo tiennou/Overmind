@@ -1,4 +1,3 @@
-import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {DirectivePortalScout} from '../../directives/situational/portalScout';
 import {OverlordPriority} from '../../priorities/priorities_overlords';

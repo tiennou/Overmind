@@ -3,9 +3,11 @@ import profiler from './screeps-profiler';
 
 // export {profile} from './profiler';
 
-export function profile(target: Function): void;
-export function profile(target: object, key: string | symbol, _descriptor: TypedPropertyDescriptor<Function>): void;
-export function profile(target: object | Function, key?: string | symbol,
+type Profilable = Function | {prototype: any, name: string};
+
+export function profile(target: Profilable): void;
+export function profile(target: Profilable, key: string | symbol, _descriptor: TypedPropertyDescriptor<Function>): void;
+export function profile(target: Profilable | Function, key?: string | symbol,
 						_descriptor?: TypedPropertyDescriptor<Function>,): void {
 	if (!USE_SCREEPS_PROFILER) {
 		return;
@@ -18,7 +20,7 @@ export function profile(target: object | Function, key?: string | symbol,
 	}
 
 	// case of class decorator
-	const ctor = target as any;
+	const ctor = target;
 	if (!ctor.prototype) {
 		return;
 	}

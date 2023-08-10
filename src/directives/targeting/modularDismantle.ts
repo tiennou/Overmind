@@ -54,7 +54,7 @@ export class DirectiveModularDismantle extends Directive {
 			return;
 		}
 		const targetedStructureTypes = this.memory.onlyKillRampart ? [STRUCTURE_RAMPART] : AttackStructurePriorities;
-		const targets = this.pos.lookFor(LOOK_STRUCTURES) as Structure[];
+		const targets = this.pos.lookFor(LOOK_STRUCTURES);
 		for (const structureType of targetedStructureTypes) {
 			const correctTargets = targets.filter(target => {
 				if (target.structureType == structureType) {

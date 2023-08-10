@@ -22,7 +22,7 @@ export class DistractionOverlord extends CombatOverlord {
 	};
 
 	constructor(directive: Directive,
-				boosted  = false,
+				_boosted  = false,
 				priority = OverlordPriority.defense.rangedDefense) {
 		super(directive, 'distraction', priority, 1);
 		this.distractions = this.combatZerg(Roles.rangedDistractor);

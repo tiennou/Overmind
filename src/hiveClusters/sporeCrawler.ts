@@ -181,7 +181,8 @@ export class SporeCrawler extends HiveCluster {
 					return true;
 				}
 			});
-			if (Game.time % 21 == 0 && _.filter(possibleTargets, target => target.hits < target.hitsMax / 2).length == 0) {
+			if (Game.time % 21 == 0
+				&& _.filter(possibleTargets, target => target.hits < target.hitsMax / 2).length == 0) {
 				// console.log('Scattershotting!');
 				return this.scatterShot(possibleTargets);
 			}

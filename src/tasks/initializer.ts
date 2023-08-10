@@ -11,7 +11,7 @@ import {generateSafeModeTargetType, generateSafeModeTaskName, TaskGenerateSafeMo
 import {getBoostedTargetType, getBoostedTaskName, TaskGetBoosted} from './instances/getBoosted';
 import {getRenewedTargetType, getRenewedTaskName, TaskGetRenewed} from './instances/getRenewed';
 import {goToTaskName} from './instances/goTo';
-import {goToRoomTargetType, goToRoomTaskName, TaskGoToRoom} from './instances/goToRoom';
+import {goToRoomTaskName, TaskGoToRoom} from './instances/goToRoom';
 import {harvestTargetType, harvestTaskName, TaskHarvest} from './instances/harvest';
 import {healTargetType, healTaskName, TaskHeal} from './instances/heal';
 import {TaskInvalid} from './instances/invalid';
@@ -38,7 +38,7 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 	// Retrieve name and target data from the ProtoTask
 	const taskName = protoTask.name;
 	const target = deref(protoTask._target.ref);
-	let task: any;
+	let task: Task<any>;
 	// Create a task object of the correct type
 	switch (taskName) {
 		case attackTaskName:
@@ -74,7 +74,7 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 			task = new TaskInvalid();
 			break;
 		case goToRoomTaskName:
-			task = new TaskGoToRoom(protoTask._target._pos.roomName as goToRoomTargetType);
+			task = new TaskGoToRoom(protoTask._target._pos.roomName);
 			break;
 		case harvestTaskName:
 			task = new TaskHarvest(target as harvestTargetType);

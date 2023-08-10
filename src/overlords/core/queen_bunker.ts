@@ -33,7 +33,7 @@ function computeQuadrant(colony: Colony, quadrant: Coord[]): SupplyStructure[] {
 	const positions = _.map(quadrant, coord => getPosFromBunkerCoord(coord, colony));
 	const structures: SupplyStructure[] = [];
 	for (const pos of positions) {
-		const structure = <SupplyStructure | undefined>_.find(pos.lookFor(LOOK_STRUCTURES), s => isSupplyStructure(s));
+		const structure = <SupplyStructure>_.find(pos.lookFor(LOOK_STRUCTURES), s => isSupplyStructure(s));
 		if (structure) {
 			structures.push(structure);
 		}
@@ -390,22 +390,20 @@ export class BunkerQueenOverlord extends Overlord {
 	// }
 
 	private handleQueen(queen: Zerg): void {
-		// Does something need withdrawing?
 		if (this.colony.transportRequests.needsWithdrawing() &&
 			_.any(_.keys(this.assignments[queen.name]), id => this.colony.transportRequests.withdrawByID[id])) {
+			// Does something need withdrawing?
 			this.debug(`${queen.print}: should withdraw`);
 			queen.task = this.buildWithdrawTaskManifest(queen);
-		}
-		// Does something need supplying?
-		else if (this.colony.transportRequests.needsSupplying() &&
+		} else if (this.colony.transportRequests.needsSupplying() &&
 				 _.any(_.keys(this.assignments[queen.name]), id => this.colony.transportRequests.supplyByID[id])) {
+			// Does something need supplying?
 			this.debug(`${queen.print}: should supply`);
 			queen.task = this.buildSupplyTaskManifest(queen);
-		}
-		// Do we need safemodes?
-		else if (this.colony.level > 5 && this.colony.controller.safeModeAvailable < 3 &&
+		} else if (this.colony.level > 5 && this.colony.controller.safeModeAvailable < 3 &&
 				 this.colony.terminal && this.colony.terminal.store[RESOURCE_GHODIUM] >= 1000 &&
 				 queen.store.getCapacity() >= 1000) {
+			// Do we need safemodes?
 			this.debug(`${queen.print}: should safemode`);
 			// Only use 1 queen to avoid adding 2 safemodes
 			if (queen.name == _.first(_.sortBy(this.queens, q => q.name)).name) {

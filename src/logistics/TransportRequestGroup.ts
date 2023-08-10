@@ -57,7 +57,7 @@ export class TransportRequestGroup {
 
 	needsSupplying(priorityThreshold?: Priority): boolean {
 		for (const priority in this.supply) {
-			if (priorityThreshold != undefined && parseInt(priority, 10) > priorityThreshold) {
+			if (priorityThreshold != undefined && <Priority>parseInt(priority, 10) > priorityThreshold) {
 				continue; // lower numerical priority values are more important; if priority > threshold then ignore it
 			}
 			if (this.supply[priority].length > 0) {
@@ -69,7 +69,7 @@ export class TransportRequestGroup {
 
 	needsWithdrawing(priorityThreshold?: Priority): boolean {
 		for (const priority in this.withdraw) {
-			if (priorityThreshold != undefined && parseInt(priority, 10) > priorityThreshold) {
+			if (priorityThreshold != undefined && <Priority>parseInt(priority, 10) > priorityThreshold) {
 				continue; // lower numerical priority values are more important; if priority > threshold then ignore it
 			}
 			if (this.withdraw[priority].length > 0) {
@@ -92,7 +92,7 @@ export class TransportRequestGroup {
 				} else {
 					searchRequests = requests[priority];
 				}
-				return _.find(searchRequests, request => request.target.ref == target!.ref);
+				return _.find(searchRequests, request => request.target.ref == target.ref);
 			}
 		}
 	}
@@ -100,7 +100,8 @@ export class TransportRequestGroup {
 	/**
 	 * Request for resources to be deposited into this target
 	 */
-	requestInput(target: TransportRequestTarget, priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
+	requestInput(target: TransportRequestTarget,
+		priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 		});
@@ -111,7 +112,7 @@ export class TransportRequestGroup {
 		const req: TransportRequest = {
 			target      : target,
 			resourceType: opts.resourceType!,
-			amount      : opts.amount!,
+			amount      : opts.amount,
 		};
 		if (opts.amount > 0) {
 			this.supply[priority].push(req);
@@ -123,7 +124,8 @@ export class TransportRequestGroup {
 	/**
 	 * Request for resources to be withdrawn from this target
 	 */
-	requestOutput(target: TransportRequestTarget, priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
+	requestOutput(target: TransportRequestTarget,
+		priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 		});
@@ -134,7 +136,7 @@ export class TransportRequestGroup {
 		const req: TransportRequest = {
 			target      : target,
 			resourceType: opts.resourceType!,
-			amount      : opts.amount!,
+			amount      : opts.amount,
 		};
 		if (opts.amount > 0) {
 			this.withdraw[priority].push(req);
@@ -144,7 +146,8 @@ export class TransportRequestGroup {
 	}
 
 	// /* Makes a provide for every resourceType in a requestor object */
-	// requestOutputAll(target: StoreStructure, priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
+	// requestOutputAll(target: StoreStructure,
+	//	priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
 	// 	for (let resourceType in target.store) {
 	// 		let amount = target.store[<ResourceConstant>resourceType] || 0;
 	// 		if (amount > 0) {

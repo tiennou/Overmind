@@ -25,6 +25,13 @@ module.exports = {
         "project": "tsconfig.json",
         "sourceType": "module"
     },
+    "ignorePatterns": [
+        ".eslintrc.cjs",
+        "dist/*",
+        "rollup.config.js",
+        "src/**/*_obfuscated.js",
+        "tsc-out/**",
+    ],
     "plugins": [
         "eslint-plugin-jsdoc",
         "eslint-plugin-prefer-arrow",
@@ -96,6 +103,9 @@ module.exports = {
         "@typescript-eslint/no-base-to-string": "off",
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unused-vars": ["error", {
+            "varsIgnorePattern": "^_", "argsIgnorePattern": "^_"
+        }],
         "arrow-parens": [
             "off",
             "always"
@@ -132,16 +142,10 @@ module.exports = {
         "id-match": "error",
         "indent": "off",
         "jsdoc/check-alignment": "error",
-        "jsdoc/check-indentation": "error",
+        "jsdoc/check-indentation": "off",
         "max-classes-per-file": "off",
-        "max-len": [
-            "error",
-            {
-                "code": 120
-            }
-        ],
         "new-parens": "error",
-        "no-bitwise": "off",
+        "no-bitwise": "error",
         "no-caller": "error",
         "no-cond-assign": "error",
         "no-console": "off",

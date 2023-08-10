@@ -1,5 +1,5 @@
 import {log} from '../../console/log';
-import {CombatSetups, Roles} from '../../creepSetups/setups';
+import {Roles} from '../../creepSetups/setups';
 import {DirectiveStronghold} from '../../directives/situational/stronghold';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
@@ -93,7 +93,7 @@ export class StrongholdOverlord extends CombatOverlord {
 		} else if (safeSpots[1].length > 0) {
 			// Can't safely attack target, need to attack another position first
 			const range1Spots = safeSpots[1];
-			const ramparts = target.room!.ramparts;
+			const ramparts = target.room.ramparts;
 			const posToRampartMap: Map<RoomPosition, StructureRampart[]> = new Map();
 			for (const spot of range1Spots) {
 				for (const rampart of ramparts) {
@@ -132,7 +132,7 @@ export class StrongholdOverlord extends CombatOverlord {
 		if (this.memory.target && this.memory.target.exp > Game.time) {
 			const target = Game.getObjectById(this.memory.target.id);
 			if (target) {
-				return target as Creep | Structure;
+				return target ;
 			}
 		}
 		// If nothing found
@@ -149,7 +149,7 @@ export class StrongholdOverlord extends CombatOverlord {
 
 
 	bestRampartToAttackSortFunction(element1: RoomPosition, element2: RoomPosition, currentPos: RoomPosition,
-									/*map: Map<RoomPosition, StructureRampart[]>*/) {
+									/* map: Map<RoomPosition, StructureRampart[]>*/) {
 		// const numRamparts1 = map.get(element1) == undefined ? 10 : map.get(element1)!.length;
 		// const numRamparts2 = map.get(element2) == undefined ? 10 : map.get(element2)!.length;
 		return element1.getRangeTo(currentPos) - element2.getRangeTo(currentPos); // + (numRamparts1 - numRamparts2);
@@ -203,7 +203,7 @@ export class StrongholdOverlord extends CombatOverlord {
 		if (this.room && killer.pos.roomName == this.pos.roomName) {
 			if (this.directive.core && !this.memory.target) {
 				const before = Game.cpu.getUsed();
-				const targetingInfo = this.resetAttacking(this.directive.core, 3, killer);
+				const _targetingInfo = this.resetAttacking(this.directive.core, 3, killer);
 				log.info(`CPU used for stronghold is ${Game.cpu.getUsed() - before}`);
 			}
 		}
@@ -291,29 +291,29 @@ export class StrongholdOverlord extends CombatOverlord {
 		}
 		// log.info(`Setting up body type for ${this.print} with ${this.directive.memory.strongholdLevel}`);
 
-		let setup;
-		// TODO fix me for when strongholds typescript is out
-		switch (this.directive.memory.strongholdLevel) {
-			case 5:
-				return; // Fuck this shit we out
-			case 4:
-				return;
-			// setup = CombatSetups.strongholdKiller["4"];
-			// break;
-			case 3:
-				setup = CombatSetups.strongholdKiller['3'];
-				break;
-			case 2:
-				setup = CombatSetups.strongholdKiller['2'];
-				break;
-			case 1:
-				setup = CombatSetups.strongholdKiller['1'];
-				break;
-			case 0:
-				return; // Forget it, no need for the lil ones
-			default:
-				return;// setup = CombatSetups.strongholdKiller["3"];
-		}
+		// let setup;
+		// // TODO fix me for when strongholds typescript is out
+		// switch (this.directive.memory.strongholdLevel) {
+		// 	case 5:
+		// 		return; // Fuck this shit we out
+		// 	case 4:
+		// 		return;
+		// 	// setup = CombatSetups.strongholdKiller["4"];
+		// 	// break;
+		// 	case 3:
+		// 		setup = CombatSetups.strongholdKiller['3'];
+		// 		break;
+		// 	case 2:
+		// 		setup = CombatSetups.strongholdKiller['2'];
+		// 		break;
+		// 	case 1:
+		// 		setup = CombatSetups.strongholdKiller['1'];
+		// 		break;
+		// 	case 0:
+		// 		return; // Forget it, no need for the lil ones
+		// 	default:
+		// 		return;// setup = CombatSetups.strongholdKiller["3"];
+		// }
 
 		// if (!this.canBoostSetup(setup)) {// TODO: need to move this to the new CombatCreepSetup system
 		// 	// Need boosts
@@ -334,7 +334,7 @@ export class StrongholdOverlord extends CombatOverlord {
 	}
 
 	run() {
-		const avoids: RoomPosition[] = [];
+		// const avoids: RoomPosition[] = [];
 		// if (this.directive.room) {
 		// 	avoids = avoids.concat(_.flatten(this.directive.room.sources.map(source =>
 		// 	source.pos.getPositionsInRange(4, false, false))));

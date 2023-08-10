@@ -32,7 +32,7 @@ export const PROFILER_COLONY_LIMIT = Math.ceil(Game.gcl.level / 2);
 /**
  * While profiling, ensure these colonies are included in the randomly chosen ones specified by PROFILER_COLONY_LIMIT.
  */
-export const PROFILER_INCLUDE_COLONIES: string[] = [/*'E15S49'*/];
+export const PROFILER_INCLUDE_COLONIES: string[] = [/* 'E15S49'*/];
 
 /**
  * Enable this to wrap evaluations of constructor, init, and run phase for each colony in try...catch statemenets.
@@ -50,7 +50,6 @@ export const SUPPRESS_INVALID_DIRECTIVE_ALERTS: boolean = false;
  * Operation will be penalized by skipping every 3rd tick for using a signature that does not contain the substring
  * "overmind" or the small-caps variant.
  */
-const OVERMIND_PLAIN = 'Overmind';
 export const OVERMIND_SMALL_CAPS = '\u1D0F\u1D20\u1D07\u0280\u1D0D\u026A\u0274\u1D05';
 export const DEFAULT_OVERMIND_SIGNATURE = leftAngleQuote + OVERMIND_SMALL_CAPS + rightAngleQuote;
 global.__DEFAULT_OVERMIND_SIGNATURE__ = DEFAULT_OVERMIND_SIGNATURE;

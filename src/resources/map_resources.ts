@@ -55,7 +55,7 @@ export const BASE_RESOURCES: ResourceConstant[] = [
 	RESOURCE_HYDROGEN,
 ];
 export const _baseResourcesLookup: { [resource: string]: boolean | undefined } =
-				 _.zipObject(BASE_RESOURCES, _.map(BASE_RESOURCES, i => true));
+				 _.zipObject(BASE_RESOURCES, _.map(BASE_RESOURCES, () => true));
 
 export const RESOURCE_IMPORTANCE = [
 	RESOURCE_CATALYZED_GHODIUM_ALKALIDE,
@@ -156,7 +156,7 @@ export const REAGENTS: { [product: string]: [ResourceConstant, ResourceConstant]
 
 export const MINERAL_COMPOUNDS_ALL = _.keys(REAGENTS).concat(BASE_RESOURCES);
 export const _mineralCompoundsAllLookup: { [resource: string]: boolean | undefined } =
-				 _.zipObject(MINERAL_COMPOUNDS_ALL, _.map(MINERAL_COMPOUNDS_ALL, i => true));
+				 _.zipObject(MINERAL_COMPOUNDS_ALL, _.map(MINERAL_COMPOUNDS_ALL, () => true));
 
 export const BOOST_PARTS: { [boost: string]: BodyPartConstant } = {
 
@@ -345,7 +345,7 @@ export const COMMODITIES_ALL: ResourceConstant[] = [
 	RESOURCE_ESSENCE
 ];
 export const _commoditiesLookup: { [resource: string]: boolean | undefined } =
-				 _.zipObject(COMMODITIES_ALL, _.map(COMMODITIES_ALL, i => true));
+				 _.zipObject(COMMODITIES_ALL, _.map(COMMODITIES_ALL, () => true));
 
 export const DEPOSITS_ALL: ResourceConstant[] = [
 	RESOURCE_SILICON,
@@ -354,4 +354,4 @@ export const DEPOSITS_ALL: ResourceConstant[] = [
 	RESOURCE_MIST,
 ];
 
-export const ALL_ZERO_ASSETS: StoreContents = _.zipObject(RESOURCES_ALL, _.map(RESOURCES_ALL, i => 0));
+export const ALL_ZERO_ASSETS: StoreContents = _.zipObject(RESOURCES_ALL, _.map(RESOURCES_ALL, () => 0));

@@ -37,7 +37,7 @@ export class EmptyOverlord extends Overlord {
 		this.wishlist(1, Setups.upgraders.default);
 	}
 
-	private handleUpgrader(zerg: Zerg): void {
+	private handleUpgrader(_zerg: Zerg): void {
 		// TODO
 	}
 

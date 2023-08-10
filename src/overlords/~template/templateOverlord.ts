@@ -19,7 +19,7 @@ const getDefaultTemplateOverlordMemory: () => TemplateOverlordMemory = () => ({
 });
 
 // If you are using a state that can be one of only a few values, it should be an enum type
-const enum TemplateOverlordState {
+const enum _TemplateOverlordState {
 	state1 = 'one',
 	state2 = 'two',
 	state3 = 'three',

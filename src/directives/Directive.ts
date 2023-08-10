@@ -166,7 +166,7 @@ export abstract class Directive {
 
 	// This allows you to access static DirectiveClass.directiveName from an instance of DirectiveClass
 	get directiveName(): string {
-		return (<any>this.constructor).directiveName;
+		return (<typeof Directive>this.constructor).directiveName;
 	}
 
 	refresh(): void {

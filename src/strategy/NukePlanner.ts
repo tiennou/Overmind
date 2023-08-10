@@ -24,7 +24,7 @@ interface NukeLaunchMemory {
 
 type AutoNukeMode = 'barrage' | 'single';
 
-interface NukePlannerMemory {
+export interface NukePlannerMemory {
 
 	nukes: NukeLaunchMemory[];
 
@@ -144,8 +144,8 @@ export class NukePlanner {
 
 	}
 
-	private requestVision(roomName: string) {
-
+	private requestVision(_roomName: string) {
+		// TODO: we need vision on the room
 	}
 
 	nukeRoom(roomName: string, mode: AutoNukeMode, priority: number) {

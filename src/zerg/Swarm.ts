@@ -152,8 +152,8 @@ export class Swarm implements ProtoSwarm {
 	}
 
 	get print(): string {
-		return '<a href="#!/room/' + Game.shard.name + '/' + ((this.anchor
-															   || this.rooms[0])).roomName + '">[' + `Swarm ` + this.ref + ']</a>';
+		return '<a href="#!/room/' + Game.shard.name + '/'
+			+ ((this.anchor || this.rooms[0])).roomName + '">[' + `Swarm ` + this.ref + ']</a>';
 	}
 
 	debug(...args: any[]) {
@@ -164,7 +164,7 @@ export class Swarm implements ProtoSwarm {
 
 	// This should occasionally be executed at run() phase
 	static cleanMemory(overlord: { swarms: { [ref: string]: Swarm }, memory: any }) {
-		for (const ref in overlord.swarms) {
+		for (const _ref in overlord.swarms) {
 			// TODO
 		}
 	}
@@ -291,7 +291,7 @@ export class Swarm implements ProtoSwarm {
 			ret = ERR_TIRED;
 		} else {
 			const prevDirection = this.orientation;
-			const prevFormation = this.formation;
+			const _prevFormation = this.formation;
 			const prevAngle = this.rotationsFromOrientation(prevDirection);
 			const newAngle = this.rotationsFromOrientation(direction);
 			const rotateAngle = newAngle - prevAngle;
@@ -367,8 +367,8 @@ export class Swarm implements ProtoSwarm {
 	 * Compute the "average" direction to a target
 	 */
 	getDirectionTo(obj: RoomPosition | _HasRoomPosition): DirectionConstant {
-		const pos = normalizePos(obj);
-		const directions = _.map(this.creeps, creep => creep.pos.getDirectionTo(obj));
+		const _pos = normalizePos(obj);
+		const _directions = _.map(this.creeps, creep => creep.pos.getDirectionTo(obj));
 		// TODO
 		log.warning(`NOT IMPLEMENTED`);
 		return TOP;
@@ -587,7 +587,8 @@ export class Swarm implements ProtoSwarm {
 		return NO_ACTION;
 	}
 
-	private getBestOrientation(room: Room, includeStructures = true, includeCreeps = false): TOP | RIGHT | BOTTOM | LEFT {
+	private getBestOrientation(room: Room,
+		includeStructures = true, includeCreeps = false): TOP | RIGHT | BOTTOM | LEFT {
 		const targets: _HasRoomPosition[] = [];
 		if (includeStructures) {
 			const structureTargets = this.findInMinRange(room.hostileStructures, 1);
@@ -608,10 +609,10 @@ export class Swarm implements ProtoSwarm {
 		}
 		const dxList = _.flatten(_.map(this.creeps,
 									   creep => _.map(targets,
-													  target => target.pos.x - creep.pos.x))) as number[];
+													  target => target.pos.x - creep.pos.x))) ;
 		const dyList = _.flatten(_.map(this.creeps,
 									   creep => _.map(targets,
-													  target => target.pos.y - creep.pos.y))) as number[];
+													  target => target.pos.y - creep.pos.y))) ;
 		const dx = _.sum(dxList) / dxList.length || 0;
 		const dy = _.sum(dyList) / dyList.length || 0;
 		this.debug(`dx: ${dx}, dy: ${dy}`);

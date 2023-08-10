@@ -131,6 +131,7 @@ if (RL_TRAINING_MODE) {
 } else {
 	if (USE_SCREEPS_PROFILER) {
 		// Wrap the main loop in the profiler
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		_loop = () => profiler.wrap(main);
 	} else {
 		// Use the default main loop

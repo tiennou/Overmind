@@ -1,10 +1,8 @@
 import {log} from '../../console/log';
-import {CombatCreepSetup} from '../../creepSetups/CombatCreepSetup';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
 import {DirectiveHarass} from '../../directives/offense/harass';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
-import {BOOST_TIERS} from '../../resources/map_resources';
 import {CombatZerg} from '../../zerg/CombatZerg';
 import {CombatOverlord} from '../CombatOverlord';
 
@@ -64,7 +62,7 @@ export class HarassOverlord extends CombatOverlord {
 		// Clean up construction sites then move on to another room
 	}
 
-	private chooseRemoteToHarass(hydralisk: CombatZerg, currentRoom: string) {
+	private chooseRemoteToHarass(hydralisk: CombatZerg, _currentRoom: string) {
 		if (!this.directive.memory.roomsToHarass || this.directive.memory.roomsToHarass.length == 0) {
 			this.directive.memory.roomsToHarass = this.directive.findNearbyReservedRoomsForHarassment();
 		}

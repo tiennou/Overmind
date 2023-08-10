@@ -297,6 +297,7 @@ export class OvermindConsole {
 						// Duplicate reference found
 						try {
 							// If this value does not reference a parent it can be deduped
+							// eslint-disable-next-line
 							return JSON.parse(JSON.stringify(value));
 						} catch (error) {
 							// discard key if value cannot be deduped
@@ -306,6 +307,7 @@ export class OvermindConsole {
 					// Store value in our collection
 					cache.push(value);
 				}
+				// eslint-disable-next-line
 				return value;
 			}, '\t');
 			// @ts-expect-error Clear out the cache
@@ -592,7 +594,7 @@ export class OvermindConsole {
 		return ret;
 	}
 
-	static listPortals(rangeFromColonies: number = 5, includeIntershard: boolean = false): string {
+	static listPortals(rangeFromColonies: number = 5, _includeIntershard: boolean = false): string {
 		const colonies = getAllColonies();
 		const allPortals = colonies.map(colony => RoomIntel.findPortalsInRange(colony.name, rangeFromColonies));
 		let ret = `Empire Portal Census \n`;
@@ -610,24 +612,26 @@ export class OvermindConsole {
 	}
 
 	static evaluateOutpostEfficiencies(): string {
-		const outpostsPerColony = <[Colony, string[]][]>getAllColonies().filter(c => c.bunker)
+		const outpostsPerColony: [Colony, string[]][] = getAllColonies().filter(c => c.bunker)
 			.map(c => [c, c.outposts.map(r => r.name)]);
 
 		return OvermindConsole.reportOutpostEfficiency(outpostsPerColony, (avg, colonyAvg) => avg < colonyAvg * 0.75);
 	}
 
 	static evaluatePotentialOutpostEfficiencies(): string {
-		const outpostsPerColony = <[Colony, string[]][]>getAllColonies().filter(c => c.bunker)
+		const outpostsPerColony: [Colony, string[]][] = getAllColonies().filter(c => c.bunker)
 			.map(c => {
 				const outpostNames = c.outposts.map(room => room.name);
 				return [c, Cartographer.findRoomsInRange(c.name, 2).filter(r => !outpostNames.includes(r))];
 			}
 		);
 
-		return OvermindConsole.reportOutpostEfficiency(outpostsPerColony, (avg, colonyAvg) => avg > colonyAvg * 1.25 || avg > 20);
+		return OvermindConsole.reportOutpostEfficiency(outpostsPerColony,
+			(avg, colonyAvg) => avg > colonyAvg * 1.25 || avg > 20);
 	}
 
-	static reportOutpostEfficiency(outpostsPerColony: [Colony, string[]][], selectionCallback: (avg: number, colonyAvg: number) => boolean): string {
+	static reportOutpostEfficiency(outpostsPerColony: [Colony, string[]][],
+			selectionCallback: (avg: number, colonyAvg: number) => boolean): string {
 		let msg = `Estimated outpost efficiency:\n`;
 		for (const [colony, outposts] of outpostsPerColony) {
 			let avgEnergyPerCPU = 0;
@@ -637,11 +641,19 @@ export class OvermindConsole {
 			for (const outpost of outposts) {
 				const d = ExpansionEvaluator.computeTheoreticalMiningEfficiency(colony.bunker!.anchor, outpost);
 
-				msg += `\t - ${d.room} ${`(${d.type})`.padLeft(6)}: ${(d.energyPerSource * d.sources / ENERGY_REGEN_TIME).toFixed(2)} energy/source, Net income: ${d.netIncome.toFixed(2)}, Net energy/CPU: ${(d.netIncome / d.cpuCost).toFixed(2)}\n`;
-				msg += `\t   Creep costs: ${d.creepEnergyCost.toFixed(2)} energy/tick, spawn time: ${d.spawnTimeCost.toFixed(2)}, CPU: ${d.cpuCost.toFixed(2)} cycles/tick\n`;
+				msg += `\t - ${d.room} ${`(${d.type})`.padLeft(6)}: `;
+				msg += `${(d.energyPerSource * d.sources / ENERGY_REGEN_TIME).toFixed(2)} energy/source, `
+				msg += `Net income: ${d.netIncome.toFixed(2)}, `;
+				msg += `Net energy/CPU: ${(d.netIncome / d.cpuCost).toFixed(2)}\n`;
+				msg += `\t   Creep costs: ${d.creepEnergyCost.toFixed(2)} energy/tick, `;
+				msg += `spawn time: ${d.spawnTimeCost.toFixed(2)}, CPU: ${d.cpuCost.toFixed(2)} cycles/tick\n`;
 				if (d.unreachableSources || d.unreachableController) {
 					const { unreachableSources: s, unreachableController: c } = d;
-					msg += `\t   ${color("Unreachable:", "yellow")} ${s ? `sources: ${s}` : ""}${s && c ? ', ' : ''}${c ? `controller: ${c}` : ""}\n`;
+					msg += `\t   ${color("Unreachable:", "yellow")} `;
+					if (s) msg += `sources: ${s}`;
+					if (s && c) msg += ', ';
+					if (c) msg += `controller: ${c}`;
+					msg += `\n`;
 				}
 
 				outpostAvgEnergyPerCPU.push(d.avgEnergyPerCPU);
@@ -654,7 +666,8 @@ export class OvermindConsole {
 					return undefined;
 			}).filter(avg => avg);
 
-			msg += `\n   Outposts with above average efficiency of ${avgEnergyPerCPU.toFixed(2)}: ${bestOutposts.join(", ")}\n`;
+			msg += `\n   Outposts with above average efficiency of ${avgEnergyPerCPU.toFixed(2)}: `;
+			msg += `${bestOutposts.join(", ")}\n`;
 		}
 
 		return msg;

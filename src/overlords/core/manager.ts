@@ -1,5 +1,4 @@
 import {$} from '../../caching/GlobalCache';
-import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {CommandCenter} from '../../hiveClusters/commandCenter';
 import {SpawnRequestOptions} from '../../hiveClusters/hatchery';
@@ -156,14 +155,12 @@ export class CommandCenterOverlord extends Overlord {
 			if (manager.store[request.resourceType] >= amount) {
 				manager.task = Tasks.transfer(request.target, resource, amount);
 				return true;
-			}
-			// Otherwise, if we have any currently in manager's carry, transfer it to the requestor
-			else if (manager.store[request.resourceType] > 0) {
+			} else if (manager.store[request.resourceType] > 0) {
+				// Otherwise, if we have any currently in manager's carry, transfer it to the requestor
 				manager.task = Tasks.transfer(request.target, resource, manager.store[request.resourceType]);
 				return true;
-			}
-			// Otherwise, we don't have any of the resource in the carry
-			else {
+			} else {
+				// Otherwise, we don't have any of the resource in the carry
 				if (this.unloadCarry(manager)) { // if we have other crap, we should unload it
 					return true;
 				}
