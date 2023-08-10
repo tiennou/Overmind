@@ -257,14 +257,24 @@ export class OvermindConsole {
 
 	// Debugging methods ===============================================================================================
 
-	static debug(thing: { name?: string, ref?: string, memory: MemoryDebug }): string {
-		if (thing.memory.debug) {
-			delete thing.memory.debug;
-			return `Disabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
-		} else {
-			thing.memory.debug = true;
-			return `Enabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
+	static debug(...things: { name?: string, ref?: string, memory: MemoryDebug }[]): string {
+		let mode;
+		const debugged = [];
+		for (const thing of things) {
+			if (thing.memory && thing.memory.debug && mode === undefined || mode === false) {
+				mode = false;
+				delete thing.memory.debug;
+				debugged.push(`${thing.name || thing.ref || '(no name or ref)'}`);
+			} else if (thing.memory && mode === undefined || mode === true) {
+				mode = true;
+				thing.memory.debug = true;
+				debugged.push(`${thing.name || thing.ref || '(no name or ref)'}`);
+			} else {
+				log.info(`don't know what to do with ${thing}`);
+				return;
+			}
 		}
+		return `${mode ? "Enabled" : "Disabled"} debugging for ${debugged.join(", ")}`;
 	}
 
 	static startRemoteDebugSession(): string {
