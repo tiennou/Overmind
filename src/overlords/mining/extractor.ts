@@ -60,7 +60,10 @@ export class ExtractorOverlord extends Overlord {
 	private registerOutputRequests(): void {
 		if (this.container) {
 			const outputThreshold = this.drones.length == 0 ? this.container.store.getCapacity() : 0;
-			if (this.container.store.getUsedCapacity() > outputThreshold) {
+			const exhausted = this.mineral?.mineralAmount === 0
+				&& (this.mineral?.ticksToRegeneration ?? 0) > 0;
+			if (this.container.store.getUsedCapacity() > outputThreshold
+				|| exhausted && this.container.store.getUsedCapacity() > 0) {
 				this.colony.logisticsNetwork.requestOutput(this.container, {resourceType: 'all'});
 			}
 		}
