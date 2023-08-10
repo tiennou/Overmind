@@ -14,7 +14,7 @@ export class DirectiveSKOutpost extends Directive {
 	static secondaryColor = COLOR_YELLOW;
 
 	constructor(flag: Flag) {
-		super(flag, colony => colony.level >= 7);
+		super(flag, colony => colony.level >= SourceReaperOverlord.requiredRCL);
 		this.refresh();
 	}
 
