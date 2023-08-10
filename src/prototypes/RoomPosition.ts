@@ -264,9 +264,10 @@ RoomPosition.prototype.getMultiRoomRangeTo = function(this: RoomPosition, pos: R
 	}
 };
 
-RoomPosition.prototype.findClosestByLimitedRange = function <T extends _HasRoomPosition | RoomPosition>(this: RoomPosition,
+RoomPosition.prototype.findClosestByLimitedRange =
+	function <T extends _HasRoomPosition | RoomPosition>(this: RoomPosition,
 		objects: T[], rangeLimit: number,
-		opts?: { filter: any | string; }): T | undefined {
+		opts?: FindOptions<T>): T | undefined {
 	const objectsInRange = this.findInRange<T>(objects, rangeLimit, opts);
 	return this.findClosestByRange(objectsInRange, opts) || undefined;
 };

@@ -167,6 +167,10 @@ interface RoomObject {
 	serialize(): ProtoRoomObject;
 }
 
+interface FindOptions<T> {
+	filter: object | string | ((obj: T) => boolean);
+}
+
 interface RoomPosition {
 	/** Debug helper to format the object */
 	print: string;
@@ -224,7 +228,7 @@ interface RoomPosition {
 
 	findClosestByLimitedRange<T extends _HasRoomPosition | RoomPosition>(this: RoomPosition,
 		objects: T[], rangeLimit: number,
-		opts?: { filter: any | string; }): T | undefined;
+		opts?: FindOptions<T>): T | undefined;
 
 	findClosestByMultiRoomRange<T extends _HasRoomPosition>(objects: T[]): T | undefined;
 
