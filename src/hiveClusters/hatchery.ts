@@ -237,6 +237,11 @@ export class Hatchery extends HiveCluster {
 			if (hasMinerals(this.battery.store)) {
 				this.colony.logisticsNetwork.requestOutputMinerals(this.battery);
 			}
+		} else {
+			// We don't have the battery up yet, so we need to also ask for input from the logistic network
+			// so that transporters participate as well
+			_.forEach(this.energyStructures,
+				struct => this.colony.logisticsNetwork.requestInput(struct, { multiplier: 1.5 }));
 		}
 		// Register energy transport requests (goes on hatchery store group, which can be colony store group)
 		// let refillStructures = this.energyStructures;
