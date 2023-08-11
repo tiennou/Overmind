@@ -256,12 +256,12 @@ export class LogisticsNetwork {
 		}
 		if (transporter.task) {
 			let approximateDistance = transporter.task.eta;
-			let pos = transporter.pos;
 			const targetPositions = transporter.task.targetPosManifest;
+			let pos = targetPositions.shift()!;
 			// this.debug(() => `computeNextAvailability: ${transporter.print}@${pos.print}: eta: ${approximateDistance}, pos: ${targetPositions.map(p => p.print)}`);
 			// If there is a well-defined task ETA, use that as the first leg, else set dist to zero and use range
 			if (approximateDistance) {
-				for (const targetPos of targetPositions.slice(1)) {
+				for (const targetPos of targetPositions) {
 					// The path lengths between any two logistics targets should be well-memorized
 					approximateDistance += Math.ceil(pos.getMultiRoomRangeTo(targetPos)
 													 * LogisticsNetwork.settings.rangeToPathHeuristic);
