@@ -17,50 +17,14 @@ import columnify from 'columnify';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
 
-declare global {
-	var help: string;
-	var info: () => string;
-	var notifications: () => string;
-	var debug: (obj: any) => string;
-	var stopDebug: (obj: any) => string;
-	var setMode: (mode: operationMode) => string;
-	var setSignature: (signature: string | undefined) => string | undefined;
-	var timeit: (cb: () => any, repeat?: number) => string;
-	var profileOverlord: (overlord: string | Overlord, ticks?: number | undefined) => string;
-	var finishProfilingOverlord: (overlord: string | Overlord) => string;
-	var setLogLevel: (value: number) => void;
-	var suspendColony: (roomName: string) => string;
-	var unsuspendColony: (roomName: string) => string;
-	var listSuspendedColonies: () => string;
-	var openRoomPlanner: (roomName: string) => string;
-	var closeRoomPlanner: (roomName: string) => string;
-	var cancelRoomPlanner: (roomName: string) => string;
-	var listActiveRoomPlanners: () => string;
-	var destroyErrantStructures: (roomName: string) => string;
-	var destroyAllHostileStructures: (roomName: string) => string;
-	var destroyAllBarriers: (roomName: string) => string;
-	var listConstructionSites: () => string;
-	var removeUnbuiltConstructionSites: () => string;
-	var listDirectives: () => string;
-	var listPersistentDirectives: () => string;
-	var removeAllLogisticsDirectives: () => string;
-	var removeFlagsByColor: (color: ColorConstant, secondaryColor: ColorConstant) => string;
-	var removeErrantFlags: () => string;
-	var deepCleanMemory: () => string;
-	var startRemoteDebugSession: () => string;
-	var endRemoteDebugSession: () => string;
-	var profileMemory: () => string;
-	var cancelMarketOrders: () => string;
-	var setRoomUpgradeRate: (roomName: string, rate: number) => string;
-	var getEmpireMineralDistribution: () => string;
-	var listPortals: () => string;
-	var evaluateOutpostEfficiencies: () => string;
-	var evaluatePotentialOutpostEfficiencies: () => string;
-	var showRoomSafety: (roomName: string) => string;
-}
-
 interface MemoryDebug {
 	debug?: boolean;
+}
+
+interface ConsoleCommand {
+	name: string,
+	description: string;
+	command: (...args: any[]) => string | void;
 }
 
 /**
@@ -68,48 +32,208 @@ interface MemoryDebug {
  */
 export class OvermindConsole {
 
+	static commands: ConsoleCommand[] = [
+	{
+		name: 'help',
+		description: 'show this message',
+		command: () => OvermindConsole.help(),
+	},
+	{
+		name: 'info()',
+		description: 'display version and operation information',
+		command: () => OvermindConsole.info(),
+	},
+	{
+		name: 'notifications()',
+		description: 'print a list of notifications with hyperlinks to the console',
+		command: () => OvermindConsole.notifications(),
+	},
+	{
+		name: 'setMode(mode)',
+		description: 'set the operational mode to "manual", "semiautomatic", or "automatic"',
+		command: OvermindConsole.setMode.bind(OvermindConsole),
+	},
+	{
+		name: 'setSignature(newSignature)',
+		description: 'set your controller signature; no argument sets to default',
+		command: OvermindConsole.setSignature.bind(OvermindConsole),
+	},
+	{
+		name: 'print(...args[])',
+		description: 'log stringified objects to the console',
+		command: OvermindConsole.print.bind(OvermindConsole),
+	},
+	{
+		name: 'debug(thing | ...things)',
+		description: 'enable debug logging for a game object or process',
+		command: OvermindConsole.debug.bind(OvermindConsole),
+	},
+	{
+		name: 'stopDebug(thing | ...things)',
+		description: 'disable debug logging for a game object or process',
+		command: OvermindConsole.debug.bind(OvermindConsole),
+	},
+	{
+		name: 'timeit(function, repeat=1)',
+		description: 'time the execution of a snippet of code',
+		command: OvermindConsole.timeit.bind(OvermindConsole),
+	},
+	{
+		name: 'profileOverlord(overlord, ticks?)',
+		description: 'start profiling on an overlord instance or name',
+		command: OvermindConsole.profileOverlord.bind(OvermindConsole),
+	},
+	{
+		name: 'finishProfilingOverlord(overlord)',
+		description: 'stop profiling on an overlord',
+		command: OvermindConsole.finishProfilingOverlord.bind(OvermindConsole)
+	},
+	{
+		name: 'setLogLevel(int)',
+		description: 'set the logging level from 0 - 4',
+		command: log.setLogLevel.bind(OvermindConsole)
+	},
+	{
+		name: 'suspendColony(roomName)',
+		description: 'suspend operations within a colony',
+		command: OvermindConsole.suspendColony.bind(OvermindConsole),
+	},
+	{
+		name: 'unsuspendColony(roomName)',
+		description: 'resume operations within a suspended colony',
+		command: OvermindConsole.unsuspendColony.bind(OvermindConsole),
+	},
+	{
+		name: 'listSuspendedColonies()',
+		description: 'Prints all suspended colonies',
+		command: OvermindConsole.listSuspendedColonies.bind(OvermindConsole),
+	},
+	{
+		name: 'openRoomPlanner(roomName)',
+		description: 'open the room planner for a room',
+		command: OvermindConsole.openRoomPlanner.bind(OvermindConsole),
+	},
+	{
+		name: 'closeRoomPlanner(roomName)',
+		description: 'close the room planner and save changes',
+		command: OvermindConsole.closeRoomPlanner.bind(OvermindConsole),
+	},
+	{
+		name: 'cancelRoomPlanner(roomName)',
+		description: 'close the room planner and discard changes',
+		command: OvermindConsole.cancelRoomPlanner.bind(OvermindConsole),
+	},
+	{
+		name: 'listActiveRoomPlanners()',
+		description: 'display a list of colonies with open room planners',
+		command: OvermindConsole.listActiveRoomPlanners.bind(OvermindConsole),
+	},
+	{
+		name: 'destroyErrantStructures(roomName)',
+		description: 'destroys all misplaced structures within an owned room',
+		command: OvermindConsole.destroyErrantStructures.bind(OvermindConsole),
+	},
+	{
+		name: 'destroyAllHostileStructures(roomName)',
+		description: 'destroys all hostile structures in an owned room',
+		command: OvermindConsole.destroyAllHostileStructures.bind(OvermindConsole),
+	},
+	{
+		name: 'destroyAllBarriers(roomName)',
+		description: 'destroys all ramparts and barriers in a room',
+		command: OvermindConsole.destroyAllBarriers.bind(OvermindConsole),
+	},
+	{
+		name: 'listConstructionSites(filter?)',
+		description: 'list all construction sites matching an optional filter',
+		command: OvermindConsole.listConstructionSites.bind(OvermindConsole),
+	},
+	{
+		name: 'removeUnbuiltConstructionSites()',
+		description: 'removes all construction sites with 0 progress',
+		command: OvermindConsole.removeUnbuiltConstructionSites.bind(OvermindConsole),
+	},
+	{
+		name: 'listDirectives(filter?)',
+		description: 'list directives, matching a filter if specified',
+		command: OvermindConsole.listDirectives.bind(OvermindConsole),
+	},
+	{
+		name: 'listPersistentDirectives()',
+		description: 'print type, name, pos of every persistent directive',
+		command: OvermindConsole.listPersistentDirectives.bind(OvermindConsole),
+	},
+	{
+		name: 'removeFlagsByColor(color, secondaryColor)',
+		description: 'remove flags that match the specified colors',
+		command: OvermindConsole.removeFlagsByColor.bind(OvermindConsole),
+	},
+	{
+		name: 'removeErrantFlags()',
+		description: 'remove all flags which don\'t match a directive',
+		command: OvermindConsole.removeErrantFlags.bind(OvermindConsole),
+	},
+	{
+		name: 'deepCleanMemory()',
+		description: 'deletes all non-critical portions of memory (be careful!)',
+		command: OvermindConsole.deepCleanMemory.bind(OvermindConsole),
+	},
+	{
+		name: 'profileMemory(root=Memory, depth=1)',
+		description: 'scan through memory to get the size of various objects',
+		command: OvermindConsole.profileMemory.bind(OvermindConsole),
+	},
+	{
+		name: 'startRemoteDebugSession()',
+		description: 'enables the remote debugger so Muon can debug your code',
+		command: OvermindConsole.startRemoteDebugSession.bind(OvermindConsole),
+	},
+	{
+		name: 'cancelMarketOrders(filter?)',
+		description: 'cancels all market orders matching filter (if provided)',
+		command: OvermindConsole.cancelMarketOrders.bind(OvermindConsole),
+	},
+	{
+		name: 'setRoomUpgradeRate(room, upgradeRate)',
+		description: 'changes the rate which a room upgrades at, default is 1',
+		command: OvermindConsole.setRoomUpgradeRate.bind(OvermindConsole),
+	},
+	{
+		name: 'getEmpireMineralDistribution()',
+		description: 'returns current census of colonies and mined sk room minerals',
+		command: OvermindConsole.getEmpireMineralDistribution.bind(OvermindConsole),
+	},
+	{
+		name: 'getPortals(rangeFromColonies)',
+		description: 'returns active portals within colony range',
+		command: OvermindConsole.listPortals.bind(OvermindConsole),
+	},
+	{
+		name: 'evaluateOutpostEfficiencies()',
+		description: 'prints all colony outposts efficiency',
+		command: OvermindConsole.evaluateOutpostEfficiencies.bind(OvermindConsole),
+	},
+	{
+		name: 'evaluatePotentialOutpostEfficiencies()',
+		description: 'prints all nearby unmined outposts',
+		command: OvermindConsole.evaluatePotentialOutpostEfficiencies.bind(OvermindConsole),
+	},
+	{
+		name: 'showRoomSafety(roomName?)',
+		description: 'show gathered safety data about rooms',
+		command: OvermindConsole.showRoomSafety.bind(OvermindConsole),
+	},
+];
+
 	static init() {
+		// @ts-expect-error set this one directly so that the parsing happens once
 		global.help = this.help();
-		global.info = this.info;
-		global.notifications = this.notifications;
-		global.debug = this.debug;
-		global.stopDebug = this.debug;
-		global.setMode = this.setMode;
-		global.setSignature = this.setSignature;
-		global.print = this.print;
-		global.timeit = this.timeit;
-		global.profileOverlord = this.profileOverlord;
-		global.finishProfilingOverlord = this.finishProfilingOverlord;
-		global.setLogLevel = log.setLogLevel;
-		global.suspendColony = this.suspendColony;
-		global.unsuspendColony = this.unsuspendColony;
-		global.listSuspendedColonies = this.listSuspendedColonies;
-		global.openRoomPlanner = this.openRoomPlanner;
-		global.closeRoomPlanner = this.closeRoomPlanner;
-		global.cancelRoomPlanner = this.cancelRoomPlanner;
-		global.listActiveRoomPlanners = this.listActiveRoomPlanners;
-		global.destroyErrantStructures = this.destroyErrantStructures;
-		global.destroyAllHostileStructures = this.destroyAllHostileStructures;
-		global.destroyAllBarriers = this.destroyAllBarriers;
-		global.listConstructionSites = this.listConstructionSites;
-		global.removeUnbuiltConstructionSites = this.removeUnbuiltConstructionSites;
-		global.listDirectives = this.listDirectives;
-		global.listPersistentDirectives = this.listPersistentDirectives;
-		// global.directiveInfo = this.directiveInfo;
-		global.removeAllLogisticsDirectives = this.removeAllLogisticsDirectives;
-		global.removeFlagsByColor = this.removeFlagsByColor;
-		global.removeErrantFlags = this.removeErrantFlags;
-		global.deepCleanMemory = this.deepCleanMemory;
-		global.startRemoteDebugSession = this.startRemoteDebugSession;
-		global.endRemoteDebugSession = this.endRemoteDebugSession;
-		global.profileMemory = this.profileMemory;
-		global.cancelMarketOrders = this.cancelMarketOrders;
-		global.setRoomUpgradeRate = this.setRoomUpgradeRate;
-		global.getEmpireMineralDistribution = this.getEmpireMineralDistribution;
-		global.listPortals = this.listPortals;
-		global.evaluateOutpostEfficiencies = this.evaluateOutpostEfficiencies;
-		global.evaluatePotentialOutpostEfficiencies = this.evaluatePotentialOutpostEfficiencies;
-		global.showRoomSafety = this.showRoomSafety;
+		for (const cmd of this.commands) {
+			const para = cmd.name.indexOf('(');
+			const funcName = para !== -1 ? cmd.name.substring(0, para) : cmd.name;
+			// @ts-expect-error define commands on the global object
+			global[funcName] = cmd.command;
+		}
 	}
 
 	// Help, information, and operational changes ======================================================================
@@ -121,48 +245,12 @@ export class OvermindConsole {
 		}
 		msg += '</font>';
 
-		// Generate a methods description object
-		const descr: { [functionName: string]: string } = {};
-		descr.help = 'show this message';
-		descr['info()'] = 'display version and operation information';
-		descr['notifications()'] = 'print a list of notifications with hyperlinks to the console';
-		descr['setMode(mode)'] = 'set the operational mode to "manual", "semiautomatic", or "automatic"';
-		descr['setSignature(newSignature)'] = 'set your controller signature; no argument sets to default';
-		descr['print(...args[])'] = 'log stringified objects to the console';
-		descr['debug(thing)'] = 'enable debug logging for a game object or process';
-		descr['stopDebug(thing)'] = 'disable debug logging for a game object or process';
-		descr['timeit(function, repeat=1)'] = 'time the execution of a snippet of code';
-		descr['profileOverlord(overlord, ticks?)'] = 'start profiling on an overlord instance or name';
-		descr['finishProfilingOverlord(overlord)'] = 'stop profiling on an overlord';
-		descr['setLogLevel(int)'] = 'set the logging level from 0 - 4';
-		descr['suspendColony(roomName)'] = 'suspend operations within a colony';
-		descr['unsuspendColony(roomName)'] = 'resume operations within a suspended colony';
-		descr['listSuspendedColonies()'] = 'Prints all suspended colonies';
-		descr['openRoomPlanner(roomName)'] = 'open the room planner for a room';
-		descr['closeRoomPlanner(roomName)'] = 'close the room planner and save changes';
-		descr['cancelRoomPlanner(roomName)'] = 'close the room planner and discard changes';
-		descr['listActiveRoomPlanners()'] = 'display a list of colonies with open room planners';
-		descr['destroyErrantStructures(roomName)'] = 'destroys all misplaced structures within an owned room';
-		descr['destroyAllHostileStructures(roomName)'] = 'destroys all hostile structures in an owned room';
-		descr['destroyAllBarriers(roomName)'] = 'destroys all ramparts and barriers in a room';
-		descr['listConstructionSites(filter?)'] = 'list all construction sites matching an optional filter';
-		descr['removeUnbuiltConstructionSites()'] = 'removes all construction sites with 0 progress';
-		descr['listDirectives(filter?)'] = 'list directives, matching a filter if specified';
-		descr['listPersistentDirectives()'] = 'print type, name, pos of every persistent directive';
-		descr['removeFlagsByColor(color, secondaryColor)'] = 'remove flags that match the specified colors';
-		descr['removeErrantFlags()'] = 'remove all flags which don\'t match a directive';
-		descr['deepCleanMemory()'] = 'deletes all non-critical portions of memory (be careful!)';
-		descr['profileMemory(root=Memory, depth=1)'] = 'scan through memory to get the size of various objects';
-		descr['startRemoteDebugSession()'] = 'enables the remote debugger so Muon can debug your code';
-		descr['cancelMarketOrders(filter?)'] = 'cancels all market orders matching filter (if provided)';
-		descr['setRoomUpgradeRate(room, upgradeRate)'] = 'changes the rate which a room upgrades at, default is 1';
-		descr['getEmpireMineralDistribution()'] = 'returns current census of colonies and mined sk room minerals';
-		descr['getPortals(rangeFromColonies)'] = 'returns active portals within colony range';
-		descr['evaluateOutpostEfficiencies()'] = 'prints all colony outposts efficiency';
-		descr['evaluatePotentialOutpostEfficiencies()'] = 'prints all nearby unmined outposts';
-		descr['showRoomSafety(roomName?)'] = 'show gathered safety data about rooms';
-
 		// Console list
+		const descr: { [functionName: string]: string } = {};
+		for (const cmd of this.commands) {
+			if (!cmd.description) continue;
+			descr[cmd.name] = cmd.description;
+		}
 		const descrMsg = toColumns(descr, {justify: true, padChar: '.'});
 		const maxLineLength = _.max(_.map(descrMsg, line => line.length)) + 2;
 		msg += 'Console Commands: '.padRight(maxLineLength, '=') + '\n' + descrMsg.join('\n');
