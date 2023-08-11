@@ -251,6 +251,9 @@ export class LogisticsNetwork {
 	// Transporter availability and predictive functions ===============================================================
 
 	private computeNextAvailability(transporter: Zerg): [number, RoomPosition] {
+		if (transporter.spawning) {
+			return [transporter.ticksUntilSpawned ?? 0, transporter.spawnPos ?? transporter.pos];
+		}
 		if (transporter.task) {
 			let approximateDistance = transporter.task.eta;
 			let pos = transporter.pos;
@@ -649,7 +652,7 @@ export class LogisticsNetwork {
 			info.push({
 						  creep			: transporter.name,
 						  pos			: transporter.pos.printPlain,
-						  task			: task,
+						  task			: transporter.spawning ? "spawning" : task,
 						  target		: target,
 						  size			: transporter.store.getCapacity(),
 						  free			: transporter.store.getFreeCapacity(),

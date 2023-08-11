@@ -79,6 +79,7 @@ export class Zerg extends AnyZerg {
 	// Cached properties
 	private _task: Task<any> | null;
 	private _neededBoosts: { [boostResource: string]: number } | undefined;
+	private _spawnInfo: Spawning | undefined;
 
 	constructor(creep: Creep, notifyWhenAttacked = true) {
 		super(creep, notifyWhenAttacked);
@@ -150,16 +151,42 @@ export class Zerg extends AnyZerg {
 		}
 	}
 
-	get ticksUntilSpawned(): number | undefined {
-		if (this.spawning) {
-			const spawner = this.pos.lookForStructure(STRUCTURE_SPAWN) as StructureSpawn;
-			if (spawner && spawner.spawning) {
-				return spawner.spawning.remainingTime;
-			} else {
+	private get spawnInfo(): Spawning | undefined {
+		if (!this.spawning) return undefined;
+		if (!this._spawnInfo) {
+			const spawner = this.pos.lookForStructure(STRUCTURE_SPAWN);
+			if (!spawner) {
 				// Shouldn't ever get here
-				console.log(`Error determining ticks to spawn for ${this.name} @ ${this.pos.print}!`);
+				log.error(`Error determining ticks to spawn for ${this.name} @ ${this.pos.print}!`);
+				return undefined;
 			}
+			this._spawnInfo = spawner.spawning ?? undefined;
 		}
+		return this._spawnInfo;
+	}
+
+	get spawner(): StructureSpawn | undefined {
+		return this.spawnInfo?.spawn;
+	}
+
+	get ticksUntilSpawned(): number | undefined {
+		return this.spawnInfo?.remainingTime;
+	}
+
+	get spawnPos(): RoomPosition | undefined {
+		const info = this.spawnInfo;
+		if (!info) return undefined;
+		let directions = info.directions;
+		if (!directions) {
+			directions = [TOP];
+		}
+		// Go through the list of directions and rebuild the position
+		let pos = info.spawn.pos;
+		let dir;
+		while ((dir = directions.shift())) {
+			pos = pos.getPositionAtDirection(dir);
+		}
+		return pos;
 	}
 
 	// Wrapped creep methods ===========================================================================================
