@@ -194,8 +194,12 @@ export class TransportOverlord extends Overlord {
 
 	/* Handles small transporters, which don't do well with the logisticsNetwork's stable matching system */
 	private handleSmolTransporter(smolTransporter: Zerg) {
+		const network = this.colony.logisticsNetwork;
+		const requests = network.transporterPreferences(smolTransporter);
 		// Just perform a single-sided greedy selection of all requests
-		const bestRequestViaGreedy = _.first(this.colony.logisticsNetwork.transporterPreferences(smolTransporter));
+		// WIP: this doesn't really work, as it causes each transporter to pick the same "best" request,
+		// look at it and either go grab it, or park
+		const bestRequestViaGreedy = _.first(requests);
 		this.handleTransporter(smolTransporter, bestRequestViaGreedy);
 	}
 
@@ -213,7 +217,20 @@ export class TransportOverlord extends Overlord {
 		}
 	}
 
+	retarget() {
+		this.transporters.forEach(t => t.task = null);
+		this.run();
+	}
+
 	run() {
-		this.autoRun(this.transporters, transporter => this.handleSmolTransporter(transporter));
+		this.autoRun(this.transporters, transporter => {
+			const canUseFullMatching = transporter.store.getCapacity() >= LogisticsNetwork.settings.carryThreshold;
+			const canAffordCPU = Game.cpu.bucket >= 5000;
+			if (canUseFullMatching && canAffordCPU) {
+				this.handleBigTransporter(transporter);
+			} else {
+				this.handleSmolTransporter(transporter);
+			}
+		});
 	}
 }
