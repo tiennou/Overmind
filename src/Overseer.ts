@@ -595,6 +595,11 @@ export class Overseer implements IOverseer {
 		}
 
 		this.placeDirectives();
+
+		const bucket = Game.cpu.bucket;
+		const lastBucket = Memory.stats.persistent.lastBucket ?? bucket;
+		log.info(`CPU stats: bucket: ${bucket} (delta: ${bucket - lastBucket}), tick limit: ${Game.cpu.tickLimit}`);
+		Memory.stats.persistent.lastBucket = bucket;
 	}
 
 	getCreepReport(colony: Colony): string[][] {

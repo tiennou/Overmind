@@ -38,6 +38,7 @@ interface Memory {
 			avgCPU?: number;
 			empireAge?: number;
 			build?: number;
+			lastBucket?: number;
 		};
 		"cpu.heapStatistics"?: HeapStatistics;
 	};
