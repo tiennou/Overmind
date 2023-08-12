@@ -519,7 +519,7 @@ export class Movement {
 		const nextPos = Pathing.positionAtDirection(creep.pos, nextDir);
 		if (!nextPos) return;
 
-		return nextPos.lookFor(LOOK_CREEPS)[0];
+		return nextPos.room ? nextPos.lookFor(LOOK_CREEPS)[0] : undefined;
 	}
 
 	/* Push a blocking creep out of the way */
