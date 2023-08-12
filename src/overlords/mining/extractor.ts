@@ -115,26 +115,32 @@ export class ExtractorOverlord extends Overlord {
 	}
 
 	private handleDrone(drone: Zerg) {
+		this.debug(`handling ${drone.print}`);
 		// Stay safe out there!
 		if (drone.avoidDanger({timer: 10, dropEnergy: true})) {
+			this.debug(`${this.print} avoiding danger`);
 			return;
 		}
 		// Ensure you are in the assigned room
 		if (drone.room == this.room && !drone.pos.isEdge) {
 			if (this.mineral && !drone.pos.inRangeToPos(this.mineral.pos, 1)) {
+				this.debug(`${drone.print} too far from ${this.mineral.print}`);
 				return drone.goTo(this.mineral.pos);
 			}
 			if (this.mineral) {
 				// Do harvest first - needs to check if in range anyway so this is more CPU efficient
 				if (this.extractor?.cooldown === 0) {
+					this.debug(`${drone.print} harvesting from ${this.mineral.print}`);
 					const ret = drone.harvest(this.mineral);
 					if (ret == ERR_NOT_IN_RANGE) {
+						this.debug(`${drone.print} too far from ${this.mineral.print}, moving closer`);
 						return drone.goTo(this.mineral);
 					}
 				}
 				if (this.container) {
 					// Transfer to container if you need to (can do at same tick as harvest)
 					if (drone.store.getUsedCapacity() > 0.9 * drone.store.getCapacity()) {
+						this.debug(`${drone.print} full at ${drone.store.getUsedCapacity()}/${drone.store.getCapacity()}, transferring`);
 						const transfer = drone.transferAll(this.container);
 						if (transfer == ERR_NOT_IN_RANGE) {
 							return drone.goTo(this.container, {range: 1});
@@ -142,13 +148,15 @@ export class ExtractorOverlord extends Overlord {
 					}
 					// Move onto the container pos if you need to
 					if (this.drones.length == 1 && !drone.pos.isEqualTo(this.container.pos)) {
+						this.debug(`${this.print} moving onto container`);
 						return drone.goTo(this.container, {range: 0});
 					}
 				}
 			} else {
-				log.error(`${this.print}: room defined and no mineral! (Why?)`);
+				log.error(`${drone.print}: room defined and no mineral! (Why?)`);
 			}
 		} else {
+			this.debug(`${drone.print} not in room`);
 			drone.goTo(this);
 		}
 	}

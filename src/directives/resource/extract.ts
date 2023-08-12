@@ -53,6 +53,27 @@ export class DirectiveExtract extends Directive {
 		}
 	}
 
+	visuals(): void {
+		if (!(this.memory.debug && Memory.settings.enableVisuals)) return;
+
+		const extract = this.overlords.extract;
+		const data = [this.name];
+		if (extract.container) {
+			const store = extract.container.store
+			data.push(` S: ${store.getUsedCapacity()}/${store.getCapacity()}`);
+		}
+		if (extract.extractor) {
+			data.push(` C: ${this.overlords.extract.extractor?.cooldown} ticks`);
+		}
+		if (extract.mineral?.mineralAmount) {
+			data.push(` R: ${extract.mineral.mineralAmount} ${extract.mineral.mineralType}`);
+		} else {
+			data.push(` R: ${extract.mineral?.ticksToRegeneration} ticks`);
+		}
+		const { x, y, roomName } = this.pos;
+		new RoomVisual(roomName).infoBox(data, x, y, { color: '#7acf9c' });
+	}
+
 }
 
 
