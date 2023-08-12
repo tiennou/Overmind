@@ -125,7 +125,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 
 				// Update best choices
 				if (score > bestScore &&
-					Game.map.getRoomStatus(roomName).status === Game.map.getRoomStatus(colony.room.name).status) {
+					RoomIntel.getRoomStatus(roomName).status === RoomIntel.getRoomStatus(colony.room.name).status) {
 					bestScore = score;
 					bestRoom = roomName;
 				}

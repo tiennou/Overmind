@@ -47,7 +47,7 @@ export class RandomWalkerScoutOverlord extends Overlord {
 			return;
 		}
 
-		const roomStatus = Game.map.getRoomStatus(scout.room.name);
+		const roomStatus = RoomIntel.getRoomStatus(scout.room.name);
 
 		let neighboringRooms = _.values<string>(Game.map.describeExits(scout.pos.roomName));
 		neighboringRooms = _.shuffle(neighboringRooms);
@@ -56,7 +56,7 @@ export class RandomWalkerScoutOverlord extends Overlord {
 		let neighboringRoom;
 		while ((neighboringRoom = neighboringRooms.shift())) {
 
-			const neighborStatus = Game.map.getRoomStatus(scout.room.name);
+			const neighborStatus = RoomIntel.getRoomStatus(scout.room.name);
 			if (roomStatus.status !== neighborStatus.status) {
 				continue;
 			}
