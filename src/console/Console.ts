@@ -345,18 +345,19 @@ export class OvermindConsole {
 
 	// Debugging methods ===============================================================================================
 
-	static debug(...things: { name?: string, ref?: string, memory: MemoryDebug }[]): string {
+	static debug(...things: { name?: string, ref?: string, print?: string, memory: MemoryDebug }[]): string {
 		let mode;
 		const debugged = [];
 		for (const thing of things) {
+			const name = `${thing.print || thing.ref || thing.name || '(no name or ref)'}`
 			if (thing.memory && thing.memory.debug && mode === undefined || mode === false) {
 				mode = false;
 				delete thing.memory.debug;
-				debugged.push(`${thing.name || thing.ref || '(no name or ref)'}`);
+				debugged.push(name);
 			} else if (thing.memory && mode === undefined || mode === true) {
 				mode = true;
 				thing.memory.debug = true;
-				debugged.push(`${thing.name || thing.ref || '(no name or ref)'}`);
+				debugged.push(name);
 			} else {
 				log.info(`don't know what to do with ${thing}`);
 				return;
