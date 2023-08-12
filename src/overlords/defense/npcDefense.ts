@@ -79,7 +79,11 @@ export class DefenseNPCOverlord extends Overlord {
 
 	init() {
 		const amount = this.room && (this.room.invaders.length > 0 || this.room.invaderCore || RoomIntel.isInvasionLikely(this.room)) ? 1 : 0;
-		this.wishlist(amount, CombatSetups.broodlings.default, {reassignIdle: true});
+		let setup = CombatSetups.broodlings.default;
+		if (CombatSetups.broodlings.default.generateBody(this.colony.room.energyCapacityAvailable).length === 0) {
+			setup = CombatSetups.broodlings.early;
+		}
+		this.wishlist(amount, setup, {reassignIdle: true});
 	}
 
 	run() {
