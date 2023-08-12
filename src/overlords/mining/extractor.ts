@@ -126,9 +126,11 @@ export class ExtractorOverlord extends Overlord {
 			}
 			if (this.mineral) {
 				// Do harvest first - needs to check if in range anyway so this is more CPU efficient
-				const ret = drone.harvest(this.mineral);
-				if (ret == ERR_NOT_IN_RANGE) {
-					return drone.goTo(this.mineral);
+				if (this.extractor?.cooldown === 0) {
+					const ret = drone.harvest(this.mineral);
+					if (ret == ERR_NOT_IN_RANGE) {
+						return drone.goTo(this.mineral);
+					}
 				}
 				if (this.container) {
 					// Transfer to container if you need to (can do at same tick as harvest)
