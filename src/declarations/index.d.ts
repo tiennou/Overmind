@@ -31,6 +31,7 @@ declare var PERMACACHE: {
 	cartographerRoomTypes: { [roomName: string]: import('utilities/Cartographer').RoomType };
 	_packedRoomNames: { [roomName: string]: string };
 	_unpackedRoomNames: { [roomName: string]: string };
+	positionNeighbors: { [posCoords: string]: RoomPosition[] };
 };
 
 declare var __DEFAULT_OVERMIND_SIGNATURE__: string;

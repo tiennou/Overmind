@@ -1,5 +1,6 @@
 // A stripped-down version of the logistics network intended for local deliveries
 
+import { log } from 'console/log';
 import {blankPriorityQueue, Priority} from '../priorities/priorities';
 import {profile} from '../profiler/decorator';
 
@@ -97,6 +98,12 @@ export class TransportRequestGroup {
 		}
 	}
 
+
+	private isTargetValid(target: TransportRequestTarget) {
+		if (target.pos.availableNeighbors(true).length === 0) return false;
+		return true;
+	}
+
 	/**
 	 * Request for resources to be deposited into this target
 	 */
@@ -105,6 +112,10 @@ export class TransportRequestGroup {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 		});
+		if (!this.isTargetValid(target)) {
+			log.warning(`Transport request error: target input ${target.print} is invalid`);
+			return;
+		}
 		if (opts.amount == undefined) {
 			opts.amount = this.getInputAmount(target, opts.resourceType!);
 		}
@@ -129,6 +140,10 @@ export class TransportRequestGroup {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 		});
+		if (!this.isTargetValid(target)) {
+			log.warning(`Transport request error: target output ${target.print} is invalid`);
+			return;
+		}
 		if (opts.amount == undefined) {
 			opts.amount = this.getOutputAmount(target, opts.resourceType!);
 		}

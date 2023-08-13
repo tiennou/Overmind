@@ -138,6 +138,11 @@ export class LogisticsNetwork {
 
 	// Request and provide functions ===================================================================================
 
+	private isTargetValid(target: LogisticsTarget) {
+		if (target.pos.availableNeighbors(true).length === 0) return false;
+		return true;
+	}
+
 	/**
 	 * Request for resources to be deposited into this target
 	 */
@@ -153,6 +158,10 @@ export class LogisticsNetwork {
 		}
 		if (opts.resourceType == 'all') {
 			log.warning(`Logistics request error: 'all' can only be used for output requests`);
+			return;
+		}
+		if (!this.isTargetValid(target)) {
+			log.warning(`Logistics request error: target input ${target.print} is invalid`);
 			return;
 		}
 		if (!opts.amount) {
@@ -182,6 +191,10 @@ export class LogisticsNetwork {
 			multiplier  : 1,
 			dAmountdt   : 0,
 		});
+		if (!this.isTargetValid(target)) {
+			log.warning(`Logistics request error: target output ${target.print} is invalid`);
+			return;
+		}
 		if (opts.resourceType == 'all' && !isResource(target)) {
 			if (target.store.getUsedCapacity() == target.store.energy) {
 				opts.resourceType = RESOURCE_ENERGY; // convert "all" requests to energy if that's all they have

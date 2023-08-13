@@ -193,8 +193,17 @@ RoomPosition.prototype.isWalkable = function(this: RoomPosition, ignoreCreeps = 
 	return true;
 };
 
+PERMACACHE.positionNeighbors = PERMACACHE.positionNeighbors ?? {};
 RoomPosition.prototype.availableNeighbors = function(this: RoomPosition, ignoreCreeps = false): RoomPosition[] {
-	return _.filter(this.neighbors, pos => pos.isWalkable(ignoreCreeps));
+	if (ignoreCreeps) {
+		const key = `${this.readableName}`;
+		if (!PERMACACHE.positionNeighbors[key]) {
+			PERMACACHE.positionNeighbors[key] = this.neighbors.filter(pos => pos.isWalkable(ignoreCreeps));
+		}
+		return PERMACACHE.positionNeighbors[key];
+	} else {
+		return this.neighbors.filter(pos => pos.isWalkable(ignoreCreeps));
+	}
 };
 
 RoomPosition.prototype.getPositionAtDirection =
