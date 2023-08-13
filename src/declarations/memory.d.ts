@@ -160,6 +160,7 @@ interface CreepMemory {
 	_go?: MoveData;
 	debug?: boolean;
 	talkative?: boolean;
+	retired?: boolean;
 }
 
 interface MoveData {

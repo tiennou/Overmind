@@ -1,4 +1,3 @@
-import { TaskRetire } from 'tasks/instances/retire';
 import {log} from '../console/log';
 import {isCreep, isPowerCreep, isStandardZerg} from '../declarations/typeGuards';
 import {CombatIntel} from '../intel/CombatIntel';
@@ -8,7 +7,7 @@ import {BOOST_PARTS} from '../resources/map_resources';
 import {initializeTask} from '../tasks/initializer';
 import {MIN_LIFETIME_FOR_BOOST} from '../tasks/instances/getBoosted';
 import {Task} from '../tasks/Task';
-import {AnyZerg} from './AnyZerg';
+import {AnyZerg, setOverlord} from './AnyZerg';
 
 
 export function normalizeStandardZerg(creep: Zerg | Creep): Zerg | Creep {
@@ -529,32 +528,19 @@ export class Zerg extends AnyZerg {
 
 	// Overlord logic --------------------------------------------------------------------------------------------------
 
-	// get overlord(): Overlord | null {
-	// 	return getOverlord(this);
-	// }
-
-	// set overlord(newOverlord: Overlord | null) {
-	// 	setOverlord(this, newOverlord);
-	// }
-
-	// TODO add retire/reassignment logic
-	// Eg. creep get repurposed, it gets recycled, etc
 	/**
-	 * When a zerg has no more use for it's current overlord, it will be retired.
+	 * When a zerg has no more use for its current overlord, it will be retired.
 	 * For now, that means RIP
 	 */
 	retire() {
-		const colonySpawns = this.colony?.hatchery?.spawns;
-		if (colonySpawns) {
-			const nearbySpawn = this.pos.findClosestByMultiRoomRange(colonySpawns);
-			log.info(`${this.print} is retiring to closest spawn: ${nearbySpawn?.pos}`);
-			if (nearbySpawn) {
-				this.task = new TaskRetire(nearbySpawn);
-				return;
-			}
+		if (this.colony) {
+			log.info(`${this.print} is retiring from duty`);
+			setOverlord(this, this.colony.overlords.default);
+			this.memory.retired = true;
+			return;
 		}
 
-		log.warning(`${this.name} is committing suicide!`);
+		log.warning(`${this.print} is committing suicide!`);
 		return this.suicide();
 	}
 
