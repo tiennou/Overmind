@@ -4,12 +4,18 @@ import {BoostType, BoostTypeBodyparts} from '../resources/map_resources';
 import {BodyGeneratorReturn} from './CombatCreepSetup';
 
 export interface BodySetup {
-	pattern: BodyPartConstant[];			// body pattern to be repeated
-	sizeLimit: number;						// maximum number of unit repetitions to make body
-	prefix: BodyPartConstant[];				// stuff at beginning of body
-	suffix: BodyPartConstant[];				// stuff at end of body
-	proportionalPrefixSuffix: boolean;		// (?) prefix/suffix scale with body size
-	ordered: boolean;						// (?) assemble as WORK WORK MOVE MOVE instead of WORK MOVE WORK MOVE
+	/** body pattern to be repeated */
+	pattern: BodyPartConstant[];
+	/** maximum number of unit repetitions to make body */
+	sizeLimit: number;
+	/** stuff at beginning of body */
+	prefix: BodyPartConstant[];
+	/** stuff at end of body */
+	suffix: BodyPartConstant[];
+	/** (?) prefix/suffix scale with body size */
+	proportionalPrefixSuffix: boolean;
+	/** (?) assemble as WORK WORK MOVE MOVE instead of WORK MOVE WORK MOVE */
+	ordered: boolean;
 }
 
 /* Return the cost of an entire array of body parts */
