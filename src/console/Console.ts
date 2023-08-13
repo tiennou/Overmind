@@ -450,7 +450,7 @@ export class OvermindConsole {
 	// Colony suspension ===============================================================================================
 
 	static suspendColony(roomName: string): void {
-		if (!Overmind.colonies[roomName]) {
+		if (!Memory.colonies[roomName]) {
 			console.log(`Colony ${roomName} is not a valid colony!`);
 			return;
 		}
@@ -465,7 +465,7 @@ export class OvermindConsole {
 	}
 
 	static unsuspendColony(roomName: string): void {
-		if (!Overmind.colonies[roomName]) {
+		if (!Memory.colonies[roomName]) {
 			console.log(`Colony ${roomName} is not a valid colony!`);
 			return;
 		}
