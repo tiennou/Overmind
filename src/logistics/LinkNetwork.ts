@@ -84,8 +84,14 @@ export class LinkNetwork {
 		}
 		// Now send all remaining transmit link requests to the command center
 		if (this.colony.commandCenter && this.colony.commandCenter.link) {
+			let free = this.colony.commandCenter.link.store.getFreeCapacity(RESOURCE_ENERGY)
 			for (const transmitLink of this.transmit) {
-				transmitLink.transferEnergy(this.colony.commandCenter.link);
+				if (free <= 0) break;
+				const available = transmitLink.store.getUsedCapacity(RESOURCE_ENERGY);
+				if (free >= available) {
+					transmitLink.transferEnergy(this.colony.commandCenter.link);
+					free -= available;
+				}
 			}
 		}
 	}
