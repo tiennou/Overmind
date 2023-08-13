@@ -24,7 +24,7 @@ interface MemoryDebug {
 interface ConsoleCommand {
 	name: string,
 	description: string;
-	command: (...args: any[]) => string | void;
+	command: (...args: any[]) => any;
 }
 
 /**
@@ -226,19 +226,27 @@ export class OvermindConsole {
 ];
 
 	static init() {
-		// @ts-expect-error set this one directly so that the parsing happens once
-		global.help = this.help();
 		for (const cmd of this.commands) {
 			const para = cmd.name.indexOf('(');
 			const funcName = para !== -1 ? cmd.name.substring(0, para) : cmd.name;
 			// @ts-expect-error define commands on the global object
 			global[funcName] = cmd.command;
 		}
+		this.generateHelp();
+		// @ts-expect-error set this one directly so that the parsing happens once
+		global.help = this.helpMsg;
 	}
 
 	// Help, information, and operational changes ======================================================================
 
+	static helpMsg: string;
+
 	static help() {
+		if (!this.helpMsg) this.generateHelp();
+		console.log(this.helpMsg);
+	}
+
+	static generateHelp() {
 		let msg = '\n<font color="#ff00ff">';
 		for (const line of asciiLogoSmall) {
 			msg += line + '\n';
@@ -257,7 +265,7 @@ export class OvermindConsole {
 
 		msg += '\n\nRefer to the repository for more information\n';
 
-		return msg;
+		this.helpMsg = msg;
 	}
 
 	static printUpdateMessage(aligned = false): void {
@@ -291,61 +299,60 @@ export class OvermindConsole {
 		return _.map(notifications, msg => bullet + msg).join('\n');
 	}
 
-	static setMode(mode: operationMode): string {
-		switch (mode) {
-			case 'manual':
-				Memory.settings.operationMode = 'manual';
-				return `Operational mode set to manual. Only defensive directives will be placed automatically; ` +
-					   `remove harvesting, claiming, room planning, and raiding must be done manually.`;
-			case 'semiautomatic':
-				Memory.settings.operationMode = 'semiautomatic';
-				return `Operational mode set to semiautomatic. Claiming, room planning, and raiding must be done ` +
-					   `manually; everything else is automatic.`;
-			case 'automatic':
-				Memory.settings.operationMode = 'automatic';
-				return `Operational mode set to automatic. All actions are done automatically, but manually placed ` +
-					   `directives will still be responded to.`;
-			default:
-				return `Invalid mode: please specify 'manual', 'semiautomatic', or 'automatic'.`;
+	static setMode(mode: operationMode): void {
+		if ("manual".startsWith(mode)) {
+			Memory.settings.operationMode = 'manual';
+			console.log(`Operational mode set to manual. Only defensive directives will be placed automatically; ` +
+				`remove harvesting, claiming, room planning, and raiding must be done manually.`);
+		} else if ("semiautomatic".startsWith(mode)) {
+			Memory.settings.operationMode = 'semiautomatic';
+			console.log(`Operational mode set to semiautomatic. Claiming, room planning, and raiding must be done ` +
+				`manually; everything else is automatic.`);
+		} else if ("automatic".startsWith(mode)) {
+			Memory.settings.operationMode = 'automatic';
+			console.log(`Operational mode set to automatic. All actions are done automatically, but manually placed ` +
+				`directives will still be responded to.`);
+		} else {
+			console.log(`Invalid mode: please specify 'manual', 'semiautomatic', or 'automatic'.`);
 		}
 	}
 
 
-	static setSignature(signature: string | undefined): string | undefined {
+	static setSignature(signature: string | undefined): void {
 		const sig = signature ? signature : DEFAULT_OVERMIND_SIGNATURE;
 		if (sig.length > 100) {
 			throw new Error(`Invalid signature: ${signature}; length is over 100 chars.`);
-		} else if (sig.toLowerCase().includes('overmind') || sig.includes(DEFAULT_OVERMIND_SIGNATURE)) {
-			Memory.settings.signature = sig;
-
-			_.each(Overmind.colonies, colony => {
-				const signer = _.sample(colony.getZergByRole("worker"));
-				if (!signer) {
-					log.warning(`${colony.print}: unable to find a random worker to re-sign the controller`);
-					return;
-				}
-				signer.task = new TaskSignController(colony.controller);
-			})
-
-			_.filter(Overmind.directives, directive => directive instanceof DirectiveOutpost)
-				.forEach(directive => {
-					const overlord = <ReservingOverlord>directive.overlords.reserve;
-					overlord.settings.resetSignature = true;
-					if (overlord.reservers[0]) {
-						overlord.reservers[0].task = null;
-					}
-				});
-			return `Controller signature set to ${sig}`;
-		} else {
+		} else if (!sig.toLowerCase().includes('overmind') || !sig.includes(DEFAULT_OVERMIND_SIGNATURE)) {
 			throw new Error(`Invalid signature: ${signature}; must contain the string "Overmind" or ` +
 							`${DEFAULT_OVERMIND_SIGNATURE} (accessible on global with __DEFAULT_OVERMIND_SIGNATURE__)`);
 		}
+
+		Memory.settings.signature = sig;
+
+		_.each(Overmind.colonies, colony => {
+			const signer = _.sample(colony.getZergByRole("worker"));
+			if (!signer) {
+				log.warning(`${colony.print}: unable to find a random worker to re-sign the controller`);
+				return;
+			}
+			signer.task = new TaskSignController(colony.controller);
+		})
+
+		_.filter(Overmind.directives, directive => directive instanceof DirectiveOutpost)
+			.forEach(directive => {
+				const overlord = <ReservingOverlord>directive.overlords.reserve;
+				overlord.settings.resetSignature = true;
+				if (overlord.reservers[0]) {
+					overlord.reservers[0].task = null;
+				}
+			});
+		console.log(`Controller signature set to ${sig}`);
 	}
 
 
 	// Debugging methods ===============================================================================================
 
-	static debug(...things: { name?: string, ref?: string, print?: string, memory: MemoryDebug }[]): string {
+	static debug(...things: { name?: string, ref?: string, print?: string, memory: MemoryDebug }[]): void {
 		let mode;
 		const debugged = [];
 		for (const thing of things) {
@@ -363,20 +370,20 @@ export class OvermindConsole {
 				return;
 			}
 		}
-		return `${mode ? "Enabled" : "Disabled"} debugging for ${debugged.join(", ")}`;
+		console.log(`${mode ? "Enabled" : "Disabled"} debugging for ${debugged.join(", ")}`);
 	}
 
-	static startRemoteDebugSession(): string {
+	static startRemoteDebugSession(): void {
 		global.remoteDebugger.enable();
-		return `Started remote debug session.`;
+		console.log(`Started remote debug session.`);
 	}
 
-	static endRemoteDebugSession(): string {
+	static endRemoteDebugSession(): void {
 		global.remoteDebugger.disable();
-		return `Ended remote debug session.`;
+		console.log(`Ended remote debug session.`);
 	}
 
-	static print(...args: any[]): string {
+	static print(...args: any[]): void {
 		let message = '';
 		for (const arg of args) {
 			let cache: any[] = [];
@@ -403,202 +410,212 @@ export class OvermindConsole {
 			cache = null;
 			message += '\n' + msg;
 		}
-		return message;
+		console.log(message);
 	}
 
-	static timeit(callback: () => any, repeat = 1): string {
+	static timeit(callback: () => any, repeat = 1): void {
 		const start = Game.cpu.getUsed();
 		let i: number;
 		for (i = 0; i < repeat; i++) {
 			callback();
 		}
 		const used = Game.cpu.getUsed() - start;
-		return `CPU used: ${used}. Repetitions: ${repeat} (${used / repeat} each).`;
+		console.log(`CPU used: ${used}. Repetitions: ${repeat} (${used / repeat} each).`);
 	}
 
 	// Overlord profiling ==============================================================================================
-	static profileOverlord(overlord: Overlord | string, ticks?: number): string {
+	static profileOverlord(overlord: Overlord | string, ticks?: number): void {
 		const overlordInstance = typeof overlord == 'string' ? Overmind.overlords[overlord]
 															 : overlord as Overlord | undefined;
 		if (!overlordInstance) {
-			return `No overlord found for ${overlord}!`;
+			console.log(`No overlord found for ${overlord}!`);
 		} else {
 			overlordInstance.startProfiling(ticks);
-			return `Profiling ${overlordInstance.print} for ${ticks || 'indefinite'} ticks.`;
+			console.log(`Profiling ${overlordInstance.print} for ${ticks || 'indefinite'} ticks.`);
 		}
 	}
 
-	static finishProfilingOverlord(overlord: Overlord | string): string {
+	static finishProfilingOverlord(overlord: Overlord | string): void {
 		const overlordInstance = typeof overlord == 'string' ? Overmind.overlords[overlord]
 															 : overlord as Overlord | undefined;
 		if (!overlordInstance) {
-			return `No overlord found for ${overlord}!`;
+			console.log(`No overlord found for ${overlord}!`);
 		} else {
 			overlordInstance.finishProfiling();
-			return `Profiling ${overlordInstance.print} stopped.`;
+			console.log(`Profiling ${overlordInstance.print} stopped.`);
 		}
 	}
 
 
 	// Colony suspension ===============================================================================================
 
-	static suspendColony(roomName: string): string {
-		if (Overmind.colonies[roomName]) {
-			const colonyMemory = Memory.colonies[roomName] as ColonyMemory | undefined;
-			if (colonyMemory) {
-				colonyMemory.suspend = true;
-				Overmind.shouldBuild = true;
-				return `Colony ${roomName} suspended.`;
-			} else {
-				return `No colony memory for ${roomName}!`;
-			}
-		} else {
-			return `Colony ${roomName} is not a valid colony!`;
+	static suspendColony(roomName: string): void {
+		if (!Overmind.colonies[roomName]) {
+			console.log(`Colony ${roomName} is not a valid colony!`);
+			return;
 		}
-	}
-
-	static unsuspendColony(roomName: string): string {
 		const colonyMemory = Memory.colonies[roomName] as ColonyMemory | undefined;
-		if (colonyMemory) {
-			if (!colonyMemory.suspend) {
-				return `Colony ${roomName} is not suspended!`;
-			} else {
-				delete colonyMemory.suspend;
-				Overmind.shouldBuild = true;
-				return `Colony ${roomName} unsuspended.`;
-			}
-		} else {
-			return `No colony memory for ${roomName}!`;
+		if (!colonyMemory) {
+			console.log(`No colony memory for ${roomName}!`);
+			return;
 		}
+		colonyMemory.suspend = true;
+		Overmind.shouldBuild = true;
+		console.log(`Colony ${roomName} suspended.`);
 	}
 
-	static listSuspendedColonies(): string {
-		let msg = 'Colonies currently suspended: \n';
-		for (const i in Memory.colonies) {
-			const colonyMemory = Memory.colonies[i] as ColonyMemory | undefined;
-			if (colonyMemory && colonyMemory.suspend == true) {
-				msg += 'Colony ' + i + ' \n';
-			}
+	static unsuspendColony(roomName: string): void {
+		if (!Overmind.colonies[roomName]) {
+			console.log(`Colony ${roomName} is not a valid colony!`);
+			return;
 		}
-		return msg;
+		const colonyMemory = Memory.colonies[roomName] as ColonyMemory | undefined;
+		if (!colonyMemory) {
+			console.log(`No colony memory for ${roomName}!`);
+			return;
+		}
+		delete colonyMemory.suspend;
+		Overmind.shouldBuild = true;
+		console.log(`Colony ${roomName} unsuspended.`);
+	}
+
+	static listSuspendedColonies(): Colony[] {
+		const suspended = _.filter(Object.entries(Memory.colonies), ([_name, mem]) => mem.suspend);
+
+		let msg = 'Colonies currently suspended: \n';
+		for (const [name, _mem] of suspended) {
+			msg += `Colony ${name}\n`;
+		}
+		console.log(msg);
+		return suspended.map(([name, _mem]) => Overmind.colonies[name]);
 	}
 
 	// Room planner control ============================================================================================
 
-	static openRoomPlanner(roomName: string): string {
-		if (Overmind.colonies[roomName]) {
-			if (Overmind.colonies[roomName].roomPlanner.active != true) {
-				Overmind.colonies[roomName].roomPlanner.active = true;
-				return '';
-			} else {
-				return `RoomPlanner for ${roomName} is already active!`;
-			}
-		} else {
-			return `Error: ${roomName} is not a valid colony!`;
+	static openRoomPlanner(roomName: string): void {
+		if (!Overmind.colonies[roomName]) {
+			console.log(`Error: ${roomName} is not a valid colony!`);
+			return;
 		}
+		if (Overmind.colonies[roomName].roomPlanner.active) {
+			console.log(`RoomPlanner for ${roomName} is already active!`);
+			return;
+		}
+		console.log(`Enabled RoomPlanner for ${Overmind.colonies[roomName].print}`);
+		Overmind.colonies[roomName].roomPlanner.active = true;
 	}
 
-	static closeRoomPlanner(roomName: string): string {
-		if (Overmind.colonies[roomName]) {
-			if (Overmind.colonies[roomName].roomPlanner.active) {
-				Overmind.colonies[roomName].roomPlanner.finalize();
-				return '';
-			} else {
-				return `RoomPlanner for ${roomName} is not active!`;
-			}
-		} else {
-			return `Error: ${roomName} is not a valid colony!`;
+	static closeRoomPlanner(roomName: string): void {
+		if (!Overmind.colonies[roomName]) {
+			console.log(`Error: ${roomName} is not a valid colony!`);
+			return;
 		}
+		if (!Overmind.colonies[roomName].roomPlanner.active) {
+			console.log(`RoomPlanner for ${roomName} is not active!`);
+			return;
+		}
+		console.log(`Closed RoomPlanner for ${Overmind.colonies[roomName].print}`);
+		Overmind.colonies[roomName].roomPlanner.finalize();
 	}
 
-	static cancelRoomPlanner(roomName: string): string {
-		if (Overmind.colonies[roomName]) {
-			if (Overmind.colonies[roomName].roomPlanner.active) {
-				Overmind.colonies[roomName].roomPlanner.active = false;
-				return `RoomPlanner for ${roomName} has been deactivated without saving changes`;
-			} else {
-				return `RoomPlanner for ${roomName} is not active!`;
-			}
-		} else {
-			return `Error: ${roomName} is not a valid colony!`;
+	static cancelRoomPlanner(roomName: string): void {
+		if (!Overmind.colonies[roomName]) {
+			console.log(`Error: ${roomName} is not a valid colony!`);
+			return;
 		}
+		if (!Overmind.colonies[roomName].roomPlanner.active) {
+			console.log(`RoomPlanner for ${roomName} is not active!`);
+			return;
+		}
+		Overmind.colonies[roomName].roomPlanner.active = false;
+		console.log(`RoomPlanner for ${Overmind.colonies[roomName].print} has been deactivated without saving changes`);
 	}
 
-	static listActiveRoomPlanners(): string {
+	static listActiveRoomPlanners(): Colony[] {
 		const coloniesWithActiveRoomPlanners: Colony[] = _.filter(
 			_.map(_.keys(Overmind.colonies), colonyName => Overmind.colonies[colonyName]),
 			(colony: Colony) => colony.roomPlanner.active);
 		const names: string[] = _.map(coloniesWithActiveRoomPlanners, colony => colony.room.print);
 		if (names.length > 0) {
 			console.log('Colonies with active room planners: ' + names.toString());
-			return '';
+			return coloniesWithActiveRoomPlanners;
 		} else {
-			return `No colonies with active room planners`;
+			console.log(`No colonies with active room planners`);
+			return [];
 		}
 	}
 
-	static listConstructionSites(filter?: (site: ConstructionSite) => any): string {
-		let msg = `${_.keys(Game.constructionSites).length} construction sites currently present: \n`;
-		for (const id in Game.constructionSites) {
-			const site = Game.constructionSites[id];
-			if (!filter || filter(site)) {
-				msg += `${bullet}Type: ${site.structureType}`.padRight(20) +
-					   `Pos: ${site.pos.print}`.padRight(65) +
-					   `Progress: ${site.progress} / ${site.progressTotal} \n`;
-			}
+	static listConstructionSites(filter?: (site: ConstructionSite) => any): ConstructionSite[] {
+		if (!filter) {
+			filter = () => true;
 		}
-		return msg;
+		const sites = _.filter(Game.constructionSites, filter);
+
+		let msg = `${_.keys(Game.constructionSites).length} construction sites currently present: \n`;
+		for (const site of sites) {
+			msg += `${bullet}Type: ${site.structureType}`.padRight(20) +
+					`Pos: ${site.pos.print}`.padRight(65) +
+					`Progress: ${site.progress} / ${site.progressTotal} \n`;
+		}
+		console.log(msg);
+		return sites;
 	}
 
 	// Directive management ============================================================================================
 
-	static listDirectives(filter?: (dir: Directive) => any): string {
-		let msg = '';
-		for (const i in Overmind.directives) {
-			const dir = Overmind.directives[i];
-			if (!filter || filter(dir)) {
-				msg += `${bullet}Name: ${dir.print}`.padRight(70) +
-					   `Colony: ${dir.colony.print}`.padRight(55) +
-					   `Pos: ${dir.pos.print}\n`;
-			}
+	static listDirectives(filter?: string | ((dir: Directive) => boolean)): Directive[] {
+		if (typeof filter === "string") {
+			const match = filter;
+			filter = (dir) => dir.name.startsWith(match);
+		} else if (!filter) {
+			filter = () => true;
 		}
-		return msg;
+
+		const matches = _.filter(Overmind.directives, filter);
+		let msg = "";
+		for (const dir of matches) {
+			msg += `${bullet}Name: ${dir.print}`.padRight(70) +
+				`Colony: ${dir.colony.print}`.padRight(55) +
+				`Pos: ${dir.pos.print}\n`;
+		}
+		console.log(msg);
+		return matches;
 	}
 
-	static removeAllLogisticsDirectives(): string {
+	static removeAllLogisticsDirectives(): void {
 		const logisticsFlags = _.filter(Game.flags, flag => flag.color == COLOR_YELLOW &&
 															flag.secondaryColor == COLOR_YELLOW);
 		for (const dir of logisticsFlags) {
 			dir.remove();
 		}
-		return `Removed ${logisticsFlags.length} logistics directives.`;
+		console.log(`Removed ${logisticsFlags.length} logistics directives.`);
 	}
 
-	static listPersistentDirectives(): string {
+	static listPersistentDirectives(): Directive[] {
+		const directives = _.filter(Overmind.directives, dir => dir.memory.persistent);
 		let msg = '';
-		for (const i in Overmind.directives) {
-			const dir = Overmind.directives[i];
-			if (dir.memory.persistent) {
-				msg += `Type: ${dir.directiveName}`.padRight(20) +
-					   `Name: ${dir.name}`.padRight(15) +
-					   `Pos: ${dir.pos.print}\n`;
-			}
+		for (const dir of directives) {
+			msg += `Type: ${dir.directiveName}`.padRight(20) +
+					`Name: ${dir.name}`.padRight(15) +
+					`Pos: ${dir.pos.print}\n`;
 		}
-		return msg;
+		console.log(msg);
+		return directives;
 	}
 
-	static removeFlagsByColor(color: ColorConstant, secondaryColor: ColorConstant): string {
+	static removeFlagsByColor(color: ColorConstant, secondaryColor: ColorConstant): void {
 		const removeFlags = _.filter(Game.flags, flag => flag.color == color && flag.secondaryColor == secondaryColor);
 		for (const flag of removeFlags) {
 			flag.remove();
 		}
-		return `Removed ${removeFlags.length} flags.`;
+		console.log(`Removed ${removeFlags.length} flags.`);
 	}
 
-	static removeErrantFlags(): string {
+	static removeErrantFlags(): void {
 		// This may need to be be run several times depending on visibility
 		if (USE_SCREEPS_PROFILER) {
-			return `ERROR: should not be run while profiling is enabled!`;
+			console.log(`ERROR: should not be run while profiling is enabled!`);
+			return;
 		}
 		let count = 0;
 		for (const name in Game.flags) {
@@ -607,15 +624,18 @@ export class OvermindConsole {
 				count += 1;
 			}
 		}
-		return `Removed ${count} flags.`;
+		console.log(`Removed ${count} flags.`);
 	}
 
 
 	// Structure management ============================================================================================
 
-	static destroyErrantStructures(roomName: string): string {
+	static destroyErrantStructures(roomName: string): void {
 		const colony = Overmind.colonies[roomName];
-		if (!colony) return `${roomName} is not a valid colony!`;
+		if (!colony) {
+			console.log(`${roomName} is not a valid colony!`);
+			return;
+		}
 		const room = colony.room;
 		const allStructures = room.find(FIND_STRUCTURES);
 		let i = 0;
@@ -628,31 +648,43 @@ export class OvermindConsole {
 				}
 			}
 		}
-		return `Destroyed ${i} misplaced structures in ${roomName}.`;
+		console.log(`Destroyed ${i} misplaced structures in ${roomName}.`);
 	}
 
-	static destroyAllHostileStructures(roomName: string): string {
+	static destroyAllHostileStructures(roomName: string): void {
 		const room = Game.rooms[roomName];
-		if (!room) return `${roomName} is undefined! (No vision?)`;
-		if (!room.my) return `${roomName} is not owned by you!`;
+		if (!room) {
+			console.log(`${roomName} is undefined! (No vision?)`);
+			return;
+		}
+		if (!room.my) {
+			console.log(`${roomName} is not owned by you!`);
+			return;
+		}
 		const hostileStructures = room.find(FIND_HOSTILE_STRUCTURES);
 		for (const structure of hostileStructures) {
 			structure.destroy();
 		}
-		return `Destroyed ${hostileStructures.length} hostile structures.`;
+		console.log(`Destroyed ${hostileStructures.length} hostile structures.`);
 	}
 
-	static destroyAllBarriers(roomName: string): string {
+	static destroyAllBarriers(roomName: string): void {
 		const room = Game.rooms[roomName];
-		if (!room) return `${roomName} is undefined! (No vision?)`;
-		if (!room.my) return `${roomName} is not owned by you!`;
+		if (!room) {
+			console.log(`${roomName} is undefined! (No vision?)`);
+			return;
+		}
+		if (!room.my) {
+			console.log(`${roomName} is not owned by you!`);
+			return;
+		}
 		for (const barrier of room.barriers) {
 			barrier.destroy();
 		}
-		return `Destroyed ${room.barriers.length} barriers.`;
+		console.log(`Destroyed ${room.barriers.length} barriers.`);
 	}
 
-	static removeUnbuiltConstructionSites(): string {
+	static removeUnbuiltConstructionSites(): void {
 		let msg = '';
 		for (const id in Game.constructionSites) {
 			const csite = Game.constructionSites[id];
@@ -662,52 +694,55 @@ export class OvermindConsole {
 					   `${csite.pos.print}; response: ${ret}\n`;
 			}
 		}
-		return msg;
+		console.log(msg);
 	}
 
 	// Colony Management ===============================================================================================
 
-	static setRoomUpgradeRate(roomName: string, rate: number): string {
+	static setRoomUpgradeRate(roomName: string, rate: number): void {
 		const colony: Colony = Overmind.colonies[roomName];
 		colony.upgradeSite.memory.speedFactor = rate;
 
-		return `Colony ${roomName} is now upgrading at a rate of ${rate}.`;
+		console.log(`Colony ${roomName} is now upgrading at a rate of ${rate}.`);
 	}
 
-	static getEmpireMineralDistribution(): string {
+	static getEmpireMineralDistribution(): void {
 		const minerals = EmpireAnalysis.empireMineralDistribution();
-		let ret = 'Empire Mineral Distribution \n';
+		let msg = 'Empire Mineral Distribution \n';
 		for (const mineral in minerals) {
-			ret += `${mineral}: ${minerals[mineral]} \n`;
+			msg += `${mineral}: ${minerals[mineral]} \n`;
 		}
-		return ret;
+		console.log(msg);
 	}
 
-	static listPortals(rangeFromColonies: number = 5, _includeIntershard: boolean = false): string {
+	static listPortals(rangeFromColonies: number = 5, _includeIntershard: boolean = false): SavedPortal[] {
 		const colonies = getAllColonies();
-		const allPortals = colonies.map(colony => RoomIntel.findPortalsInRange(colony.name, rangeFromColonies));
-		let ret = `Empire Portal Census \n`;
-		for (const [colonyId, portals] of Object.entries(allPortals)) {
+		const portalsByColony = colonies.map(colony => RoomIntel.findPortalsInRange(colony.name, rangeFromColonies));
+		const allPortals = [];
+		let msg = `Empire Portal Census \n`;
+		for (const [colonyId, portals] of Object.entries(portalsByColony)) {
 			if (_.keys(portals).length > 0) {
-				ret += `Colony ${Overmind.colonies[colonyId].print}: \n`;
+				msg += `Colony ${Overmind.colonies[colonyId].print}: \n`;
 			}
 			for (const portalRoomName of _.keys(portals)) {
 				const samplePortal = _.first(portals[portalRoomName]); // don't need to list all 8 in a room
-				ret += `\t\t Room ${printRoomName(portalRoomName)} Destination ${samplePortal.dest} ` +
+				allPortals.push(samplePortal);
+				msg += `\t\t Room ${printRoomName(portalRoomName)} Destination ${samplePortal.dest} ` +
 					   `Expiration ${samplePortal[MEM.EXPIRATION] - Game.time}] \n`;
 			}
 		}
-		return ret;
+		console.log(msg);
+		return allPortals;
 	}
 
-	static evaluateOutpostEfficiencies(): string {
+	static evaluateOutpostEfficiencies(): void {
 		const outpostsPerColony: [Colony, string[]][] = getAllColonies().filter(c => c.bunker)
 			.map(c => [c, c.outposts.map(r => r.name)]);
 
-		return OvermindConsole.reportOutpostEfficiency(outpostsPerColony, (avg, colonyAvg) => avg < colonyAvg * 0.75);
+		console.log(OvermindConsole.reportOutpostEfficiency(outpostsPerColony, (avg, colonyAvg) => avg < colonyAvg * 0.75));
 	}
 
-	static evaluatePotentialOutpostEfficiencies(): string {
+	static evaluatePotentialOutpostEfficiencies(): void {
 		const outpostsPerColony: [Colony, string[]][] = getAllColonies().filter(c => c.bunker)
 			.map(c => {
 				const outpostNames = c.outposts.map(room => room.name);
@@ -715,8 +750,8 @@ export class OvermindConsole {
 			}
 		);
 
-		return OvermindConsole.reportOutpostEfficiency(outpostsPerColony,
-			(avg, colonyAvg) => avg > colonyAvg * 1.25 || avg > 20);
+		console.log(OvermindConsole.reportOutpostEfficiency(outpostsPerColony,
+			(avg, colonyAvg) => avg > colonyAvg * 1.25 || avg > 20));
 	}
 
 	static reportOutpostEfficiency(outpostsPerColony: [Colony, string[]][],
@@ -764,7 +799,7 @@ export class OvermindConsole {
 
 	// Memory management ===============================================================================================
 
-	static deepCleanMemory(): string {
+	static deepCleanMemory(): void {
 		// Clean colony memory
 		const protectedColonyKeys = ['defcon', 'roomPlanner', 'roadPlanner', 'barrierPlanner'];
 		for (const colName in Memory.colonies) {
@@ -796,7 +831,7 @@ export class OvermindConsole {
 				Memory.creeps[i].task = null;
 			}
 		}
-		return `Memory has been cleaned.`;
+		console.log(`Memory has been cleaned.`);
 	}
 
 
@@ -812,22 +847,23 @@ export class OvermindConsole {
 		}
 	}
 
-	static profileMemory(root = Memory, depth = 1): string {
+	static profileMemory(root = Memory, depth = 1): RecursiveObject {
 		const sizes: RecursiveObject = {};
 		console.log(`Profiling memory...`);
 		const start = Game.cpu.getUsed();
 		OvermindConsole.recursiveMemoryProfile(root, sizes, depth);
 		console.log(`Time elapsed: ${Game.cpu.getUsed() - start}`);
-		return JSON.stringify(sizes, undefined, '\t');
+		console.log(JSON.stringify(sizes, undefined, '\t'));
+		return sizes;
 	}
 
-	static cancelMarketOrders(filter?: (order: Order) => boolean): string {
+	static cancelMarketOrders(filter?: (order: Order) => boolean): void {
 		const ordersToCancel = !!filter ? _.filter(Game.market.orders, order => filter(order)) : Game.market.orders;
 		_.forEach(_.values(ordersToCancel), (order: Order) => Game.market.cancelOrder(order.id));
-		return `Canceled ${_.values(ordersToCancel).length} orders.`;
+		console.log(`Canceled ${_.values(ordersToCancel).length} orders.`);
 	}
 
-	static showRoomSafety(roomName?: string): string {
+	static showRoomSafety(roomName?: string): void {
 		const names = roomName ? [roomName] : Object.keys(Memory.rooms);
 
 		let msg = `Room Intelligence data for ${roomName? `room ${roomName}` : "all rooms"}:\n`;
@@ -870,6 +906,6 @@ export class OvermindConsole {
 		}), data => data.room);
 
 		msg += columnify(roomData);
-		return msg;
+		console.log(msg);
 	}
 }
