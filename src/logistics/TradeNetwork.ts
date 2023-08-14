@@ -164,9 +164,9 @@ export class TraderJoe implements ITradeNetwork {
 		this.ordersPlacedThisTick = 0;
 	}
 
-	private debug(...args: any[]) {
+	private debug(...args: string[]) {
 		if (this.memory.debug) {
-			log.alert('TradeNetwork:', args);
+			log.alert('TradeNetwork:', ...args);
 		}
 	}
 

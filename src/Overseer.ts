@@ -99,7 +99,7 @@ export class Overseer implements IOverseer {
 					}
 					Overmind.exceptions.push(e);
 				} else {
-					log.error(`Got a non-Error exception`, e);
+					log.error(`Got a non-Error exception`, String(e));
 				}
 			}
 		} else {

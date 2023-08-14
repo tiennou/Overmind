@@ -9,6 +9,10 @@ export function sandbox() {
 	try {
 		global.PackratTests = PackratTests;
 	} catch (e) {
-		log.error(e);
+		if (e instanceof Error) {
+			log.error(e);
+		} else {
+			console.log(e);
+		}
 	}
 }

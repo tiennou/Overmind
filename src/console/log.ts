@@ -1,7 +1,7 @@
 import {profile} from '../profiler/decorator';
 import {color} from '../utilities/utils';
 
-export enum LogLevels {
+export enum LogLevel {
 	ERROR,		// log.level = 0
 	WARNING,	// log.level = 1
 	ALERT,		// log.level = 2
@@ -12,7 +12,7 @@ export enum LogLevels {
 /**
  * Default debug level for log output
  */
-export const LOG_LEVEL: number = LogLevels.INFO;
+export const LOG_LEVEL: number = LogLevel.INFO;
 
 /**
  * Prepend log output with current tick number.
@@ -114,6 +114,14 @@ export function debug(thing: { name: string, memory: any, pos: RoomPosition }, .
 	}
 }
 
+export interface LogSettings {
+	level?: LogLevel,
+	showSource?: boolean,
+	showTick?: boolean;
+}
+
+export type LogMessage = (string | object | (() => string))
+
 /**
  * Log provides methods for displaying pretty-printed text into the Screeps console
  */
@@ -153,24 +161,24 @@ export class Log {
 	setLogLevel(value: number) {
 		let changeValue = true;
 		switch (value) {
-			case LogLevels.ERROR:
+			case LogLevel.ERROR:
 				console.log(`Logging level set to ${value}. Displaying: ERROR.`);
 				break;
-			case LogLevels.WARNING:
+			case LogLevel.WARNING:
 				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING.`);
 				break;
-			case LogLevels.ALERT:
+			case LogLevel.ALERT:
 				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT.`);
 				break;
-			case LogLevels.INFO:
+			case LogLevel.INFO:
 				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT, INFO.`);
 				break;
-			case LogLevels.DEBUG:
+			case LogLevel.DEBUG:
 				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT, INFO, DEBUG.`);
 				break;
 			default:
 				console.log(`Invalid input: ${value}. Loging level can be set to integers between `
-							+ LogLevels.ERROR + ' and ' + LogLevels.DEBUG + ', inclusive.');
+							+ LogLevel.ERROR + ' and ' + LogLevel.DEBUG + ', inclusive.');
 				changeValue = false;
 				break;
 		}
@@ -198,7 +206,7 @@ export class Log {
 	private _maxFileString: number = 0;
 
 	trace(error: Error): Log {
-		if (this.level >= LogLevels.ERROR && error.stack) {
+		if (this.level >= LogLevel.ERROR && error.stack) {
 			console.log(this.resolveStack(error.stack));
 		}
 
@@ -209,23 +217,38 @@ export class Log {
 		console.log.apply(this, this.buildArguments(FATAL).concat([color(e.toString(), fatalColor)]));
 	}
 
-	error(...args: any[]): undefined {
-		if (this.level >= LogLevels.ERROR) {
-			console.log.apply(this, this.buildArguments(LogLevels.ERROR).concat([].slice.call(args)));
+	private _log(level: LogLevel, args: LogMessage[]) {
+		// console.log(`_log: ${typeof args}`);
+		// args = _.flatten(args);
+		for (let i = 0; i < args.length; i++) {
+			// console.log(`_log: ${typeof args[i]} ${Array.isArray(args[i])}`);
+			const argFunc = args[i];
+			if (_.isFunction(argFunc)) {
+				// console.log(`_log: argFunc: ${argFunc}`);
+				const arg = <string|object>argFunc();
+				args.splice(i, 1, arg);
+			}
+		}
+		console.log.apply(this, this.buildArguments(level).concat([].slice.call(args)));
+	}
+
+	error(...args: LogMessage[]): undefined {
+		if (this.level >= LogLevel.ERROR) {
+			this._log(LogLevel.ERROR, args);
 		}
 		return undefined;
 	}
 
-	warning(...args: any[]): undefined {
-		if (this.level >= LogLevels.WARNING) {
-			console.log.apply(this, this.buildArguments(LogLevels.WARNING).concat([].slice.call(args)));
+	warning(...args: LogMessage[]): undefined {
+		if (this.level >= LogLevel.WARNING) {
+			this._log(LogLevel.WARNING, args);
 		}
 		return undefined;
 	}
 
-	alert(...args: any[]): undefined {
-		if (this.level >= LogLevels.ALERT) {
-			console.log.apply(this, this.buildArguments(LogLevels.ALERT).concat([].slice.call(args)));
+	alert(...args: LogMessage[]): undefined {
+		if (this.level >= LogLevel.ALERT) {
+			this._log(LogLevel.ALERT, args);
 		}
 		return undefined;
 	}
@@ -236,27 +259,27 @@ export class Log {
 		return undefined;
 	}
 
-	info(...args: any[]): undefined {
-		if (this.level >= LogLevels.INFO) {
-			console.log.apply(this, this.buildArguments(LogLevels.INFO).concat([].slice.call(args)));
+	info(...args: LogMessage[]): undefined {
+		if (this.level >= LogLevel.INFO) {
+			this._log(LogLevel.INFO, args);
 		}
 		return undefined;
 	}
 
-	debug(...args: any[]) {
-		if (this.level >= LogLevels.DEBUG) {
-			console.log.apply(this, this.buildArguments(LogLevels.DEBUG).concat([].slice.call(args)));
+	debug(...args: LogMessage[]) {
+		if (this.level >= LogLevel.DEBUG) {
+			this._log(LogLevel.DEBUG, args);
 		}
 	}
 
-	debugCreep(creep: { name: string, memory: any, pos: RoomPosition }, ...args: any[]) {
+	debugCreep(creep: { name: string, memory: any, pos: RoomPosition }, ...args: LogMessage[]) {
 		if (creep.memory && creep.memory.debug) {
-			this.debug(`${creep.name} @ ${creep.pos.print}: `, args);
+			this.debug(`${creep.name} @ ${creep.pos.print}: `, ...args);
 		}
 	}
 
 	printObject(obj: any) {
-		console.log.apply(this, this.buildArguments(LogLevels.DEBUG).concat(JSON.stringify(obj)));
+		this._log(LogLevel.DEBUG, [JSON.stringify(obj)]);
 	}
 
 	getFileLine(upStack = 4): string {
@@ -277,22 +300,22 @@ export class Log {
 		return '';
 	}
 
-	private buildArguments(level: number): string[] {
+	private buildArguments(level: LogLevel): string[] {
 		const out: string[] = [];
 		switch (level) {
-			case LogLevels.ERROR:
+			case LogLevel.ERROR:
 				out.push(color('ERROR  ', 'red'));
 				break;
-			case LogLevels.WARNING:
+			case LogLevel.WARNING:
 				out.push(color('WARNING', 'orange'));
 				break;
-			case LogLevels.ALERT:
+			case LogLevel.ALERT:
 				out.push(color('ALERT  ', 'yellow'));
 				break;
-			case LogLevels.INFO:
+			case LogLevel.INFO:
 				out.push(color('INFO   ', 'green'));
 				break;
-			case LogLevels.DEBUG:
+			case LogLevel.DEBUG:
 				out.push(color('DEBUG  ', 'gray'));
 				break;
 			case FATAL:
@@ -304,7 +327,7 @@ export class Log {
 		if (this.showTick) {
 			out.push(time());
 		}
-		if (this.showSource && level <= LogLevels.ERROR) {
+		if (this.showSource && level <= LogLevel.ERROR) {
 			out.push(this.getFileLine());
 		}
 		return out;

@@ -350,9 +350,9 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 		this.stats = Mem.wrap(Memory.stats.persistent, 'terminalNetwork', getDefaultTerminalNetworkStats);
 	}
 
-	private debug(...args: any[]) {
+	private debug(...args: string[]) {
 		if (this.memory.debug) {
-			log.alert('TerminalNetwork:', args);
+			log.alert('TerminalNetwork:', ...args);
 		}
 	}
 

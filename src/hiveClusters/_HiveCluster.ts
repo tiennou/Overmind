@@ -1,5 +1,5 @@
 import {Colony} from '../Colony';
-import {log} from '../console/log';
+import {LogMessage, log} from '../console/log';
 import {Overlord} from '../overlords/Overlord';
 import {profile} from '../profiler/decorator';
 
@@ -29,9 +29,9 @@ export abstract class HiveCluster {
 		return '<a href="#!/room/' + Game.shard.name + '/' + this.pos.roomName + '">[' + this.ref + ']</a>';
 	}
 
-	protected debug(...args: any[]) {
+	protected debug(...args: LogMessage[]) {
 		if (this.memory?.debug) {
-			log.alert(this.print, args);
+			log.alert(this.print, ...args);
 		}
 	}
 

@@ -269,9 +269,9 @@ export class Colony {
 		return this.print;
 	}
 
-	protected debug(...args: any[]) {
+	protected debug(...args: string[]) {
 		if (this.memory.debug) {
-			log.alert(this.print, args);
+			log.alert(this.print, ...args);
 		}
 	}
 

@@ -1,5 +1,5 @@
 import {Colony} from '../Colony';
-import {log} from '../console/log';
+import {LogMessage, log} from '../console/log';
 import {CombatCreepSetup} from '../creepSetups/CombatCreepSetup';
 import {CreepSetup} from '../creepSetups/CreepSetup';
 import {SpawnRequest, SpawnRequestOptions} from '../hiveClusters/hatchery';
@@ -120,9 +120,9 @@ export abstract class Overlord {
 		return '<a href="#!/room/' + Game.shard.name + '/' + this.pos.roomName + '">[' + this.ref + ']</a>';
 	}
 
-	debug(...args: any[]) {
+	debug(...args: LogMessage[]) {
 		if (this.memory.debug) {
-			log.alert(this.print, args);
+			log.alert(this.print, ...args);
 		}
 	}
 
