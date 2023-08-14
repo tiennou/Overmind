@@ -1,5 +1,6 @@
 // Jump table to instantiate flags based on type
 
+import { DirectivePrioritize } from './colony/prioritize';
 import {DirectiveClearRoom} from './colony/clearRoom';
 import {DirectiveColonize} from './colony/colonize';
 import {DirectiveIncubate} from './colony/incubate';
@@ -56,6 +57,8 @@ export function DirectiveWrapper(flag: Flag): Directive | undefined {
 					return new DirectiveClearRoom(flag);
 				case COLOR_RED:
 					return new DirectivePoisonRoom(flag);
+				case COLOR_CYAN:
+					return new DirectivePrioritize(flag);
 			}
 			break;
 
