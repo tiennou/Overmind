@@ -7,7 +7,7 @@ import {BOOST_PARTS} from '../resources/map_resources';
 import {initializeTask} from '../tasks/initializer';
 import {MIN_LIFETIME_FOR_BOOST} from '../tasks/instances/getBoosted';
 import {Task} from '../tasks/Task';
-import {AnyZerg, setOverlord} from './AnyZerg';
+import {AnyZerg} from './AnyZerg';
 
 
 export function normalizeStandardZerg(creep: Zerg | Creep): Zerg | Creep {

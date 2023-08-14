@@ -9,7 +9,6 @@ import {Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
 import {Abathur} from '../resources/Abathur';
 import {Tasks} from '../tasks/Tasks';
-import {getOverlord, setOverlord} from '../zerg/AnyZerg';
 import {CombatZerg} from '../zerg/CombatZerg';
 import {Zerg} from '../zerg/Zerg';
 
@@ -359,12 +358,12 @@ export abstract class Overlord {
 	// TODO: make this potentially colony independent
 	protected reassignIdleCreeps(role: string, maxPerTick=1): boolean {
 		// Find all creeps without an overlord
-		const idleCreeps = _.filter(this.colony.getCreepsByRole(role), creep => !getOverlord(creep));
+		const idleCreeps = _.filter(this.colony.getZergByRole(role), creep => !creep.overlord);
 		// Reassign them all to this flag
 		let reassigned = 0;
 		for (const creep of idleCreeps) {
 			// TODO: check range of creep from overlord
-			setOverlord(creep, this);
+			creep.overlord = this;
 			reassigned++;
 			if (reassigned >= maxPerTick) {
 				break;
@@ -481,9 +480,9 @@ export abstract class Overlord {
 
 		let spawnQuantity = quantity - creepQuantity;
 		if (opts.reassignIdle && spawnQuantity > 0) {
-			const idleCreeps = _.filter(this.colony.getCreepsByRole(setup.role), creep => !getOverlord(creep));
+			const idleCreeps = _.filter(this.colony.getZergByRole(setup.role), creep => !creep.overlord);
 			for (let i = 0; i < Math.min(idleCreeps.length, spawnQuantity); i++) {
-				setOverlord(idleCreeps[i], this);
+				idleCreeps[i].overlord = this;
 				spawnQuantity--;
 			}
 		}

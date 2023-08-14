@@ -2,7 +2,6 @@ import { TaskRetire } from 'tasks/instances/retire';
 import {Colony} from '../../Colony';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
-import {getOverlord} from '../../zerg/AnyZerg';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
 
@@ -29,8 +28,8 @@ export class DefaultOverlord extends Overlord {
 
 	init() {
 		// Zergs are collected at end of init phase; by now anything needing to be claimed already has been
-		const idleCreeps = _.filter(this.colony.creeps, creep => !getOverlord(creep));
-		this.idleZerg = _.map(idleCreeps, creep => Overmind.zerg[creep.name] || new Zerg(creep));
+		const zergs = _.map(this.colony.creeps, creep => Overmind.zerg[creep.name] || new Zerg(creep));
+		this.idleZerg = _.filter(zergs, zerg => !zerg.overlord);
 		for (const zerg of this.idleZerg) {
 			zerg.refresh();
 		}
