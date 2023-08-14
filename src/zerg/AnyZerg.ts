@@ -297,6 +297,29 @@ export abstract class AnyZerg {
 
 	set overlord(newOverlord: Overlord | null) {
 		setOverlord(this, newOverlord);
+	/**
+	 * When a zerg has no more use for its current overlord, it will be retired.
+	 */
+	retire() {
+		if (this.colony && !isPowerCreep(this.creep)) {
+			log.info(`${this.print} is retiring from duty`);
+			setOverlord(this, this.colony.overlords.default);
+			this.memory.retired = true;
+			return;
+		}
+
+		log.warning(`${this.print} is committing suicide!`);
+		return this.suicide();
+	}
+
+	/**
+	 * Reassigns the creep to work under a new overlord and as a new role.
+	 */
+	reassign(newOverlord: Overlord | null) {
+		this.overlord = newOverlord;
+		if (newOverlord && newOverlord.colony && this.colony != newOverlord.colony) {
+			this.colony = newOverlord.colony;
+		}
 	}
 
 	// Colony association ----------------------------------------------------------------------------------------------

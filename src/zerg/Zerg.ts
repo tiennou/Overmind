@@ -529,29 +529,10 @@ export class Zerg extends AnyZerg {
 	// Overlord logic --------------------------------------------------------------------------------------------------
 
 	/**
-	 * When a zerg has no more use for its current overlord, it will be retired.
-	 * For now, that means RIP
-	 */
-	retire() {
-		if (this.colony) {
-			log.info(`${this.print} is retiring from duty`);
-			setOverlord(this, this.colony.overlords.default);
-			this.memory.retired = true;
-			return;
-		}
-
-		log.warning(`${this.print} is committing suicide!`);
-		return this.suicide();
-	}
-
-	/**
 	 * Reassigns the creep to work under a new overlord and as a new role.
 	 */
 	reassign(newOverlord: Overlord | null, newRole?: string, invalidateTask = true) {
-		this.overlord = newOverlord;
-		if (newOverlord && newOverlord.colony && this.colony != newOverlord.colony) {
-			this.colony = newOverlord.colony;
-		}
+		super.reassign(newOverlord);
 		if (newRole) {
 			this.roleName = newRole;
 			this.memory.role = newRole;
