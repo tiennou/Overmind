@@ -178,7 +178,7 @@ export class BarrierPlanner {
 	}
 
 	run(): void {
-		if (this.roomPlanner.active) {
+		if (this.roomPlanner.active || this.roomPlanner.visualize) {
 			if (this.roomPlanner.bunkerPos) {
 				this.barrierPositions = this.computeBunkerBarrierPositions(this.roomPlanner.bunkerPos,
 																		   this.colony.controller.pos);

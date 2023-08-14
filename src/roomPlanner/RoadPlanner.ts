@@ -416,7 +416,7 @@ export class RoadPlanner {
 	}
 
 	run(): void {
-		if (this.roomPlanner.active) {
+		if (this.roomPlanner.active || this.roomPlanner.visualize) {
 			if (this.roomPlanner.storagePos) {
 				this.buildRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles());
 			}

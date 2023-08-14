@@ -50,6 +50,7 @@ export interface RoomPlan {
 
 export interface RoomPlannerMemory {
 	active: boolean;
+	visualize: boolean;
 	relocating?: boolean;
 	recheckStructuresAt?: number;
 	bunkerData?: {
@@ -62,6 +63,7 @@ export interface RoomPlannerMemory {
 
 const getDefaultRoomPlannerMemory: () => RoomPlannerMemory = () => ({
 	active    : true,
+	visualize : false,
 	savedFlags: [],
 });
 
@@ -148,6 +150,14 @@ export class RoomPlanner {
 		if (active) {
 			this.reactivate();
 		}
+	}
+
+	get visualize(): boolean {
+		return this.memory.visualize;
+	}
+
+	set visualize(state: boolean) {
+		this.memory.visualize = state;
 	}
 
 	/**
@@ -902,7 +912,7 @@ export class RoomPlanner {
 	}
 
 	run(): void {
-		if (this.active) {
+		if (this.active || this.visualize) {
 			this.make();
 			this.visuals();
 		} else {
