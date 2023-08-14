@@ -19,7 +19,7 @@ export class QueenOverlord extends Overlord {
 	settings: any;
 
 	constructor(hatchery: Hatchery, priority = OverlordPriority.core.queen) {
-		super(hatchery, 'supply', priority);
+		super(hatchery, 'queen', priority);
 		this.hatchery = hatchery;
 		this.queenSetup = this.colony.storage && !this.colony.state.isRebuilding ? Setups.queens.default
 																				 : Setups.queens.early;

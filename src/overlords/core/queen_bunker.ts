@@ -62,12 +62,11 @@ export class BunkerQueenOverlord extends Overlord {
 	static canFunction(colony: Colony): boolean {
 		return (colony.layout === "bunker"
 			&& insideBunkerBounds(colony.spawns[0].pos, colony)
-			&& (!!colony.storage || !!colony.terminal)
-			&& colony.assets[RESOURCE_ENERGY] > 10000);
+			&& (!!colony.storage || !!colony.terminal));
 	}
 
 	constructor(hatchery: Hatchery, priority = OverlordPriority.core.queen) {
-		super(hatchery, 'supply', priority);
+		super(hatchery, 'bunker_queen', priority);
 		this.queenSetup = Setups.queens.default;
 		this.queens = this.zerg(Roles.queen);
 		this.batteries = _.filter(this.room.containers, container => insideBunkerBounds(container.pos, this.colony));

@@ -145,11 +145,15 @@ export class Hatchery extends HiveCluster {
 	}
 
 	spawnMoarOverlords() {
+		const queens = this.colony.getZergByRole("queen");
 		if (BunkerQueenOverlord.canFunction(this.colony)) {
 			this.overlord = new BunkerQueenOverlord(this); // use bunker queen if has storage and enough energy
 		} else {
 			this.overlord = new QueenOverlord(this);
 		}
+		// Reassign queens to the correct overlord
+		queens.filter(queen => queen.overlord?.name !== this.overlord.name)
+			.forEach(queen => queen.reassign(this.overlord));
 	}
 
 	/**
