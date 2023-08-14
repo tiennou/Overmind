@@ -673,8 +673,8 @@ export class Colony {
 	/**
 	 * Get a list of zerg in the colony which have a specified role name
 	 */
-	getZergByRole(roleName: string): (Zerg | undefined)[] {
-		return _.map(this.getCreepsByRole(roleName), creep => Overmind.zerg[creep.name]);
+	getZergByRole(roleName: string): Zerg[] {
+		return _.compact(_.map(this.getCreepsByRole(roleName), creep => Overmind.zerg[creep.name]));
 	}
 
 	/**
