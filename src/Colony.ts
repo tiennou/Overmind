@@ -34,6 +34,8 @@ import {Cartographer, ROOMTYPE_CONTROLLER} from './utilities/Cartographer';
 import {maxBy, mergeSum, minBy} from './utilities/utils';
 import {Visualizer} from './visuals/Visualizer';
 import {Zerg} from './zerg/Zerg';
+import { CombatCreepSetup } from 'creepSetups/CombatCreepSetup';
+import { CreepSetup } from 'creepSetups/CreepSetup';
 
 export enum ColonyStage {
 	Larva = 0,		// No storage and no incubator
@@ -675,6 +677,47 @@ export class Colony {
 	 */
 	getZergByRole(roleName: string): Zerg[] {
 		return _.compact(_.map(this.getCreepsByRole(roleName), creep => Overmind.zerg[creep.name]));
+	}
+
+	/**
+	 * Check a given creep against a specific setup
+	 *
+	 * This will return true if the creep has all types of body parts the setup would create,
+	 * though not necessarily as many of them.
+	 */
+	private hasCompatibleBody(creep: Zerg, setup: CreepSetup | CombatCreepSetup): boolean {
+		let body: BodyPartConstant[];
+		if (setup instanceof CreepSetup) {
+			body = setup.generateBody(this.room.energyCapacityAvailable);
+		} else if (setup instanceof CombatCreepSetup) {
+			body = setup.create(this, true).body;
+		} else {
+			log.warning(`not sure what to do with ${setup}`);
+			return false;
+		}
+		return body.every(part => creep.creep.getActiveBodyparts(part) !== 0);
+	}
+
+	/**
+	 * Reassigns a zerg to this colony.
+	 *
+	 * This will check the to-be-reassigned zerg against the current list of
+	 * spawn requests, picking the first one whose body requirements match the creep.
+	 * With a role given, it will also ensure that it matches the spawn request.
+	 */
+	reassign(creep: Zerg, roleName?: string) {
+		if (!(creep instanceof Zerg)) {
+			log.warning(`invalid value: ${creep}`);
+			return false;
+		}
+		for (const request of this.hatchery?.spawnRequests ?? []) {
+			if ((request.setup.role === roleName || !roleName) && this.hasCompatibleBody(creep, request.setup)) {
+				log.info(`${this.print} reassigning ${creep.print} to ${request.overlord.print} as ${request.setup.role}`);
+				creep.reassign(request.overlord, request.setup.role);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
