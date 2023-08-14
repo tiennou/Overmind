@@ -3,7 +3,7 @@
 import columnify from 'columnify';
 import {Matcher} from '../algorithms/galeShapley';
 import {Colony} from '../Colony';
-import {log} from '../console/log';
+import {LogMessage, log} from '../console/log';
 import {Roles} from '../creepSetups/setups';
 import {isResource, isRuin, isTombstone,} from '../declarations/typeGuards';
 import {Mem} from '../memory/Memory';
@@ -50,6 +50,7 @@ interface RequestOptions {
 }
 
 interface LogisticsNetworkMemory {
+	debug?: boolean;
 	transporterCache: {
 		[transporterName: string]: {
 			nextAvailability: [number, RoomPosition],
@@ -123,6 +124,20 @@ export class LogisticsNetwork {
 		};
 	}
 
+	get ref(): string {
+		return `${this.colony.print}>logistics`;
+	}
+
+	debug(...args: LogMessage[]) {
+		if (this.memory.debug) {
+			log.alert(this.ref, ...args);
+		}
+	}
+
+	static logRequest(r: LogisticsRequest) {
+		return `${r.id}: ${r.amount} of ${r.resourceType} (∂: ${r.dAmountdt}, prio:${r.multiplier}) at ${r.target.print}`;
+	}
+
 	// Request and provide functions ===================================================================================
 
 	/**
@@ -155,6 +170,7 @@ export class LogisticsNetwork {
 			resourceType: opts.resourceType!,
 			multiplier  : opts.multiplier!,
 		};
+		this.debug(() => `requested to deposit ${LogisticsNetwork.logRequest(req)}`);
 		this.requests.push(req);
 		this.targetToRequest[req.target.ref] = requestID;
 	}
@@ -188,6 +204,7 @@ export class LogisticsNetwork {
 			resourceType: opts.resourceType!,
 			multiplier  : opts.multiplier!,
 		};
+		this.debug(() => `requested to pickup ${LogisticsNetwork.logRequest(req)}`);
 		this.requests.push(req);
 		this.targetToRequest[req.target.ref] = requestID;
 	}
@@ -238,6 +255,7 @@ export class LogisticsNetwork {
 			let approximateDistance = transporter.task.eta;
 			let pos = transporter.pos;
 			const targetPositions = transporter.task.targetPosManifest;
+			// this.debug(() => `computeNextAvailability: ${transporter.print}@${pos.print}: eta: ${approximateDistance}, pos: ${targetPositions.map(p => p.print)}`);
 			// If there is a well-defined task ETA, use that as the first leg, else set dist to zero and use range
 			if (approximateDistance) {
 				for (const targetPos of targetPositions.slice(1)) {
@@ -358,6 +376,16 @@ export class LogisticsNetwork {
 		const otherTargetingTransporters = LogisticsNetwork.targetingTransporters(request.target, transporter);
 		// let closerTargetingTransporters = _.filter(otherTargetingTransporters,
 		// 										   transporter => this.nextAvailability(transporter)[0] < eta);
+		let targetCapacity: number;
+		if (isResource(request.target)) {
+			targetCapacity = request.target.amount;
+		} else {
+			targetCapacity = request.resourceType === "all"
+				? request.target.store.getCapacity() ?? 0
+				: request.target.store.getCapacity(request.resourceType) ?? 0;
+		}
+		const prefix = `${transporter.print} ${request.target.print}:`;
+		this.debug(() => `${prefix} target capacity: ${targetCapacity}, ${otherTargetingTransporters.length} transporters also heading there`);
 		if (request.amount > 0) { // input state, resources into target
 			let predictedAmount = request.amount + predictedDifference;
 			// if (isStoreStructure(request.target)) { 	// cap predicted amount at storeCapacity
@@ -370,9 +398,12 @@ export class LogisticsNetwork {
 				// @ts-ignore
 				predictedAmount = minMax(predictedAmount, 0, request.target.store.getCapacity(request.resourceType));
 			}
+			this.debug(() => `${prefix} predicted amount after drop off: ${predictedAmount}`);
 			const resourceInflux = _.sum(_.map(otherTargetingTransporters,
 											   other => (other.store[<ResourceConstant>request.resourceType] || 0)));
+			this.debug(() => `${prefix} estimated influx: ${resourceInflux}`);
 			predictedAmount = Math.max(predictedAmount - resourceInflux, 0);
+			this.debug(() => `${prefix} final predicted amount after drop off: ${predictedAmount}`);
 			return predictedAmount;
 		} else { // output state, resources withdrawn from target
 			let predictedAmount = request.amount + predictedDifference;
@@ -385,9 +416,12 @@ export class LogisticsNetwork {
 				// @ts-ignore
 				predictedAmount = minMax(predictedAmount, -1 * request.target.store.getCapacity(request.resourceType), 0);
 			}
+			this.debug(() => `${prefix} predicted amount after pickup: ${predictedAmount}`);
 			const resourceOutflux = _.sum(_.map(otherTargetingTransporters,
 												other => other.store.getCapacity() - other.store.getUsedCapacity()));
+			this.debug(() => `${prefix} estimated outflux: ${resourceOutflux}`);
 			predictedAmount = Math.min(predictedAmount + resourceOutflux, 0);
+			this.debug(() => `${prefix} final predicted amount after pickup: ${predictedAmount}`);
 			return predictedAmount;
 		}
 	}
@@ -593,12 +627,14 @@ export class LogisticsNetwork {
 			}
 			const targetingTprtrNames = _.map(LogisticsNetwork.targetingTransporters(request.target), c => c.name);
 			info.push({
-						  target       : targetType,
-						  resourceType : request.resourceType,
-						  requestAmount: request.amount,
-						  currentAmount: amount,
-						  targetedBy   : targetingTprtrNames,
-						  pos          : request.target.pos.print,
+						  target		: targetType,
+						  type			: request.resourceType,
+						  prio			: request.multiplier,
+						  requested		: request.amount,
+						  current		: amount,
+						  "∂Current"	: request.dAmountdt,
+						  targetedBy	: targetingTprtrNames,
+						  pos			: request.target.pos.print,
 					  });
 		}
 		console.log('Requests: \n' + columnify(info) + '\n');
@@ -609,11 +645,13 @@ export class LogisticsNetwork {
 						   transporter.task.proto._target.ref + ' ' + transporter.task.targetPos.printPlain : 'none';
 			const nextAvailability = this.nextAvailability(transporter);
 			info.push({
-						  creep       : transporter.name,
-						  pos         : transporter.pos.printPlain,
-						  task        : task,
-						  target      : target,
-						  availability: `available in ${nextAvailability[0]} ticks at ${nextAvailability[1].print}`,
+						  creep			: transporter.name,
+						  pos			: transporter.pos.printPlain,
+						  task			: task,
+						  target		: target,
+						  size			: transporter.store.getCapacity(),
+						  free			: transporter.store.getFreeCapacity(),
+						  availability:	`available in ${nextAvailability[0]} ticks at ${nextAvailability[1].print}`,
 					  });
 		}
 		console.log('Transporters: \n' + columnify(info) + '\n');

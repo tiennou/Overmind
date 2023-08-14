@@ -673,6 +673,11 @@ export class Colony {
 		this.roadLogistics.run();											// Run the road network
 		this.roomPlanner.run();												// Run the room planner
 		this.stats();														// Log stats per tick
+
+		if (this.logisticsNetwork.memory.debug) {
+			this.logisticsNetwork.summarize();
+			this.logisticsNetwork.summarizeMatching();
+		}
 	}
 
 	/**
