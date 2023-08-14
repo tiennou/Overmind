@@ -60,7 +60,7 @@ export interface OverlordSuspendOptions {
 }
 
 export interface OverlordMemory {
-	suspend?: OverlordSuspendOptions;
+	suspend?: OverlordSuspendOptions | boolean;
 	[MEM.STATS]?: OverlordStats;
 	debug?: boolean;
 }
@@ -167,25 +167,33 @@ export abstract class Overlord {
 	 * Returns whether the overlord is currently suspended
 	 */
 	get isSuspended(): boolean {
-		if (this.memory.suspend) {
-			if (this.memory.suspend.endTick) {
-				if (Game.time < this.memory.suspend.endTick) {
-					return true;
-				} else {
-					delete this.memory.suspend;
-					return false;
-				}
+		const suspend = this.memory.suspend;
+		if (typeof suspend === "boolean") {
+			return true;
+		} else if (suspend && suspend.endTick) {
+			if (Game.time < suspend.endTick) {
+				return true;
+			} else {
+				delete this.memory.suspend;
+				return false;
 			}
-			if (this.memory.suspend.condition) {
-				log.error('NOT IMPLEMENTED'); // TODO
-				// const {fn, freq} = this.memory.suspend.condition;
-				// if (Game.time % freq == 0) {
-				// 	const condition = new Function(fn);
-				// 	// TODO - finish this
-				// }
-			}
+		} else if (suspend && suspend.condition) {
+			log.error('NOT IMPLEMENTED'); // TODO
+			// const {fn, freq} = this.memory.suspend.condition;
+			// if (Game.time % freq == 0) {
+			// 	const condition = new Function(fn);
+			// 	// TODO - finish this
+			// }
 		}
 		return false;
+	}
+
+	suspend(): void {
+		this.memory.suspend = true;
+	}
+
+	unsuspend(): void {
+		delete this.memory.suspend;
 	}
 
 	suspendFor(ticks: number): void {
