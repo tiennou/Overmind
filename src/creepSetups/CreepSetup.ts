@@ -72,7 +72,10 @@ export class CreepSetup {
 		}
 
 		// Otherwise recompute
-		const body = this.generateBody(colony.room.energyCapacityAvailable);
+		const availableEnergy = colony.state.bootstrapping ?
+			_.sum(colony.hatchery?.energyStructures ?? [], s => s.store.getUsedCapacity(RESOURCE_ENERGY))
+			: colony.room.energyCapacityAvailable;
+		const body = this.generateBody(availableEnergy);
 		const bodyCounts = _.countBy(body);
 
 		const boosts: ResourceConstant[] = [];

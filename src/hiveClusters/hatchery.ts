@@ -283,7 +283,13 @@ export class Hatchery extends HiveCluster {
 
 	private spawnCreep(protoCreep: ProtoCreep, options: SpawnRequestOptions = {}): number {
 		// If you can't build it, return this error
-		if (bodyCost(protoCreep.body) > this.room.energyCapacityAvailable) {
+		if (protoCreep.body.length === 0) {
+			return ERR_INVALID_ARGS;
+		}
+		const availableEnergy = this.colony.state.bootstrapping
+			? _.sum(this.energyStructures, s => s.store.getUsedCapacity(RESOURCE_ENERGY))
+			: this.room.energyCapacityAvailable;
+		if (bodyCost(protoCreep.body) > availableEnergy) {
 			return ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH;
 		}
 		// Get a spawn to use
@@ -410,27 +416,24 @@ export class Hatchery extends HiveCluster {
 				const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
 				const preLog = `request ${this.logRequest(request)}, needed ${bodyCost(protoCreep.body)}, `
 					+ `stored: ${this.room.energyCapacityAvailable}`;
-				if (this.canSpawn(protoCreep.body) && protoCreep.body.length > 0) {
-					// Try to spawn the creep
-					const result = this.spawnCreep(protoCreep, request.options);
-					if (result == OK) {
-						this.debug(`${preLog}: spawn successful`);
-						return result;
-					} else if (result == ERR_SPECIFIED_SPAWN_BUSY) {
-						this.debug(`${preLog}: requested spawn is busy`);
-						return result; // continue to spawn other things while waiting on specified spawn
-					} else {
-						// If there's not enough energyCapacity to spawn, ignore and move on, otherwise block and wait
-						if (result != ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH) {
-							this.debug(`${preLog}: failed to spawn ${request.setup.role}, requeuing: ${result}`);
-							this.productionQueue[priority].unshift(request);
-							return result;
-						}
-						this.debug(`${preLog}: not enough energy`);
-					}
+				// Try to spawn the creep
+				const result = this.spawnCreep(protoCreep, request.options);
+				if (result == OK) {
+					this.debug(`${preLog}: spawn successful`);
+					return result;
+				} else if (result == ERR_SPECIFIED_SPAWN_BUSY) {
+					this.debug(`${preLog}: requested spawn is busy`);
+					return result; // continue to spawn other things while waiting on specified spawn
+				} else if (result === ERR_INVALID_ARGS) {
+					this.debug(`${preLog}: asked to spawn an invalid creep, ignoring`);
+				} else if (result === ERR_NOT_ENOUGH_ENERGY || result === ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH) {
+					// If there's not enough energyCapacity to spawn, ignore and move on, otherwise block and wait
+					this.debug(`${preLog}: not enough energy, ignoring`);
+					return result;
 				} else {
-					log.debug(`${this.room.print}: cannot spawn creep ${protoCreep.name} with body ` +
-							  `${JSON.stringify(protoCreep.body)}!`);
+					this.debug(`${preLog}: failed to spawn, requeuing: ${result}`);
+					this.productionQueue[priority].unshift(request);
+					return result;
 				}
 			} else {
 				this.debug(`no request at priority ${priority}`);
