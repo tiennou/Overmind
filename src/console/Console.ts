@@ -14,6 +14,7 @@ import {log} from './log';
 import {DirectiveOutpost} from 'directives/colony/outpost';
 import {TaskSignController} from 'tasks/instances/signController';
 import columnify from 'columnify';
+import { Zerg } from 'zerg/Zerg';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
 
@@ -222,6 +223,16 @@ export class OvermindConsole {
 		name: 'showRoomSafety(roomName?)',
 		description: 'show gathered safety data about rooms',
 		command: OvermindConsole.showRoomSafety.bind(OvermindConsole),
+	},
+	{
+		name: 'spawnSummary(Colony | string)',
+		description: 'show all ongoing spawn requests',
+		command: OvermindConsole.spawnSummary.bind(OvermindConsole),
+	},
+	{
+		name: 'idleCreeps(Colony | string)',
+		description: 'show all idle creeps',
+		command: OvermindConsole.idleCreeps.bind(OvermindConsole),
 	},
 ];
 
@@ -907,5 +918,68 @@ export class OvermindConsole {
 
 		msg += columnify(roomData);
 		console.log(msg);
+	}
+
+	private static resolveColonySpec(colonySpec?: Colony | string) {
+		let colonies;
+		if (typeof colonySpec === "string") {
+			if (!Overmind.colonies[colonySpec]) {
+				throw new Error(`Unknown colony ${colonySpec}`);
+			}
+			colonies = [Overmind.colonies[colonySpec]];
+		} else if (colonySpec instanceof Colony) {
+			colonies = [colonySpec];
+		} else if (typeof colonySpec === "undefined") {
+			colonies = Object.values(Overmind.colonies);
+		} else {
+			throw new Error(`Don't know what to do with ${colonySpec}`);
+		}
+		return colonies;
+	}
+
+	static spawnSummary(colonySpec?: Colony | string) {
+		const colonies = this.resolveColonySpec(colonySpec);
+		let msg = `Ongoing creep requests:\n`;
+		for (const colony of colonies) {
+			if (!colony.hatchery) {
+				msg += `\n${bullet} ${colony.name} has no hatchery\n`
+				continue;
+			}
+			if (colony.hatchery?.spawnRequests.length === 0) {
+				msg += `\n${bullet} ${colony.name} is idle\n`
+				continue;
+			}
+			msg += `\n${bullet} ${colony.name} has the following requests:\n`
+			const requestsByRole = _.groupBy(colony.hatchery?.spawnRequests, req => req.setup.role);
+			for (const [role, requests] of Object.entries(requestsByRole)) {
+				if (requests.length === 1) {
+					const req = requests[0];
+					msg += `\t\t- "${role}": ${req.overlord.print} at priority ${req.priority}\n`;
+				} else {
+					msg += `\t\t- "${role}":\n`;
+					for (const req of requests) {
+						msg += `\t\t\t${req.overlord.print} at priority ${req.priority}\n`;
+					}
+				}
+			}
+			msg += `\n`;
+		}
+		console.log(msg);
+	}
+
+	static idleCreeps(colonySpec?: Colony | string) {
+		const colonies = this.resolveColonySpec(colonySpec);
+		let idleCreeps: Zerg[] = [];
+		let msg = "The following creeps are idle:\n";
+		for (const colony of colonies) {
+			const idle = colony.overlords.default.idleZerg;
+			if (idle.length === 0) continue;
+
+			msg += `\t${bullet} ${colony.name}: ${idle.map(z => z.print)}\n`;
+			idleCreeps = idleCreeps.concat(...idle);
+		}
+		if (idleCreeps.length === 0) msg = "No idle creeps";
+		console.log(msg);
+		return idleCreeps;
 	}
 }

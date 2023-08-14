@@ -94,6 +94,9 @@ export class Hatchery extends HiveCluster {
 	private productionQueue: {								// Prioritized spawning queue
 		[priority: number]: SpawnRequest[]
 	};
+
+	/** Flattened list of spawn requests */
+	private _spawnRequests: SpawnRequest[];
 	private isOverloaded: boolean;
 	private _waitTimes: { [priority: number]: number } | undefined;
 
@@ -136,6 +139,7 @@ export class Hatchery extends HiveCluster {
 		this.availableSpawns = _.filter(this.spawns, spawn => !spawn.spawning);
 		this.productionPriorities = [];
 		this.productionQueue = {};
+		this._spawnRequests = [];
 		this.isOverloaded = false;
 		this._waitTimes = undefined;
 	}
@@ -440,13 +444,7 @@ export class Hatchery extends HiveCluster {
 		if (!this.settings.suppressSpawning) {
 
 			if (true || this.spawns.some(s => !s.spawning)) {
-				const requests: SpawnRequest[] = [];
-				const sortedKeys = _.sortBy(this.productionPriorities);
-				for (const priority of sortedKeys) {
-					const prioReqs = this.productionQueue[priority];
-					if (prioReqs) requests.push(...prioReqs);
-				}
-
+				const requests = this.spawnRequests;
 				if (requests.length) {
 					this.debug(() => `queued: ${requests.map(request => this.logRequest(request)).join(', ')}`);
 				}
@@ -481,6 +479,19 @@ export class Hatchery extends HiveCluster {
 		}
 
 		this.recordStats();
+	}
+
+	/** The list of ongoing requests, sorted by priority */
+	get spawnRequests(): SpawnRequest[] {
+		if (!this._spawnRequests) {
+			this._spawnRequests = [];
+			const sortedKeys = _.sortBy(this.productionPriorities);
+			for (const priority of sortedKeys) {
+				const prioReqs = this.productionQueue[priority];
+				if (prioReqs) this._spawnRequests.push(...prioReqs);
+			}
+		}
+		return this._spawnRequests;
 	}
 
 	private recordStats() {

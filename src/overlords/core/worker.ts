@@ -33,6 +33,7 @@ export class WorkerOverlord extends Overlord {
 	nukeDefenseHitsRemaining: { [id: string]: number };
 	nukeDefenseHitsNeeded: { [id: string]: number };
 	useBoostedRepair?: boolean;
+	private priorityTasks: Flag[] = [];
 
 	static settings = {
 		barrierHits         : {			// What HP to fortify barriers to at each RCL
@@ -165,6 +166,8 @@ export class WorkerOverlord extends Overlord {
 		super.refresh();
 		$.refresh(this, 'repairStructures', 'dismantleStructures', 'fortifyBarriers', 'criticalBarriers',
 				  'constructionSites', 'nukeDefenseRamparts');
+
+		this.priorityTasks = [];
 	}
 
 	init() {
@@ -229,8 +232,22 @@ export class WorkerOverlord extends Overlord {
 		this.wishlist(numWorkers, setup);
 	}
 
+	/**
+	 * Give priority to a worker task at this location
+	 * Must be called each tick.
+	 */
+	prioritizeTask(flag: Flag) {
+		this.priorityTasks.push(flag);
+	}
+
+	private filterPriorityTargets<T extends _HasRoomPosition>(objects: T[]) {
+		if (this.priorityTasks.length === 0) return objects;
+		return objects.filter(obj => this.priorityTasks.some(flag => flag.pos.isEqualTo(obj.pos)));
+	}
+
 	private repairActions(worker: Zerg): boolean {
-		const target = worker.pos.findClosestByMultiRoomRange(this.repairStructures);
+		const repairStructures = this.filterPriorityTargets(this.repairStructures);
+		const target = worker.pos.findClosestByMultiRoomRange(repairStructures);
 		if (target) {
 			this.debug(`${worker.print} repairing ${target.print}`);
 			worker.task = Tasks.repair(target);
@@ -241,7 +258,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private buildActions(worker: Zerg): boolean {
-		const groupedSites = _.groupBy(this.constructionSites, site => site.structureType);
+		const constructionSites = this.filterPriorityTargets(this.constructionSites);
+		const groupedSites = _.groupBy(constructionSites, site => site.structureType);
 		for (const structureType of BuildPriorities) {
 			if (groupedSites[structureType]) {
 				const target = worker.pos.findClosestByMultiRoomRange(groupedSites[structureType]);
