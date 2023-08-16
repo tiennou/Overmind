@@ -195,8 +195,8 @@ export class OvermindConsole {
 		command: OvermindConsole.cancelMarketOrders.bind(OvermindConsole),
 	},
 	{
-		name: 'setRoomUpgradeRate(room, upgradeRate)',
-		description: 'changes the rate which a room upgrades at, default is 1',
+		name: 'setRoomUpgradeRate(Colony|string, upgradeRate?)',
+		description: 'changes the rate which a room upgrades at, default is 1. Pass no rate to get the current value',
 		command: OvermindConsole.setRoomUpgradeRate.bind(OvermindConsole),
 	},
 	{
@@ -710,11 +710,19 @@ export class OvermindConsole {
 
 	// Colony Management ===============================================================================================
 
-	static setRoomUpgradeRate(roomName: string, rate: number): void {
-		const colony: Colony = Overmind.colonies[roomName];
-		colony.upgradeSite.memory.speedFactor = rate;
+	static setRoomUpgradeRate(colonySpec: Colony | string, rate?: number): void {
+		const colony = this.resolveSingleColonySpec(colonySpec)
+		const oldRate = colony.upgradeSite.memory.speedFactor;
 
-		console.log(`Colony ${roomName} is now upgrading at a rate of ${rate}.`);
+		if (typeof rate === "number") {
+			rate = Math.max(0, rate);
+			colony.upgradeSite.memory.speedFactor = rate;
+
+			console.log(`Colony ${colony.name} is now upgrading at a rate of ${rate} (previously ${oldRate}).`);
+		} else {
+			const rate = colony.upgradeSite.memory.speedFactor;
+			console.log(`Colony ${colony.name} currently upgrading at a rate of ${rate}.`);
+		}
 	}
 
 	static getEmpireMineralDistribution(): void {
@@ -935,6 +943,14 @@ export class OvermindConsole {
 			throw new Error(`Don't know what to do with ${colonySpec}`);
 		}
 		return colonies;
+	}
+
+	private static resolveSingleColonySpec(colonySpec?: Colony | string) {
+		const colonies = this.resolveColonySpec(colonySpec);
+		if (colonies.length > 1) {
+			throw new Error(`more than one colony matched ${colonySpec}`);
+		}
+		return colonies[0];
 	}
 
 	static spawnSummary(colonySpec?: Colony | string) {
