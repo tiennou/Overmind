@@ -34,12 +34,6 @@ export const OverlordPriority = {
 		controllerAttack: 399,
 	},
 
-	colonization: { 			// Colonizing new rooms
-		claim          : 400,
-		pioneer        : 401,
-		remoteUpgrading: 410,
-	},
-
 	priorityOwnedRoom: {		// Situationally prioritized in-room operations
 		priorityUpgrade  : 450,
 		priorityTransport: 451,
@@ -54,30 +48,36 @@ export const OverlordPriority = {
 		mineral       : 520
 	},
 
-	outpostOffense: {
-		harass      : 560,
-		roomPoisoner: 561,
+	remoteRoom: { 				// Operation of a remote room. Allows colonies to restart one room at a time.
+		reserve      : 530,
+		mine         : 531,
+		roomIncrement: 5, 			// remote room priorities are incremented by this for each outpost
 	},
 
 	upgrading: {				// Spawning upgraders
-		upgrade: 600,
+		upgrade: 550,
+	},
+
+	throttleThreshold: 599,  	// Everything past this may be throttled in the event of low CPU
+
+	outpostOffense: {
+		harass      : 600,
+		roomPoisoner: 601,
 	},
 
 	collectionUrgent: { 		// Collecting resources that are time sensitive, like decaying resources on ground
 		haul: 700
 	},
 
-	throttleThreshold: 799,  	// Everything past this may be throttled in the event of low CPU
-
 	scouting: {
 		stationary  : 800,
 		randomWalker: 801
 	},
 
-	remoteRoom: { 				// Operation of a remote room. Allows colonies to restart one room at a time.
-		reserve      : 900,
-		mine         : 901,
-		roomIncrement: 5, 			// remote room priorities are incremented by this for each outpost
+	colonization: { 			// Colonizing new rooms
+		claim          : 850,
+		pioneer        : 851,
+		remoteUpgrading: 860,
 	},
 
 	remoteSKRoom: {
