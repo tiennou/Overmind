@@ -18,8 +18,6 @@ export class HaulingOverlord extends Overlord {
 	haulers: Zerg[];
 	directive: DirectiveHaul;
 
-	requiredRCL: 4;
-
 	constructor(directive: DirectiveHaul, priority = directive.hasDrops ? OverlordPriority.collectionUrgent.haul :
 													 OverlordPriority.tasks.haul) {
 		super(directive, 'haul', priority);

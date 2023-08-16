@@ -29,10 +29,12 @@ export class DirectiveHaul extends Directive {
 	private _drops: DropContents;
 	private _finishAtTime: number;
 
+	static requiredRCL: 4;
+
 	memory: DirectiveHaulMemory;
 
 	constructor(flag: Flag) {
-		super(flag);
+		super(flag, (colony) => colony.level >= DirectiveHaul.requiredRCL);
 	}
 
 	spawnMoarOverlords() {
