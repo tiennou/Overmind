@@ -687,7 +687,7 @@ export class RoomIntel {
 		if (room) {
 			room.instantaneousThreatLevel = instantaneousThreatLevel;
 			room.threatLevel = safetyData[RMEM_SAFETY.THREAT_LEVEL];
-			room.isSafe = room.instantaneousThreatLevel == 0 &&
+			room.isSafe = room.instantaneousThreatLevel <= (Memory.settings.attitude.brazenness ?? 0.5) &&
 						  (room.threatLevel < 0.15 || safetyData[RMEM_SAFETY.SAFE_FOR] > 50);
 		}
 
