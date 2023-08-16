@@ -70,6 +70,12 @@ export interface MineralInfo extends RoomObjectInfo {
 	density: number;
 }
 
+export interface DepositInfo extends RoomObjectInfo {
+	containerPos?: RoomPosition;
+	depositType: DepositConstant;
+	cooldown: number;
+}
+
 export interface ImportantStructureInfo {
 	storagePos: RoomPosition | undefined;
 	terminalPos: RoomPosition | undefined;
@@ -84,6 +90,7 @@ export interface RoomInfo {
 	sources: SourceInfo[];
 	portals: PortalInfo[];
 	mineral: MineralInfo | undefined;
+	deposits: DepositInfo[];
 	skLairs: RoomObjectInfo[];
 	importantStructures: ImportantStructureInfo | undefined;
 }
@@ -271,6 +278,7 @@ export class RoomIntel {
 		if (mem) {
 			const savedSources = mem[RMEM.SOURCES] || [];
 			const savedMineral = mem[RMEM.MINERAL];
+			const savedDeposits = mem[RMEM.DEPOSITS] || [];
 			const savedSkLairs = mem[RMEM.SKLAIRS] || [];
 
 			const returnObject: RoomInfo = {
@@ -284,6 +292,17 @@ export class RoomIntel {
 					mineralType: savedMineral[RMEM_MNRL.MINERALTYPE],
 					density    : savedMineral[RMEM_MNRL.DENSITY],
 				} : undefined,
+				deposits: savedDeposits.map(dpst => {
+					const obj: DepositInfo = {
+						pos: unpackCoordAsPos(dpst.c, roomName),
+						depositType: dpst[RMEM_DPST.DEPOSITTYPE],
+						cooldown: dpst[RMEM_DPST.COOLDOWN],
+					};
+					if (dpst[RMEM_DPST.CONTAINERPOS]) {
+						obj.containerPos = unpackCoordAsPos(dpst.cn, roomName);
+					}
+					return obj;
+				}),
 				skLairs            : _.map(savedSkLairs, lair => ({pos: unpackCoordAsPos(lair.c, roomName)})),
 				importantStructures: this.getImportantStructureInfo(roomName)
 			};
@@ -334,6 +353,22 @@ export class RoomIntel {
 			};
 		} else {
 			delete room.memory[RMEM.MINERAL];
+		}
+		if (room.deposits) {
+			room.memory[RMEM.DEPOSITS] = room.deposits.map(deposit => {
+				const dpst: SavedDeposit = {
+					c: packCoord(deposit.pos),
+					[RMEM_DPST.DEPOSITTYPE]: deposit.depositType,
+					[RMEM_DPST.COOLDOWN]: deposit.cooldown
+				}
+				const container = deposit.pos.findClosestByLimitedRange(room.containers, 2);
+				if (container) {
+					dpst[RMEM_DPST.CONTAINERPOS] = packCoord(container.pos);
+				}
+				return dpst;
+			});
+		} else {
+			delete room.memory[RMEM.DEPOSITS];
 		}
 		if (room.keeperLairs.length > 0) {
 			room.memory[RMEM.SKLAIRS] = _.map(room.keeperLairs, lair => {

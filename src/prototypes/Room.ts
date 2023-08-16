@@ -272,6 +272,16 @@ Object.defineProperty(Room.prototype, 'drops', {
 	configurable: true,
 });
 
+Object.defineProperty(Room.prototype, 'deposits', {
+	get(this: Room) {
+		if (!this._deposits) {
+			this._deposits = this.find(FIND_DEPOSITS);
+		}
+		return this._deposits;
+	},
+	configurable: true,
+});
+
 Object.defineProperty(Room.prototype, 'droppedEnergy', {
 	get(this: Room) {
 		return this.drops[RESOURCE_ENERGY] || [];

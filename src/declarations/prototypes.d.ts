@@ -125,6 +125,7 @@ interface Room {
 	rechargeables: rechargeObjectType[];
 	sources: Source[];
 	mineral: Mineral | undefined;
+	deposits: Deposit[];
 	constructionSites: ConstructionSite[];
 	allConstructionSites: ConstructionSite[];
 	hostileConstructionSites: ConstructionSite[];
@@ -156,6 +157,7 @@ interface Room {
 	_hostileConstructionSites: ConstructionSite[];
 	_tombstones: Tombstone[];
 	_ruins: Ruin[];
+	_deposits: Deposit[];
 	_drops: { [resourceType: string]: Resource[] };
 }
 

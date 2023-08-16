@@ -11,6 +11,7 @@ interface RoomMemory {
 	[RMEM.CONTROLLER]?: SavedController;
 	[RMEM.PORTALS]?: SavedPortal[];
 	[RMEM.MINERAL]?: SavedMineral;
+	[RMEM.DEPOSITS]?: SavedDeposit[];
 	[RMEM.SKLAIRS]?: SavedKeeperLair[];
 	[RMEM.IMPORTANT_STRUCTURES]?: {
 		// Positions of important structures relevant to sieges
@@ -42,6 +43,7 @@ declare const enum RMEM {
 	SOURCES              = 's',
 	CONTROLLER           = 'c',
 	MINERAL              = 'm',
+	DEPOSITS             = 't',
 	SKLAIRS              = 'k',
 	EXPANSION_DATA       = 'e',
 	INVASION_DATA        = 'v',
@@ -86,6 +88,12 @@ declare const enum RMEM_CTRL {
 declare const enum RMEM_MNRL {
 	MINERALTYPE = 't',
 	DENSITY     = 'd',
+}
+
+declare const enum RMEM_DPST {
+	CONTAINERPOS = 'cn',
+	DEPOSITTYPE = 't',
+	COOLDOWN    = 'd',
 }
 
 declare const enum MEM_AVGS {
@@ -155,6 +163,12 @@ interface SavedController extends SavedRoomObject {
 interface SavedMineral extends SavedRoomObject {
 	[RMEM_MNRL.MINERALTYPE]: MineralConstant;
 	[RMEM_MNRL.DENSITY]: number;
+}
+
+interface SavedDeposit extends SavedRoomObject {
+	[RMEM_DPST.CONTAINERPOS]?: string;
+	[RMEM_DPST.DEPOSITTYPE]: DepositConstant;
+	[RMEM_DPST.COOLDOWN]: number;
 }
 
 interface SavedKeeperLair extends SavedRoomObject {
