@@ -60,6 +60,9 @@ export interface VolatileMatrixOptions {
 	blockCreeps?: boolean;	// Whether to block creeps (default is undefined -> false)
 }
 
+/** How old must a SK outpost be before we ignore SK creeps in it completely */
+const AVOID_SKROOM_OUTPOST_AGE_THRESHOLD = 2500;
+const AVOID_SPAWNING_KEEPER_LAIR_THRESHOLD = 50;
 
 PERMACACHE.terrainMatrices = PERMACACHE.terrainMatrices || {};
 
@@ -285,19 +288,18 @@ export class MatrixLib {
 				dir.directiveName == 'outpostSK'); // had to do this ungly thing due to circular dependency problems :(
 			// const skDirective = _.first(DirectiveSKOutpost.findInRoom(roomName));
 
-			if (!(skDirective && skDirective.age > 2500)) {
-				const keeperLairInfo = RoomIntel.getKeeperLairInfo(roomName);
-				const chillPositions = _.compact(_.map(keeperLairInfo || [], info => info.chillPos)) as RoomPosition[];
+			const isOldOutpost = !!(skDirective && skDirective.age > AVOID_SKROOM_OUTPOST_AGE_THRESHOLD);
+			if (!isOldOutpost || !(room && room.sourceKeepers.length === 0)) {
 
 				let avoidPositions: RoomPosition[] = [];
 				if (room) {
 					avoidPositions = avoidPositions.concat(
 						..._.map(room.sourceKeepers, keeper => keeper.pos),
-						..._.map(room.keeperLairs.filter(lair => (lair.ticksToSpawn || Infinity) < 100), lair => lair.pos),
-						...chillPositions
+						..._.map(room.keeperLairs.filter(lair => (lair.ticksToSpawn || Infinity) < AVOID_SPAWNING_KEEPER_LAIR_THRESHOLD), lair => lair.pos),
 					);
 				} else {
-					avoidPositions = chillPositions;
+					const keeperLairInfo = RoomIntel.getKeeperLairInfo(roomName);
+					avoidPositions = _.compact(_.map(keeperLairInfo || [], info => info.chillPos)) as RoomPosition[];
 				}
 
 				MatrixLib.blockWithinRange(matrix, avoidPositions, 3);
