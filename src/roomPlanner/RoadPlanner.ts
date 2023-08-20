@@ -342,33 +342,31 @@ export class RoadPlanner {
 		roadPositions = _.sortBy(roadPositions, pos => pos.getMultiRoomRangeTo(origin));
 		let needsRoad = false;
 		for (const pos of roadPositions) {
-			// Skip if we don't have visibility
+			// Skip if we don't have visibility or we went through our quota
 			if (!pos.room) continue;
-			const road = pos.lookForStructure(STRUCTURE_ROAD);
+			if (count <= 0) break;
+			const road = pos.lookForStructure(STRUCTURE_ROAD)
+				|| pos.lookFor(LOOK_CONSTRUCTION_SITES).some(s => s.structureType === STRUCTURE_ROAD)
 			if (!road) {
 				needsRoad = true;
-				if (count > 0) {
-					const ret = pos.createConstructionSite(STRUCTURE_ROAD);
-					if (ret != OK) {
-						if (ret == ERR_NOT_OWNER) {
-							if (Game.time % 50 == 0) {
-								log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}; room ` +
-											`is reserved/owned by hostile forces!`);
-							}
-						} else if (ret == ERR_FULL) {
-							// For some reason, when you place a construction site, the last check they run to see if
-							// you're already at max placed sites searches through EVERY SINGLE GAME OBJECT you have
-							// access to, which is quite expensive! Don't try to make a bunch more of these or you'll
-							// murder your CPU.
-							log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}, too many ` +
-										`construction sites!`);
-							break;
-						} else {
-							log.warning(`${this.colony.print}: couldn't create road site at ${pos.print} (${ret})`);
-						}
-					} else {
-						count--;
+				const ret = pos.createConstructionSite(STRUCTURE_ROAD);
+				if (ret === OK) {
+					count--;
+				} else if (ret == ERR_NOT_OWNER) {
+					if (Game.time % 50 == 0) {
+						log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}; room ` +
+									`is reserved/owned by hostile forces!`);
 					}
+				} else if (ret == ERR_FULL) {
+					// For some reason, when you place a construction site, the last check they run to see if
+					// you're already at max placed sites searches through EVERY SINGLE GAME OBJECT you have
+					// access to, which is quite expensive! Don't try to make a bunch more of these or you'll
+					// murder your CPU.
+					log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}, too many ` +
+								`construction sites!`);
+					break;
+				} else {
+					log.warning(`${this.colony.print}: couldn't create road site at ${pos.print} (${ret})`);
 				}
 			}
 		}
