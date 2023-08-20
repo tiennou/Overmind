@@ -216,7 +216,7 @@ export class RoomIntel {
 	}
 
 	/**
-	 * Returns information about intra-shard portals in a given room
+	 * Returns information about source keeper lairs in a given room
 	 */
 	static getKeeperLairInfo(roomName: string): KeeperLairInfo[] | undefined {
 		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.SKLAIRS]) {
