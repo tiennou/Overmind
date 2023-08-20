@@ -132,33 +132,40 @@ export class MatrixLib {
 
 		// Otherwise we'll build a base matrix for the non-volatile options, cache it, then modify it for volatile opts
 		if (matrix === undefined) {
-			if (room) {
-				matrix = MatrixLib.generateCostMatrixForRoom(room, <MatrixOptions>opts);
-				const roomOwner = RoomIntel.roomOwnedBy(roomName);
-				if (Cartographer.roomType(roomName) == ROOMTYPE_SOURCEKEEPER) {
-					expiration = Game.time + 10;
-				} else if (roomOwner && !isAlly(roomOwner)) {
-					expiration = Game.time + 25;
-				} else {
-					expiration = Game.time + 100;
-				}
-				if (opts.ignoreStructures) {
-					invalidateCondition = () => false;
-				} else {
-					// Invalidate the path if the number of structures in the room changes
-					const numStructures = room.structures.length;
-					invalidateCondition =
-						() => Game.rooms[roomName] && Game.rooms[roomName].structures.length != numStructures;
-				}
+			matrix = MatrixLib.generateCostMatrixForRoom(room, <MatrixOptions>opts);
+			const roomOwner = RoomIntel.roomOwnedBy(roomName);
+			if (Cartographer.roomType(roomName) == ROOMTYPE_SOURCEKEEPER) {
+				expiration = Game.time + 10;
+			} else if (roomOwner && !isAlly(roomOwner)) {
+				expiration = Game.time + 25;
 			} else {
-				matrix = MatrixLib.generateCostMatrixForInvisibleRoom(roomName, <MatrixOptions>opts);
-				const roomOwner = RoomIntel.roomOwnedBy(roomName);
-				if (roomOwner && !isAlly(roomOwner)) {
-					expiration = Game.time + 100;
-				} else {
-					expiration = Game.time + 1000;
-				}
+				expiration = Game.time + 100;
+			}
+			if (opts.ignoreStructures) {
 				invalidateCondition = () => false;
+			} else {
+				// Invalidate the path if the number of structures in the room changes
+				let numStructures: number;
+				if (room) {
+					numStructures = room.structures.length;
+				 } else {
+					const info = RoomIntel.getImportantStructureInfo(roomName);
+					if (!info) {
+						numStructures = 0;
+					} else {
+						numStructures = info.rampartPositions.length
+							+ info.spawnPositions.length
+							+ info.towerPositions.length
+							+ info.wallPositions.length
+							+ (info.storagePos ? 1 : 0)
+							+ (info.terminalPos ? 1 : 0);
+						}
+				 }
+				const wasHidden = !room;
+				invalidateCondition =
+					() => Game.rooms[roomName]
+						&& (wasHidden
+							|| Game.rooms[roomName].structures.length != numStructures);
 			}
 
 			// Cache the results for the non-volatile options
@@ -226,11 +233,12 @@ export class MatrixLib {
 	}
 
 	/**
-	 * Generates a cost matrix for a visible room based on the fully-specified matrix options
+	 * Generates a cost matrix for a room based on the fully-specified matrix options
 	 */
-	private static generateCostMatrixForRoom(room: Room, opts: MatrixOptions): CostMatrix {
+	private static generateCostMatrixForRoom(room: Room | undefined, opts: MatrixOptions): CostMatrix {
 
 		const matrix = new PathFinder.CostMatrix();
+		const roomName = opts.roomName;
 
 		// Set road costs, usually to plainCost / 2
 		if (opts.terrainCosts.roadCost) {
@@ -252,90 +260,17 @@ export class MatrixLib {
 
 		// Explicitly specify the terrain costs if needed
 		if (opts.explicitTerrainCosts) {
-			MatrixLib.addTerrainCosts(matrix, room.name, opts.terrainCosts);
-		}
-
-		if (opts.terrainCosts.roadCost) {
-			for (const road of room.roads) {
-				matrix.set(road.pos.x, road.pos.y, opts.terrainCosts.roadCost);
-			}
-		}
-
-		// Mark the exits as unpathable
-		if (opts.blockExits) {
-			MatrixLib.blockExits(matrix);
-		}
-
-		// Avoid source keepers
-		if (opts.avoidSK && Cartographer.roomType(room.name) == ROOMTYPE_SOURCEKEEPER) {
-			// Skip this step if we've been harvesting from the room for a while
-			const skDirective = _.find(Overmind.overseer.getDirectivesInRoom(room.name), dir =>
-				dir.directiveName == 'outpostSK'); // had to do this ungly thing due to circular dependency problems :(
-			// const skDirective = _.first(DirectiveSKOutpost.findInRoom(roomName));
-
-			if (!(skDirective && skDirective.age > 2500)) {
-				const keeperLairInfo = RoomIntel.getKeeperLairInfo(room.name);
-				const chillPositions = _.compact(_.map(keeperLairInfo || [], info => info.chillPos)) as RoomPosition[];
-				const blockPositions: RoomPosition[] = [
-					..._.map(room.sourceKeepers, keeper => keeper.pos),
-					..._.map(room.keeperLairs.filter(lair => (lair.ticksToSpawn || Infinity) < 100), lair => lair.pos),
-					...chillPositions];
-				MatrixLib.blockWithinRange(matrix, blockPositions, 3);
-			}
-		}
-
-		// Block or soft-block portals
-		if (opts.allowPortals) {
-			MatrixLib.softBlock(matrix, room.portals, room.name, MatrixLib.settings.portalCost);
-		} else {
-			MatrixLib.block(matrix, room.portals);
-		}
-
-		// Block structure positions
-		if (!opts.ignoreStructures) {
-			const impassibleStructures = _.filter(room.structures, s => !s.isWalkable);
-			const impassibleConstructionSites = _.filter(room.constructionSites, c => !c.isWalkable);
-			const alliedConstructionSites = _.filter(room.hostileConstructionSites, c => isAlly(c.owner.username));
-			const blockPositions = _.map([...impassibleStructures,
-										  ...impassibleConstructionSites,
-										  ...alliedConstructionSites], s => s.pos);
-			MatrixLib.block(matrix, blockPositions);
-		}
-
-		// Block any other obstacles that might be specified
-		if (opts.obstacles.length > 0) {
-			const obstacles = _.filter(unpackPosList(opts.obstacles), pos => pos.roomName == room.name);
-			MatrixLib.block(matrix, obstacles);
-		}
-
-		// Finally, as the very last step, we apply a smear to account for swarm size if greater than 1x1
-		if (opts.swarmWidth > 1 || opts.swarmHeight > 1) {
-			if (!opts.explicitTerrainCosts) {
-				log.error(`Swarm matrix generation requires opts.explicitTerrainCosts! opts: ${JSON.stringify(opts)}`);
-			}
-			MatrixLib.applyMovingMaxPool(matrix, opts.swarmWidth, opts.swarmHeight);
-		}
-
-		// Tada!
-		return matrix;
-
-	}
-
-	/**
-	 * Generates a cost matrix for an invisible room based on the fully-specified matrix options
-	 */
-	private static generateCostMatrixForInvisibleRoom(roomName: string, opts: Full<MatrixOptions>): CostMatrix {
-
-		const matrix = new PathFinder.CostMatrix();
-
-		// Explicitly specify the terrain costs if needed
-		if (opts.explicitTerrainCosts) {
 			MatrixLib.addTerrainCosts(matrix, roomName, opts.terrainCosts);
 		}
 
-		// Set road costs, usually to plainCost / 2
-		if (opts.terrainCosts.roadCost !== undefined) {
-			// Can't do anything here // TODO: maybe I should track road positions?
+		if (opts.terrainCosts.roadCost) {
+			if (room) {
+				for (const road of room.roads) {
+					matrix.set(road.pos.x, road.pos.y, opts.terrainCosts.roadCost);
+				}
+			} else {
+				// Can't do anything here // TODO: maybe I should track road positions?
+			}
 		}
 
 		// Mark the exits as unpathable
@@ -353,29 +288,51 @@ export class MatrixLib {
 			if (!(skDirective && skDirective.age > 2500)) {
 				const keeperLairInfo = RoomIntel.getKeeperLairInfo(roomName);
 				const chillPositions = _.compact(_.map(keeperLairInfo || [], info => info.chillPos)) as RoomPosition[];
-				MatrixLib.blockWithinRange(matrix, chillPositions, 3);
+
+				let avoidPositions: RoomPosition[] = [];
+				if (room) {
+					avoidPositions = avoidPositions.concat(
+						..._.map(room.sourceKeepers, keeper => keeper.pos),
+						..._.map(room.keeperLairs.filter(lair => (lair.ticksToSpawn || Infinity) < 100), lair => lair.pos),
+						...chillPositions
+					);
+				} else {
+					avoidPositions = chillPositions;
+				}
+
+				MatrixLib.blockWithinRange(matrix, avoidPositions, 3);
 			}
 		}
 
 		// Block or soft-block portals
-		const portalPositions = _.map(RoomIntel.getPortalInfo(roomName), portalInfo => portalInfo.pos);
+		const portalPositions = room ? room.portals : _.map(RoomIntel.getPortalInfo(roomName), portalInfo => portalInfo.pos);
 		if (opts.allowPortals) {
 			MatrixLib.softBlock(matrix, portalPositions, roomName, MatrixLib.settings.portalCost);
 		} else {
 			MatrixLib.block(matrix, portalPositions);
 		}
 
-		// Block positions of structures you remember
+		// Block structure positions
 		if (!opts.ignoreStructures) {
-			const owner = RoomIntel.roomOwnedBy(roomName) || '_noOwner_';
-			const info = RoomIntel.getImportantStructureInfo(roomName);
-			if (info) {
-				if (!isAlly(owner)) MatrixLib.block(matrix, info.rampartPositions);
-				MatrixLib.block(matrix, info.wallPositions);
-				MatrixLib.block(matrix, info.towerPositions);
-				MatrixLib.block(matrix, info.spawnPositions);
-				if (info.storagePos) MatrixLib.block(matrix, [info.storagePos]);
-				if (info.terminalPos) MatrixLib.block(matrix, [info.terminalPos]);
+			if (room) {
+				const impassibleStructures = _.filter(room.structures, s => !s.isWalkable);
+				const impassibleConstructionSites = _.filter(room.constructionSites, c => !c.isWalkable);
+				const alliedConstructionSites = _.filter(room.hostileConstructionSites, c => isAlly(c.owner.username));
+				const blockPositions = _.map([...impassibleStructures,
+					...impassibleConstructionSites,
+					...alliedConstructionSites], s => s.pos);
+				MatrixLib.block(matrix, blockPositions);
+			} else {
+				const owner = RoomIntel.roomOwnedBy(roomName) || '_noOwner_';
+				const info = RoomIntel.getImportantStructureInfo(roomName);
+				if (info) {
+					if (!isAlly(owner)) MatrixLib.block(matrix, info.rampartPositions);
+					MatrixLib.block(matrix, info.wallPositions);
+					MatrixLib.block(matrix, info.towerPositions);
+					MatrixLib.block(matrix, info.spawnPositions);
+					if (info.storagePos) MatrixLib.block(matrix, [info.storagePos]);
+					if (info.terminalPos) MatrixLib.block(matrix, [info.terminalPos]);
+				}
 			}
 		}
 
@@ -421,7 +378,6 @@ export class MatrixLib {
 		matrixToModify._bits.fill(value);
 		return matrixToModify;
 	}
-
 
 	/**
 	 * Blocks all specified positions, setting their cost to 0xff
