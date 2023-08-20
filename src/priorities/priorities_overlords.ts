@@ -37,6 +37,7 @@ export const OverlordPriority = {
 	priorityOwnedRoom: {		// Situationally prioritized in-room operations
 		priorityUpgrade  : 450,
 		priorityTransport: 451,
+		prioritySKReaper : 452,
 	},
 
 	ownedRoom: { 				// Operation of an owned room
