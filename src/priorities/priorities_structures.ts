@@ -7,6 +7,7 @@ export const BuildPriorities: BuildableStructureConstant[] = [
 	STRUCTURE_EXTENSION,
 	STRUCTURE_STORAGE,
 	STRUCTURE_TERMINAL,
+	STRUCTURE_FACTORY,
 	STRUCTURE_CONTAINER,
 	STRUCTURE_LINK,
 	STRUCTURE_EXTRACTOR,
@@ -28,6 +29,7 @@ export const FortifyPriorities: BuildableStructureConstant[] = [
 	STRUCTURE_SPAWN,
 	STRUCTURE_TOWER,
 	STRUCTURE_LAB,
+	STRUCTURE_FACTORY,
 	STRUCTURE_NUKER,
 ];
 
@@ -49,6 +51,7 @@ export const AttackStructurePriorities: StructureConstant[] = [
 	STRUCTURE_ROAD,
 	STRUCTURE_STORAGE,
 	STRUCTURE_TERMINAL,
+	STRUCTURE_FACTORY,
 	STRUCTURE_RAMPART,
 	STRUCTURE_WALL,
 ];
@@ -85,6 +88,7 @@ export const DemolishStructurePriorities: {
 	{ structureType: STRUCTURE_CONTAINER },
 	{ structureType: STRUCTURE_STORAGE, maxRemoved: 1 },
 	{ structureType: STRUCTURE_TERMINAL, maxRemoved: 1 },
+	{ structureType: STRUCTURE_FACTORY, maxRemoved: 1 },
 	{ structureType: STRUCTURE_WALL },
 	{ structureType: STRUCTURE_RAMPART },
 ];
