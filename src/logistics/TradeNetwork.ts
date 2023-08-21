@@ -1,4 +1,5 @@
 import {assimilationLocked} from '../assimilation/decorator';
+import { NO_ACTION } from 'utilities/errors';
 import {getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';

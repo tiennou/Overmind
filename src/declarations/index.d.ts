@@ -4,9 +4,6 @@ declare const require: (module: string) => any;
 
 declare const MARKET_FEE = 300; // missing in the typed-screeps declarations
 
-declare type NO_ACTION = 1;
-declare var NO_ACTION: NO_ACTION = 1;
-
 type TickPhase = 'assimilating' | 'build' | 'refresh' | 'init' | 'run' | 'postRun';
 declare var PHASE: TickPhase;
 declare var LATEST_BUILD_TICK: number;

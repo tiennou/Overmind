@@ -1,3 +1,4 @@
+import { ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH, ERR_SPECIFIED_SPAWN_BUSY } from 'utilities/errors';
 import {$} from '../caching/GlobalCache';
 import {Colony, ColonyStage} from '../Colony';
 import {log} from '../console/log';
@@ -18,9 +19,6 @@ import {ema, hasMinerals} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {Zerg} from '../zerg/Zerg';
 import {HiveCluster} from './_HiveCluster';
-
-const ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH = -20;
-const ERR_SPECIFIED_SPAWN_BUSY = -21;
 
 export interface SpawnRequest {
 	/** creep body generator to use */

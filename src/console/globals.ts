@@ -9,8 +9,6 @@ global.derefRoomPosition = function(protoPos: ProtoPos): RoomPosition {
 	return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
 };
 
-global.NO_ACTION = 1;
-
 // @ts-expect-error partial initialization
 global.PERMACACHE = {};
 

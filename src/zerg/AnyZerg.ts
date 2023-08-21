@@ -1,3 +1,4 @@
+import { NO_ACTION } from 'utilities/errors';
 import {Colony, getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {isAnyZerg, isPowerCreep} from '../declarations/typeGuards';
@@ -375,7 +376,7 @@ export abstract class AnyZerg {
 	 * Kite around hostiles in the room
 	 */
 	kite(avoidGoals: (RoomPosition | _HasRoomPosition)[] = this.room.hostiles,
-		options: MoveOptions = {}): number | undefined {
+		options: MoveOptions = {}) {
 		return Movement.kite(this, avoidGoals, options);
 	}
 
@@ -398,7 +399,7 @@ export abstract class AnyZerg {
 		} else if (this.room.controller && this.room.controller.my && this.room.controller.safeMode) {
 			return false;
 		} else {
-			const fleeing = Movement.flee(this, avoidGoals, fleeOptions.dropEnergy, moveOptions) != undefined;
+			const fleeing = Movement.flee(this, avoidGoals, fleeOptions.dropEnergy, moveOptions) !== NO_ACTION;
 			if (fleeing) {
 				// Drop energy if needed
 				if (fleeOptions.dropEnergy && this.store.energy > 0) {
@@ -513,21 +514,21 @@ export abstract class AnyZerg {
 	/**
 	 * Moves a creep off of the current tile to the first available neighbor
 	 */
-	moveOffCurrentPos(): number | undefined {
+	moveOffCurrentPos() {
 		return Movement.moveOffCurrentPos(this);
 	}
 
 	/**
 	 * Moves onto an exit tile
 	 */
-	moveOnExit(): ScreepsReturnCode | undefined {
+	moveOnExit() {
 		return Movement.moveOnExit(this);
 	}
 
 	/**
 	 * Moves off of an exit tile
 	 */
-	moveOffExit(towardPos?: RoomPosition, avoidSwamp = true): ScreepsReturnCode | NO_ACTION {
+	moveOffExit(towardPos?: RoomPosition, avoidSwamp = true) {
 		return Movement.moveOffExit(this, towardPos, avoidSwamp);
 	}
 

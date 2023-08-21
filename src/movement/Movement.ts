@@ -1,3 +1,4 @@
+import { ERR_CANNOT_PUSH_CREEP, ERR_SWARM_BUSY, ERR_NOT_IMPLEMENTED, ERR_SWARM_ROTATE_FAILED, NO_ACTION } from 'utilities/errors';
 import {log} from '../console/log';
 import {Roles} from '../creepSetups/setups';
 import {isAnyZerg, isPowerZerg, isStandardZerg} from '../declarations/typeGuards';
@@ -15,7 +16,6 @@ import {Pathing, PathOptions} from './Pathing';
 
 
 export const CROSSING_PORTAL = 21;
-export const ERR_CANNOT_PUSH_CREEP = -30;
 
 const REPORT_CPU_THRESHOLD = 750; 	// Report when creep uses more than this amount of CPU over lifetime
 const REPORT_SWARM_CPU_THRESHOLD = 1500;
@@ -106,6 +106,8 @@ export interface MoveState {
 	currentXY?: Coord;
 }
 
+export type ZergMoveReturnCode = CreepMoveReturnCode | ERR_NO_PATH | ERR_CANNOT_PUSH_CREEP | ERR_NOT_IN_RANGE | NO_ACTION;
+export type ZergSwarmMoveReturnCode = ZergMoveReturnCode | ERR_SWARM_BUSY | ERR_NOT_IMPLEMENTED | ERR_SWARM_ROTATE_FAILED;
 
 /**
  * This is the movement library for Overmind. It was originally based on BonzAI's Traveler library, but it has been
@@ -119,7 +121,7 @@ export class Movement {
 	/**
 	 * Move a creep to a destination
 	 */
-	static goTo(creep: AnyZerg, destination: _HasRoomPosition | RoomPosition, moveOpts: MoveOptions = {}): number {
+	static goTo(creep: AnyZerg, destination: _HasRoomPosition | RoomPosition, moveOpts: MoveOptions = {}): ZergMoveReturnCode {
 
 		if (creep.blockMovement && !moveOpts.force) {
 			return ERR_BUSY;
@@ -627,7 +629,7 @@ export class Movement {
 	/**
 	 * Travel to a room
 	 */
-	static goToRoom(creep: AnyZerg, roomName: string, options: MoveOptions = {}): number {
+	static goToRoom(creep: AnyZerg, roomName: string, options: MoveOptions = {}) {
 		options.range = 20;
 		return this.goTo(creep, new RoomPosition(25, 25, roomName), options);
 	}
@@ -635,7 +637,7 @@ export class Movement {
 	/**
 	 * Travel to a room
 	 */
-	static goToRoom_swarm(swarm: Swarm, roomName: string, options: SwarmMoveOptions = {}): number {
+	static goToRoom_swarm(swarm: Swarm, roomName: string, options: SwarmMoveOptions = {}) {
 		options.range = 24 - Math.max(swarm.width, swarm.height);
 		return this.swarmMove(swarm, new RoomPosition(25, 25, roomName), options);
 	}
@@ -643,7 +645,7 @@ export class Movement {
 	/**
 	 * Park a creep off-roads
 	 */
-	static park(creep: AnyZerg, pos: RoomPosition = creep.pos, maintainDistance = false): number {
+	static park(creep: AnyZerg, pos: RoomPosition = creep.pos, maintainDistance = false): ZergMoveReturnCode {
 		const road = creep.pos.lookForStructure(STRUCTURE_ROAD);
 		if (!road) return OK;
 
@@ -679,23 +681,24 @@ export class Movement {
 	/**
 	 * Moves a creep off of the current tile to the first available neighbor
 	 */
-	static moveOffCurrentPos(creep: AnyZerg): number | undefined {
+	static moveOffCurrentPos(creep: AnyZerg): ZergMoveReturnCode {
 		const destinationPos = _.first(creep.pos.availableNeighbors());
 		if (destinationPos) {
 			const direction = creep.pos.getDirectionTo(destinationPos);
 			return creep.move(direction);
 		} else {
 			log.debug(`${creep.print} can't move off current pos!`);
+			return ERR_NO_PATH;
 		}
 	}
 
 	/**
 	 * Moves onto an exit tile
 	 */
-	static moveOnExit(creep: AnyZerg): ScreepsReturnCode | undefined {
+	static moveOnExit(creep: AnyZerg): ZergMoveReturnCode | ERR_NOT_IN_RANGE {
 		if (creep.pos.rangeToEdge > 0) {
 			if (isStandardZerg(creep) && creep.fatigue > 0) {
-				return;
+				return ERR_TIRED;
 			}
 			const directions = [1, 3, 5, 7, 2, 4, 6, 8] as DirectionConstant[];
 			for (const direction of directions) {
@@ -709,12 +712,13 @@ export class Movement {
 			log.warning(`moveOnExit() assumes nearby exit tile, position: ${creep.pos}`);
 			return ERR_NO_PATH;
 		}
+		return ERR_NOT_IN_RANGE;
 	}
 
 	/**
 	 * Moves off of an exit tile
 	 */
-	static moveOffExit(creep: AnyZerg, towardPos?: RoomPosition, avoidSwamp = true): ScreepsReturnCode | NO_ACTION {
+	static moveOffExit(creep: AnyZerg, towardPos?: RoomPosition, avoidSwamp = true): ZergMoveReturnCode | ERR_NOT_IN_RANGE {
 		if (!creep.pos.isEdge) {
 			return NO_ACTION;
 		}
@@ -746,8 +750,8 @@ export class Movement {
 	 * Moves a pair of creeps; the follower will always attempt to be in the last position of the leader
 	 */
 	static pairwiseMove(leader: AnyZerg, follower: AnyZerg, target: _HasRoomPosition | RoomPosition,
-						opts = {} as MoveOptions, allowedRange = 1): number | undefined {
-		let outcome;
+						opts = {} as MoveOptions, allowedRange = 1): ZergSwarmMoveReturnCode {
+		let outcome: ZergSwarmMoveReturnCode = ERR_SWARM_BUSY;
 		if (leader.room != follower.room) {
 			if (leader.pos.rangeToEdge == 0) {
 				// Leader should move off of exit tiles while waiting for follower
@@ -785,7 +789,7 @@ export class Movement {
 	/**
 	 * Moves a swarm to a destination, accounting for group pathfinding
 	 */
-	static swarmMove(swarm: Swarm, destination: _HasRoomPosition | RoomPosition, opts: SwarmMoveOptions = {}): number {
+	static swarmMove(swarm: Swarm, destination: _HasRoomPosition | RoomPosition, opts: SwarmMoveOptions = {}): ZergSwarmMoveReturnCode {
 
 		if (swarm.fatigue > 0) {
 			Movement.circle(swarm.anchor, 'aqua', .3);
@@ -948,7 +952,7 @@ export class Movement {
 
 
 	static swarmCombatMove(swarm: Swarm, approach: PathFinderGoal[], avoid: PathFinderGoal[],
-						   options: CombatMoveOptions = {}): number {
+						   options: CombatMoveOptions = {}): ZergSwarmMoveReturnCode {
 		_.defaults(options, {
 			allowExit     : false,
 			avoidPenalty  : 10,
@@ -983,7 +987,7 @@ export class Movement {
 			return matrix;
 		};
 
-		let outcome: number = NO_ACTION;
+		let outcome: ZergSwarmMoveReturnCode = NO_ACTION;
 
 		// Flee from bad things that that you're too close to
 		if (avoid.length > 0) {
@@ -1045,7 +1049,7 @@ export class Movement {
 	}
 
 	static combatMove(creep: Zerg, approach: PathFinderGoal[], avoid: PathFinderGoal[],
-					  opts: CombatMoveOptions = {}): number {
+					  opts: CombatMoveOptions = {}): ZergMoveReturnCode {
 		_.defaults(opts, {
 			allowExit         : false,
 			avoidPenalty      : 10,
@@ -1091,7 +1095,7 @@ export class Movement {
 			}
 		};
 
-		let outcome: number = NO_ACTION;
+		let outcome: ZergMoveReturnCode = NO_ACTION;
 
 		// Flee from bad things that that you're too close to
 		if (avoid.length > 0) {
@@ -1184,7 +1188,7 @@ export class Movement {
 	/**
 	 * Moving routine for guards or sourceReapers in a room with NPC invaders
 	 */
-	static invasionMove(creep: Zerg, destination: RoomPosition | _HasRoomPosition, opts: MoveOptions = {}): number {
+	static invasionMove(creep: Zerg, destination: RoomPosition | _HasRoomPosition, opts: MoveOptions = {}): ZergMoveReturnCode {
 		_.defaults(opts, getDefaultMoveOptions());
 		const dest = normalizePos(destination);
 		if (creep.pos.getRangeTo(dest) > 8) {
@@ -1205,7 +1209,7 @@ export class Movement {
 	 */
 	static kite(creep: AnyZerg,
 		avoidGoals: (RoomPosition | _HasRoomPosition)[],
-		options: MoveOptions = {}): number | undefined {
+		options: MoveOptions = {}): ZergMoveReturnCode {
 		const opts = _.defaults({}, options.pathOpts ?? {}, {
 			terrainCosts: getTerrainCosts(creep),
 		});
@@ -1213,19 +1217,20 @@ export class Movement {
 		if (nextPos) {
 			return creep.move(creep.pos.getDirectionTo(nextPos));
 		}
+		return NO_ACTION;
 	}
 
 	/**
 	 * Flee from avoid goals in the room while not re-pathing every tick like kite() does.
 	 */
 	static flee(creep: AnyZerg, avoidGoals: (RoomPosition | _HasRoomPosition)[],
-				dropEnergy = false, opts: MoveOptions = {}): number | undefined {
+				dropEnergy = false, opts: MoveOptions = {}): ZergMoveReturnCode {
 
 		if (dropEnergy) {
 			log.warning("TODO: dropEnergy");
 		}
 		if (avoidGoals.length == 0) {
-			return; // nothing to flee from
+			return NO_ACTION; // nothing to flee from
 		}
 		const terrainCosts = getTerrainCosts(creep);
 		const fleeDefaultOpts: MoveOptions = {pathOpts: {terrainCosts: terrainCosts}};
@@ -1243,7 +1248,7 @@ export class Movement {
 		if (rangeToClosest > opts.fleeRange) { // Out of range of baddies
 
 			if (!creep.memory._go) {
-				return;
+				return NO_ACTION;
 			}
 
 			if (creep.pos.isEdge) {
@@ -1256,14 +1261,14 @@ export class Movement {
 				if (moveData.fleeWait <= 0) {
 					// you're safe now
 					delete creep.memory._go;
-					return;
+					return NO_ACTION;
 				} else {
 					moveData.fleeWait--;
 					return NO_ACTION;
 				}
 			} else {
 				// you're safe
-				return;
+				return NO_ACTION;
 			}
 
 		} else { // Still need to run away

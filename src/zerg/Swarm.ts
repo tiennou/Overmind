@@ -1,9 +1,10 @@
+import { ERR_SWARM_BUSY, ERR_NOT_IMPLEMENTED, NO_ACTION, errorForCode } from 'utilities/errors';
 import {log} from '../console/log';
 import {hasPos} from '../declarations/typeGuards';
 import {CombatIntel} from '../intel/CombatIntel';
 import {Mem} from '../memory/Memory';
 import {normalizePos} from '../movement/helpers';
-import {CombatMoveOptions, Movement, SwarmMoveOptions} from '../movement/Movement';
+import {CombatMoveOptions, Movement, SwarmMoveOptions, ZergSwarmMoveReturnCode} from '../movement/Movement';
 import {CombatOverlord} from '../overlords/CombatOverlord';
 import {profile} from '../profiler/decorator';
 import {CombatTargeting} from '../targeting/CombatTargeting';
@@ -34,8 +35,6 @@ const getDefaultSwarmMemory: () => SwarmMemory = () => ({
 	orientation: TOP,
 	numRetreats: 0,
 });
-
-const ERR_NOT_ALL_OK = -7;
 
 interface SwarmOverlord extends CombatOverlord {
 	memory: any;
@@ -200,7 +199,7 @@ export class Swarm implements ProtoSwarm {
 	/**
 	 * Pivots the swarm formation clockwise or counterclockwise
 	 */
-	private pivot(direction: 'clockwise' | 'counterclockwise'): number {
+	private pivot(direction: 'clockwise' | 'counterclockwise'): ZergSwarmMoveReturnCode {
 		if (this.fatigue > 0) {
 			return ERR_TIRED;
 		}
@@ -234,7 +233,7 @@ export class Swarm implements ProtoSwarm {
 			for (const creep of this.creeps) {
 				creep.cancelOrder('move');
 			}
-			return -1 * (_.findIndex([r1, r2, r3, r4], r => r != OK) || 899) - 100;
+			return (-1 * _.findIndex([r1, r2, r3, r4], r => r != OK) - 100) as ZergSwarmMoveReturnCode;
 		}
 	}
 
@@ -242,7 +241,7 @@ export class Swarm implements ProtoSwarm {
 	 * Reverses the orientation of the swarm formation in an X pattern to preserve the reflective parity of the
 	 * original formation
 	 */
-	private swap(direction: 'horizontal' | 'vertical'): number {
+	private swap(direction: 'horizontal' | 'vertical'): ZergSwarmMoveReturnCode {
 		if (this.fatigue > 0) {
 			return ERR_TIRED;
 		}
@@ -271,11 +270,11 @@ export class Swarm implements ProtoSwarm {
 			for (const creep of this.creeps) {
 				creep.cancelOrder('move');
 			}
-			return -1 * (_.findIndex([r1, r2, r3, r4], r => r != OK) || 899) - 100;
+			return (-1 * _.findIndex([r1, r2, r3, r4], r => r != OK) - 100) as ZergSwarmMoveReturnCode;
 		}
 	}
 
-	rotate(direction: TOP | BOTTOM | LEFT | RIGHT): number {
+	rotate(direction: TOP | BOTTOM | LEFT | RIGHT): ZergSwarmMoveReturnCode {
 		if (direction == this.orientation) {
 			// do nothing
 			return NO_ACTION;
@@ -283,10 +282,10 @@ export class Swarm implements ProtoSwarm {
 
 		if (!(this.width == 2 && this.height == 2)) {
 			console.log('NOT IMPLEMENTED FOR LARGER SWARMS YET');
-			return -100;
+			return ERR_NOT_IMPLEMENTED;
 		}
 
-		let ret = -777;
+		let ret: ZergSwarmMoveReturnCode = OK;
 		if (this.fatigue > 0) {
 			ret = ERR_TIRED;
 		} else {
@@ -312,7 +311,7 @@ export class Swarm implements ProtoSwarm {
 			}
 		}
 
-		this.debug(`Rotating to ${direction}, result: ${ret}`);
+		this.debug(`Rotating to ${direction}, result: ${errorForCode(ret)}`);
 		return ret;
 	}
 
@@ -447,7 +446,7 @@ export class Swarm implements ProtoSwarm {
 						ignoreCreepsOnDestination: true,
 						// ignoreCreeps: !creep.pos.inRangeToPos(destination, Math.max(this.width, this.height))
 					});
-					console.log(`${creep.print} moves to ${destination.print}, response: ${ret}`);
+					console.log(`${creep.print} moves to ${destination.print}, response: ${errorForCode(ret)}`);
 				}
 			}
 			return false;
@@ -502,7 +501,7 @@ export class Swarm implements ProtoSwarm {
 
 	// Movement methods ================================================================================================
 
-	move(direction: DirectionConstant): number {
+	move(direction: DirectionConstant): ZergSwarmMoveReturnCode {
 		let allMoved = true;
 		for (const creep of this.creeps) {
 			const result = creep.move(direction);
@@ -516,24 +515,24 @@ export class Swarm implements ProtoSwarm {
 				creep.cancelOrder('move');
 			}
 		}
-		return allMoved ? OK : ERR_NOT_ALL_OK;
+		return allMoved ? OK : ERR_SWARM_BUSY;
 	}
 
-	goTo(destination: RoomPosition | _HasRoomPosition, options: SwarmMoveOptions = {}): number {
+	goTo(destination: RoomPosition | _HasRoomPosition, options: SwarmMoveOptions = {}) {
 		// if (DEBUG) {
 		// 	options.displayCostMatrix = true;
 		// }
 		return Movement.swarmMove(this, destination, options);
 	}
 
-	goToRoom(roomName: string, options: SwarmMoveOptions = {}): number {
+	goToRoom(roomName: string, options: SwarmMoveOptions = {}) {
 		// if (DEBUG) {
 		// 	options.displayCostMatrix = true;
 		// }
 		return Movement.goToRoom_swarm(this, roomName, options);
 	}
 
-	combatMove(approach: PathFinderGoal[], avoid: PathFinderGoal[], options: CombatMoveOptions = {}): number {
+	combatMove(approach: PathFinderGoal[], avoid: PathFinderGoal[], options: CombatMoveOptions = {}) {
 		// if (DEBUG) {
 		// 	options.displayAvoid = true;
 		// }
@@ -572,7 +571,7 @@ export class Swarm implements ProtoSwarm {
 	// 	}
 	// }
 
-	reorient(includeStructures = true, includeCreeps = false): number {
+	reorient(includeStructures = true, includeCreeps = false) {
 		if (this.uniformCreepType) {
 			return NO_ACTION;
 		}
@@ -669,7 +668,7 @@ export class Swarm implements ProtoSwarm {
 		if (!this.isInFormation()) {
 			this.debug(`Regrouping!`);
 			if (!_.any(this.creeps, creep => creep.pos.isEdge)) {
-				return this.regroup();
+				return this.regroup() ? OK : ERR_BUSY;
 			}
 		}
 
@@ -703,7 +702,7 @@ export class Swarm implements ProtoSwarm {
 			// 					 pos => ({pos: pos, range: 1}));
 			const result = this.combatMove([{pos: this.target.pos, range: 1}], []);
 			if (result != NO_ACTION) {
-				this.debug(`Moving to target ${this.target}: ${result}`);
+				this.debug(`Moving to target ${this.target}: ${errorForCode(result)}`);
 				return result;
 			} else {
 				// Move to best damage spot
@@ -718,7 +717,7 @@ export class Swarm implements ProtoSwarm {
 		}
 
 		// Orient yourself to face structure targets
-		this.reorient(true, false);
+		return this.reorient(true, false);
 	}
 
 
@@ -736,7 +735,7 @@ export class Swarm implements ProtoSwarm {
 		if (!this.isInFormation()) {
 			this.debug(`Regrouping!`);
 			if (!_.any(this.creeps, creep => creep.pos.isEdge)) {
-				return this.regroup();
+				return this.regroup() ? OK : ERR_BUSY;
 			}
 		}
 
