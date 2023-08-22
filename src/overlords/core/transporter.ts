@@ -228,6 +228,6 @@ export class TransportOverlord extends Overlord {
 			} else {
 				this.handleSmolTransporter(transporter);
 			}
-		});
+		}, transporter => transporter.avoidDanger({ timer: 5, dropEnergy: true }));
 	}
 }
