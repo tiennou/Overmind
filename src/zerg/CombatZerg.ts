@@ -270,7 +270,7 @@ export class CombatZerg extends Zerg {
 		const target = CombatTargeting.findTarget(this);
 		const preferRanged = this.getActiveBodyparts(RANGED_ATTACK) > this.getActiveBodyparts(ATTACK);
 		const targetRange = preferredRange || preferRanged ? 3 : 1;
-		this.debug(`${target}, ${targetRange}`);
+		this.debug(`fighting: ${target}, ${targetRange}`);
 		if (target) {
 			const avoid = [];
 			// Avoid melee hostiles if you are a ranged creep
