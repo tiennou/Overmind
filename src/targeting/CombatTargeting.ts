@@ -1,3 +1,4 @@
+import {isStructure} from 'declarations/typeGuards';
 import {log} from '../console/log';
 import {CombatIntel} from '../intel/CombatIntel';
 import {MatrixLib} from '../matrix/MatrixLib';
@@ -46,12 +47,17 @@ export class CombatTargeting {
 	/**
 	 * Standard target-finding logic
 	 */
-	static findTarget(zerg: Zerg, targets = zerg.room.hostiles): Creep | undefined {
-		return maxBy(targets, function(hostile) {
-			if (hostile.hitsPredicted == undefined) hostile.hitsPredicted = hostile.hits;
+	static findTarget(zerg: Zerg, targets?: (Creep | Structure)[]): Creep | Structure | undefined {
+		if (!targets) targets = [...zerg.room.hostiles, ...zerg.room.hostileStructures];
+		return maxBy<Creep | Structure>(targets, function(hostile) {
 			if (hostile.pos.lookForStructure(STRUCTURE_RAMPART)) return false;
-			return hostile.hitsMax - hostile.hitsPredicted + CombatIntel.getHealPotential(hostile)
-				   - 10 * zerg.pos.getMultiRoomRangeTo(hostile.pos); // compute score
+			if (isStructure(hostile)) {
+				return hostile.hitsMax - 10 * zerg.pos.getMultiRoomRangeTo(hostile.pos);
+			} else {
+				if (hostile.hitsPredicted == undefined) hostile.hitsPredicted = hostile.hits;
+				return hostile.hitsMax - hostile.hitsPredicted + CombatIntel.getHealPotential(hostile)
+					- 10 * zerg.pos.getMultiRoomRangeTo(hostile.pos); // compute score
+			}
 		});
 	}
 
