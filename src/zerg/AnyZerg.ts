@@ -431,7 +431,9 @@ export abstract class AnyZerg {
 
 		// If you previously determined you are in danger, wait for timer to expire
 		if (this.memory.avoidDanger) {
-			if (this.memory.avoidDanger.timer > 0) {
+			const roomIsSafe = this.room.isSafe
+				|| this.room.dangerousPlayerHostiles.length == 0 && this.room.invaders.length == 0;
+			if (this.memory.avoidDanger.timer > 0 && !roomIsSafe) {
 				this.goToRoom(this.memory.avoidDanger.fallback);
 				if (opts.dropEnergy && this.store.energy > 0) {
 					this.drop(RESOURCE_ENERGY); // transfer energy to container check is only run on first danger tick
