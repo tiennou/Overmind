@@ -201,7 +201,7 @@ export class Mem {
 				log                   : {},
 				enableVisuals         : true,
 				resourceCollectionMode: 0,
-				allies                : [MY_USERNAME],
+				allies                : [],
 				powerCollection       : {
 					enabled : false,
 					maxRange: 5,

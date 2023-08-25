@@ -1,5 +1,6 @@
 // Random utilities that don't belong anywhere else
 
+import { MUON, MY_USERNAME } from '~settings';
 import {alignedNewline, bullet} from './stringConstants';
 
 export function getAllRooms(): Room[] {
@@ -92,9 +93,8 @@ export function getMyUsername(): string {
 	return 'ERROR: Could not determine username.';
 }
 
-const MUON = 'Muon'
 export function isAlly(username: string): boolean {
-	return username == MUON || (Memory.settings.allies || []).includes(username);
+	return username == MUON || username === MY_USERNAME || (Memory.settings.allies || []).includes(username);
 }
 
 export function hasJustSpawned(): boolean {
