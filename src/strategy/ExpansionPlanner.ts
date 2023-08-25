@@ -94,6 +94,11 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		for (const roomName in colony.memory.expansionData.possibleExpansions) {
 			let score = colony.memory.expansionData.possibleExpansions[roomName];
 			if (typeof score != 'number') continue;
+			const isBlocked = Game.flags[roomName + '-Block'] != null; // TODO: this is ugly
+			if (isBlocked) {
+				continue;
+			}
+
 			// Compute modified score
 			if (score + MAX_SCORE_BONUS > bestScore) {
 				// Is the room too close to an existing colony?
