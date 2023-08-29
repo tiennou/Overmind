@@ -191,6 +191,14 @@ export abstract class AnyZerg {
 		return result;
 	}
 
+	goPickup(resource: Resource) {
+		if (this.pos.inRangeToPos(resource.pos, RANGES.DROP)) {
+			return this.pickup(resource);
+		} else {
+			return this.goTo(resource.pos);
+		}
+	}
+
 	/* Say a message; maximum message length is 10 characters */
 	say(message: string, pub?: boolean) {
 		return this.creep.say(message, pub);
