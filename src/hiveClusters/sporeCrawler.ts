@@ -118,7 +118,7 @@ export class SporeCrawler extends HiveCluster {
 			}
 			// repair roads
 			if (includeRoads) {
-				const decayingRoads = _.filter(this.room.roads, road => road.hits < 0.2 * road.hitsMax);
+				const decayingRoads = _.filter(this.room.roads, road => road.hits < 0.2 * road.hitsMax && this.colony.roomPlanner.roadShouldBeHere(road.pos));
 				if (decayingRoads.length > 0) {
 					const roadsToRepair = _.sample(decayingRoads, this.towers.length);
 					// ^ if |towers| > |roads| then this will have length of |roads|
