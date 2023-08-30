@@ -65,6 +65,7 @@ export class SporeCrawler extends HiveCluster {
 	}
 
 	private scatterShot(targets: Creep[]): void {
+		if (targets.length === 0) return;
 		for (const tower of this.towers) {
 			const target = _.sample(targets);
 			const predictedDamage = CombatIntel.singleTowerDamage(target.pos.getRangeTo(tower));
