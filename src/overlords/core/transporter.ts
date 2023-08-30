@@ -70,8 +70,12 @@ export class TransportOverlord extends Overlord {
 
 		const transportPowerEach = setup.getBodyPotential(CARRY, this.colony);
 		const neededTransportPower = this.neededTransportPower();
-		const numTransporters = Math.ceil(neededTransportPower / transportPowerEach + 0.1); // div by zero error
+		let numTransporters = 0;
+		if (transportPowerEach !== 0) {
+			numTransporters = Math.ceil(neededTransportPower / transportPowerEach);
+		}
 
+		this.debug(`requesting ${numTransporters} because of ${neededTransportPower} needed by ${transportPowerEach}`);
 		if (this.transporters.length == 0) {
 			this.wishlist(numTransporters, setup, {priority: OverlordPriority.ownedRoom.firstTransport});
 		} else {

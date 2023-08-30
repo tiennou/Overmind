@@ -489,7 +489,7 @@ export abstract class Overlord {
 
 		// A bug in outpostDefenseOverlord caused infinite requests and cost me two botarena rounds before I found it...
 		if (spawnQuantity > MAX_SPAWN_REQUESTS) {
-			log.error(`Too many requests for ${setup.role}s submitted by ${this.print}! (Check for errors.)`);
+			log.error(`Too many requests (${spawnQuantity}) for ${setup.role}s submitted by ${this.print}! (Check for errors.)`);
 		} else {
 			for (let i = 0; i < spawnQuantity; i++) {
 				if (i >= 1 && opts.spawnOneAtATime) break;
