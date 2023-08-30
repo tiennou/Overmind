@@ -439,10 +439,10 @@ export abstract class AnyZerg {
 
 		_.defaults(opts, {timer: 10, dropEnergy: true});
 
+		const roomIsSafe = this.room.isSafe || this.pos.findClosestByLimitedRange(this.room.dangerousHostiles, RANGES.RANGED_ATTACK + 2);
+
 		// If you previously determined you are in danger, wait for timer to expire
 		if (this.memory.avoidDanger) {
-			const roomIsSafe = this.room.isSafe
-				|| this.room.dangerousPlayerHostiles.length == 0 && this.room.invaders.length == 0;
 			if (this.memory.avoidDanger.timer > 0 && !roomIsSafe) {
 				this.goToRoom(this.memory.avoidDanger.fallback);
 				if (opts.dropEnergy && this.store.energy > 0) {
@@ -455,7 +455,7 @@ export abstract class AnyZerg {
 			}
 		}
 
-		if (!this.room.isSafe || this.hits < this.hitsMax) {
+		if (!roomIsSafe || this.hits < this.hitsMax) {
 
 			if (Cartographer.roomType(this.room.name) == ROOMTYPE_SOURCEKEEPER) {
 				// If you're in an SK room, you can skip the danger avoidance as long as you have max hp, there are no
