@@ -1,3 +1,4 @@
+import { RANGES } from 'zerg/AnyZerg';
 import {$} from '../caching/GlobalCache';
 import {Colony} from '../Colony';
 import {log} from '../console/log';
@@ -145,7 +146,6 @@ export class SporeCrawler extends HiveCluster {
 
 	run() {
 		if (this.room.hostiles.length > 0) {
-			this.debug(`${this.room.hostiles} hostiles detected!`);
 			const myDefenders = _.filter(this.room.creeps, creep => creep.getActiveBodyparts(ATTACK) > 1);
 			const myRangedDefenders = _.filter(this.room.creeps, creep => creep.getActiveBodyparts(RANGED_ATTACK) > 1);
 			const myCreepDamage = ATTACK_POWER * _.sum(myDefenders, creep => CombatIntel.getAttackPotential(creep)) +
@@ -158,6 +158,14 @@ export class SporeCrawler extends HiveCluster {
 				const damageTaken = CombatIntel.towerDamageAtPos(hostile.pos)! + myCreepDamage;
 				const damageMultiplier = CombatIntel.minimumDamageTakenMultiplier(hostile);
 				return damageTaken * damageMultiplier > avgHealing;
+			});
+			this.debug(() => {
+				const closestHostile = this.pos.findClosestByRange(this.room.hostiles);
+				return `${this.room.hostiles.length} hostiles detected!\n`
+				+ `\tPotential creep damage: ${myCreepDamage}\n`
+				+ `\tMaximum tower damage: ${closestHostile ? CombatIntel.towerDamageAtPos(closestHostile.pos) : 0}\n`
+				+ `\tEnemy healing power: ${avgHealing}\n`
+				+ `\tTargets: ${possibleTargets}`
 			});
 			// Only attack dancing targets (drain attack) which are far enough in rooms to be killed off by towers
 			possibleTargets = _.filter(possibleTargets, hostile => {
@@ -184,12 +192,18 @@ export class SporeCrawler extends HiveCluster {
 			});
 			if (Game.time % 21 == 0
 				&& _.filter(possibleTargets, target => target.hits < target.hitsMax / 2).length == 0) {
-				// console.log('Scattershotting!');
+				this.debug(`Scattershotting ${possibleTargets}`);
 				return this.scatterShot(possibleTargets);
 			}
-			possibleTargets = possibleTargets.filter(enemy => enemy.hits < enemy.hitsMax / 2
-															  || enemy.pos.findInRange(FIND_MY_CREEPS, 3).length > 0);
+			this.debug(`filtered (range): ${possibleTargets}`);
+			// TODO: that's broken since it only checks creeps proximity
+			// enemy.hits < enemy.hitsMax / 2
+			possibleTargets = _.sortBy(possibleTargets, enemy =>
+				enemy.pos.findInRange(FIND_MY_CREEPS, RANGES.RANGED_ATTACK).length > 0
+				|| enemy.pos.findInRange(FIND_MY_STRUCTURES, RANGES.RANGED_ATTACK).length > 0);
+			this.debug(`filtered (hp): ${possibleTargets}`);
 			const target = CombatTargeting.findBestCreepTargetForTowers(this.room, possibleTargets);
+			this.debug(`selected target: ${target?.print}`);
 			if (target) {
 				return this.attack(target);
 			}

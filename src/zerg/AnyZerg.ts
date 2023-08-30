@@ -26,12 +26,14 @@ interface FleeOptions {
 	invalidateTask?: boolean;
 }
 
-const RANGES = {
+export const RANGES = {
 	BUILD   : 3,
 	REPAIR  : 3,
 	TRANSFER: 1,
 	WITHDRAW: 1,
 	HARVEST : 1,
+	ATTACK  : 1,
+	RANGED_ATTACK: 3,
 	DROP    : 0,
 };
 
