@@ -391,9 +391,10 @@ export class MiningOverlord extends Overlord {
 			return true;
 		} else if (!this.source) {
 			// We likely don't have visibilty, just move to it
-			if (!miner.pos.inRangeToPos(this.pos, 1)) {
+			if (!miner.pos.inRangeToPos(this.pos, 1) && miner.store.getFreeCapacity(RESOURCE_ENERGY) !== 0) {
 				this.debug(`${miner.print} not in range, moving closer to ${this.pos}`);
-				return miner.goTo(this);
+				miner.goTo(this);
+				return true;
 			}
 			log.error(`${miner.print} has no source??`);
 			return true;
