@@ -62,8 +62,11 @@ export class SourceReaperOverlord extends CombatOverlord {
 	}
 
 	init() {
-		const defenderAmount = this.room && (this.room.invaders.length > 0
-											 || RoomIntel.isInvasionLikely(this.room)) ? 1 : 0;
+		let defenderAmount = 0;
+		if (this.room && (this.room.invaders.length > 0 || RoomIntel.isInvasionLikely(this.room))) {
+			// Spawn as many defenders as there are invaders, which might be a bit wasteful
+			defenderAmount = this.room.invaders.length;
+		}
 		const priority = OverlordPriority.priorityOwnedRoom.prioritySKReaper;
 		this.wishlist(1, CombatSetups.zerglings.sourceKeeper, { priority });
 		this.wishlist(defenderAmount, CombatSetups.hydralisks.sourceKeeper, { priority });
