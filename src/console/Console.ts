@@ -234,6 +234,16 @@ export class OvermindConsole {
 		description: 'show all idle creeps',
 		command: OvermindConsole.idleCreeps.bind(OvermindConsole),
 	},
+	{
+		name: 'visuals()',
+		description: 'enable/disable showing visuals',
+		command: OvermindConsole.visuals.bind(OvermindConsole),
+	},
+	{
+		name: 'showIntelVisuals(ticks?)',
+		description: 'show intel using visuals (ticks defaults to 100)',
+		command: OvermindConsole.showIntelVisuals.bind(OvermindConsole),
+	},
 ];
 
 	static init() {
@@ -997,5 +1007,15 @@ export class OvermindConsole {
 		if (idleCreeps.length === 0) msg = "No idle creeps";
 		console.log(msg);
 		return idleCreeps;
+	}
+
+	static visuals() {
+		Memory.settings.enableVisuals = !Memory.settings.enableVisuals;
+		console.log(`Visuals ${Memory.settings.enableVisuals ? 'enabled' : 'disabled'}.`);
+	}
+
+	static showIntelVisuals(ticks: number = 100) {
+		Memory.settings.intelVisualsUntil = Game.time + ticks;
+		console.log(`Intel visuals enabled for the next ${ticks} ticks (until ${Memory.settings.intelVisualsUntil}).`);
 	}
 }

@@ -15,6 +15,7 @@ import {
 } from '../utilities/packrat';
 import {ema, getCacheExpiration, isAlly, minMax} from '../utilities/utils';
 import {CombatIntel} from './CombatIntel';
+import {Visualizer} from '../visuals/Visualizer';
 
 const RECACHE_TIME = 5000;
 const OWNED_RECACHE_TIME = 1000;
@@ -157,7 +158,7 @@ export class RoomIntel {
 		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.EXPANSION_DATA]) {
 			return;
 		}
-		const data = Memory.rooms[roomName][RMEM.EXPANSION_DATA] as SavedExpansionData | 0;
+		const data = Memory.rooms[roomName][RMEM.EXPANSION_DATA]!;
 		if (data === 0) {
 			return false;
 		}
@@ -968,6 +969,32 @@ export class RoomIntel {
 
 	}
 
+	static visuals(): void {
+		const until = Memory.settings.intelVisualsUntil;
+		if (!Visualizer.enabled || until === undefined || Game.time > until) {
+			return;
+		}
+		for (const name in Memory.rooms) {
+			const exp = RoomIntel.getExpansionData(name);
+			const data = [];
+
+			if (exp === undefined) {
+				data.push(["Status", "Unexplored"]);
+			} else if (exp === false) {
+				data.push(["Status", "Uninhabitable"]);
+			} else {
+				data.push(["Score", exp.score.toFixed(0)]);
+				data.push(["Anchor", `${exp.bunkerAnchor.x}, ${exp.bunkerAnchor.y}`]);
+				data.push(["Outposts:"]);
+				if (_.keys(exp.outposts).length !== 0) {
+					for (const outpost in exp.outposts) {
+						data.push([outpost, exp.outposts[outpost].toString()]);
+					}
+				}
+			}
+			Visualizer.infoBox(`Intel: ${name}`, data, { x: 40, y: 7, roomName: name}, 6);
+		}
+	}
 }
 
 // For debugging purposes

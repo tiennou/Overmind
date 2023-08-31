@@ -660,5 +660,6 @@ export class Overseer implements IOverseer {
 		// for (let colony of this.colonies) {
 		// 	this.drawCreepReport(colony);
 		// }
+		RoomIntel.visuals();
 	}
 }
