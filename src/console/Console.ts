@@ -15,6 +15,7 @@ import {DirectiveOutpost} from 'directives/colony/outpost';
 import {TaskSignController} from 'tasks/instances/signController';
 import columnify from 'columnify';
 import { Zerg } from 'zerg/Zerg';
+import { COMMODITIES_ALL, RESOURCE_IMPORTANCE } from 'resources/map_resources';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
 
@@ -243,6 +244,11 @@ export class OvermindConsole {
 		name: 'showIntelVisuals(ticks?)',
 		description: 'show intel using visuals (ticks defaults to 100)',
 		command: OvermindConsole.showIntelVisuals.bind(OvermindConsole),
+	},
+	{
+		name: 'showAssets()',
+		description: 'show all available resources across colonies',
+		command: OvermindConsole.showAssets.bind(OvermindConsole),
 	},
 ];
 
@@ -1017,5 +1023,43 @@ export class OvermindConsole {
 	static showIntelVisuals(ticks: number = 100) {
 		Memory.settings.intelVisualsUntil = Game.time + ticks;
 		console.log(`Intel visuals enabled for the next ${ticks} ticks (until ${Memory.settings.intelVisualsUntil}).`);
+	}
+
+	static showAssets() {
+		let count = 0;
+		const data: Record<string, number> = {};
+		for (const resourceType of RESOURCE_IMPORTANCE) {
+			if (!(resourceType.length == 1 || resourceType.length == 5 || resourceType == RESOURCE_ENERGY)) {
+				continue;
+			}
+			count = 0;
+			_.forEach(Game.rooms, room => {
+				if (room.my) {
+					count += room.storage?.store[resourceType] ?? 0;
+					count += room.terminal?.store[resourceType] ?? 0;
+					count += room.factory?.store[resourceType] ?? 0;
+				}
+			});
+			if (count > 0) {
+				data[resourceType] = count;
+			}
+		}
+		for (const resourceType of COMMODITIES_ALL) {
+			count = 0;
+			_.forEach(Game.rooms, room => {
+				if (room.my) {
+					count += room.storage?.store[resourceType] ?? 0;
+					count += room.terminal?.store[resourceType] ?? 0;
+					count += room.factory?.store[resourceType] ?? 0;
+				}
+			});
+			if (count > 0) {
+				data[resourceType] = count;
+			}
+		}
+
+		const msg = 'Reporting all assets:\n' + columnify(data);
+		console.log(msg);
+		return data;
 	}
 }
