@@ -155,8 +155,8 @@ export class RoomIntel {
 	 * comparing to false!
 	 */
 	static getExpansionData(roomName: string): ExpansionData | false | undefined {
-		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.EXPANSION_DATA]) {
-			return;
+		if (!Memory.rooms[roomName] || Memory.rooms[roomName][RMEM.EXPANSION_DATA] === undefined) {
+			return undefined;
 		}
 		const data = Memory.rooms[roomName][RMEM.EXPANSION_DATA]!;
 		if (data === 0) {
