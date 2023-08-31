@@ -6,7 +6,6 @@ import {isIVM} from '../utilities/utils';
 import {
 	DEFAULT_OPERATION_MODE,
 	DEFAULT_OVERMIND_SIGNATURE,
-	MY_USERNAME,
 	PROFILER_COLONY_LIMIT,
 	USE_SCREEPS_PROFILER
 } from '../~settings';
