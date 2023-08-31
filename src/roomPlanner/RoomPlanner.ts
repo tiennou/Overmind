@@ -112,6 +112,7 @@ export class RoomPlanner {
 		linkCheckFrequency: 100,
 		maxSitesPerColony : onPublicServer() ? 10 : 25,
 		maxDismantleCount : 5,
+		allowDestroy: false,
 	};
 
 	constructor(colony: Colony) {
@@ -569,6 +570,15 @@ export class RoomPlanner {
 		}
 	}
 
+	private destroyStructure(structure: Structure) {
+		if (RoomPlanner.settings.allowDestroy) {
+			return structure.destroy();
+		} else {
+			log.warning(`${this.colony.print}: RoomPlanner would have deleted ${structure.print} but destruction is disabled in settings`);
+			return OK;
+		}
+	}
+
 	/**
 	 * Create construction sites for any buildings that need to be built
 	 */
@@ -689,8 +699,7 @@ export class RoomPlanner {
 								}
 							}
 						}
-						// TODO: adding this for safety for now; remove later
-						const result: any = 'destroy() disabled'; // structure.destroy();
+						const result = this.destroyStructure(structure);
 						if (result != OK) {
 							log.warning(`${this.colony.name}: couldn't destroy structure of type ` +
 										`"${structureType}" at ${structure.pos.print}. Result: ${result}`);
@@ -737,7 +746,7 @@ export class RoomPlanner {
 								// Destroy the structure if it is less important and not protected
 								if (!this.structureShouldBeHere(structure.structureType, pos)
 									&& !safeTypes.includes(structure.structureType)) {
-									const result = 'destroy() disabled' as any; // structure.destroy();
+									const result = this.destroyStructure(structure);
 									if (result == OK) {
 										log.info(`${this.colony.name}: destroyed ${structure.structureType} at` +
 												 ` ${structure.pos.print}`);
