@@ -2,7 +2,7 @@ import { RoomIntelMemory } from 'intel/RoomIntel';
 import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
 import {Stats} from '../stats/stats';
-import {isIVM} from '../utilities/utils';
+import {ema, isIVM} from '../utilities/utils';
 import {
 	DEFAULT_OPERATION_MODE,
 	DEFAULT_OVERMIND_SIGNATURE,
@@ -39,10 +39,12 @@ export function getAutonomyLevel(): Autonomy {
 let lastMemory: Memory;
 let lastTime: number = 0;
 
-const MAX_BUCKET = 10000;
+export const MAX_BUCKET = 10000;
 const HEAP_CLEAN_FREQUENCY = 200;
 const BUCKET_CLEAR_CACHE = 7000;
 const BUCKET_CPU_HALT = 4000;
+const BUCKET_LOW_WATERMARK = 500;
+const PIXEL_GENERATION_GRACE_PERIOD = 500;
 
 /**
  * This module contains a number of low-level memory clearing and caching functions
@@ -59,7 +61,7 @@ export class Mem {
 		if (USE_SCREEPS_PROFILER && Game.time % 10 == 0) {
 			log.warning(`Profiling is currently enabled; only ${PROFILER_COLONY_LIMIT} colonies will be run!`);
 		}
-		if (Game.cpu.bucket < 500) {
+		if (Game.cpu.bucket < BUCKET_LOW_WATERMARK && (!Memory.pixelsTick || Game.time - Memory.pixelsTick >= PIXEL_GENERATION_GRACE_PERIOD)) {
 			if (_.keys(Game.spawns).length > 1 && !Memory.resetBucket && !Memory.haltTick) {
 				// don't run CPU reset routine at very beginning or if it's already triggered
 				log.warning(`CPU bucket is critically low (${Game.cpu.bucket})! Starting CPU reset routine.`);
@@ -90,6 +92,30 @@ export class Mem {
 			}
 		}
 		return shouldRun;
+	}
+
+	static didRun() {
+		Memory.tick++;
+
+		// Update bucket delta tracking
+		const bucket = Game.cpu.bucket;
+		const lastBucket = Memory.stats.persistent.lastBucket;
+		if (lastBucket !== undefined) {
+			const used = Game.cpu.getUsed();
+			const limit = Game.cpu.shardLimits[Game.shard.name];
+
+			// Since that (realistic) calculation will cap once the bucket is full
+			// switch to an estimate based on CPU usage instead
+			const delta = bucket - lastBucket;
+			const deltaEstimate = Math.ceil(limit - used);
+
+			const lastAvgDelta = Memory.stats.persistent.avgBucketDelta ?? bucket;
+			const avgDelta = Math.min(ema((delta === 0 ? deltaEstimate : delta), lastAvgDelta, 10), limit);
+
+			log.info(`CPU: used: ${used.toFixed(3)}, bucket: ${bucket} (delta: ${delta}, est: ${deltaEstimate}, avg: ${avgDelta.toFixed(0)}), tick limit: ${Game.cpu.tickLimit}`);
+			Memory.stats.persistent.avgBucketDelta = avgDelta;
+		}
+		Memory.stats.persistent.lastBucket = bucket;
 	}
 
 	/**
@@ -210,6 +236,9 @@ export class Mem {
 					enabled      : false,
 					maxRange     : 4,
 					maxConcurrent: 1,
+				},
+				pixelGeneration: {
+					enabled: false,
 				},
 				attitude: {
 					brazenness: 0.5,

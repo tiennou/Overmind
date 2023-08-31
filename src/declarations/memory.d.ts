@@ -44,6 +44,7 @@ interface Memory {
 			empireAge?: number;
 			build?: number;
 			lastBucket?: number;
+			avgBucketDelta?: number;
 			terminalNetwork?: import('logistics/TerminalNetwork_v2').TerminalNetworkStats;
 			trader?: import('logistics/TradeNetwork').TraderStats;
 		};
@@ -53,6 +54,7 @@ interface Memory {
 	// suspend?: number;
 	resetBucket?: boolean;
 	haltTick?: number;
+	pixelsTick?: number;
 	combatPlanner: import('strategy/CombatPlanner').CombatPlannerMemory;
 	playerCreepTracker: { // TODO revisit for a better longterm solution
 		[playerName: string]: CreepTracker
@@ -83,6 +85,9 @@ interface Memory {
 			enabled: boolean;
 			maxRange: number;
 			maxConcurrent: number;
+		},
+		pixelGeneration: {
+			enabled: boolean;
 		},
 		attitude: {
 			/**

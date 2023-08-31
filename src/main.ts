@@ -76,7 +76,7 @@ function main(): void {
 	PHASE = 'postRun';
 	Overmind.visuals(); 						// Draw visuals
 	Stats.run(); 								// Record statistics
-	Memory.tick++;								// Record successful tick
+	Mem.didRun();								// Record successful tick
 
 	// Post-run code: handle sandbox code and error catching -----------------------------------------------------------
 	sandbox();									// Sandbox: run any testing code

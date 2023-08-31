@@ -18,7 +18,7 @@ import {DirectiveNukeResponse} from './directives/situational/nukeResponse';
 import {DirectiveTerminalEvacuateState} from './directives/terminalState/terminalState_evacuate';
 import {RoomIntel} from './intel/RoomIntel';
 import {LogisticsNetwork} from './logistics/LogisticsNetwork';
-import {Autonomy, getAutonomyLevel, Mem} from './memory/Memory';
+import {Autonomy, getAutonomyLevel, MAX_BUCKET, Mem} from './memory/Memory';
 import {Pathing} from './movement/Pathing';
 import {Overlord} from './overlords/Overlord';
 import {profile} from './profiler/decorator';
@@ -594,11 +594,20 @@ export class Overseer implements IOverseer {
 		}
 
 		this.placeDirectives();
+	}
 
-		const bucket = Game.cpu.bucket;
-		const lastBucket = Memory.stats.persistent.lastBucket ?? bucket;
-		log.info(`CPU stats: bucket: ${bucket} (delta: ${bucket - lastBucket}), tick limit: ${Game.cpu.tickLimit}`);
-		Memory.stats.persistent.lastBucket = bucket;
+	postRun(): void {
+		if (Memory.settings.pixelGeneration.enabled) {
+			// Make sure that our current bucket delta looks fine so we recover quickly
+			const delta = Memory.stats.persistent.avgBucketDelta ?? 0;
+			if (delta >= 20 && Game.cpu.bucket === MAX_BUCKET) {
+				log.warning(`Generating pixels!`);
+				Memory.pixelsTick = Game.time;
+				// Reset the last bucket count so we don't tank the average
+				Memory.stats.persistent.lastBucket = 0;
+				Game.cpu.generatePixel();
+			}
+		}
 	}
 
 	getCreepReport(colony: Colony): string[][] {
