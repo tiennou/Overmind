@@ -726,7 +726,7 @@ export class OvermindConsole {
 
 	// Colony Management ===============================================================================================
 
-	static setRoomUpgradeRate(colonySpec: Colony | string, rate?: number): void {
+	static setRoomUpgradeRate(colonySpec: Colony | string, rate?: number | null): void {
 		const colony = this.resolveSingleColonySpec(colonySpec)
 		const oldRate = colony.upgradeSite.memory.speedFactor;
 
@@ -735,6 +735,8 @@ export class OvermindConsole {
 			colony.upgradeSite.memory.speedFactor = rate;
 
 			console.log(`Colony ${colony.name} is now upgrading at a rate of ${rate} (previously ${oldRate}).`);
+		} else if (rate === null) {
+			delete colony.upgradeSite.memory.speedFactor;
 		} else {
 			const rate = colony.upgradeSite.memory.speedFactor;
 			console.log(`Colony ${colony.name} currently upgrading at a rate of ${rate}.`);

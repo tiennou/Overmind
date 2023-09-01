@@ -11,7 +11,7 @@ import {HiveCluster} from './_HiveCluster';
 
 interface UpgradeSiteMemory {
 	stats: { downtime: number };
-	speedFactor: number;		// Multiplier on upgrade parts for fast growth
+	speedFactor?: number;		// Multiplier on upgrade parts for fast growth
 }
 
 
@@ -101,36 +101,25 @@ export class UpgradeSite extends HiveCluster {
 
 	private getUpgradePowerNeeded(): number {
 		return $.number(this, 'upgradePowerNeeded', () => {
-			if (this.room.storage) { // Workers perform upgrading until storage is set up
-				const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
-				let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
-				if (amountOver > 800000) {
-					upgradePower *= 4; // double upgrade power if we have lots of surplus energy
-				} else if (amountOver > 500000) {
-					upgradePower *= 2;
-				}
-				if (this.controller.level == 8) {
-					if (this.colony.assets.energy < 30000) {
-						upgradePower = 0;
-					} else {
-						upgradePower = Math.min(upgradePower, 15); // don't go above 15 work parts at RCL 8
-					}
-				} else if (this.controller.level >= 6) {
-					// Can set a room to upgrade at an accelerated rate manually
-					upgradePower = this.memory.speedFactor != undefined
-						? upgradePower * this.memory.speedFactor
-						: upgradePower;
-				}
-				return upgradePower;
-			} else {
-				return 0;
+			// Workers perform upgrading until storage is set up
+			if (!this.room.storage) return 0;
+
+			const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
+			let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
+			if (this.memory.speedFactor !== undefined) {
+				upgradePower *= this.memory.speedFactor;
+			} else if (amountOver > 800000) {
+				upgradePower *= 4; // double upgrade power if we have lots of surplus energy
+			} else if (amountOver > 500000) {
+				upgradePower *= 2;
 			}
+			return upgradePower;
 		});
 	}
 
 	init(): void {
 		// Register energy requests
-		if (this.link && this.link.energy < UpgradeSite.settings.linksRequestBelow) {
+		if (this.link && this.link.store[RESOURCE_ENERGY] < UpgradeSite.settings.linksRequestBelow) {
 			this.colony.linkNetwork.requestReceive(this.link);
 		}
 		const inThreshold = this.colony.stage > ColonyStage.Larva ? 0.5 : 0.75;
@@ -212,7 +201,9 @@ export class UpgradeSite extends HiveCluster {
 
 	private drawUpgradeReport(coord: Coord) {
 		let { x, y } = coord;
-		const height = this.controller.level !== 8 ? 2 : 1;
+		let height = 1;
+		if (this.controller.level !== 8) height += 1;
+		if (this.memory.speedFactor !== undefined) height += 1;
 		const titleCoords = Visualizer.section(`${this.colony.name} Upgrade Site (${this.controller.level})`,
 			{ x, y, roomName: this.room.name }, 9.5, height + 0.1
 		);
@@ -225,6 +216,14 @@ export class UpgradeSite extends HiveCluster {
 			const fmt = (num: number) => `${Math.floor(num / 1000)}K`;
 			Visualizer.barGraph([this.controller.progress, this.controller.progressTotal],
 				{ x: boxX + 4, y: y, roomName: this.room.name }, 5, 1, fmt);
+			y += 1;
+		}
+
+		if (this.memory.speedFactor !== undefined) {
+			Visualizer.text(`Rate`,
+				{ x: boxX, y: y, roomName: this.room.name});
+			Visualizer.text(this.memory.speedFactor.toString(),
+				{ x: boxX + 4, y: y, roomName: this.room.name});
 			y += 1;
 		}
 
