@@ -790,6 +790,11 @@ export class Colony {
 			Stats.log(`colonies.${this.name}.threatLevel`, this.room.threatLevel);
 			const avgBarrierHits = _.sum(this.room.barriers, barrier => barrier.hits) / this.room.barriers.length;
 			Stats.log(`colonies.${this.name}.avgBarrierHits`, avgBarrierHits);
+			const report = Overmind.overseer.getCreepReport(this);
+			for (const [role, [current, needed]] of Object.entries(report)) {
+				Stats.log(`colonies.${this.name}.creeps.${role}.current`, current);
+				Stats.log(`colonies.${this.name}.creeps.${role}.needed`, needed);
+			}
 		}
 	}
 
