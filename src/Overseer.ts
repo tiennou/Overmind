@@ -609,8 +609,7 @@ export class Overseer implements IOverseer {
 		}
 	}
 
-	getCreepReport(colony: Colony): string[][] {
-		const spoopyBugFix = false;
+	getCreepReport(colony: Colony) {
 		const roleOccupancy: { [role: string]: [number, number] } = {};
 
 		for (const overlord of this.overlordsByColony[colony.name]) {
@@ -626,26 +625,10 @@ export class Overseer implements IOverseer {
 					}
 					roleOccupancy[role][0] += report[0];
 					roleOccupancy[role][1] += report[1];
-					if (spoopyBugFix) { // bizzarely, if you comment these lines out, the creep report is incorrect
-						log.debug(`report: ${JSON.stringify(report)}`);
-						log.debug(`occupancy: ${JSON.stringify(roleOccupancy)}`);
-					}
 				}
 			}
 		}
-
-
-		// let padLength = _.max(_.map(_.keys(roleOccupancy), str => str.length)) + 2;
-		const roledata: string[][] = [];
-		for (const role in roleOccupancy) {
-			const [current, needed] = roleOccupancy[role];
-			// if (needed > 0) {
-			// 	stringReport.push('| ' + `${role}:`.padRight(padLength) +
-			// 					  `${Math.floor(100 * current / needed)}%`.padLeft(4));
-			// }
-			roledata.push([role, `${current}/${needed}`]);
-		}
-		return roledata;
+		return roleOccupancy;
 	}
 
 	visuals(): void {

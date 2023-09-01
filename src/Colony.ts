@@ -795,7 +795,14 @@ export class Colony {
 
 	private drawCreepReport(coord: Coord): Coord {
 		let {x, y} = coord;
-		const roledata = Overmind.overseer.getCreepReport(this);
+		const report = Overmind.overseer.getCreepReport(this);
+
+		const roledata: string[][] = [];
+		for (const role in report) {
+			const [current, needed] = report[role];
+			roledata.push([role, `${current}/${needed}`]);
+		}
+
 		const tablePos = new RoomPosition(x, y, this.room.name);
 		y = Visualizer.infoBox(`${this.name} Creeps`, roledata, tablePos, 7);
 		return {x, y};

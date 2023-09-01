@@ -192,7 +192,7 @@ interface IOverseer {
 
 	run(): void;
 
-	getCreepReport(colony: any): string[][];
+	getCreepReport(colony: any);
 
 	visuals(): void;
 }
