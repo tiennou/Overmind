@@ -390,7 +390,7 @@ export class Overseer implements IOverseer {
 			if (alreadyOwned || alreadyReserved || isBlocked) {
 				return false;
 			}
-			const neighboringRooms = _.values<string>(Game.map.describeExits(roomName));
+			const neighboringRooms = _.values<string>(Cartographer.describeExits(roomName));
 			const isReachableFromColony = _.any(neighboringRooms, r => colony.roomNames.includes(r));
 			return isReachableFromColony && RoomIntel.getRoomStatus(roomName).status === colonyRoomStatus;
 		});

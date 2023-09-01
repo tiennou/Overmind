@@ -7,6 +7,7 @@ import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
 import { log } from 'console/log';
+import { Cartographer } from 'utilities/Cartographer';
 
 const DEFAULT_NUM_SCOUTS = 3;
 
@@ -52,7 +53,7 @@ export class RandomWalkerScoutOverlord extends Overlord {
 
 		const roomStatus = RoomIntel.getRoomStatus(scout.room.name);
 
-		let neighboringRooms = _.values<string>(Game.map.describeExits(scout.pos.roomName));
+		let neighboringRooms = _.values<string>(Cartographer.describeExits(scout.pos.roomName));
 		neighboringRooms = _.shuffle(neighboringRooms);
 
 		// Pick a new random room from the neighboring rooms, making sure they have compatible room status

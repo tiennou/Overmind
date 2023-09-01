@@ -246,6 +246,30 @@ export class Cartographer {
 	// 	}
 	// }
 
+	/**
+	 * Returns a room's available exits
+	 *
+	 * Compared to {@link Game.map.describeExits}, this method won't return
+	 * exits to rooms that are outside of the world's boundaries.
+	 *
+	 * @param roomName The room name to check
+	 * @returns
+	 */
+	static describeExits(roomName: string) {
+		const exits = Game.map.describeExits(roomName);
+		if (!exits) return exits;
+		const radius = Math.ceil(Game.map.getWorldSize() / 2) - 1;
+		const coord = this.getRoomCoordinates(roomName);
+		if (coord.x >= radius) {
+			const xDirToMoveDir = coord.xDir === "W" ? 7 : 3;
+			delete exits[xDirToMoveDir];
+		}
+		if (coord.y >= radius) {
+			const yDirToMoveDir = coord.xDir === "N" ? 1 : 5;
+			delete exits[yDirToMoveDir];
+		}
+		return exits;
+	}
 }
 
 // Register on global for debugging

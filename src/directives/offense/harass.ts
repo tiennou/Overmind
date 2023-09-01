@@ -1,3 +1,4 @@
+import { Cartographer } from 'utilities/Cartographer';
 import {log} from '../../console/log';
 import {RoomIntel} from '../../intel/RoomIntel';
 import {HarassOverlord} from '../../overlords/offense/harass';
@@ -73,14 +74,14 @@ export class DirectiveHarass extends Directive {
 		}
 		const whitelist = Memory.settings.allies;
 		const reservedByTargetPlayer: string[] = [];
-		const adjacentRooms = _.values<string>(Game.map.describeExits(roomName));
+		const adjacentRooms = _.values<string>(Cartographer.describeExits(roomName));
 		adjacentRooms.forEach(room => {
 			const reservation = RoomIntel.roomReservedBy(room);
 			console.log('Checking for harass in room ' + room);
 			if (reservation && this.memory.aggressive ? !whitelist.includes(reservation) : reservation == playerName) {
 				reservedByTargetPlayer.push(room);
 				// TODO This will double add rooms next to owned rooms, making it more likely to harass them, reconsider
-				(_.values<string>(Game.map.describeExits(room))).forEach(room => {
+				(_.values<string>(Cartographer.describeExits(room))).forEach(room => {
 					if (RoomIntel.roomReservedBy(room) == playerName) {
 						reservedByTargetPlayer.push(room);
 					}

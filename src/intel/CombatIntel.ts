@@ -193,7 +193,7 @@ export class CombatIntel {
 		const maxRoomDistance = 8;
 		const allowedExits: { [direction: string]: boolean } = {};
 		if (!bestExit) {
-			const exitData = Game.map.describeExits(this.room.name);
+			const exitData = Cartographer.describeExits(this.room.name);
 			for (const direction in exitData) {
 				const roomName = exitData[<'1' | '3' | '5' | '7'>direction] as string;
 				const allowedRooms = Pathing.findRoute(this.colony.name, roomName);
