@@ -1,3 +1,4 @@
+import { log } from 'console/log';
 import {Cartographer} from '../utilities/Cartographer';
 import {minBy, mod} from '../utilities/utils';
 
@@ -119,6 +120,26 @@ Object.defineProperty(RoomPosition.prototype, 'neighbors', {
 	},
 	configurable: true,
 });
+
+let lastSitePlacedFullTick: number | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const _createConstructionSite = RoomPosition.prototype.createConstructionSite;
+RoomPosition.prototype.createConstructionSite = function(this: RoomPosition, structureType: BuildableStructureConstant, name?: string) {
+	if (lastSitePlacedFullTick === Game.time) return ERR_FULL;
+	// @ts-expect-error function wrapping
+	const result = _createConstructionSite.call(this, structureType, name);
+	if (result === ERR_FULL) {
+		// For some reason, when you place a construction site, the last check they run to see if
+		// you're already at max placed sites searches through EVERY SINGLE GAME OBJECT you have
+		// access to, which is quite expensive! Don't try to make a bunch more of these or you'll
+		// murder your CPU.
+		if (lastSitePlacedFullTick !== Game.time) {
+			log.warning(`RoomPosition.createConstructionSite: ERR_FULL triggered, disabling construction for tick ${Game.time}`);
+		}
+		lastSitePlacedFullTick = Game.time;
+	}
+	return result;
+}
 
 RoomPosition.prototype.inRangeToPos = function(this: RoomPosition, pos: RoomPosition, range: number): boolean {
 	return this.roomName === pos.roomName &&

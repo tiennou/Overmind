@@ -1,3 +1,4 @@
+import { errorForCode } from 'utilities/errors';
 import {getCutTiles} from '../algorithms/minCut';
 import {Colony} from '../Colony';
 import {log} from '../console/log';
@@ -149,7 +150,7 @@ export class BarrierPlanner {
 			if (count > 0 && RoomPlanner.canBuild(STRUCTURE_RAMPART, pos) && this.barrierShouldBeHere(pos)) {
 				const ret = pos.createConstructionSite(STRUCTURE_RAMPART);
 				if (ret != OK) {
-					log.warning(`${this.colony.name}: couldn't create rampart site at ${pos.print}. Result: ${ret}`);
+					log.warning(`${this.colony.name}: couldn't create rampart site at ${pos.print}: ${errorForCode(ret)}`);
 				} else {
 					count--;
 				}

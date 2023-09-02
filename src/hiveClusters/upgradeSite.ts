@@ -8,6 +8,7 @@ import {profile} from '../profiler/decorator';
 import {Stats} from '../stats/stats';
 import {hasMinerals} from '../utilities/utils';
 import {HiveCluster} from './_HiveCluster';
+import { errorForCode } from 'utilities/errors';
 
 interface UpgradeSiteMemory {
 	stats: { downtime: number };
@@ -172,10 +173,8 @@ export class UpgradeSite extends HiveCluster {
 			const buildHere = this.batteryPos;
 			if (buildHere) {
 				const result = buildHere.createConstructionSite(STRUCTURE_CONTAINER);
-				if (result == OK) {
-					return;
-				} else {
-					log.warning(`Upgrade site at ${this.pos.print}: cannot build battery! Result: ${result}`);
+				if (result !== OK) {
+					log.warning(`${this.print}: cannot build battery at ${buildHere.print}: ${errorForCode(result)}`);
 				}
 			}
 		}

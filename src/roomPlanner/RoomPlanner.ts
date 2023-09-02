@@ -1,3 +1,4 @@
+import { errorForCode } from 'utilities/errors';
 import {Colony, getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {isOwnedStructure} from '../declarations/typeGuards';
@@ -741,12 +742,22 @@ export class RoomPlanner {
 			log.info(this.colony.name + ' does not have a room plan yet! Unable to build missing structures.');
 		}
 		// Build missing structures from room plan
+		stop:
 		for (const structureType of BuildPriorities) {
 			if (this.map[structureType]) {
 				for (const pos of this.map[structureType]) {
 					if ((structureType == STRUCTURE_SPAWN || count > 0) && RoomPlanner.canBuild(structureType, pos)) {
 						const result = pos.createConstructionSite(structureType);
-						if (result != OK) {
+						if (result === OK) {
+							count--;
+							this.memory.recheckStructuresAt = Game.time + RoomPlanner.settings.recheckAfter;
+							continue;
+						}
+						log.warning(`${this.colony.name}: couldn't create construction site of type ` +
+									`"${structureType}" at ${pos.print}: ${errorForCode(result)}`);
+						if (result === ERR_FULL || result === ERR_NOT_OWNER) {
+							break stop;
+						} else if (result === ERR_INVALID_TARGET) {
 							const structures = pos.lookFor(LOOK_STRUCTURES);
 							for (const structure of structures) {
 								// let thisImportance = _.findIndex(BuildPriorities, type => type == structureType);
@@ -758,28 +769,22 @@ export class RoomPlanner {
 									&& !safeTypes.includes(structure.structureType)) {
 									const result = this.destroyStructure(structure);
 									if (result == OK) {
-										log.info(`${this.colony.name}: destroyed ${structure.structureType} at` +
-												 ` ${structure.pos.print}`);
-										this.memory.recheckStructuresAt = Game.time +
-																		  RoomPlanner.settings.recheckAfter;
+										log.info(`${this.colony.name}: destroyed ${structure.structureType} at ${structure.pos.print}`);
+										this.memory.recheckStructuresAt =
+											Game.time + RoomPlanner.settings.recheckAfter;
 									} else {
 										log.warning(`${this.colony.name}: couldn't destroy ${structure.structureType}` +
-													` at ${structure.pos.print}! Result: ${result}`);
+													` at ${structure.pos.print}! Result: ${errorForCode(result)}`);
 									}
 								}
 							}
-							log.warning(`${this.colony.name}: couldn't create construction site of type ` +
-										`"${structureType}" at ${pos.print}. Result: ${result}`);
-						} else {
-							count--;
-							this.memory.recheckStructuresAt = Game.time + RoomPlanner.settings.recheckAfter;
 						}
 					}
 				}
 			}
 		}
 		// Build extractor on mineral deposit if not already present
-		const mineral = this.colony.room.find(FIND_MINERALS)[0];
+		const mineral = this.colony.room.mineral;
 		if (mineral) {
 			const extractor = mineral.pos.lookForStructure(STRUCTURE_EXTRACTOR);
 			if (!extractor) {

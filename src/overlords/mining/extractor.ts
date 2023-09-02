@@ -1,3 +1,4 @@
+import { errorForCode } from 'utilities/errors';
 import {$} from '../../caching/GlobalCache';
 import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
@@ -98,7 +99,7 @@ export class ExtractorOverlord extends Overlord {
 				log.info(`${this.print}: building container at ${containerPos.print}`);
 				const result = containerPos.createConstructionSite(STRUCTURE_CONTAINER);
 				if (result != OK) {
-					log.error(`${this.print}: cannot build container at ${containerPos.print}! Result: ${result}`);
+					log.error(`${this.print}: cannot build container at ${containerPos.print}: ${errorForCode(result)}`);
 				}
 				return;
 			}

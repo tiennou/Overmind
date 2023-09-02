@@ -200,6 +200,10 @@ interface RoomPosition {
 
 	toCoord(): Coord;
 
+	createConstructionSite(structureType: BuildableStructureConstant): ScreepsReturnCode;
+	// createConstructionSite(structureType: StructureSpawn, name?: string): ScreepsReturnCode;
+	_createConstructionSite(structureType: BuildableStructureConstant, name?: string): ScreepsReturnCode;
+
 	inRangeToPos(pos: RoomPosition, range: number): boolean;
 
 	inRangeToXY(x: number, y: number, range: number): boolean;

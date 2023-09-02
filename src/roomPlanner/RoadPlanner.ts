@@ -1,3 +1,4 @@
+import { errorForCode } from 'utilities/errors';
 import {$} from '../caching/GlobalCache';
 import {Colony, getAllColonies} from '../Colony';
 import {log} from '../console/log';
@@ -341,9 +342,10 @@ export class RoadPlanner {
 		const origin = (this.colony.storage || this.colony.hatchery || this.colony).pos;
 		roadPositions = _.sortBy(roadPositions, pos => pos.getMultiRoomRangeTo(origin));
 		let needsRoad = false;
+		const forbiddenRooms = new Set();
 		for (const pos of roadPositions) {
 			// Skip if we don't have visibility or we went through our quota
-			if (!pos.room) continue;
+			if (!pos.room || forbiddenRooms.has(pos.roomName)) continue;
 			if (count <= 0) break;
 			const road = pos.lookForStructure(STRUCTURE_ROAD)
 				|| pos.lookFor(LOOK_CONSTRUCTION_SITES).some(s => s.structureType === STRUCTURE_ROAD)
@@ -352,21 +354,13 @@ export class RoadPlanner {
 				const ret = pos.createConstructionSite(STRUCTURE_ROAD);
 				if (ret === OK) {
 					count--;
-				} else if (ret == ERR_NOT_OWNER) {
-					if (Game.time % 50 == 0) {
-						log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}; room ` +
-									`is reserved/owned by hostile forces!`);
-					}
+					continue;
+				}
+				log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}: (${errorForCode(ret)})`);
+				if (ret == ERR_NOT_OWNER) {
+					forbiddenRooms.add(pos.roomName);
 				} else if (ret == ERR_FULL) {
-					// For some reason, when you place a construction site, the last check they run to see if
-					// you're already at max placed sites searches through EVERY SINGLE GAME OBJECT you have
-					// access to, which is quite expensive! Don't try to make a bunch more of these or you'll
-					// murder your CPU.
-					log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}, too many ` +
-								`construction sites!`);
 					break;
-				} else {
-					log.warning(`${this.colony.print}: couldn't create road site at ${pos.print} (${ret})`);
 				}
 			}
 		}
