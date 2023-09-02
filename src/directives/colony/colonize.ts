@@ -8,6 +8,7 @@ import {Cartographer, ROOMTYPE_CONTROLLER} from '../../utilities/Cartographer';
 import {printRoomName} from '../../utilities/utils';
 import {MY_USERNAME} from '../../~settings';
 import {Directive} from '../Directive';
+import { DirectiveIncubate } from './incubate';
 
 
 /**
@@ -49,7 +50,12 @@ export class DirectiveColonize extends Directive {
 	}
 
 	init() {
-		this.alert(`Colonization in progress`);
+		const incubator = DirectiveIncubate.findInRoom(this.flag.pos.roomName).shift();
+		if (incubator && incubator.colony.spawnGroup) {
+			this.alert(`Colonization in progress, incubating from ${incubator.colony.spawnGroup.colonyNames}`);
+		} else {
+			this.alert(`Colonization in progress`);
+		}
 	}
 
 	run(verbose = false) {

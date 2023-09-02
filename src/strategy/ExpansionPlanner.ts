@@ -10,6 +10,7 @@ import {Cartographer} from '../utilities/Cartographer';
 import {maxBy} from '../utilities/utils';
 import {MAX_OWNED_ROOMS, SHARD3_MAX_OWNED_ROOMS} from '../~settings';
 import {MIN_EXPANSION_DISTANCE} from './ExpansionEvaluator';
+import { DirectiveIncubate } from 'directives/colony/incubate';
 
 
 const CHECK_EXPANSION_FREQUENCY = 1000;
@@ -57,19 +58,16 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		if (roomName) {
 			const pos = Pathing.findPathablePosition(roomName);
 			DirectiveColonize.createIfNotPresent(pos, 'room');
+			DirectiveIncubate.createIfNotPresent(pos, 'room');
+
 			log.notify(`Room ${roomName} selected as next colony! Creating colonization directive.`);
 		}
 	}
 
 	private chooseNextColonyRoom(): string | undefined {
 		// Generate a list of possible colonies to expand from based on level and whether they are already expanding
-		// let possibleIncubators: Colony[] = []; // TODO: support incubation
 		const possibleColonizers: Colony[] = [];
 		for (const colony of getAllColonies()) {
-			// if (colony.level >= DirectiveIncubate.requiredRCL
-			// 	&& _.filter(colony.flags, flag => DirectiveIncubate.filter(flag)).length == 0) {
-			// 	possibleIncubators.push(colony);
-			// }
 			if (colony.level >= DirectiveColonize.requiredRCL
 				&& _.filter(colony.flags, flag => DirectiveColonize.filter(flag)).length == 0) {
 				possibleColonizers.push(colony);

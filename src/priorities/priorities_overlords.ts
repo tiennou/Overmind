@@ -55,6 +55,9 @@ export const OverlordPriority = {
 		roomIncrement: 5, 			// remote room priorities are incremented by this for each outpost
 	},
 
+	/** Everything past this will be ignored when incubating another colony */
+	incubationThreshold: 550,
+
 	upgrading: {				// Spawning upgraders
 		upgrade: 550,
 	},

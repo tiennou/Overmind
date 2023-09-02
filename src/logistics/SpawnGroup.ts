@@ -36,10 +36,18 @@ const defaultSettings: SpawnGroupSettings = {
 };
 
 export interface SpawnGroupSettings {
-	maxPathDistance: number;	// maximum path distance colonies can spawn creeps to
-	requiredRCL: number;		// required RCL of colonies to contribute
-	maxLevelDifference: number; // max difference from the colony with highest RCL to be included in spawn group
-	// flexibleEnergy: boolean;	// whether to enforce that only the largest possible creeps are spawned
+	/** maximum path distance colonies can spawn creeps to */
+	maxPathDistance: number;
+	/** required RCL of colonies to contribute */
+	requiredRCL: number;
+	/** max difference from the colony with highest RCL to be included in spawn group */
+	maxLevelDifference: number;
+	/** whether to enforce that only the largest possible creeps are spawned */
+	// flexibleEnergy: boolean;
+	/** maximum priority the spawn group will allow to spawn */
+	spawnPriorityThreshold?: number;
+	/** spawn priority boost applied to spawn requests */
+	spawnPriorityBoost?: number;
 }
 
 export interface SpawnGroupInitializer {
@@ -148,6 +156,12 @@ export class SpawnGroup {
 	}
 
 	enqueue(request: SpawnRequest): void {
+		const threshold = this.settings.spawnPriorityThreshold;
+		if (threshold !== undefined && request.priority > threshold) return;
+		const boost = this.settings.spawnPriorityBoost;
+		if (boost !== undefined) {
+			request.priority += boost;
+		}
 		this.requests.push(request);
 	}
 
