@@ -482,7 +482,7 @@ export class MiningOverlord extends Overlord {
 			this.debug(`${miner.print} overfilled, dropping into ${this.link.print}`);
 			miner.goTransfer(this.link, RESOURCE_ENERGY);
 			return true;
-		} else if (this.container) {
+		} else if (this.container && this.container.store.getFreeCapacity(RESOURCE_ENERGY) !== 0) {
 			this.debug(`${miner.print} overfilled, dropping into ${this.container.print}`);
 			miner.goTransfer(this.container);
 			return true;
