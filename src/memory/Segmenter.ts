@@ -165,3 +165,5 @@ static getForeignSegmentProperty<T extends Segment>(key: keyof T): T[typeof key]
 	}
 
 }
+
+global.Segmenter = Segmenter;

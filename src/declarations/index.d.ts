@@ -40,6 +40,8 @@ declare var Overmind: IOvermind;
 declare var Memory: Memory;
 declare var Assimilator: IAssimilator;
 
+declare var Segmenter: import('memory/Segmenter').Segmenter;
+
 declare var TerminalNetwork: import('logistics/TerminalNetwork_v2').TerminalNetworkV2;
 declare var TradeNetwork: import('logistics/TradeNetwork').TraderJoe;
 
@@ -57,6 +59,7 @@ declare var PackratTests: import('utilities/packrat').PackratTests;
 
 declare var CombatCreepSetup: typeof import('creepSetups/CombatCreepSetup').CombatCreepSetup;
 declare var DefaultCombatCreepSetups: {[type: string]: any }; // import('creepSetups/CombatCreepSetup').CombatCreepSetup }
+declare var Tasks: typeof import('tasks/Tasks').Tasks;
 
 type Full<T> = {
 	[P in keyof T]-?: T[P];

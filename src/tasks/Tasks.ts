@@ -167,3 +167,5 @@ export class Tasks {
 	}
 
 }
+
+global.Tasks = Tasks;
