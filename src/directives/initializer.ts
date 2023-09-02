@@ -34,6 +34,7 @@ import {DirectiveModularDismantle} from './targeting/modularDismantle';
 import {DirectiveTargetSiege} from './targeting/siegeTarget';
 import {DirectiveTerminalEvacuateState} from './terminalState/terminalState_evacuate';
 import {DirectiveTerminalRebuildState} from './terminalState/terminalState_rebuild';
+import { DirectiveAvoid } from './targeting/avoid';
 
 /**
  * This is the initializer for directives, which maps flags by their color code to the corresponding directive
@@ -141,6 +142,8 @@ export function DirectiveWrapper(flag: Flag): Directive | undefined {
 					return new DirectiveDismantle(flag);
 				case COLOR_CYAN:
 					return new DirectiveModularDismantle(flag);
+				case COLOR_GREY:
+					return new DirectiveAvoid(flag);
 			}
 			break;
 

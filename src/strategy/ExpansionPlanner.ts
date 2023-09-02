@@ -1,4 +1,5 @@
 import {assimilationLocked} from '../assimilation/decorator';
+import { DirectiveAvoid } from 'directives/targeting/avoid';
 import {Colony, getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {DirectiveColonize} from '../directives/colony/colonize';
@@ -94,7 +95,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		for (const roomName in colony.memory.expansionData.possibleExpansions) {
 			let score = colony.memory.expansionData.possibleExpansions[roomName];
 			if (typeof score != 'number') continue;
-			const isBlocked = Game.flags[roomName + '-Block'] != null; // TODO: this is ugly
+			const isBlocked = DirectiveAvoid.isPresent(roomName);
 			if (isBlocked) {
 				continue;
 			}

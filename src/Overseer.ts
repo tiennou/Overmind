@@ -1,3 +1,4 @@
+import { DirectiveAvoid } from 'directives/targeting/avoid';
 import {Colony, ColonyStage, getAllColonies, OutpostDisableReason} from './Colony';
 import {log} from './console/log';
 import {bodyCost} from './creepSetups/CreepSetup';
@@ -383,9 +384,9 @@ export class Overseer implements IOverseer {
 			}
 			const alreadyOwned = RoomIntel.roomOwnedBy(roomName);
 			const alreadyReserved = RoomIntel.roomReservedBy(roomName);
-			const isBlocked = Game.flags[roomName + '-Block'] != null; // TODO: this is ugly
+			const isBlocked = DirectiveAvoid.isPresent(roomName);
 			if (isBlocked) {
-				// Game.notify("Room " + roomName + " is blocked, not expanding there.");
+				log.info(`Room ${roomName} is blocked, not expanding there.`);
 			}
 			if (alreadyOwned || alreadyReserved || isBlocked) {
 				return false;
