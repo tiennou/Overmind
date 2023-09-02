@@ -6,10 +6,9 @@ import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
-import { log } from 'console/log';
 import { Cartographer } from 'utilities/Cartographer';
 
-const DEFAULT_NUM_SCOUTS = 3;
+const DEFAULT_NUM_SCOUTS = 2;
 
 /**
  * Sends out scouts which randomly traverse rooms to uncover possible expansion locations and gather intel
@@ -39,6 +38,7 @@ export class RandomWalkerScoutOverlord extends Overlord {
 		const moveOptions: MoveOptions = {
 			pathOpts: {
 				allowHostile: true,
+				allowPortals: true,
 			},
 		};
 
@@ -53,28 +53,32 @@ export class RandomWalkerScoutOverlord extends Overlord {
 
 		const roomStatus = RoomIntel.getRoomStatus(scout.room.name);
 
+		// Check all the room's exits + portals
 		let neighboringRooms = _.values<string>(Cartographer.describeExits(scout.pos.roomName));
-		neighboringRooms = _.shuffle(neighboringRooms);
+		neighboringRooms = neighboringRooms.filter(room => RoomIntel.getRoomStatus(room).status === roomStatus.status);
 
-		// Pick a new random room from the neighboring rooms, making sure they have compatible room status
+		const intrashardPortals = scout.room.portals.filter(portal => portal.destination instanceof RoomPosition);
+		neighboringRooms = neighboringRooms.concat(intrashardPortals.map(portal => (<RoomPosition>portal.destination).roomName));
+		neighboringRooms = neighboringRooms.filter(room => !RoomIntel.isConsideredHostile(room));
+
+		// Sort by last visible tick so we prioritize going to places that need to be refreshed
+		neighboringRooms = neighboringRooms.sort((a, b) => RoomIntel.lastVisible(a) - RoomIntel.lastVisible(b));
+
+		this.debug(`${scout.print}: available rooms: ${neighboringRooms}`);
+
 		let neighboringRoom: string | undefined;
 		while ((neighboringRoom = neighboringRooms.shift())) {
+			// Filter out any rooms we might have sent another scout to
+			if (this.scouts.some(scout => scout.task?.targetPos.roomName === neighboringRoom)) continue;
 
-			const neighborStatus = RoomIntel.getRoomStatus(scout.room.name);
-			if (roomStatus.status !== neighborStatus.status) {
-				this.debug(`${scout.print} room ${neighboringRoom} status doesn't match ${scout.room.name}: ${roomStatus} ${neighborStatus.status}`);
-				continue;
-			}
-
-			log.info(`${scout.print} moving to ${neighboringRoom}`)
+			this.debug(`${scout.print}: moving to ${neighboringRoom}`)
 			scout.task = Tasks.goToRoom(neighboringRoom, { moveOptions });
 			break;
 		}
 
 		// Just move back to the colony and start over
 		if (!scout.task) {
-			this.debug(`${scout.print} no task`);
-			log.info(`${scout.print} moving back to ${this.colony.print}`)
+			this.debug(`${scout.print}: no task, moving back to ${this.colony.print}`);
 			scout.task = Tasks.goToRoom(this.colony.room.name, { moveOptions });
 		}
 	}
