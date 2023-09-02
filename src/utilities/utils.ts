@@ -44,6 +44,21 @@ export function rgbToHex(r: number, g: number, b: number): string {
 	return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
+export function interpolateColor(c0: string, c1: string, f: number) {
+	const s0 = c0.match(/#?([0-9A-F]{1,2})([0-9A-F]{1,2})([0-9A-F]{1,2})/);
+	const s1 = c1.match(/#?([0-9A-F]{1,2})([0-9A-F]{1,2})([0-9A-F]{1,2})/);
+	if (!s0) throw new TypeError(`invalid value for c0: ${c0}`);
+	if (!s1) throw new TypeError(`invalid value for c1: ${c1}`);
+	if (typeof f !== "number" || f < 0 || f > 1) throw new TypeError(`f must be a number between 0.0 and 1.0`);
+
+	const n0 = s0.map((oct) => parseInt(oct, 16) * (1 - f));
+	const n1 = s1.map((oct) => parseInt(oct, 16) * f);
+
+	const ci = [1,2,3].map(i => Math.min(Math.round(n0[i] + n1[i]), 255));
+	// eslint-disable-next-line no-bitwise
+	return "#" + ci.reduce((a,v) => ((a << 8) + v), 0).toString(16).padStart(6, "0");
+}
+
 /**
  * Correct generalization of the modulo operator to negative numbers
  */

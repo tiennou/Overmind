@@ -13,7 +13,7 @@ import {
 	unpackCoordListAsPosList,
 	unpackPos
 } from '../utilities/packrat';
-import {ema, getCacheExpiration, isAlly, minMax} from '../utilities/utils';
+import {ema, getCacheExpiration, interpolateColor, isAlly, minMax} from '../utilities/utils';
 import {CombatIntel} from './CombatIntel';
 import {Visualizer} from '../visuals/Visualizer';
 
@@ -969,20 +969,53 @@ export class RoomIntel {
 
 	}
 
+	static limitedRoomVisual: Set<string> | undefined;
+
 	static visuals(): void {
 		const until = Memory.settings.intelVisualsUntil;
 		if (!Visualizer.enabled || until === undefined || Game.time > until) {
+			this.limitedRoomVisual = undefined;
 			return;
 		}
-		for (const name in Memory.rooms) {
+
+		if (!this.limitedRoomVisual) {
+			this.limitedRoomVisual = new Set();
+			for (const colony of Object.values(Overmind.colonies)) {
+				const rooms = Cartographer.findRoomsInRange(colony.room.name, 10);
+				for (const name of rooms) {
+					this.limitedRoomVisual?.add(name);
+				}
+			}
+		}
+
+		for (const [name, _name] of this.limitedRoomVisual.entries()) {
+			if (!Memory.rooms[name]) continue;
+
 			const exp = RoomIntel.getExpansionData(name);
 			const data = [];
 
+			const sec = RoomIntel.getSafetyData(name);
+			const threatColor = interpolateColor("#00FF00", "#FF0000", sec.threatLevel);
+			Game.map.visual.rect(new RoomPosition(2, 2, name), 4, 4, { fill: threatColor, stroke: "#FFFFFF", opacity: 1 });
+
+			if (name in Game.rooms) {
+				Game.map.visual.circle(new RoomPosition(4 + 4 + 2, 4, name), { radius: 2, fill: "#00CCCC", stroke: "#000000" });
+			}
+
+			const expPos = new RoomPosition(45, 5, name);
+			const expSize = 10;
 			if (exp === undefined) {
+				Game.map.visual.text("?", expPos, { fontSize: expSize, color: "#AAAAAA" });
+
 				data.push(["Status", "Unexplored"]);
 			} else if (exp === false) {
+				Game.map.visual.text("X", expPos, { fontSize: expSize, color: "#FF0000" });
+
 				data.push(["Status", "Uninhabitable"]);
 			} else {
+				Game.map.visual.text("🏠", expPos, { fontSize: expSize });
+				Game.map.visual.text(exp.score.toFixed(0), new RoomPosition(48, 14, name), { fontSize: 4, color: "#00FF00", align: "right" });
+
 				data.push(["Score", exp.score.toFixed(0)]);
 				data.push(["Anchor", `${exp.bunkerAnchor.x}, ${exp.bunkerAnchor.y}`]);
 				data.push(["Outposts:"]);
