@@ -463,7 +463,10 @@ export class RoomIntel {
 		}
 	}
 
-	private static recomputeScoreIfNecessary(room: Room): boolean {
+	private static recomputeScoreIfNecessary(room: Room, force = false): boolean {
+		if (force) {
+			return ExpansionEvaluator.computeExpansionData(room, true);
+		}
 		if (room.memory[RMEM.EXPANSION_DATA] === 0) { // room is uninhabitable or owned
 			if (Math.random() < FALSE_SCORE_RECALC_PROB) {
 				// false scores get evaluated very occasionally
