@@ -108,7 +108,7 @@ export abstract class Overlord {
 		this._zerg = {};
 		this._combatZerg = {};
 		this.recalculateCreeps();
-		this.creepUsageReport = _.mapValues(this._creeps, creep => undefined);
+		this.creepUsageReport = _.mapValues(this._creeps, () => undefined);
 
 		// Register the overlord on the colony overseer and on the overmind
 		Overmind.overlords[this.ref] = this;
