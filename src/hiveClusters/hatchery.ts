@@ -413,7 +413,7 @@ export class Hatchery extends HiveCluster {
 				// Generate a protocreep from the request
 				const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
 				const preLog = `request ${this.logRequest(request)}, needed ${bodyCost(protoCreep.body)}, `
-					+ `stored: ${this.room.energyCapacityAvailable}`;
+					+ `stored: ${this.room.energyAvailable}, total: ${this.room.energyCapacityAvailable}`;
 				// Try to spawn the creep
 				const result = this.spawnCreep(protoCreep, request.options);
 				if (result == OK) {
@@ -448,11 +448,22 @@ export class Hatchery extends HiveCluster {
 		// Handle spawning
 		if (!this.settings.suppressSpawning) {
 
-			if (true || this.spawns.some(s => !s.spawning)) {
-				const requests = this.spawnRequests;
-				if (requests.length) {
-					this.debug(() => `queued: ${requests.map(request => this.logRequest(request)).join(', ')}`);
-				}
+			const spawningSpawns = this.spawns.filter(s => s.spawning);
+			let requests = this.spawnRequests;
+			if ((spawningSpawns.length || requests.length) && Game.time % 5 === 0) {
+				this.debug(() => {
+					let msg = "";
+					// Slice out the in-progress requests so they don't show up twice
+					requests = requests.slice(spawningSpawns.length);
+					if (spawningSpawns.length) {
+						msg += `spawning: ${spawningSpawns.map(s => `${Memory.creeps[s.spawning!.name].role} in ${s.spawning!.remainingTime} ticks`).join(', ')}`;
+					}
+					if (spawningSpawns.length && requests.length) msg += ", ";
+					if (requests.length) {
+						msg += `queued: ${requests.map(request => this.logRequest(request)).join(', ')}`
+					}
+					return msg;
+				});
 			}
 
 			// Spawn all queued creeps that you can
