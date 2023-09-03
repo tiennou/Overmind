@@ -88,6 +88,7 @@ export interface ColonyMemory {
 	barrierPlanner?: {
 		barrierCoordsPacked: string;
 	};
+	sporeCrawler?: {};
 	hatchery?: HatcheryMemory;
 	commandCenter?: CommandCenterMemory;
 	upgradeSite?: any;

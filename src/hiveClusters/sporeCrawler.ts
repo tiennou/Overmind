@@ -7,6 +7,7 @@ import {WorkerOverlord} from '../overlords/core/worker';
 import {profile} from '../profiler/decorator';
 import {CombatTargeting} from '../targeting/CombatTargeting';
 import {HiveCluster} from './_HiveCluster';
+import { Mem } from 'memory/Memory';
 
 
 /**
@@ -25,11 +26,13 @@ export class SporeCrawler extends HiveCluster {
 
 	constructor(colony: Colony, tower: StructureTower) {
 		super(colony, tower, 'sporeCrawler');
+		this.memory = Mem.wrap(this.colony.memory, 'sporeCrawler');
 		// Register structure components
 		this.towers = this.colony.towers;
 	}
 
 	refresh() {
+		this.memory = Mem.wrap(this.colony.memory, 'sporeCrawler');
 		$.refreshRoom(this);
 		$.refresh(this, 'towers');
 	}
