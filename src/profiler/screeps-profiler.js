@@ -275,8 +275,8 @@ const Profiler = {
         }
 
         const endTick = Math.min(Memory.screepsProfiler.disableTick || Game.time, Game.time);
-        const startTick = Memory.screepsProfiler.enabledTick + 1;
-        const elapsedTicks = endTick - startTick;
+        const startTick = Memory.screepsProfiler.enabledTick;
+        const elapsedTicks = endTick - startTick + 1;
         const header = 'calls\t\ttime\t\tavg\t\tfunction';
         const footer = [
             `Ticks: ${elapsedTicks}`,
