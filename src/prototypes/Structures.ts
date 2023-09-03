@@ -158,8 +158,9 @@ StructureTerminal.prototype.send = function(resourceType: ResourceConstant, amou
 	const response = _terminalSend.call(this, resourceType, amount, destination, description);
 	if (response == OK) {
 		this._notReady = true;
-		if (Game.rooms[destination] && Game.rooms[destination].terminal) {
-			(<any>Game.rooms[destination].terminal!)._hasReceived = true;
+		const receiver = Game.rooms[destination] && Game.rooms[destination].terminal;
+		if (receiver) {
+			receiver._hasReceived = true;
 		}
 	}
 	return response;
