@@ -57,6 +57,7 @@ declare var MatrixLib: import('matrix/MatrixLib').MatrixLib;
 
 declare var PackratTests: import('utilities/packrat').PackratTests;
 
+declare var Setups: typeof import('creepSetups/setups').Setups;
 declare var CombatCreepSetup: typeof import('creepSetups/CombatCreepSetup').CombatCreepSetup;
 declare var DefaultCombatCreepSetups: {[type: string]: any }; // import('creepSetups/CombatCreepSetup').CombatCreepSetup }
 declare var Tasks: typeof import('tasks/Tasks').Tasks;

@@ -567,3 +567,5 @@ export const CombatSetups = {
 	}
 
 };
+
+global.Setups = Setups;
