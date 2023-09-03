@@ -1,5 +1,5 @@
 import {$} from '../../caching/GlobalCache';
-import {Colony, ColonyStage, DEFCON} from '../../Colony';
+import {Colony, DEFCON} from '../../Colony';
 import {CreepSetup} from '../../creepSetups/CreepSetup';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {DirectiveNukeResponse} from '../../directives/situational/nukeResponse';
@@ -174,7 +174,7 @@ export class WorkerOverlord extends Overlord {
 		let setup = this.colony.level == 1 ? Setups.workers.early : Setups.workers.default;
 		const workPartsPerWorker = setup.getBodyPotential(WORK, this.colony);
 		let numWorkers: number;
-		if (this.colony.stage == ColonyStage.Larva) {
+		if (!this.colony.storage) {
 			numWorkers = $.number(this, 'numWorkers', () => {
 				// At lower levels, try to saturate the energy throughput of the colony
 				const MAX_WORKERS = 10; // Maximum number of workers to spawn
@@ -442,7 +442,7 @@ export class WorkerOverlord extends Overlord {
 			// Acquire more energy
 			let workerWithdrawLimit = 100;
 			// The minimum is intentionally raised on low-level colonies to keep the hatchery from being starved
-			if (this.colony.stage == ColonyStage.Larva &&
+			if (this.colony.storage &&
 				this.colony.hatchery?.getWaitTimeForPriority(OverlordPriority.throttleThreshold) !== 0) {
 				workerWithdrawLimit = 750;
 			}

@@ -37,12 +37,6 @@ import {Zerg} from './zerg/Zerg';
 import { CombatCreepSetup } from 'creepSetups/CombatCreepSetup';
 import { CreepSetup } from 'creepSetups/CreepSetup';
 
-export enum ColonyStage {
-	Larva = 0,		// No storage and no incubator
-	Pupa  = 1,		// Has storage but RCL < 8
-	Adult = 2,		// RCL 8 room
-}
-
 export enum DEFCON {
 	safe               = 0,
 	invasionNPC        = 1,
@@ -208,8 +202,6 @@ export class Colony {
 	// Operational state
 	/** Level of the colony's main room */
 	level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-	/** The stage of the colony "lifecycle" */
-	stage: ColonyStage;
 	/** The military alert state of the colony */
 	defcon: DEFCON;
 	/** Various flags tracking the colony's state */
@@ -470,16 +462,6 @@ export class Colony {
 	 */
 	private registerOperationalState(): void {
 		this.level = this.controller.level as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-		// Set colony stage
-		if (this.storage && this.spawns[0]) { // TODO: remove colony stage
-			if (this.controller.level == 8) {
-				this.stage = ColonyStage.Adult;
-			} else {
-				this.stage = ColonyStage.Pupa;
-			}
-		} else {
-			this.stage = ColonyStage.Larva;
-		}
 		// Set DEFCON level TODO: finish this
 		let defcon = DEFCON.safe;
 		const defconDecayTime = 200;

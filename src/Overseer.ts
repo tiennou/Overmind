@@ -1,5 +1,5 @@
 import { DirectiveAvoid } from 'directives/targeting/avoid';
-import {Colony, ColonyStage, getAllColonies, OutpostDisableReason} from './Colony';
+import {Colony, getAllColonies, OutpostDisableReason} from './Colony';
 import {log} from './console/log';
 import {bodyCost} from './creepSetups/CreepSetup';
 import {Roles} from './creepSetups/setups';
@@ -536,37 +536,37 @@ export class Overseer implements IOverseer {
 	// Safe mode condition =============================================================================================
 
 	private handleSafeMode(colony: Colony): void {
-		if (colony.stage == ColonyStage.Larva && onPublicServer()) {
-			return;
-		}
-		// Safe mode activates when there are dangerous player hostiles that can reach the spawn
+		const hostiles = colony.room.dangerousPlayerHostiles;
+		if (!hostiles.length || colony.controller.safeMode) return;
+
+		// Safe mode activates when:
+		// - any critical structure has less than 50% hitpoints and there are hostile creeps close by
+		// - hostile creeps can path to the spawn
+		let activateSafeMode = false;
 		const criticalStructures = _.compact([...colony.spawns,
 											  colony.storage,
 											  colony.terminal]) as Structure[];
-		for (const structure of criticalStructures) {
-			if (structure.hits < structure.hitsMax &&
-				structure.pos.findInRange(colony.room.dangerousPlayerHostiles, 2).length > 0) {
-				const ret = colony.controller.activateSafeMode();
-				if (ret != OK && !colony.controller.safeMode) {
-					if (colony.terminal) {
-						DirectiveTerminalEvacuateState.createIfNotPresent(colony.terminal.pos, 'room');
-					}
-				} else {
-					return;
-				}
+
+		const hasEndangeredStructures = criticalStructures.some(s => {
+			return s.hits < s.hitsMax / 2 && s.pos.findInRange(hostiles, 2).length > 0;
+		});
+
+		if (hasEndangeredStructures) {
+			activateSafeMode = true;
+		} else {
+			const spawn = colony.spawns[0];
+			const closestHostileToSpawn = spawn && spawn.pos.findClosestByRange(colony.room.dangerousPlayerHostiles);
+			const barriers = colony.room.barriers.map(b => b.pos);
+			if (closestHostileToSpawn && Pathing.isReachable(closestHostileToSpawn.pos, spawn.pos, barriers)) {
+				activateSafeMode = true;
 			}
 		}
-		const firstHostile = _.first(colony.room.dangerousPlayerHostiles);
-		if (firstHostile && colony.spawns[0]) {
-			const barriers = _.map(colony.room.barriers, barrier => barrier.pos);
-			if (Pathing.isReachable(firstHostile.pos, colony.spawns[0].pos, barriers)) {
-				const ret = colony.controller.activateSafeMode();
-				if (ret != OK && !colony.controller.safeMode) {
-					if (colony.terminal) {
-						DirectiveTerminalEvacuateState.createIfNotPresent(colony.terminal.pos, 'room');
-					}
-				} else {
-					return;
+
+		if (activateSafeMode) {
+			const ret = colony.controller.activateSafeMode();
+			if (ret != OK && !colony.controller.safeMode) {
+				if (colony.terminal) {
+					DirectiveTerminalEvacuateState.createIfNotPresent(colony.terminal.pos, 'room');
 				}
 			}
 		}

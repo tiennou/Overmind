@@ -1,6 +1,5 @@
 import { errorForCode } from 'utilities/errors';
 import {$} from '../../caching/GlobalCache';
-import {ColonyStage} from '../../Colony';
 import {log} from '../../console/log';
 import {bodyCost, CreepSetup} from '../../creepSetups/CreepSetup';
 import {Roles, Setups} from '../../creepSetups/setups';
@@ -323,7 +322,7 @@ export class MiningOverlord extends Overlord {
 	private registerEnergyRequests(): void {
 		if (this.container) {
 			const transportCapacity = 200 * this.colony.level;
-			const threshold = this.colony.stage > ColonyStage.Larva ? 0.8 : 0.5;
+			const threshold = this.colony.storage ? 0.8 : 0.5;
 			if (this.container.store.getUsedCapacity() > threshold * transportCapacity) {
 				this.colony.logisticsNetwork.requestOutput(this.container, {
 					resourceType: 'all',

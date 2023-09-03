@@ -1,6 +1,6 @@
 import { ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH, ERR_SPECIFIED_SPAWN_BUSY } from 'utilities/errors';
 import {$} from '../caching/GlobalCache';
-import {Colony, ColonyStage} from '../Colony';
+import {Colony} from '../Colony';
 import {log} from '../console/log';
 import {CombatCreepSetup} from '../creepSetups/CombatCreepSetup';
 import {bodyCost, CreepSetup} from '../creepSetups/CreepSetup';
@@ -236,7 +236,7 @@ export class Hatchery extends HiveCluster {
 			this.colony.linkNetwork.requestReceive(this.link);
 		}
 		if (this.battery) {
-			const threshold = this.colony.stage == ColonyStage.Larva ? 0.75 : 0.5;
+			const threshold = this.colony.storage ? 0.5 : 0.75;
 			if (this.battery.store.getUsedCapacity() < threshold * this.battery.store.getCapacity()) {
 				this.colony.logisticsNetwork.requestInput(this.battery, {multiplier: 1.5});
 			}

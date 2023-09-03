@@ -1,6 +1,6 @@
 import { Visualizer } from 'visuals/Visualizer';
 import {$} from '../caching/GlobalCache';
-import {Colony, ColonyStage} from '../Colony';
+import {Colony} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
 import {UpgradingOverlord} from '../overlords/core/upgrader';
@@ -123,7 +123,7 @@ export class UpgradeSite extends HiveCluster {
 		if (this.link && this.link.store[RESOURCE_ENERGY] < UpgradeSite.settings.linksRequestBelow) {
 			this.colony.linkNetwork.requestReceive(this.link);
 		}
-		const inThreshold = this.colony.stage > ColonyStage.Larva ? 0.5 : 0.75;
+		const inThreshold = this.colony.storage ? 0.5 : 0.75;
 		if (this.battery) {
 			if (this.battery.energy < inThreshold * this.battery.store.getCapacity()) {
 				const energyPerTick = UPGRADE_CONTROLLER_POWER * this.upgradePowerNeeded;
