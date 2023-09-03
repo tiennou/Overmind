@@ -50,10 +50,20 @@ export class UpgradingOverlord extends Overlord {
 			this.debug(`no upgraders needed`);
 		}
 
-		if (upgradersNeeded > 0) {
-			this.debug(`need ${upgradersNeeded} ${setup} upgraders`);
+		// Ask for one upgraded at normal priority, and the rest more lazily
+		this.debug(`need ${upgradersNeeded} ${setup} upgraders total`);
+
+		const creepSetup = _.get<CreepSetup>(Setups.upgraders, setup);
+		const speedFactor = this.upgradeSite.memory.speedFactor ?? 1;
+		if (this.upgraders.length < speedFactor && upgradersNeeded > 0) {
+			this.debug(`wishlisting ${Math.min(speedFactor, upgradersNeeded)} quickly!`);
+			this.wishlist(Math.min(speedFactor, upgradersNeeded), creepSetup);
+		} else if (upgradersNeeded > 0) {
+			this.debug(`wishlisting ${upgradersNeeded} later`);
+			this.wishlist(upgradersNeeded, creepSetup, {
+				priority: OverlordPriority.upgrading.additional
+			});
 		}
-		this.wishlist(upgradersNeeded, _.get(Setups.upgraders, setup));
 	}
 
 	private handleUpgrader(upgrader: Zerg): void {

@@ -64,7 +64,8 @@ export const OverlordPriority = {
 
 	/** Spawning upgraders */
 	upgrading: {
-		upgrade: 560,
+		upgrade: 506,
+		additional: 560,
 	},
 
 	throttleThreshold: 599,  	// Everything past this may be throttled in the event of low CPU
