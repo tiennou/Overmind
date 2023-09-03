@@ -191,7 +191,7 @@ export class Pathing {
 			const path1ret = PathFinder.search(origin, portalGoals, pfOptions);
 			// if the path is incomplete then we'll let it get handled at the end of this method
 			if (!path1ret.incomplete) {
-				const lastPosInPath = _.last(path1ret.path);
+				const lastPosInPath = _.last(path1ret.path) ?? origin;
 				const usedPortal = _.find(portals, portal => portal.pos.isEqualTo(lastPosInPath));
 				if (usedPortal) {
 					portalUsed = usedPortal;
