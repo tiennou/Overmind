@@ -250,6 +250,11 @@ export class OvermindConsole {
 		description: 'show all available resources across colonies',
 		command: OvermindConsole.showAssets.bind(OvermindConsole),
 	},
+	{
+		name: 'toggleRoomActive(roomName, state?)',
+		description: 'activate or deactivate a given room',
+		command: OvermindConsole.toggleRoomActive.bind(OvermindConsole),
+	}
 ];
 
 	static init() {
@@ -1063,5 +1068,20 @@ export class OvermindConsole {
 		const msg = 'Reporting all assets:\n' + columnify(data);
 		console.log(msg);
 		return data;
+	}
+
+	static toggleRoomActive(roomName: string, state?: boolean) {
+		const colonyName = Overmind.colonyMap[roomName];
+		if (!colonyName) {
+			log.error(`${roomName} is not a known outpost`);
+			return;
+		}
+
+		const colony = Overmind.colonies[colonyName];
+		if (state === undefined) {
+			state = !colony.memory.outposts[roomName].active;
+		}
+		colony.memory.outposts[roomName].active = state;
+		console.log(`Toggled room ${roomName} of colony ${colony.name} ${state ? "online" : "offline"}`);
 	}
 }

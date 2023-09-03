@@ -267,6 +267,9 @@ export class GatheringOverlord extends Overlord {
 		}
 	}
 
+	get isActive() {
+		return super.isActive && !this.isDisabled;
+	}
 
 	init() {
 		this.wishlist(this.minersNeeded, this.setup);

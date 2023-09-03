@@ -218,7 +218,7 @@ export class Overseer implements IOverseer {
 
 		// Initialize overlords
 		for (const overlord of this.overlords) {
-			if (!overlord.isSuspended) {
+			if (!overlord.isSuspended && overlord.isActive) {
 				if (overlord.profilingActive) {
 					const start = Game.cpu.getUsed();
 					overlord.preInit();
@@ -579,7 +579,7 @@ export class Overseer implements IOverseer {
 			directive.run();
 		}
 		for (const overlord of this.overlords) {
-			if (!overlord.isSuspended) {
+			if (!overlord.isSuspended && overlord.isActive) {
 				if (overlord.profilingActive) {
 					const start = Game.cpu.getUsed();
 					this.try(() => overlord.run());

@@ -163,6 +163,14 @@ export abstract class Overlord {
 	}
 
 	/**
+	 * Returns whether the overlord is currently active
+	 */
+	get isActive() {
+		// Only consider room active state if the room we're in is part of a colony
+		return !this.colony.memory.outposts[this.pos.roomName] || this.colony.isRoomActive(this.pos.roomName);
+	}
+
+	/**
 	 * Returns whether the overlord is currently suspended
 	 */
 	get isSuspended(): boolean {
