@@ -28,8 +28,8 @@ export class DirectivePoisonRoom extends Directive {
 		roomPoisoner: RoomPoisonerOverlord;
 	};
 
-	static settings: {
-		runFrequency: 12;
+	static settings = {
+		runFrequency: 12,
 	};
 
 	constructor(flag: Flag) {
