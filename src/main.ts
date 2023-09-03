@@ -48,6 +48,9 @@ import {ActionParser} from './reinforcementLearning/actionParser';
 
 // Main loop
 function main(): void {
+	// Bump the stack trace limit so we see more of it
+	Error.stackTraceLimit = 20;
+
 	// Memory operations: load and clean memory, suspend operation as needed -------------------------------------------
 	Mem.load();									// Load previous parsed memory if present
 	if (!Mem.shouldRun()) return;				// Suspend operation if necessary
