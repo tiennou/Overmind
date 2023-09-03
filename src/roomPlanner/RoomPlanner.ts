@@ -18,6 +18,7 @@ import {bunkerLayout} from './layouts/bunker';
 import {commandCenterLayout} from './layouts/commandCenter';
 import {hatcheryLayout} from './layouts/hatchery';
 import {RoadPlanner} from './RoadPlanner';
+import { NotifierPriority } from 'directives/Notifier';
 
 export interface BuildingPlannerOutput {
 	name?: string;
@@ -917,6 +918,9 @@ export class RoomPlanner {
 	}
 
 	run(): void {
+		if (this.memory.relocating) {
+			Overmind.overseer.notifier.alert(`Colony ${this.colony.name} relocating!`, this.colony.room.name, NotifierPriority.High);
+		}
 		if (this.active || this.visualize) {
 			this.make();
 			this.visuals();
