@@ -12,7 +12,7 @@
  * If you use Travler, change all occurrences of creep.moveTo() to creep.goTo()
  */
 
-import {MoveOptions} from 'movement/Movement';
+import {MoveOptions, ZergMoveReturnCode} from 'movement/Movement';
 import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
 import {Zerg} from '../zerg/Zerg';
@@ -287,7 +287,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Move to within range of the target
 	 */
-	moveToTarget(range = this.settings.targetRange): number {
+	moveToTarget(range = this.settings.targetRange) {
 		const moveOpts: MoveOptions = _.defaultsDeep(this.options.moveOptions, { range: range });
 		return this.creep.goTo(this.targetPos, moveOpts);
 	}
@@ -295,11 +295,12 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Moves to the next position on the agenda if specified - call this in some tasks after work() is completed
 	 */
-	moveToNextPos(): number | undefined {
+	moveToNextPos() {
 		if (this.options.nextPos) {
 			const nextPos = derefRoomPosition(this.options.nextPos);
 			return this.creep.goTo(nextPos);
 		}
+		return ERR_NO_PATH;
 	}
 
 	/**
@@ -314,7 +315,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Execute this task each tick. Returns nothing unless work is done.
 	 */
-	run(): number | undefined {
+	run() {
 		if (this.isWorking) {
 			delete this.creep.memory._go;
 			// if (this.settings.workOffRoad) { // this is disabled as movement priorities makes it unnecessary
@@ -327,7 +328,11 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 			}
 			return result;
 		} else {
-			this.moveToTarget();
+			const result = this.moveToTarget();
+			if (result !== OK) {
+				log.debugCreep(this.creep, `failed to move to target ${result}`);
+			}
+			return result;
 		}
 	}
 
@@ -341,7 +346,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Task to perform when at the target
 	 */
-	abstract work(): number;
+	abstract work(): ZergMoveReturnCode | ScreepsReturnCode;
 
 	/**
 	 * Finalize the task and switch to parent task (or null if there is none)

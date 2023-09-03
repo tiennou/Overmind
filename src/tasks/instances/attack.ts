@@ -1,3 +1,4 @@
+import { ZergMoveReturnCode } from 'movement/Movement';
 import {profile} from '../../profiler/decorator';
 import {Task} from '../Task';
 
@@ -31,8 +32,8 @@ export class TaskAttack extends Task<attackTargetType> {
 	work() {
 		const creep = this.creep;
 		const target = this.target;
-		let attackReturn = 0;
-		let rangedAttackReturn = 0;
+		let attackReturn: CreepActionReturnCode | ZergMoveReturnCode = 0;
+		let rangedAttackReturn: CreepActionReturnCode = 0;
 		if (creep.getActiveBodyparts(ATTACK) > 0) {
 			if (creep.pos.isNearTo(target)) {
 				attackReturn = creep.attack(target);
