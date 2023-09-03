@@ -45,21 +45,26 @@ export const OverlordPriority = {
 		mine          : 501,
 		work          : 502,
 		mineralRCL8   : 503,
-		transport     : 510,		// Spawn the rest of the transporters
-		mineral       : 520
+		transport     : 504,		// Spawn the rest of the transporters
+		mineral       : 505,
 	},
 
-	remoteRoom: { 				// Operation of a remote room. Allows colonies to restart one room at a time.
-		reserve      : 530,
-		mine         : 531,
-		roomIncrement: 5, 			// remote room priorities are incremented by this for each outpost
+	/**
+	 * Operation of a remote room. Allows colonies to restart one room at a time.
+	 * The increment is such that 510 + 2 * (number of rooms at range 2 = 24) = 558
+	 */
+	remoteRoom: {
+		mine         : 510,
+		reserve      : 511,
+		roomIncrement: 2,
 	},
 
 	/** Everything past this will be ignored when incubating another colony */
 	incubationThreshold: 550,
 
-	upgrading: {				// Spawning upgraders
-		upgrade: 550,
+	/** Spawning upgraders */
+	upgrading: {
+		upgrade: 560,
 	},
 
 	throttleThreshold: 599,  	// Everything past this may be throttled in the event of low CPU
