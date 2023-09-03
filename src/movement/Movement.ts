@@ -321,8 +321,9 @@ export class Movement {
 			let color = 'orange';
 			if (ret.incomplete) {
 				// uncommenting this is a great way to diagnose creep behavior issues
+				const e = new Error();
 				log.debug(`Movement: incomplete path for ${creep.print}! ` +
-						  `(${creep.pos.print} ${rightArrow} ${destination.print})`);
+						  `(${creep.pos.print} ${rightArrow} ${destination.print}): ${JSON.stringify(opts)}\n${e.stack}`);
 				color = 'red';
 			}
 			this.circle(creep.pos, color);

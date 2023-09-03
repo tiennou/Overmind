@@ -356,8 +356,8 @@ export class Pathing {
 		}
 
 		if (route == ERR_NO_PATH) {
-			log.warning(`Pathing: couldn't findRoute from ${origin} to ${destination} ` +
-						`with opts ${JSON.stringify(opts)}!`);
+			log.trace(new Error(`Pathing: couldn't findRoute from ${origin} to ${destination} ` +
+						`with opts ${JSON.stringify(opts)}!`));
 			return ERR_NO_PATH;
 		} else {
 			return route;
