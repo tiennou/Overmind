@@ -786,7 +786,7 @@ export class Overseer implements IOverseer {
 	}
 
 	postRun(): void {
-		if (Memory.settings.pixelGeneration.enabled) {
+		if (Memory.settings.pixelGeneration.enabled && Game.cpu.generatePixel) {
 			// Make sure that our current bucket delta looks fine so we recover quickly
 			const delta = Memory.stats.persistent.avgBucketDelta ?? 0;
 			if (delta >= 20 && Game.cpu.bucket === MAX_BUCKET) {

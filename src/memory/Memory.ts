@@ -122,7 +122,7 @@ export class Mem {
 		const lastBucket = Memory.stats.persistent.lastBucket;
 		if (lastBucket !== undefined) {
 			const used = Game.cpu.getUsed();
-			const limit = Game.cpu.shardLimits[Game.shard.name];
+			const limit = Game.cpu.shardLimits?.[Game.shard.name] ?? 500;
 
 			// Since that (realistic) calculation will cap once the bucket is full
 			// switch to an estimate based on CPU usage instead
