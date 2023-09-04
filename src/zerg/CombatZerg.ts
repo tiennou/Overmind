@@ -6,6 +6,7 @@ import {CombatTargeting} from '../targeting/CombatTargeting';
 import {GoalFinder} from '../targeting/GoalFinder';
 import {randomHex} from '../utilities/utils';
 import {Zerg} from './Zerg';
+import { RANGES } from './AnyZerg';
 
 interface CombatZergMemory extends CreepMemory {
 	recovering: boolean;
@@ -192,13 +193,13 @@ export class CombatZerg extends Zerg {
 	/**
 	 * Automatically heal the best creep in range
 	 */
-	autoHeal(allowRangedHeal = true, friendlies = this.room.creeps) {
-		const target = CombatTargeting.findBestHealingTargetInRange(this, allowRangedHeal ? 3 : 1, friendlies);
-		this.debug(`Heal target: ${target}`);
+	autoHeal(allowRangedHeal = true, friendlies?: Creep[]) {
+		const target = CombatTargeting.findBestHealingTargetInRange(this, allowRangedHeal ? RANGES.HEAL : RANGES.RANGED_HEAL, friendlies);
 		if (target) {
-			if (this.pos.getRangeTo(target) <= 1) {
+			this.debug(`Heal target: ${target}`);
+			if (this.pos.getRangeTo(target) <= RANGES.HEAL) {
 				return this.heal(target);
-			} else if (allowRangedHeal && this.pos.getRangeTo(target) <= 3) {
+			} else if (allowRangedHeal && this.pos.getRangeTo(target) <= RANGES.RANGED_HEAL) {
 				return this.rangedHeal(target);
 			}
 		}

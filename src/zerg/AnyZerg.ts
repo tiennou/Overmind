@@ -33,7 +33,9 @@ export const RANGES = {
 	WITHDRAW: 1,
 	HARVEST : 1,
 	ATTACK  : 1,
+	HEAL    : 1,
 	RANGED_ATTACK: 3,
+	RANGED_HEAL: 3,
 	DROP    : 0,
 };
 
@@ -252,6 +254,10 @@ export abstract class AnyZerg {
 	}
 
 	// Custom creep methods ============================================================================================
+
+	get isDamaged() {
+		return this.hits < this.hitsMax;
+	}
 
 	// Carry methods
 

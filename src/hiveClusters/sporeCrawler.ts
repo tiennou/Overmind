@@ -212,7 +212,7 @@ export class SporeCrawler extends HiveCluster {
 			}
 		}
 
-		const closestDamagedAlly = this.pos.findClosestByRange(_.filter(this.room.creeps,
+		const closestDamagedAlly = this.pos.findClosestByRange(_.filter(this.room.friendlies,
 																		creep => creep.hits < creep.hitsMax));
 		if (closestDamagedAlly) {
 			for (const tower of this.towers) {
