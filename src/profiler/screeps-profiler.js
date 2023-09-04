@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-ignore
 'use strict';
 
 // This is a modified version of screeps-profiler taken from https://github.com/samogot/screeps-profiler
@@ -30,27 +32,8 @@ function setupProfiler() {
         background(filter) {
             setupMemory('background', false, filter);
         },
-        callgrind() {
-            const id = `id${Math.random()}`;
-            /* eslint-disable */
-            const download = `
-<script>
-  var element = document.getElementById('${id}');
-  if (!element) {
-    element = document.createElement('a');
-    element.setAttribute('id', '${id}');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,${encodeURIComponent(Profiler.callgrind())}');
-    element.setAttribute('download', 'callgrind.out.${Game.time}');
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-  }
-</script>
-      `;
-            /* eslint-enable */
-            console.log(download.split('\n').map((s) => s.trim()).join(''));
+        callgrind(duration, filter) {
+			setupMemory('callgrind', duration || 100, filter);
         },
         restart() {
             if (Profiler.isProfiling()) {
@@ -242,6 +225,29 @@ const Profiler = {
         Game.notify(Profiler.output(1000));
     },
 
+	downloadCallgrind() {
+		const id = `id${Math.random()}`;
+		/* eslint-disable */
+		const download = `
+<script>
+var element = document.getElementById('${id}');
+if (!element) {
+element = document.createElement('a');
+element.setAttribute('id', '${id}');
+element.setAttribute('href', 'data:text/plain;charset=utf-8,${encodeURIComponent(Profiler.callgrind())}');
+element.setAttribute('download', 'callgrind.out.${Game.time}');
+
+element.style.display = 'none';
+document.body.appendChild(element);
+
+element.click();
+}
+</script>
+  `;
+		/* eslint-enable */
+		console.log(download.split('\n').map((s) => s.trim()).join(''));
+	},
+
     callgrind() {
         const elapsedTicks = Game.time - Memory.screepsProfiler.enabledTick + 1;
         Memory.screepsProfiler.map['(tick)'].calls = elapsedTicks;
@@ -404,7 +410,9 @@ const Profiler = {
             Profiler.printProfile();
         } else if (Profiler.shouldEmail()) {
             Profiler.emailProfile();
-        }
+        } else if (Profiler.shouldCallgrind()) {
+			Profiler.downloadCallgrind();
+		}
     },
 
     isProfiling() {
@@ -428,6 +436,10 @@ const Profiler = {
     shouldEmail() {
         return Profiler.type() === 'email' && Memory.screepsProfiler.disableTick === Game.time;
     },
+
+	shouldCallgrind() {
+		return Profiler.type() === 'callgrind' && Memory.screepsProfiler.disableTick === Game.time;
+	}
 };
 
 module.exports = {
@@ -465,7 +477,7 @@ module.exports = {
     },
 
     output   : Profiler.output,
-    callgrind: Profiler.callgrind,
+    // callgrind: Profiler.callgrind,
 
     registerObject: profileObjectFunctions,
     registerFN    : profileFunction,
