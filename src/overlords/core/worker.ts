@@ -8,12 +8,20 @@ import {BuildPriorities, FortifyPriorities} from '../../priorities/priorities_st
 import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Cartographer, ROOMTYPE_CONTROLLER} from '../../utilities/Cartographer';
-import {minBy} from '../../utilities/utils';
+import {minBy, minMax} from '../../utilities/utils';
 import {Visualizer} from '../../visuals/Visualizer';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
 
 type hitsCallbackType = (structure: StructureWall | StructureRampart) => number;
+
+
+/** Maximum number of workers to spawn */
+const MAX_WORKERS = 10;
+/** Average energy per tick when working */
+const WORKER_ENERGY_PER_TICK = 1.1;
+/** How often are workers working */
+const WORKER_AVG_UPTIME = 0.8;
 
 /**
  * Spawns general-purpose workers, which maintain a colony, performing actions such as building, repairing, fortifying,
@@ -170,65 +178,78 @@ export class WorkerOverlord extends Overlord {
 		this.priorityTasks = [];
 	}
 
+	/**
+	 * Estimates how many workers we could afford given the current energy input
+	 */
+	private maxSustainableWorkers(workPartsPerWorker: number) {
+		const numWorkers = Math.ceil(this.colony.energyMinedPerTick * WORKER_AVG_UPTIME / (workPartsPerWorker * WORKER_ENERGY_PER_TICK));
+		return Math.min(numWorkers, MAX_WORKERS);
+	}
+
+	/**
+	 * Estimates how many workers are needed to take care of all tasks
+	 */
+	private estimatedWorkerCount(workPartsPerWorker: number) {
+		const maxWorkers = this.maxSustainableWorkers(workPartsPerWorker);
+
+		// We want to rush storage, or we're relocating; maintain a maximum of workers
+		if (this.colony.level < 4 || this.colony.roomPlanner.memory.relocating) {
+			return maxWorkers;
+		}
+
+		// Nuke incoming, spawn as much as possible to fortify as much as possible
+		if (this.nukeDefenseRamparts.length > 0) {
+			return MAX_WORKERS;
+		}
+
+		// At higher levels, spawn workers based on construction and repair that needs to be done
+		const buildTicks = _.sum(this.constructionSites,
+									site => Math.max(site.progressTotal - site.progress, 0)) / BUILD_POWER;
+		const repairTicks = _.sum(this.repairStructures,
+									structure => structure.hitsMax - structure.hits) / REPAIR_POWER;
+		const activeRooms = _.filter(this.colony.roomNames, roomName => this.colony.isRoomActive(roomName));
+		const paveTicks = _.sum(activeRooms,
+								roomName => this.colony.roadLogistics.energyToRepave(roomName));
+		let fortifyTicks = 0;
+		const shouldFortify = this.colony.assets.energy > WorkerOverlord.settings.fortifyDutyThreshold;
+		if (shouldFortify) {
+			fortifyTicks = 0.25 * _.sum(this.fortifyBarriers, barrier =>
+				Math.max(0, WorkerOverlord.settings.barrierHits[this.colony.level] - barrier.hits))
+					/ REPAIR_POWER;
+		}
+
+		// max constructionTicks for private server manually setting progress
+		let numWorkers = Math.ceil(2 * (5 * buildTicks + repairTicks + paveTicks + fortifyTicks)
+			/ (workPartsPerWorker * CREEP_LIFE_TIME));
+
+		const neededUpgraders = this.shouldPreventControllerDowngrade() ? 1 : 0;
+		numWorkers = minMax(numWorkers, neededUpgraders, maxWorkers);
+
+		return numWorkers;
+	}
+
+	/**
+	 * Check if the controller is close to downgrading.
+	 *
+	 * Handles both natural decay and downgrade attacks
+	 */
+	private shouldPreventControllerDowngrade() {
+		const downgradeLevel = CONTROLLER_DOWNGRADE[this.colony.controller.level] *
+								(this.colony.controller.level < 4 ? .3 : .7);
+
+		return ((!this.colony.controller.upgradeBlocked || this.colony.controller.upgradeBlocked < 30)
+			&& (this.colony.controller.ticksToDowngrade <= downgradeLevel
+				|| this.colony.controller.progress > this.colony.controller.progressTotal))
+	}
+
 	init() {
 		let setup = this.colony.level == 1 ? Setups.workers.early : Setups.workers.default;
-		const workPartsPerWorker = setup.getBodyPotential(WORK, this.colony);
-		let numWorkers: number;
-		if (!this.colony.storage) {
-			numWorkers = $.number(this, 'numWorkers', () => {
-				// At lower levels, try to saturate the energy throughput of the colony
-				const MAX_WORKERS = 10; // Maximum number of workers to spawn
-				const energyMinedPerTick = _.sum(_.map(this.colony.miningSites, function(site) {
-					const overlord = site.overlords.mine;
-					const miningPowerAssigned = _.sum(overlord.miners, miner => miner.getActiveBodyparts(WORK));
-					const saturation = Math.min(miningPowerAssigned / overlord.miningPowerNeeded, 1);
-					return overlord.energyPerTick * saturation;
-				}));
-				const energyPerTickPerWorker = 1.1 * workPartsPerWorker; // Average energy per tick when working
-				const workerUptime = 0.8;
-				const numWorkers = Math.ceil(energyMinedPerTick / (energyPerTickPerWorker * workerUptime));
-				return Math.min(numWorkers, MAX_WORKERS);
-			});
-		} else {
-			if (this.colony.roomPlanner.memory.relocating) {
-				// If relocating, maintain a maximum of workers
-				numWorkers = 5;
-			} else {
-				numWorkers = $.number(this, 'numWorkers', () => {
-					// At higher levels, spawn workers based on construction and repair that needs to be done
-					const MAX_WORKERS = 5; // Maximum number of workers to spawn
-					if (this.nukeDefenseRamparts.length > 0) {
-						return MAX_WORKERS;
-					}
-					const buildTicks = _.sum(this.constructionSites,
-											 site => Math.max(site.progressTotal - site.progress, 0)) / BUILD_POWER;
-					const repairTicks = _.sum(this.repairStructures,
-											  structure => structure.hitsMax - structure.hits) / REPAIR_POWER;
-					const activeRooms = _.filter(this.colony.roomNames, roomName => this.colony.isRoomActive(roomName));
-					const paveTicks = _.sum(activeRooms,
-											roomName => this.colony.roadLogistics.energyToRepave(roomName));
-					let fortifyTicks = 0;
-					const shouldFortify = this.colony.assets.energy > WorkerOverlord.settings.fortifyDutyThreshold;
-					if (shouldFortify) {
-						fortifyTicks = 0.25 * _.sum(this.fortifyBarriers, barrier =>
-							Math.max(0, WorkerOverlord.settings.barrierHits[this.colony.level]
-										- barrier.hits)) / REPAIR_POWER;
-					}
-					// max constructionTicks for private server manually setting progress
-					let numWorkers = Math.ceil(2 * (5 * buildTicks + repairTicks + paveTicks + fortifyTicks) /
-											   (workPartsPerWorker * CREEP_LIFE_TIME));
-					numWorkers = Math.min(numWorkers, MAX_WORKERS);
-					if (this.colony.controller.ticksToDowngrade <= (this.colony.level >= 4 ? 10000 : 2000)) {
-						numWorkers = Math.max(numWorkers, 1);
-					}
-					return numWorkers;
-				});
-			}
-		}
+		const numWorkers = $.number(this, 'numWorkers', () => this.estimatedWorkerCount(setup.getBodyPotential(WORK, this.colony)));
 
 		if (this.useBoostedRepair) {
 			setup = CreepSetup.boosted(setup, ['construct']);
 		}
+
 		this.wishlist(numWorkers, setup);
 	}
 
@@ -391,12 +412,7 @@ export class WorkerOverlord extends Overlord {
 		if (worker.store.energy > 0) {
 			// TODO Add high priority to block controller with ramparts/walls in case of downgrade attack
 			// FIXME workers get stalled at controller in case of downgrade attack
-			// Upgrade controller if close to downgrade or if getting controller attacked/was downgraded
-			const downgradeLevel = CONTROLLER_DOWNGRADE[this.colony.controller.level] *
-								   (this.colony.controller.level < 4 ? .3 : .7);
-			if ((!this.colony.controller.upgradeBlocked || this.colony.controller.upgradeBlocked < 30)
-				&& (this.colony.controller.ticksToDowngrade <= downgradeLevel
-					|| this.colony.controller.progress > this.colony.controller.progressTotal)) {
+			if (this.shouldPreventControllerDowngrade()) {
 				this.debug(`${worker.print} emergency upgrade!`);
 				if (this.upgradeActions(worker)) return;
 			}

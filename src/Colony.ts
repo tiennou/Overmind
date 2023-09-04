@@ -720,6 +720,20 @@ export class Colony {
 	}
 
 	/**
+	 * Calculate the total amount of energy harvested by the colony
+	 */
+	get energyMinedPerTick() {
+		return $.number(this, 'energyMinedPerTick', () => {
+			return _.sum(_.map(this.miningSites, site => {
+				const overlord = site.overlords.mine;
+				const miningPowerAssigned = _.sum(overlord.miners, miner => miner.getActiveBodyparts(WORK));
+				const saturation = miningPowerAssigned / overlord.miningPowerNeeded;
+				return overlord.energyPerTick * saturation;
+			}));
+		}, 5);
+	}
+
+	/**
 	 * Initializes the state of the colony each tick
 	 */
 	init(): void {
