@@ -267,6 +267,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private repairActions(worker: Zerg): boolean {
+		if (this.rechargeActions(worker)) return true;
+
 		const repairStructures = this.filterPriorityTargets(this.repairStructures);
 		const target = worker.pos.findClosestByMultiRoomRange(repairStructures);
 		if (target) {
@@ -279,6 +281,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private buildActions(worker: Zerg): boolean {
+		if (this.rechargeActions(worker)) return true;
+
 		const constructionSites = this.filterPriorityTargets(this.constructionSites);
 		const groupedSites = _.groupBy(constructionSites, site => site.structureType);
 		for (const structureType of BuildPriorities) {
@@ -309,6 +313,8 @@ export class WorkerOverlord extends Overlord {
 
 	// Find a suitable repair ordering of roads with a depth first search
 	private pavingActions(worker: Zerg): boolean {
+		if (this.rechargeActions(worker)) return true;
+
 		const roomToRepave = this.colony.roadLogistics.workerShouldRepave(worker)!;
 		this.colony.roadLogistics.registerWorkerAssignment(worker, roomToRepave);
 		// Build a paving manifest
@@ -341,6 +347,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private fortifyActions(worker: Zerg, fortifyStructures = this.fortifyBarriers): boolean {
+		if (this.rechargeActions(worker)) return true;
+
 		const lowBarriers = this.findLowBarriers(fortifyStructures);
 		const target = worker.pos.findClosestByMultiRoomRange(lowBarriers);
 		if (target) {
@@ -353,6 +361,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private nukeFortifyActions(worker: Zerg, fortifyStructures = this.nukeDefenseRamparts): boolean {
+		if (this.rechargeActions(worker)) return true;
+
 		const adaptedHits = _.reduce(fortifyStructures, (obj, structure: StructureWall | StructureRampart) => {
 			obj[structure.id] = structure.hits - this.neededNukeHits(structure);
 			return obj;
@@ -384,6 +394,16 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private upgradeActions(worker: Zerg): boolean {
+		// Check the upgrade site battery first
+		if (worker.store.energy === 0) {
+			const battery = this.colony.upgradeSite.battery;
+			if (battery && battery.store.energy > 0) {
+				worker.task = Tasks.withdraw(battery);
+				return true;
+			}
+			if (this.rechargeActions(worker)) return true;
+		}
+
 		// Sign controller if needed
 		if ((!this.colony.controller.signedByMe && !this.colony.controller.signedByScreeps)) {
 			this.debug(`${worker.print} signing controller ${this.colony.controller.ref}`);
@@ -396,6 +416,8 @@ export class WorkerOverlord extends Overlord {
 	}
 
 	private bootstrapActions(worker: Zerg): boolean {
+		if (this.rechargeActions(worker)) return true;
+
 		// Dump energy into the hatchery
 		const target = this.colony.hatchery?.energyStructures.find(struct =>
 			struct.store.getFreeCapacity(RESOURCE_ENERGY));
@@ -407,64 +429,67 @@ export class WorkerOverlord extends Overlord {
 		return false;
 	}
 
+	private rechargeActions(worker: Zerg) {
+		if (worker.store.energy > 0) return false;
+
+		// Acquire more energy
+		let workerWithdrawLimit = 100;
+		// The minimum is intentionally raised on low-level colonies to keep the hatchery from being starved
+		if (this.colony.storage &&
+			this.colony.hatchery?.getWaitTimeForPriority(OverlordPriority.throttleThreshold) !== 0) {
+			workerWithdrawLimit = 750;
+		}
+		// this.debug(`${worker.print} going for a refill`);
+		worker.task = Tasks.recharge(workerWithdrawLimit);
+		return true;
+	}
+
 	private handleWorker(worker: Zerg) {
 		// this.debug(`${worker.print} looking for work`);
-		if (worker.store.energy > 0) {
-			// TODO Add high priority to block controller with ramparts/walls in case of downgrade attack
-			// FIXME workers get stalled at controller in case of downgrade attack
-			if (this.shouldPreventControllerDowngrade()) {
-				this.debug(`${worker.print} emergency upgrade!`);
-				if (this.upgradeActions(worker)) return;
-			}
-			// Turn into queens until the bootstrap situation gets resolved
-			const hatcheryIsOverloaded = this.colony.hatchery && this.colony.hatchery.memory.stats.overload >= 0.1;
-			if (this.colony.state.bootstrapping || hatcheryIsOverloaded) {
-				if (this.bootstrapActions(worker)) return;
-			}
-			// Repair damaged non-road non-barrier structures
-			if (this.repairStructures.length > 0 && this.colony.defcon == DEFCON.safe) {
-				if (this.repairActions(worker)) return;
-			}
-			// Fortify critical barriers
-			if (this.criticalBarriers.length > 0) {
-				if (this.fortifyActions(worker, this.criticalBarriers)) return;
-			}
-			// Build new structures
-			if (this.constructionSites.length > 0) {
-				if (this.buildActions(worker)) return;
-			}
-			// Build ramparts to block incoming nuke
-			if (this.nukeDefenseRamparts.length > 0 && !this.colony.state.isRebuilding) {
-				if (this.nukeFortifyActions(worker, this.nukeDefenseRamparts)) return;
-			}
-			// Build and maintain roads
-			if (this.colony.roadLogistics.workerShouldRepave(worker) && this.colony.defcon == DEFCON.safe) {
-				if (this.pavingActions(worker)) return;
-			}
-			// Dismantle marked structures
-			if (this.dismantleStructures.length > 0 && this.colony.defcon == DEFCON.safe) {
-				if (this.dismantleActions(worker)) return;
-			}
-			// Fortify walls and ramparts
-			if (this.fortifyBarriers.length > 0) {
-				if (this.fortifyActions(worker, this.fortifyBarriers)) return;
-			}
-			// Upgrade controller if less than RCL8 or no upgraders
-			if ((this.colony.level < 8 || this.colony.upgradeSite.overlord.upgraders.length == 0)
-				&& this.colony.defcon == DEFCON.safe) {
-				if (this.upgradeActions(worker)) return;
-			}
-		} else {
-			// Acquire more energy
-			let workerWithdrawLimit = 100;
-			// The minimum is intentionally raised on low-level colonies to keep the hatchery from being starved
-			if (this.colony.storage &&
-				this.colony.hatchery?.getWaitTimeForPriority(OverlordPriority.throttleThreshold) !== 0) {
-				workerWithdrawLimit = 750;
-			}
-			// this.debug(`${worker.print} going for a refill`);
-			worker.task = Tasks.recharge(workerWithdrawLimit);
-			return;
+
+		// TODO Add high priority to block controller with ramparts/walls in case of downgrade attack
+		// FIXME workers get stalled at controller in case of downgrade attack
+		if (this.shouldPreventControllerDowngrade()) {
+			this.debug(`${worker.print} emergency upgrade!`);
+			if (this.upgradeActions(worker)) return;
+		}
+		// Turn into queens until the bootstrap situation gets resolved
+		const hatcheryIsOverloaded = this.colony.hatchery && this.colony.hatchery.memory.stats.overload >= 0.1;
+		if (this.colony.state.bootstrapping || hatcheryIsOverloaded) {
+			if (this.bootstrapActions(worker)) return;
+		}
+		// Repair damaged non-road non-barrier structures
+		if (this.repairStructures.length > 0 && this.colony.defcon == DEFCON.safe) {
+			if (this.repairActions(worker)) return;
+		}
+		// Fortify critical barriers
+		if (this.criticalBarriers.length > 0) {
+			if (this.fortifyActions(worker, this.criticalBarriers)) return;
+		}
+		// Build new structures
+		if (this.constructionSites.length > 0) {
+			if (this.buildActions(worker)) return;
+		}
+		// Build ramparts to block incoming nuke
+		if (this.nukeDefenseRamparts.length > 0 && !this.colony.state.isRebuilding) {
+			if (this.nukeFortifyActions(worker, this.nukeDefenseRamparts)) return;
+		}
+		// Build and maintain roads
+		if (this.colony.roadLogistics.workerShouldRepave(worker) && this.colony.defcon == DEFCON.safe) {
+			if (this.pavingActions(worker)) return;
+		}
+		// Dismantle marked structures
+		if (this.dismantleStructures.length > 0 && this.colony.defcon == DEFCON.safe) {
+			if (this.dismantleActions(worker)) return;
+		}
+		// Fortify walls and ramparts
+		if (this.fortifyBarriers.length > 0) {
+			if (this.fortifyActions(worker, this.fortifyBarriers)) return;
+		}
+		// Upgrade controller if less than RCL8 or no upgraders
+		if ((this.colony.level < 8 || this.colony.upgradeSite.overlord.upgraders.length == 0)
+			&& this.colony.defcon == DEFCON.safe) {
+			if (this.upgradeActions(worker)) return;
 		}
 		// this.debug(`${worker.print} no work to do!`);
 	}
