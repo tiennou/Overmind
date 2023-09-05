@@ -12,6 +12,8 @@ import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
 import { minBy } from 'utilities/utils';
 
+const MAX_TRANSPORTERS = 10;
+
 /**
  * The transport overlord handles energy transport throughout a colony
  */
@@ -51,7 +53,7 @@ export class TransportOverlord extends Overlord {
 		// Add transport power needed to move to upgradeSite
 		if (this.colony.upgradeSite.battery) {
 			transportPower += UPGRADE_CONTROLLER_POWER * this.colony.upgradeSite.upgradePowerNeeded * scaling *
-							  (Pathing.distance(this.colony.pos, this.colony.upgradeSite.battery.pos) || 0);
+							  (Pathing.distance(this.colony.pos, this.colony.upgradeSite.battery.pos) ?? 0);
 		}
 
 
@@ -75,7 +77,9 @@ export class TransportOverlord extends Overlord {
 			numTransporters = Math.ceil(neededTransportPower / transportPowerEach);
 		}
 
-		this.debug(`requesting ${numTransporters} because of ${neededTransportPower} needed by ${transportPowerEach}`);
+		numTransporters = Math.min(numTransporters, MAX_TRANSPORTERS);
+
+		this.debug(`requesting ${numTransporters} (${this.transporters.length}) because of ${neededTransportPower} needed by ${transportPowerEach}`);
 		if (this.transporters.length == 0) {
 			this.wishlist(numTransporters, setup, {priority: OverlordPriority.ownedRoom.firstTransport});
 		} else {
