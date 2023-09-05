@@ -234,6 +234,14 @@ export class RoadPlanner {
 					matrix.set(site.pos.x, site.pos.y, 0xff);
 				}
 			}
+
+			// If we generating a new path, ensure the current roads are reused
+			if (RoadPlanner.settings.encourageRoadMerging && !this.costMatrices[roomName]) {
+				const roads = room.find<StructureRoad>(FIND_STRUCTURES, { filter: { structureType: STRUCTURE_ROAD } });
+				for (const road of roads) {
+					matrix.set(road.pos.x, road.pos.y, EXISTING_PATH_COST);
+				}
+			}
 		}
 
 		return matrix;
