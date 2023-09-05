@@ -19,7 +19,7 @@ export class TaskGoToRoom extends Task<RoomPosition> {
 	}
 
 	isValidTarget() {
-		return true;
+		return this.creep.room.name !== this.targetPos.roomName;
 	}
 
 	isValid(): boolean {
