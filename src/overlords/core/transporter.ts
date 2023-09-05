@@ -9,10 +9,19 @@ import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
-import {Overlord} from '../Overlord';
-import { minBy } from 'utilities/utils';
+import {Overlord, OverlordMemory} from '../Overlord';
+import { ema, minBy } from 'utilities/utils';
+import { Stats } from 'stats/stats';
 
 const MAX_TRANSPORTERS = 10;
+
+export const enum TRANSPORT_MEM {
+	DOWNTIME = 'd',
+}
+
+interface TransporterMemory extends OverlordMemory {
+	[TRANSPORT_MEM.DOWNTIME]: number;
+}
 
 /**
  * The transport overlord handles energy transport throughout a colony
@@ -20,6 +29,7 @@ const MAX_TRANSPORTERS = 10;
 @profile
 export class TransportOverlord extends Overlord {
 
+	memory: TransporterMemory;
 	transporters: Zerg[];
 
 	constructor(colony: Colony, priority = OverlordPriority.ownedRoom.transport) {
@@ -237,5 +247,18 @@ export class TransportOverlord extends Overlord {
 				this.handleSmolTransporter(transporter);
 			}
 		}, transporter => transporter.avoidDanger({ timer: 5, dropEnergy: true }));
+
+		this.stats();
+	}
+
+	stats() {
+		const idleTransporters = this.transporters.filter(t => !t.isIdle).length;
+		const downtime = ema(idleTransporters / this.transporters.length,
+			this.memory[TRANSPORT_MEM.DOWNTIME] ?? 0,
+			CREEP_LIFE_TIME
+		);
+
+		this.memory[TRANSPORT_MEM.DOWNTIME] = downtime;
+		Stats.log(`colonies.${this.colony.name}.transportNetwork.downtime`, downtime);
 	}
 }

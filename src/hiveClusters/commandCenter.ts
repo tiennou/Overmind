@@ -11,6 +11,7 @@ import {profile} from '../profiler/decorator';
 import {Cartographer} from '../utilities/Cartographer';
 import {Visualizer} from '../visuals/Visualizer';
 import {HiveCluster} from './_HiveCluster';
+import { TRANSPORT_MEM } from 'overlords/core/transporter';
 
 export const MAX_OBSERVE_DISTANCE = 4;
 
@@ -233,7 +234,7 @@ export class CommandCenter extends HiveCluster {
 
 	visuals(coord: Coord): Coord {
 		let {x, y} = coord;
-		const height = this.storage && this.terminal ? 3 : 2;
+		const height = this.storage && this.terminal ? 4 : 3;
 		const titleCoords = Visualizer.section(`${this.colony.name} Command Center`,
 											   {x, y, roomName: this.room.name}, 9.5, height + .1);
 		const boxX = titleCoords.x;
@@ -265,6 +266,12 @@ export class CommandCenter extends HiveCluster {
 								{x: boxX + 4, y: y, roomName: this.room.name}, 5);
 			y += 1;
 		}
+
+		Visualizer.text('Logistics', {x: boxX, y: y, roomName: this.room.name});
+		Visualizer.barGraph(this.colony.overlords.logistics.memory[TRANSPORT_MEM.DOWNTIME],
+							{x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		y += 1;
+
 		return {x: x, y: y + .25};
 	}
 }
