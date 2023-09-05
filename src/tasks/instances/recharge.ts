@@ -104,11 +104,19 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		}
 	}
 
+	isValid(): boolean {
+		return false;
+	}
+
 	isValidTask() {
 		return false;
 	}
 
 	isValidTarget() {
+		return false;
+	}
+
+	get isWorking(): boolean {
 		return false;
 	}
 
