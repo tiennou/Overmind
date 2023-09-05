@@ -225,13 +225,15 @@ export class RoadPlanner {
 					impassibleStructures.push(s);
 				}
 			});
-			_.forEach(impassibleStructures, s => matrix.set(s.pos.x, s.pos.y, 0xff));
+			for (const s of impassibleStructures) {
+				matrix.set(s.pos.x, s.pos.y, 0xff);
+			}
 			// Set passability of construction sites
-			_.forEach(room.find(FIND_MY_CONSTRUCTION_SITES), (site: ConstructionSite) => {
+			for (const site of room.find(FIND_MY_CONSTRUCTION_SITES)) {
 				if (!site.isWalkable) {
 					matrix.set(site.pos.x, site.pos.y, 0xff);
 				}
-			});
+			}
 		}
 
 		return matrix;
