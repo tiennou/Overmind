@@ -356,7 +356,7 @@ export class EvolutionChamber extends HiveCluster {
 	 */
 	bestBoostAvailable(boostType: BoostType, amount: number): ResourceConstant | undefined {
 		if (PHASE != 'run') {
-			log.error(`EvolutionChamber.bestBoostAvailable() must be called in the run() phase!`);
+			log.trace(new Error(`EvolutionChamber.bestBoostAvailable() must be called in the run() phase!`));
 		}
 		// let boostFilter: (resource: ResourceConstant) => boolean;
 		// switch (boostType) {

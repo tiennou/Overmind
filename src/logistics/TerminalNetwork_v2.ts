@@ -567,7 +567,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	 */
 	canObtainResource(requestor: Colony, resource: ResourceConstant, totalAmount: number): boolean {
 		if (PHASE != 'run') { // need to have all the information from init() about colony states first
-			log.error(`TerminalNetwork.canObtainResource() must be called in the run() phase!`);
+			log.trace(new Error(`TerminalNetwork.canObtainResource() must be called in the run() phase!`));
 			return false;
 		}
 
