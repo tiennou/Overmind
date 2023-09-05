@@ -10,6 +10,7 @@ const STRUCTURE_KEY = 's';
 const NUMBER_KEY = '#';
 const POSITION_KEY = 'p';
 const LIST_KEY = 'l';
+const OBJECT_KEY = 'o';
 const COSTMATRIX_KEY = 'm';
 
 /**
@@ -73,6 +74,16 @@ export class $ { // $ = cash = cache... get it? :D
 			_cache.expiration[cacheKey] = getCacheExpiration(timeout, Math.ceil(timeout / 10));
 		}
 		return _cache.lists[cacheKey] as T[];
+	}
+
+	static object<T extends Object>(saver: HasRef, key: string, callback: () => T, timeout = CACHE_TIMEOUT): T {
+		const cacheKey = saver.ref + OBJECT_KEY + key;
+		if (_cache.objects[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
+			// Recache if new entry or entry is expired
+			_cache.objects[cacheKey] = callback();
+			_cache.expiration[cacheKey] = getCacheExpiration(timeout, Math.ceil(timeout / 10));
+		}
+		return _cache.objects[cacheKey] as T;
 	}
 
 	/**

@@ -7,8 +7,10 @@ import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
 import { Cartographer } from 'utilities/Cartographer';
+import { PortalInfo, RoomExitData } from 'intel/RoomIntel';
+import columnify from 'columnify';
 
-const DEFAULT_NUM_SCOUTS = 2;
+const DEFAULT_NUM_SCOUTS = 3;
 
 /**
  * Sends out scouts which randomly traverse rooms to uncover possible expansion locations and gather intel
@@ -17,10 +19,77 @@ const DEFAULT_NUM_SCOUTS = 2;
 export class RandomWalkerScoutOverlord extends Overlord {
 
 	scouts: Zerg[];
+	scoutMap: {[roomName: string]: string[] };
 
 	constructor(colony: Colony, priority = OverlordPriority.scouting.randomWalker) {
 		super(colony, 'scout', priority);
 		this.scouts = this.zerg(Roles.scout, {notifyWhenAttacked: false});
+		this.scoutMap = {};
+		this.generateScoutMap();
+	}
+
+	private generateScoutMap() {
+		const map: Record<string, string[]> = {};
+		for (const scout of this.scouts) {
+			const room = scout.room.name;
+			this.debug(`rebuilding map for ${scout.print} in ${scout.room}`);
+			if (map[room]) continue;
+
+			const roomStatus = RoomIntel.getRoomStatus(room);
+
+			let neighboringRooms = Cartographer.findRoomsInRange(room, 2);
+			neighboringRooms = neighboringRooms.filter(room => RoomIntel.getRoomStatus(room).status === roomStatus.status);
+
+			this.debug(() =>`rooms near ${room}: ${neighboringRooms}`);
+			// Check all the room's exits + portals
+			const exitData = RoomIntel.describeExits(scout.pos.roomName, "interOnly");
+			// This is a .compact/.filter in one swoop
+			const exits = _.values<RoomExitData>(exitData)
+				.reduce((s, e) => {
+					if (Array.isArray(e)) {
+						for (const i of e) {
+							s.add(i);
+						}
+					} else if (e) {
+						s.add(e);
+					}
+					return s;
+				}, new Set<(string | PortalInfo)>());
+
+			this.debug(() =>`exits from ${room}:\ndata: ${JSON.stringify(exitData)}\nflat: ${[...exits]}`);
+
+			// Sort by nearby exit, then by missing expansion data, then by last visible tick
+			// so we prioritize going to places that need to be refreshed
+			const sortedRooms = neighboringRooms.sort((a, b) => {
+				if (exits.has(a) && exits.has(b)) {
+					if (RoomIntel.getExpansionData(a) === RoomIntel.getExpansionData(b)) {
+						return RoomIntel.lastVisible(a) - RoomIntel.lastVisible(b);
+					} else if (RoomIntel.getExpansionData(a) === undefined) {
+						return -1;
+					} else {
+						return 1;
+					}
+				} else if (exits.has(a)) {
+					return -1;
+				} else {
+					return 1;
+				}
+			});
+			this.debug(() => {
+				return `map for ${scout.name} in ${room}:\n` + columnify(sortedRooms.map((name, idx) => {
+					return {
+						idx,
+						name,
+						exits: exits.has(name),
+						intel: RoomIntel.getControllerInfo(name) !== undefined ? "known" : "unknown",
+						exp: RoomIntel.getExpansionData(name) ? "known" : "unknown",
+						visible: RoomIntel.lastVisible(name),
+					};
+				}))
+			});
+			map[room] = sortedRooms;
+		}
+		this.scoutMap = map;
 	}
 
 	init() {
@@ -51,23 +120,15 @@ export class RandomWalkerScoutOverlord extends Overlord {
 		// 	return;
 		// }
 
-		const roomStatus = RoomIntel.getRoomStatus(scout.room.name);
+		if (!this.scoutMap[scout.room.name]) {
+			this.debug(`${scout.print}: scout map outdated, regenerate`);
+			this.generateScoutMap();
+		}
 
-		// Check all the room's exits + portals
-		let neighboringRooms = _.values<string>(Cartographer.describeExits(scout.pos.roomName));
-		neighboringRooms = neighboringRooms.filter(room => RoomIntel.getRoomStatus(room).status === roomStatus.status);
-
-		const intrashardPortals = scout.room.portals.filter(portal => portal.destination instanceof RoomPosition);
-		neighboringRooms = neighboringRooms.concat(intrashardPortals.map(portal => (<RoomPosition>portal.destination).roomName));
-		neighboringRooms = neighboringRooms.filter(room => !RoomIntel.isConsideredHostile(room));
-
-		// Sort by last visible tick so we prioritize going to places that need to be refreshed
-		neighboringRooms = neighboringRooms.sort((a, b) => RoomIntel.lastVisible(a) - RoomIntel.lastVisible(b));
-
-		this.debug(`${scout.print}: available rooms: ${neighboringRooms}`);
+		this.debug(`${scout.print}: available rooms: ${this.scoutMap[scout.room.name]}`);
 
 		let neighboringRoom: string | undefined;
-		while ((neighboringRoom = neighboringRooms.shift())) {
+		while ((neighboringRoom = this.scoutMap[scout.room.name].shift())) {
 			// Filter out any rooms we might have sent another scout to
 			if (this.scouts.some(scout => scout.task?.targetPos.roomName === neighboringRoom)) continue;
 

@@ -88,7 +88,7 @@ interface IGlobalCache {
 	costMatrices: { [key: string]: CostMatrix };
 	roomPositions: { [key: string]: RoomPosition | undefined };
 	things: { [key: string]: undefined | _HasId | _HasId[] };
-	// objects: { [key: string]: Object };
+	objects: { [key: string]: Object };
 }
 
 interface ICache {

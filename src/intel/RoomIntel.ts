@@ -16,6 +16,7 @@ import {
 import {ema, getCacheExpiration, interpolateColor, isAlly, minMax} from '../utilities/utils';
 import {CombatIntel} from './CombatIntel';
 import {Visualizer} from '../visuals/Visualizer';
+import { FIND_EXIT_PORTAL } from 'movement/Pathing';
 
 const RECACHE_TIME = 5000;
 const OWNED_RECACHE_TIME = 1000;
@@ -97,6 +98,10 @@ export interface RoomInfo {
 	importantStructures: ImportantStructureInfo | undefined;
 }
 
+export type RoomExitData = RoomExits[keyof RoomExits];
+export interface RoomExits extends ExitsInformation {
+	"42"?: PortalInfo[];
+}
 
 export interface RoomIntelMemory {
 	portalRooms: string[];
@@ -899,6 +904,43 @@ export class RoomIntel {
 		}
 
 		return !isAlly(roomD?.controller?.owner ?? '') && safety.threatLevel > cutoffOrBrazen;
+	}
+
+	/**
+	 * Returns a room's available exits
+	 *
+	 * This wraps {@link Cartographer.describeExits} method and adds exit info for
+	 * known portals in the room.
+	 *
+	 * @param roomName The room name to check
+	 * @returns
+	 */
+	static describeExits(roomName: string, allowPortals?: "interOnly" | boolean): RoomExits {
+		const exits: RoomExits = Cartographer.describeExits(roomName);
+		if (!exits) return exits;
+		const radius = Math.ceil(Game.map.getWorldSize() / 2) - 1;
+		const coord = Cartographer.getRoomCoordinates(roomName);
+		if (coord.x >= radius) {
+			const xDirToMoveDir = coord.xDir === "W" ? 7 : 3;
+			delete exits[xDirToMoveDir];
+		}
+		if (coord.y >= radius) {
+			const yDirToMoveDir = coord.xDir === "N" ? 1 : 5;
+			delete exits[yDirToMoveDir];
+		}
+
+		if (allowPortals) {
+			let portals = this.getPortalInfo(roomName);
+			if (portals) {
+				if (allowPortals === "interOnly") {
+					portals = portals.filter(portal => portal.destination instanceof RoomPosition);
+				}
+
+				exits[FIND_EXIT_PORTAL] = portals;
+			}
+		}
+
+		return exits;
 	}
 
 	/**

@@ -270,6 +270,7 @@ export class Mem {
 			costMatrices : {},
 			roomPositions: {},
 			things       : {},
+			objects      : {},
 		};
 		global._cache = defaultGlobalCache;
 	}
