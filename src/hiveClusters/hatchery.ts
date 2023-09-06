@@ -531,13 +531,14 @@ export class Hatchery extends HiveCluster {
 
 	visuals(coord: Coord): Coord {
 		let {x, y} = coord;
-		const spawnMap = new Map<string, [number, number]>();
-		_.forEach(this.spawns, function(spawn) {
+		const spawnMap = new Map<string, [string, number, number]>();
+		for (const spawn of this.spawns) {
 			if (spawn.spawning) {
 				const timeElapsed = spawn.spawning.needTime - spawn.spawning.remainingTime;
-				spawnMap.set(spawn.spawning.name.split('_')[0], [timeElapsed, spawn.spawning.needTime]);
+				const role = Memory.creeps[spawn.spawning.name].role ?? "unknown";
+				spawnMap.set(spawn.id, [role, timeElapsed, spawn.spawning.needTime]);
 			}
-		});
+		}
 		const boxCoords = Visualizer.section(`${this.colony.name} Hatchery`, {x, y, roomName: this.room.name},
 											 9.5, 4 + spawnMap.size + .1);
 		const boxX = boxCoords.x;
@@ -566,9 +567,9 @@ export class Hatchery extends HiveCluster {
 		Visualizer.text(queue, {x: boxX + 4, y: y, roomName: this.room.name});
 		y += 1;
 
-		for (const [spawning, progress] of spawnMap) {
-			Visualizer.text(spawning, {x: boxX, y: y, roomName: this.room.name});
-			Visualizer.barGraph(progress, {x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		for (const [_id, [name, elapsed, total]] of spawnMap) {
+			Visualizer.text(name, {x: boxX, y: y, roomName: this.room.name});
+			Visualizer.barGraph([elapsed, total], {x: boxX + 4, y: y, roomName: this.room.name}, 5);
 			y += 1;
 		}
 		return {x: x, y: y + .25};
