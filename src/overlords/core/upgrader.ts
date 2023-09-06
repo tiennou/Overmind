@@ -92,12 +92,17 @@ export class UpgradingOverlord extends Overlord {
 			}
 			upgrader.task = Tasks.upgrade(this.upgradeSite.controller);
 		} else {
-			// Recharge from link or battery
-			if (this.upgradeSite.link && this.upgradeSite.link.energy > 0) {
-				upgrader.task = Tasks.withdraw(this.upgradeSite.link);
-			} else if (this.upgradeSite.battery && this.upgradeSite.battery.energy > 0) {
+			// Try recharging from link first; if the has no energy,
+			// either some will pop up soon, or there is no energy anywhere
+			if (this.upgradeSite.link) {
+				if (this.upgradeSite.link.energy > 0) {
+					upgrader.task = Tasks.withdraw(this.upgradeSite.link);
+				}
+			}
+			if (!upgrader.task && this.upgradeSite.battery && this.upgradeSite.battery.energy > 0) {
 				upgrader.task = Tasks.withdraw(this.upgradeSite.battery);
-			} else {
+			}
+			if (!upgrader.task && !this.upgradeSite.link) {
 				// Find somewhere else to recharge from
 				// TODO: BUG HERE IF NO UPGRADE CONTAINER
 				if (this.upgradeSite.battery && this.upgradeSite.battery.targetedBy.length == 0) {
