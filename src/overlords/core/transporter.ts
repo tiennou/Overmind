@@ -40,7 +40,7 @@ export class TransportOverlord extends Overlord {
 	private neededTransportPower(): number {
 
 		if (!this.colony.storage
-			&& !(this.colony.hatchery && this.colony.hatchery.battery)
+			&& !(this.colony.hatchery && this.colony.hatchery.batteries)
 			&& !this.colony.upgradeSite.battery) {
 			return 0;
 		}

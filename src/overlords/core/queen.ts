@@ -50,9 +50,9 @@ export class QueenOverlord extends Overlord {
 		if (this.hatchery.link && !this.hatchery.link.isEmpty) {
 			this.debug(`${queen.print} recharging from link`);
 			queen.task = Tasks.withdraw(this.hatchery.link);
-		} else if (this.hatchery.battery && this.hatchery.battery.energy > 0) {
+		} else if (this.hatchery.batteries.length && this.hatchery.batteries[0].energy > 0) {
 			this.debug(`${queen.print} recharging from battery`);
-			queen.task = Tasks.withdraw(this.hatchery.battery);
+			queen.task = Tasks.withdraw(this.hatchery.batteries[0]);
 		} else {
 			this.debug(`${queen.print} recharging`);
 			queen.task = Tasks.recharge();
@@ -62,25 +62,25 @@ export class QueenOverlord extends Overlord {
 	private idleActions(queen: Zerg): void {
 		if (this.hatchery.link) {
 			// Can energy be moved from the link to the battery?
-			if (this.hatchery.battery && !this.hatchery.battery.isFull && !this.hatchery.link.isEmpty) {
+			if (this.hatchery.batteries.length && !this.hatchery.batteries[0].isFull && !this.hatchery.link.isEmpty) {
 				// Move energy to battery as needed
 				if (queen.store.energy < queen.store.getCapacity()) {
 					queen.task = Tasks.withdraw(this.hatchery.link);
 				} else {
-					queen.task = Tasks.transfer(this.hatchery.battery);
+					queen.task = Tasks.transfer(this.hatchery.batteries[0]);
 				}
 			} else {
 				if (queen.store.energy < queen.store.getCapacity()) { // make sure you're recharged
 					if (!this.hatchery.link.isEmpty) {
 						queen.task = Tasks.withdraw(this.hatchery.link);
-					} else if (this.hatchery.battery && !this.hatchery.battery.isEmpty) {
-						queen.task = Tasks.withdraw(this.hatchery.battery);
+					} else if (this.hatchery.batteries.length && !this.hatchery.batteries[0].isEmpty) {
+						queen.task = Tasks.withdraw(this.hatchery.batteries[0]);
 					}
 				}
 			}
 		} else {
-			if (this.hatchery.battery && queen.store.energy < queen.store.getCapacity()) {
-				queen.task = Tasks.withdraw(this.hatchery.battery);
+			if (this.hatchery.batteries.length && queen.store.energy < queen.store.getCapacity()) {
+				queen.task = Tasks.withdraw(this.hatchery.batteries[0]);
 			}
 		}
 	}
