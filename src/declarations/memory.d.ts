@@ -162,6 +162,8 @@ interface CreepMemory {
 	needBoosts?: ResourceConstant[];
 	data: {
 		origin: string;
+		/** Bunker Queens only */
+		idlePos?: Coord;
 	};
 	avoidDanger?: {
 		start: number;

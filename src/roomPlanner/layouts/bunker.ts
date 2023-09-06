@@ -502,7 +502,7 @@ export function getPosFromBunkerCoord(coord: Coord, colony: Colony): RoomPositio
 }
 
 // Spots where queens can sit to be renewed when idle
-export const bunkerChargingSpots: Coord[] = [{'x': 29, 'y': 24}, {'x': 24, 'y': 21}];
+export const bunkerChargingSpots: Coord[] = [{'x': 27, 'y': 31}, {'x': 23, 'y': 19}];
 
 export const reagentLabSpots: [Coord, Coord] = [{'x': 27, 'y': 22}, {'x': 28, 'y': 23}];
 

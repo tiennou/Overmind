@@ -9,7 +9,7 @@ import {TransportRequest} from '../../logistics/TransportRequestGroup';
 import {Pathing} from '../../movement/Pathing';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
-import {getPosFromBunkerCoord, insideBunkerBounds, quadrantFillOrder} from '../../roomPlanner/layouts/bunker';
+import {bunkerChargingSpots, getPosFromBunkerCoord, insideBunkerBounds, quadrantFillOrder} from '../../roomPlanner/layouts/bunker';
 import {Task} from '../../tasks/Task';
 import {Tasks} from '../../tasks/Tasks';
 import {hasMinerals, mergeSum, minBy} from '../../utilities/utils';
@@ -102,10 +102,13 @@ export class BunkerQueenOverlord extends Overlord {
 	}
 
 	private computeQueenAssignments() {
-		// Assign quadrants to queens
+		let bunkerChargingPositions = _.flatten(bunkerChargingSpots.map(coord => getPosFromBunkerCoord(coord, this.colony).availableNeighbors(true)));
 		this.assignments = _.zipObject(_.map(this.queens, queen => [queen.name, {}]));
 		const activeQueens = _.filter(this.queens, queen => !queen.spawning);
 		this.numActiveQueens = activeQueens.length;
+		// Reset idle positions
+		this.queens.forEach(q => delete q.memory.data.idlePos);
+		// Assign quadrants to queens
 		if (this.numActiveQueens > 0) {
 			const quadrantAssignmentOrder = [this.quadrants.lowerRight,
 											 this.quadrants.upperLeft,
@@ -115,6 +118,14 @@ export class BunkerQueenOverlord extends Overlord {
 			for (const quadrant of quadrantAssignmentOrder) {
 				const queen = activeQueens[i % activeQueens.length];
 				_.extend(this.assignments[queen.name], _.zipObject(_.map(quadrant, s => [s.id, true])));
+
+				if (quadrant[0]) {
+					const chargingSpot = quadrant[0].pos.findClosestByLimitedRange(bunkerChargingPositions, 10);
+					if (chargingSpot) {
+						bunkerChargingPositions = bunkerChargingPositions.filter(pos => !pos.isEqualTo(chargingSpot.x, chargingSpot.y));
+						queen.memory.data.idlePos = chargingSpot.toCoord();
+					}
+				}
 				i++;
 			}
 		}
@@ -415,9 +426,17 @@ export class BunkerQueenOverlord extends Overlord {
 						  `generating a new one`);
 			}
 		}
+
 		// Otherwise do idle actions
 		if (queen.isIdle) {
-			// log.debug(`${queen.print}: idle`);
+			if (queen.memory.data.idlePos) {
+				const idlePos = new RoomPosition(queen.memory.data.idlePos?.x, queen.memory.data.idlePos?.y, this.colony.room.name);
+				if (!queen.pos.inRangeToPos(idlePos, 0)) {
+					// Move the queen manually so we stop idling as early as possible
+					queen.goTo(idlePos);
+				}
+				// log.debug(`${queen.print}: idling on ${idlePos.print}`);
+			}
 			// this.idleActions(queen);
 			delete queen.memory._go;
 		}
