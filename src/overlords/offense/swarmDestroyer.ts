@@ -36,7 +36,7 @@ export class SwarmDestroyerOverlord extends SwarmOverlord {
 	};
 
 	constructor(directive: DirectiveSwarmDestroy, priority = OverlordPriority.offense.destroy) {
-		super(directive, 'destroy', priority, 8);
+		super(directive, 'destroy', priority, { requiredRCL: 8 });
 		this.directive = directive;
 		this.memory = Mem.wrap(this.directive.memory, this.name);
 		this.intel = new CombatIntel(this.directive);

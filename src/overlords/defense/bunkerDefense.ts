@@ -21,7 +21,7 @@ export class BunkerDefenseOverlord extends CombatOverlord {
 
 	constructor(directive: DirectiveInvasionDefense, priority = OverlordPriority.defense.meleeDefense) {
 		// Only spawn inside room
-		super(directive, 'bunkerDefense', priority, 1, 30);
+		super(directive, 'bunkerDefense', priority, { requiredRCL: 1, maxSpawnDistance: 30 });
 		this.defenders = this.combatZerg(Roles.bunkerDefender);
 	}
 

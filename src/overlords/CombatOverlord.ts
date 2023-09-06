@@ -10,7 +10,8 @@ export interface CombatOverlordMemory extends OverlordMemory {
 }
 
 export interface CombatOverlordOptions {
-
+	requiredRCL: number;
+	maxSpawnDistance?: number;
 }
 
 const getDefaultCombatOverlordMemory: () => CombatOverlordMemory = () => ({
@@ -28,11 +29,11 @@ export abstract class CombatOverlord extends Overlord {
 	spawnGroup: SpawnGroup;
 	requiredRCL: number; // default required RCL
 
-	constructor(directive: Directive, name: string, priority: number, requiredRCL: number, maxPathDistance?: number) {
+	constructor(directive: Directive, name: string, priority: number, options: CombatOverlordOptions) {
 		super(directive, name, priority, getDefaultCombatOverlordMemory);
 		this.directive = directive;
-		this.requiredRCL = requiredRCL;
-		this.spawnGroup = new SpawnGroup(this, {requiredRCL: this.requiredRCL, maxPathDistance: maxPathDistance});
+		this.requiredRCL = options.requiredRCL;
+		this.spawnGroup = new SpawnGroup(this, { requiredRCL: this.requiredRCL, maxPathDistance: options.maxSpawnDistance });
 	}
 
 	get age(): number {

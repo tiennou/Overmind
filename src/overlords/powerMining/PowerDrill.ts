@@ -19,8 +19,6 @@ interface PowerDrillOverlordMemory extends CombatOverlordMemory {
 @profile
 export class PowerDrillOverlord extends CombatOverlord {
 
-	static requiredRCL = 7;
-
 	directive: DirectivePowerMine;
 	memory: PowerDrillOverlordMemory;
 	partnerMap: Map<string, string[]>;
@@ -29,7 +27,9 @@ export class PowerDrillOverlord extends CombatOverlord {
 	coolant: CombatZerg[];
 
 	constructor(directive: DirectivePowerMine, priority = OverlordPriority.powerMine.drill) {
-		super(directive, 'powerDrill', priority, PowerDrillOverlord.requiredRCL);
+		super(directive, 'powerDrill', priority, {
+			requiredRCL: DirectivePowerMine.requiredRCL,
+		});
 		this.directive = directive;
 		this.priority += this.outpostIndex * OverlordPriority.powerMine.roomIncrement;
 		this.drills = this.combatZerg(Roles.drill);

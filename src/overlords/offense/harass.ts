@@ -26,7 +26,7 @@ export class HarassOverlord extends CombatOverlord {
 
 	constructor(directive: DirectiveHarass,
 				priority = OverlordPriority.outpostOffense.harass) {
-		super(directive, 'harass', priority, 1);
+		super(directive, 'harass', priority, { requiredRCL: 1 });
 		this.directive = directive;
 		this.nibblers = this.combatZerg(Roles.melee);
 		this.hydralisks = this.combatZerg(Roles.ranged);

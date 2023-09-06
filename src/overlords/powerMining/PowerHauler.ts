@@ -19,8 +19,6 @@ export class PowerHaulingOverlord extends Overlord {
 	numHaulers: number;
 	totalCollected: number;
 
-	// TODO bug where haulers can come from tiny rooms not ready yet
-	requiredRCL = 6;
 	// Allow time for body to spawn
 	prespawnAmount = 300;
 

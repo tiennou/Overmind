@@ -31,7 +31,7 @@ export class SourceReaperOverlord extends CombatOverlord {
 	defenders: CombatZerg[];
 
 	constructor(directive: DirectiveSKOutpost, priority = OverlordPriority.remoteSKRoom.sourceReaper) {
-		super(directive, 'sourceReaper', priority, SourceReaperOverlord.requiredRCL);
+		super(directive, 'sourceReaper', priority, { requiredRCL: SourceReaperOverlord.requiredRCL });
 		this.priority += this.outpostIndex * OverlordPriority.remoteSKRoom.roomIncrement;
 		this.reapers = this.combatZerg(Roles.melee);
 		this.defenders = this.combatZerg(Roles.ranged);

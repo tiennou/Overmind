@@ -24,7 +24,7 @@ export class DistractionOverlord extends CombatOverlord {
 	constructor(directive: Directive,
 				_boosted  = false,
 				priority = OverlordPriority.defense.rangedDefense) {
-		super(directive, 'distraction', priority, 1);
+		super(directive, 'distraction', priority, { requiredRCL: 1 });
 		this.distractions = this.combatZerg(Roles.rangedDistractor);
 	}
 

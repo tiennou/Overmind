@@ -48,7 +48,7 @@ export class StrongholdOverlord extends CombatOverlord {
 
 	constructor(directive: DirectiveStronghold,
 				priority = OverlordPriority.defense.rangedDefense) {
-		super(directive, 'stronghold', priority, 1);
+		super(directive, 'stronghold', priority, { requiredRCL: 1 });
 		this.strongholdKillers = this.combatZerg(Roles.strongholdKiller, {notifyWhenAttacked: false});
 	}
 

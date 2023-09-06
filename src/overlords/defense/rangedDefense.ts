@@ -24,7 +24,7 @@ export class RangedDefenseOverlord extends CombatOverlord {
 
 	constructor(directive: DirectiveInvasionDefense,
 				priority = OverlordPriority.defense.rangedDefense) {
-		super(directive, 'rangedDefense', priority, 1);
+		super(directive, 'rangedDefense', priority, { requiredRCL: 1 });
 		this.hydralisks = this.combatZerg(Roles.ranged);
 	}
 
