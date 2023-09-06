@@ -29,6 +29,7 @@ export class PowerDrillOverlord extends CombatOverlord {
 	constructor(directive: DirectivePowerMine, priority = OverlordPriority.powerMine.drill) {
 		super(directive, 'powerDrill', priority, {
 			requiredRCL: DirectivePowerMine.requiredRCL,
+			maxSpawnDistance: DirectivePowerMine.maxSpawnDistance,
 		});
 		this.directive = directive;
 		this.priority += this.outpostIndex * OverlordPriority.powerMine.roomIncrement;

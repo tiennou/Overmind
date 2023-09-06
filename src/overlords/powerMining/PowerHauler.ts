@@ -1,3 +1,4 @@
+import { SpawnGroup } from 'logistics/SpawnGroup';
 import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {DirectivePowerMine} from '../../directives/resource/powerMine';
@@ -25,6 +26,10 @@ export class PowerHaulingOverlord extends Overlord {
 	constructor(directive: DirectivePowerMine, priority = OverlordPriority.collectionUrgent.haul) {
 		super(directive, 'powerHaul', priority);
 		this.directive = directive;
+		this.spawnGroup = new SpawnGroup(this, {
+			requiredRCL: DirectivePowerMine.requiredRCL,
+			maxPathDistance: DirectivePowerMine.maxSpawnDistance,
+		});
 		this.haulers = this.zerg(Roles.transport);
 		this.totalCollected = this.totalCollected || 0;
 		// Spawn haulers to collect ALL the power at the same time.
