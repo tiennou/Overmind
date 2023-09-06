@@ -74,10 +74,13 @@ interface Memory {
 		operationMode: operationMode;
 		log: import('console/log').LogSettings;
 		enableVisuals: boolean;
-		/**
-		 * Tick until which the intel room visuals are shown
-		 */
-		intelVisualsUntil?: number;
+		intelVisuals: {
+			/**
+			 * Tick until which the intel room visuals are shown
+			 */
+			until?: number;
+			range?: number;
+		},
 		allies: string[];
 		resourceCollectionMode: resourceCollectionMode;
 		powerCollection: {

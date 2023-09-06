@@ -1,7 +1,7 @@
 import { ReservingOverlord } from 'overlords/colonization/reserver';
 import {Colony, ColonyMemory, getAllColonies} from '../Colony';
 import {Directive} from '../directives/Directive';
-import {RoomIntel} from '../intel/RoomIntel';
+import {ROOMINTEL_DEFAULT_VISUALS_RANGE, RoomIntel} from '../intel/RoomIntel';
 import {Overlord} from '../overlords/Overlord';
 import {ExpansionEvaluator} from '../strategy/ExpansionEvaluator';
 import {Cartographer} from '../utilities/Cartographer';
@@ -241,8 +241,8 @@ export class OvermindConsole {
 		command: OvermindConsole.visuals.bind(OvermindConsole),
 	},
 	{
-		name: 'showIntelVisuals(ticks?)',
-		description: 'show intel using visuals (ticks defaults to 100)',
+		name: 'showIntelVisuals(ticks?, range?)',
+		description: 'show intel in range using visuals (ticks defaults to 100)',
 		command: OvermindConsole.showIntelVisuals.bind(OvermindConsole),
 	},
 	{
@@ -1027,9 +1027,10 @@ export class OvermindConsole {
 		console.log(`Visuals ${Memory.settings.enableVisuals ? 'enabled' : 'disabled'}.`);
 	}
 
-	static showIntelVisuals(ticks: number = 100) {
-		Memory.settings.intelVisualsUntil = Game.time + ticks;
-		console.log(`Intel visuals enabled for the next ${ticks} ticks (until ${Memory.settings.intelVisualsUntil}).`);
+	static showIntelVisuals(ticks: number = 100, range?: number) {
+		Memory.settings.intelVisuals.until = Game.time + ticks;
+		Memory.settings.intelVisuals.range = range && range > 0 ? range : ROOMINTEL_DEFAULT_VISUALS_RANGE;
+		console.log(`Intel visuals enabled in range ${Memory.settings.intelVisuals.range} for the next ${ticks} ticks (until ${Memory.settings.intelVisuals.until}).`);
 	}
 
 	static showAssets() {

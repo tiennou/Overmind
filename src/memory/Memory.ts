@@ -243,6 +243,7 @@ export class Mem {
 				colonization: {
 					maxRooms: undefined,
 				},
+				intelVisuals: {},
 				attitude: {
 					brazenness: 0.5,
 				}
