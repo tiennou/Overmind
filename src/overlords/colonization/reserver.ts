@@ -8,6 +8,9 @@ import {Zerg} from '../../zerg/Zerg';
 import {MY_USERNAME} from '../../~settings';
 import {Overlord} from '../Overlord';
 
+/** Tick bias used to calculate if a reserver needs to be sent */
+const RESERVE_BUFFER_TIME = 1000;
+
 /**
  * Spawns reservers to reserve an outpost room
  */
@@ -15,36 +18,53 @@ import {Overlord} from '../Overlord';
 export class ReservingOverlord extends Overlord {
 
 	reservers: Zerg[];
-	reserveBuffer: number;
 	settings = {
 		resetSignature: false,
 	};
+	distance: number;
+	reservation: { username?: string, ticksToEnd?: number }
+	reserverCount: number;
 
 	constructor(directive: DirectiveOutpost, priority = OverlordPriority.remoteRoom.reserve) {
 		super(directive, 'reserve', priority);
 		// Change priority to operate per-outpost
 		this.priority += this.outpostIndex * OverlordPriority.remoteRoom.roomIncrement;
-		this.reserveBuffer = 2000;
 		this.reservers = this.zerg(Roles.claim);
+		this.reserverCount = 0;
+		this.refreshReservation();
+	}
+
+	private refreshReservation() {
+		if (this.room) {
+			this.reservation = {
+				username: this.room.controller!.reservation?.username,
+				ticksToEnd: this.room.controller!.reservation?.ticksToEnd,
+			}
+		} else {
+			this.reservation = {
+				username: RoomIntel.roomReservedBy(this.pos.roomName),
+				ticksToEnd: RoomIntel.roomReservationRemaining(this.pos.roomName),
+			}
+		}
+	}
+
+	refresh(): void {
+		super.refresh();
+		this.refreshReservation();
+	}
+
+	roomReservationRemaining() {
+		if (this.reservation.username !== MY_USERNAME) {
+			return 0;
+		}
+		return this.reservation.ticksToEnd ?? 0;
 	}
 
 	init() {
-		let amount = 0;
-		if (this.room) {
-			if (this.room.controller!.needsReserving(this.reserveBuffer)) {
-				amount = 1;
-			} else if (this.room.controller!.reservation && !this.room.controller!.reservedByMe) {
-				amount = Math.min(this.room.controller!.pos.availableNeighbors(true).length, 2);
-			}
-		} else if (RoomIntel.roomReservedBy(this.pos.roomName) == MY_USERNAME &&
-				   RoomIntel.roomReservationRemaining(this.pos.roomName) < 1000) {
-			amount = 1;
-		}
-		this.wishlist(amount, Setups.infestors.reserve);
+		this.wishlist(this.reserverCount, Setups.infestors.reserve);
 	}
 
 	private handleReserver(reserver: Zerg): void {
-		if (reserver.avoidDanger()) return;
 		if (reserver.room == this.room && !reserver.pos.isEdge) {
 			// If reserver is in the room and not on exit tile
 			if (!this.room.controller!.signedByMe || this.settings.resetSignature) {
@@ -59,12 +79,18 @@ export class ReservingOverlord extends Overlord {
 				reserver.task = Tasks.reserve(this.room.controller!);
 			}
 		} else {
-			// reserver.task = Tasks.goTo(this.pos);
 			reserver.goTo(this.pos);
 		}
 	}
 
 	run() {
-		this.autoRun(this.reservers, reserver => this.handleReserver(reserver));
+		const distance = (<DirectiveOutpost>this.initializer).distanceFromColony.terrainWeighted;
+		const waitTime = this.colony.hatchery?.getWaitTimeForPriority(this.priority) ?? 0;
+		this.reserverCount = this.roomReservationRemaining() - RESERVE_BUFFER_TIME <= waitTime + distance ? 1 : 0;
+		this.debug(`remaining ${this.roomReservationRemaining()}, distance: ${distance}, waitTime: ${waitTime}: needs ${this.reserverCount} reserver`);
+
+		this.autoRun(this.reservers,
+			reserver => this.handleReserver(reserver),
+			reserver => reserver.avoidDanger());
 	}
 }

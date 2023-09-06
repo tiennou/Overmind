@@ -5,9 +5,17 @@ import {Task} from '../Task';
 export type reserveTargetType = StructureController;
 export const reserveTaskName = 'colony';
 
+const RESERVE_DEFAULT_AMOUNT = 4999;
+
+interface TaskReserveOptions extends TaskOptions {
+	reserveAmount?: number;
+}
+
 @profile
 export class TaskReserve extends Task<reserveTargetType> {
+	options: TaskReserveOptions;
 	constructor(target: reserveTargetType, options = {} as TaskOptions) {
+		_.defaults(options, { reserveAmount: RESERVE_DEFAULT_AMOUNT })
 		super(reserveTaskName, target, options);
 	}
 
@@ -17,7 +25,7 @@ export class TaskReserve extends Task<reserveTargetType> {
 
 	isValidTarget() {
 		const target = this.target;
-		return (target != null && (!target.reservation || target.reservation.ticksToEnd < 4999));
+		return (target != null && (!target.reservation || target.reservation.ticksToEnd < (this.options.reserveAmount ?? RESERVE_DEFAULT_AMOUNT)));
 	}
 
 	work() {

@@ -310,8 +310,6 @@ interface StructureController {
 	reservedByMe: boolean;
 	signedByMe: boolean;
 	signedByScreeps: boolean;
-
-	needsReserving(reserveBuffer: number): boolean;
 }
 
 interface StructureSpawn extends _StoreLike {
