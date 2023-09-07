@@ -1,6 +1,6 @@
 import {log} from '../../console/log';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectivePowerMine} from '../../directives/resource/powerMine';
+import {DirectivePowerMine, PowerMineState} from '../../directives/resource/powerMine';
 import {Mem} from '../../memory/Memory';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
@@ -67,7 +67,7 @@ export class PowerDrillOverlord extends CombatOverlord {
 				// We are not there yet
 			} else {
 				// If power bank is dead
-				if (this.directive.powerBank == undefined && this.directive.memory.state < 2) {
+				if (this.directive.powerBank == undefined && this.directive.memory.state < PowerMineState.haulingStarted) {
 					Game.notify(`Power bank in ${this.room.print} is dead.`);
 					const result = drill.retire();
 					if (result == ERR_BUSY) {
@@ -198,7 +198,7 @@ export class PowerDrillOverlord extends CombatOverlord {
 	run() {
 		this.autoRun(this.drills, drill => this.handleDrill(drill));
 		this.autoRun(this.coolant, coolant => this.handleCoolant(coolant));
-		if (this.directive.memory.state >= 3) {
+		if (this.directive.memory.state >= PowerMineState.miningDone) {
 			Game.notify('DELETING ALL POWER MINING CREEPS BECAUSE STATE IS >= 3 in ' + this.directive.print);
 			this.drills.forEach(drill => drill.retire());
 			this.coolant.forEach(coolant => coolant.retire());

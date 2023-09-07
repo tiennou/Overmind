@@ -1,7 +1,7 @@
 import { SpawnGroup } from 'logistics/SpawnGroup';
 import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
-import {DirectivePowerMine} from '../../directives/resource/powerMine';
+import {DirectivePowerMine, PowerMineState} from '../../directives/resource/powerMine';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
@@ -49,7 +49,7 @@ export class PowerHaulingOverlord extends Overlord {
 
 	private handleHauler(hauler: Zerg) {
 		if (hauler.store.getUsedCapacity() === 0) {
-			if (this.directive.memory.state >= 4) {
+			if (this.directive.memory.state >= PowerMineState.haulingComplete) {
 				// FIXME: Maybe ditch this and put it as a separate on-finishing method to reassign
 				log.warning(`${hauler.name} is retiring as directive is done!`);
 				this.numHaulers = 0;
@@ -130,7 +130,7 @@ export class PowerHaulingOverlord extends Overlord {
 	}
 
 	run() {
-		if (Game.time >= this.tickToSpawnOn && this.directive.memory.state < 4) {
+		if (Game.time >= this.tickToSpawnOn && this.directive.memory.state < PowerMineState.haulingComplete) {
 			this.wishlist(this.numHaulers, Setups.transporters.default);
 		}
 		for (const hauler of this.haulers) {
