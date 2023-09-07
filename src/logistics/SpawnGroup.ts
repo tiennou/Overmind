@@ -131,15 +131,14 @@ export class SpawnGroup {
 		coloniesInRange = _.filter(coloniesInRange,
 								   colony => maxColonyLevel - colony.level <= this.settings.maxLevelDifference);
 
-		const colonyNames = [] as string[];
+		const colonyNames: string[] = [];
 		// const routes = {} as { [colonyName: string]: { [roomName: string]: boolean } };
 		// let paths = {} as { [colonyName: string]: { startPos: RoomPosition, path: string[] } };
-		const distances = {} as { [colonyName: string]: number };
+		const distances: { [colonyName: string]: number } = {};
 		for (const colony of coloniesInRange) {
 			const spawn = colony.room.spawns[0];
 			if (spawn) {
-				// const route = Pathing.findRoute(colony.room.name, this.roomName);
-				const path = Pathing.findPathToRoom(spawn.pos, this.roomName);
+				const path = Pathing.findPathToRoom(spawn.pos, this.roomName, { useFindRoute: true });
 				if (!path.incomplete && path.path.length <= DEFAULT_MAX_PATH_LENGTH + 25) {
 					colonyNames.push(colony.room.name);
 					// routes[colony.room.name] = route;
