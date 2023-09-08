@@ -32,17 +32,24 @@ export const ALL_RESOURCE_TYPE_ERROR =
 export type BufferTarget = StructureStorage | StructureTerminal;
 
 export interface LogisticsRequest {
-	id: string;							// ID of the request; used for matching purposes
-	target: LogisticsTarget;			// Target making the request
-	amount: number;						// Amount to request
-	dAmountdt: number;					// Optional value showing how fast it fills up / empties (e.g. mining rates)
-	resourceType: ResourceConstant | 'all';		// Resource type being requested
-	multiplier: number;					// Multiplier to prioritize important requests
+	/** ID of the request; used for matching purposes */
+	id: string;
+	/** Target making the request */
+	target: LogisticsTarget;
+	/** Amount to request */
+	amount: number;
+	/** Optional value showing how fast it fills up / empties (e.g. mining rates) */
+	dAmountdt: number;
+	/** Resource type being requested */
+	resourceType: ResourceConstant | 'all';
+	/** Multiplier to prioritize important requests */
+	multiplier: number;
 }
 
 interface RequestOptions {
 	amount?: number;
-	dAmountdt?: number;					// Always pass a positive value for this; sign is determined by function call
+	/** Always pass a positive value for this; sign is determined by function call */
+	dAmountdt?: number;
 	resourceType?: ResourceConstant | 'all';
 	multiplier?: number;
 }
@@ -85,9 +92,12 @@ export class LogisticsNetwork {
 	};
 	static settings = {
 		flagDropAmount        : 1000,
-		rangeToPathHeuristic  : 1.1, 	// findClosestByRange * this ~= findClosestByPos except in pathological cases
-		carryThreshold        : 800, 	// only do stable matching on transporters at least this big (RCL4+)
-		droppedEnergyThreshold: 200,	// ignore dropped energy below this amount
+		/** findClosestByRange * this ~= findClosestByPos except in pathological cases */
+		rangeToPathHeuristic  : 1.1,
+		/** only do stable matching on transporters at least this big (RCL4+) */
+		carryThreshold        : 800,
+		/** ignore dropped energy below this amount */
+		droppedEnergyThreshold: 200,
 	};
 
 	constructor(colony: Colony) {
