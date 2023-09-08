@@ -71,11 +71,12 @@ export class WorkerOverlord extends Overlord {
 			_.filter(this.fortifyBarriers,
 					 barrier => barrier.hits < WorkerOverlord.settings.barrierHits.critical), 10);
 		// Generate a list of structures needing repairing (different from fortifying except in critical case)
-		this.repairStructures = $.structures(this, 'repairStructures', () =>
-			_.filter(this.colony.repairables, structure => {
+		this.repairStructures = $.structures(this, 'repairStructures', () => {
+			const miningContainers = _.compact(_.map(this.colony.miningSites, site => site.overlords.mine?.container?.id));
+			return _.filter(this.colony.repairables, structure => {
 				if (structure.structureType == STRUCTURE_CONTAINER) {
-					// only repair containers in owned room
-					if (structure.pos.roomName == this.colony.name) {
+					// only repair non-mining containers in owned rooms
+					if (structure.pos.roomName == this.colony.name && !miningContainers.includes((<StructureContainer>structure).id)) {
 						return structure.hits < 0.5 * structure.hitsMax;
 					} else {
 						return false;
@@ -83,7 +84,8 @@ export class WorkerOverlord extends Overlord {
 				} else {
 					return structure.hits < structure.hitsMax;
 				}
-			}));
+			})
+		});
 		this.dismantleStructures = [];
 
 		const homeRoomName = this.colony.room.name;
