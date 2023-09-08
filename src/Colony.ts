@@ -202,8 +202,20 @@ export class Colony {
 	// Operational state
 	/** Level of the colony's main room */
 	level: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
 	/** The military alert state of the colony */
-	defcon: DEFCON;
+	get defcon() {
+		return this.memory.defcon.level;
+	}
+
+	set defcon(level: DEFCON) {
+		if (level < DEFCON.safe || level > DEFCON.bigPlayerInvasion) return;
+		this.memory.defcon = {
+			level: level,
+			tick : Game.time
+		};
+	}
+
 	/** Various flags tracking the colony's state */
 	state: {
 		/** Whether colony is bootstrapping or recovering from crash */
@@ -462,35 +474,35 @@ export class Colony {
 	 */
 	private registerOperationalState(): void {
 		this.level = this.controller.level as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-		// Set DEFCON level TODO: finish this
+		// Set DEFCON level for the colony
 		let defcon = DEFCON.safe;
 		const defconDecayTime = 200;
 		if (this.room.dangerousHostiles.length > 0 && !this.controller.safeMode) {
-			const effectiveHostileCount = _.sum(this.room.dangerousHostiles,
-												hostile => CombatIntel.uniqueBoosts(hostile).length > 0 ? 2 : 1);
-			if (effectiveHostileCount >= 3) {
+			const playerHostileCount = _.sum(this.room.dangerousPlayerHostiles,
+				hostile => CombatIntel.uniqueBoosts(hostile).length > 0 ? 2 : 1);
+			const hostileCount = _.sum(this.room.dangerousHostiles,
+				hostile => CombatIntel.uniqueBoosts(hostile).length > 0 ? 2 : 1);
+			if (playerHostileCount >= 3) {
+				defcon = DEFCON.bigPlayerInvasion;
+			} else if (playerHostileCount >= 1) {
+				defcon = DEFCON.playerInvasion;
+			} else if (hostileCount >= 3) {
 				defcon = DEFCON.boostedInvasionNPC;
 			} else {
 				defcon = DEFCON.invasionNPC;
 			}
 		}
-		if (this.memory.defcon) {
-			if (defcon < this.memory.defcon.level) { // decay defcon level over time if defcon less than memory value
+		if (defcon !== this.defcon) {
+			if (defcon < this.defcon) { // decay defcon level over time if defcon less than memory value
 				if (this.memory.defcon.tick + defconDecayTime < Game.time) {
-					this.memory.defcon.level = defcon;
-					this.memory.defcon.tick = Game.time;
+					log.info(`Colony DEFCON level lowered to ${defcon}`);
+					this.defcon = defcon;
 				}
-			} else if (defcon > this.memory.defcon.level) { // refresh defcon time if it increases by a level
-				this.memory.defcon.level = defcon;
-				this.memory.defcon.tick = Game.time;
+			} else if (defcon > this.defcon) { // refresh defcon time if it increases by a level
+				log.alert(`Colony DEFCON level raised to ${defcon}!`);
+				this.defcon = defcon;
 			}
-		} else {
-			this.memory.defcon = {
-				level: defcon,
-				tick : Game.time
-			};
 		}
-		this.defcon = this.memory.defcon.level;
 
 		// Set colony state to blank - other directives can modify this
 		this.state = {};
