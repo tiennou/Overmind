@@ -1,3 +1,4 @@
+import { log } from 'console/log';
 import {CombatSetups, Roles} from '../../creepSetups/setups';
 import {DirectiveOutpostDefense} from '../../directives/defense/outpostDefense';
 import {CombatIntel, CombatPotentials} from '../../intel/CombatIntel';
@@ -84,6 +85,7 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 		const needHeal = enemyPotentials.heal * 1.2;
 
 		if (needAttack > 100 || needRanged > 100 || needHeal > 100) {
+			log.warning(`${this.print}: too much firepower needed to fight: ${JSON.stringify(enemyPotentials)}`);
 			return; // fuck it let's not fight this
 		}
 
