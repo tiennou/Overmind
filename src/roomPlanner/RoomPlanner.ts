@@ -1,5 +1,5 @@
 import { errorForCode } from 'utilities/errors';
-import {Colony, getAllColonies} from '../Colony';
+import {Colony, DEFCON, getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {isOwnedStructure} from '../declarations/typeGuards';
 import {DirectiveTerminalRebuildState} from '../directives/terminalState/terminalState_rebuild';
@@ -924,7 +924,7 @@ export class RoomPlanner {
 		if (this.active || this.visualize) {
 			this.make();
 			this.visuals();
-		} else {
+		} else if (this.colony.defcon === DEFCON.safe) {
 			// Build missing structures from the layout
 			if (this.shouldRecheck()) {
 				this.demolishMisplacedStructures();

@@ -1,6 +1,6 @@
 import { errorForCode } from 'utilities/errors';
 import {$} from '../caching/GlobalCache';
-import {Colony, getAllColonies} from '../Colony';
+import {Colony, DEFCON, getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
 import {MatrixTypes, Pathing} from '../movement/Pathing';
@@ -423,7 +423,7 @@ export class RoadPlanner {
 				this.buildRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles());
 			}
 			this.visuals();
-		} else {
+		} else if (this.colony.defcon === DEFCON.safe) {
 			// Once in a blue moon, recalculate the entire network and write to memory to keep it up to date
 			if (Game.time % RoadPlanner.settings.recalculateRoadNetworkInterval == this.colony.id) {
 				if (this.roomPlanner.storagePos) {
