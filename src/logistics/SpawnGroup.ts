@@ -8,6 +8,7 @@ import {profile} from '../profiler/decorator';
 import {getCacheExpiration, minBy, onPublicServer} from '../utilities/utils';
 
 interface SpawnGroupMemory {
+	debug?: boolean;
 	colonies: string[];
 	distances: { [colonyName: string]: number };
 	// routes: { [colonyName: string]: { [roomName: string]: boolean } };
@@ -107,6 +108,16 @@ export class SpawnGroup {
 		Overmind.spawnGroups[this.ref] = this;
 	}
 
+	get print(): string {
+		return '<a href="#!/room/' + Game.shard.name + '/' + this.roomName + '">[' + this.ref + ']</a>';
+	}
+
+	protected debug(...args: string[]) {
+		if (this.memory.debug) {
+			log.alert(this.print, ...args);
+		}
+	}
+
 	get colonies(): Colony[] {
 		if (!this._colonies) {
 			this._colonies = _.compact(_.map(this.colonyNames, roomName => Overmind.colonies[roomName]));
@@ -131,6 +142,7 @@ export class SpawnGroup {
 		coloniesInRange = _.filter(coloniesInRange,
 								   colony => maxColonyLevel - colony.level <= this.settings.maxLevelDifference);
 
+		this.debug(`recalculateColonies: initial set: ${coloniesInRange.map(c => c.print)}`);
 		const colonyNames: string[] = [];
 		// const routes = {} as { [colonyName: string]: { [roomName: string]: boolean } };
 		// let paths = {} as { [colonyName: string]: { startPos: RoomPosition, path: string[] } };
@@ -147,6 +159,7 @@ export class SpawnGroup {
 				}
 			}
 		}
+		this.debug(`recalculateColonies: valid colonies: ${colonyNames}`);
 		this.memory.colonies = colonyNames;
 		// this.memory.routes = routes;
 		// this.memory.paths = TODO
@@ -179,8 +192,8 @@ export class SpawnGroup {
 			// const maxCost = bodyCost(request.setup.generateBody(this.energyCapacityAvailable));
 			// const okHatcheries = _.filter(hatcheries,
 			// 							  hatchery => hatchery.room.energyCapacityAvailable >= maxCost);
-			const bestHatchery = minBy(hatcheries, hatchery => hatchery.getWaitTimeForPriority(request.priority) +
-															   distanceTo(hatchery));
+			const bestHatchery = minBy(hatcheries, hatchery =>
+				hatchery.getWaitTimeForPriority(request.priority) + distanceTo(hatchery));
 			if (bestHatchery) {
 				bestHatchery.enqueue(request);
 			} else {
