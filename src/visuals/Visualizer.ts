@@ -315,7 +315,7 @@ export class Visualizer {
 			notificationMessages = ['No notifications'];
 		}
 		const maxStringLength = _.max(_.map(notificationMessages, msg => msg.length));
-		const width = Math.max(11, 1.2 * CHAR_WIDTH * maxStringLength);
+		const width = Math.max(16, 1.2 * CHAR_WIDTH * maxStringLength);
 		this.infoBox('Notifications', notificationMessages, {x, y}, width);
 	}
 
