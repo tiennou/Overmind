@@ -3,7 +3,7 @@ import {Colony} from '../../Colony';
 import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {isResource, isRuin, isTombstone} from '../../declarations/typeGuards';
-import {ALL_RESOURCE_TYPE_ERROR, BufferTarget, LogisticsNetwork, LogisticsRequest} from '../../logistics/LogisticsNetwork';
+import {ALL_RESOURCE_TYPE_ERROR, BufferTarget, LogisticsNetwork, LogisticsRequest, RESOURCE_ALL} from '../../logistics/LogisticsNetwork';
 import {Pathing} from '../../movement/Pathing';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
@@ -112,7 +112,7 @@ export class TransportOverlord extends Overlord {
 				if (isResource(request.target) || isTombstone(request.target) || isRuin(request.target)) {
 					log.warning(`Improper logistics request: should not request input for resource, tombstone or ruin!`);
 					return;
-				} else if (request.resourceType == 'all') {
+				} else if (request.resourceType === RESOURCE_ALL) {
 					log.error(`${this.print}: cannot request 'all' as input!`);
 					return;
 				} else {
@@ -134,7 +134,7 @@ export class TransportOverlord extends Overlord {
 				if (isResource(request.target)) {
 					this.debug(() => `${prefix}: picking up resource`);
 					task = Tasks.pickup(request.target);
-				} else if (request.resourceType == 'all') {
+				} else if (request.resourceType === RESOURCE_ALL) {
 					if (isResource(request.target)) {
 						log.error(`${this.print} ${ALL_RESOURCE_TYPE_ERROR}`);
 						return;

@@ -26,8 +26,11 @@ export type LogisticsTarget =
 	| Tombstone
 	| Resource;
 
+type RESOURCE_ALL = 'all';
+export const RESOURCE_ALL = 'all';
+
 export const ALL_RESOURCE_TYPE_ERROR =
-				 `Improper logistics request: 'all' can only be used for store structure, tombstone, or ruin!`;
+				 `Improper logistics request: ${RESOURCE_ALL} can only be used for store structure, tombstone, or ruin!`;
 
 export type BufferTarget = StructureStorage | StructureTerminal;
 
@@ -41,7 +44,7 @@ export interface LogisticsRequest {
 	/** Optional value showing how fast it fills up / empties (e.g. mining rates) */
 	dAmountdt: number;
 	/** Resource type being requested */
-	resourceType: ResourceConstant | 'all';
+	resourceType: ResourceConstant | RESOURCE_ALL;
 	/** Multiplier to prioritize important requests */
 	multiplier: number;
 }
@@ -50,7 +53,7 @@ interface RequestOptions {
 	amount?: number;
 	/** Always pass a positive value for this; sign is determined by function call */
 	dAmountdt?: number;
-	resourceType?: ResourceConstant | 'all';
+	resourceType?: ResourceConstant | RESOURCE_ALL;
 	multiplier?: number;
 }
 
@@ -166,8 +169,8 @@ export class LogisticsNetwork {
 			log.warning(`${target.ref} at ${target.pos.print} is outside colony room; shouldn't request!`);
 			return;
 		}
-		if (opts.resourceType == 'all') {
-			log.warning(`Logistics request error: 'all' can only be used for output requests`);
+		if (opts.resourceType === RESOURCE_ALL) {
+			log.warning(`Logistics request error: ${RESOURCE_ALL} can only be used for output requests`);
 			return;
 		}
 		if (!this.isTargetValid(target)) {
@@ -195,32 +198,40 @@ export class LogisticsNetwork {
 	/**
 	 * Request for resources to be withdrawn from this target
 	 */
-	requestOutput(target: LogisticsTarget, opts = {} as RequestOptions): void {
-		_.defaults(opts, {
-			resourceType: RESOURCE_ENERGY,
-			multiplier  : 1,
-			dAmountdt   : 0,
-		});
+	requestOutput(target: LogisticsTarget, opts: RequestOptions = {}): void {
 		if (!this.isTargetValid(target)) {
 			log.warning(`Logistics request error: target output ${target.print} is invalid`);
 			return;
 		}
-		if (opts.resourceType == 'all' && !isResource(target)) {
+
+		let resourceType = opts.resourceType ?? RESOURCE_ALL;
+		if (isResource(target) && resourceType !== RESOURCE_ALL && target.resourceType !== resourceType) {
+			log.warning(`Logistics request error: target output doesn't contain ${opts.resourceType}`);
+			return;
+		} else if (isResource(target) && resourceType === RESOURCE_ALL) {
+			resourceType = target.resourceType;
+		} else if (!isResource(target) && resourceType === RESOURCE_ALL) {
+			// convert "all" requests to energy if that's all they have
 			if (target.store.getUsedCapacity() == target.store.energy) {
-				opts.resourceType = RESOURCE_ENERGY; // convert "all" requests to energy if that's all they have
+				resourceType = RESOURCE_ENERGY;
 			}
 		}
-		if (!opts.amount) {
-			opts.amount = this.getOutputAmount(target, opts.resourceType!);
-		}
-		opts.amount *= -1;
+
+		_.defaults(opts, {
+			resourceType: resourceType,
+			amount      : this.getOutputAmount(target, resourceType),
+			multiplier  : 1,
+			dAmountdt   : 0,
+		});
+
+		(opts.amount!) *= -1;
 		(opts.dAmountdt!) *= -1;
 		// Register the request
 		const requestID = this.requests.length;
 		const req: LogisticsRequest = {
 			id          : requestID.toString(),
 			target      : target,
-			amount      : opts.amount,
+			amount      : opts.amount!,
 			dAmountdt   : opts.dAmountdt!,
 			resourceType: opts.resourceType!,
 			multiplier  : opts.multiplier!,
@@ -252,8 +263,8 @@ export class LogisticsNetwork {
 		return target.store.getFreeCapacity(resourceType) || 0;
 	}
 
-	private getOutputAmount(target: LogisticsTarget, resourceType: ResourceConstant | 'all'): number {
-		if (resourceType == 'all') {
+	private getOutputAmount(target: LogisticsTarget, resourceType: ResourceConstant | RESOURCE_ALL): number {
+		if (resourceType === RESOURCE_ALL) {
 			if (isResource(target)) {
 				log.error(ALL_RESOURCE_TYPE_ERROR);
 				return 0;
@@ -338,7 +349,7 @@ export class LogisticsNetwork {
 					const remainingCapacity = carry.getFreeCapacity()
 					const resourceAmount = -1 * this.predictedRequestAmount(transporter, request, nextAvailability);
 					// ^ need to multiply amount by -1 since transporter is doing complement of what request needs
-					if (request.resourceType == 'all') {
+					if (request.resourceType === RESOURCE_ALL) {
 						if (isResource(request.target)) {
 							log.error(ALL_RESOURCE_TYPE_ERROR);
 							return <StoreContents>{energy: 0};
@@ -403,11 +414,11 @@ export class LogisticsNetwork {
 		if (isResource(request.target)) {
 			targetCapacity = request.target.amount;
 		} else if (isTombstone(request.target)) {
-			targetCapacity = request.resourceType === "all"
+			targetCapacity = request.resourceType === RESOURCE_ALL
 				? _.sum(request.target.store.contents)
 				: request.target.store[request.resourceType] ?? 0;
 		} else {
-			targetCapacity = request.resourceType === "all"
+			targetCapacity = request.resourceType === RESOURCE_ALL
 				? request.target.store.getCapacity() ?? 0
 				: request.target.store.getCapacity(request.resourceType) ?? 0;
 		}
@@ -463,8 +474,8 @@ export class LogisticsNetwork {
 			carry = transporter.store;
 		}
 		if (amount > 0) { // requestInput instance, needs refilling
-			if (request.resourceType == 'all') {
-				log.warning(`Improper resourceType in bufferChoices! Type 'all' is only allowable for outputs!`);
+			if (request.resourceType === RESOURCE_ALL) {
+				log.warning(`Improper resourceType in bufferChoices! Type ${RESOURCE_ALL} is only allowable for outputs!`);
 				return [];
 			}
 			// Change in resources if transporter goes straight to the input
@@ -629,7 +640,7 @@ export class LogisticsNetwork {
 			if (isResource(request.target)) {
 				amount = request.target.amount;
 			} else {
-				if (request.resourceType == 'all') {
+				if (request.resourceType === RESOURCE_ALL) {
 					if (!isResource(request.target)) {
 						amount = request.target.store.getUsedCapacity() || 0;
 					} else {
