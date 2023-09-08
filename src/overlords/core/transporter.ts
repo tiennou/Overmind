@@ -240,7 +240,7 @@ export class TransportOverlord extends Overlord {
 	run() {
 		this.autoRun(this.transporters, transporter => {
 			const canUseFullMatching = transporter.store.getCapacity() >= LogisticsNetwork.settings.carryThreshold;
-			const canAffordCPU = Game.cpu.bucket >= 5000;
+			const canAffordCPU = (Memory.stats.persistent.avgBucketDelta ?? 0) >= 10;
 			if (canUseFullMatching && canAffordCPU) {
 				this.handleBigTransporter(transporter);
 			} else {
