@@ -264,13 +264,13 @@ export class Zerg extends AnyZerg {
 		return this.creep.generateSafeMode(target);
 	}
 
-	harvest(source: Source | Mineral) {
+	harvest(source: Source | Deposit | Mineral) {
 		const result = this.creep.harvest(source);
 		if (!this.actionLog.harvest) this.actionLog.harvest = (result == OK);
 		return result;
 	}
 
-	goHarvest(source: Source | Mineral): void {
+	goHarvest(source: Source | Deposit | Mineral): void {
 		if (this.harvest(source) == ERR_NOT_IN_RANGE) {
 			this.goTo(source);
 		}

@@ -85,7 +85,12 @@ export const Setups = {
 			sourceKeeper: new CreepSetup(Roles.drone, {
 				pattern  : [WORK, WORK, CARRY, MOVE],
 				sizeLimit: 5,
-			})
+			}),
+
+			deposit: new CreepSetup(Roles.drone, {
+				pattern  : [WORK, WORK, CARRY, MOVE],
+				sizeLimit: 5,
+			}),
 		}
 	},
 
