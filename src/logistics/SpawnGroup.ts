@@ -5,7 +5,7 @@ import {Hatchery, SpawnRequest} from '../hiveClusters/hatchery';
 import {Mem} from '../memory/Memory';
 import {Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
-import {getCacheExpiration, minBy, onPublicServer} from '../utilities/utils';
+import {getCacheExpiration, maxBy, minBy, onPublicServer} from '../utilities/utils';
 
 interface SpawnGroupMemory {
 	debug?: boolean;
@@ -30,9 +30,9 @@ const MAX_LINEAR_DISTANCE = 10; // maximum linear distance to search for ANY spa
 const DEFAULT_RECACHE_TIME = onPublicServer() ? 2000 : 1000;
 
 const defaultSettings: SpawnGroupSettings = {
-	maxPathDistance   : 4 * 50,		// override default path distance
+	maxPathDistance   : DEFAULT_MAX_PATH_LENGTH,		// override default path distance
 	requiredRCL       : 7,
-	maxLevelDifference: 0,
+	maxLevelDifference: 8,
 	// flexibleEnergy    : true,
 };
 
@@ -68,7 +68,6 @@ export class SpawnGroup {
 	memory: SpawnGroupMemory;
 	requests: SpawnRequest[];
 	roomName: string;
-	colonyNames: string[];
 	energyCapacityAvailable: number;
 	ref: string;
 	settings: SpawnGroupSettings;
@@ -93,16 +92,8 @@ export class SpawnGroup {
 		if (Game.time >= this.memory.expiration) {
 			this.recalculateColonies();
 		}
-		// Compute stats
-		this.colonyNames = _.filter(this.memory.colonies,
-									roomName => this.memory.distances[roomName] <= this.settings.maxPathDistance &&
-												Game.rooms[roomName] && Game.rooms[roomName].my &&
-												Game.rooms[roomName].controller!.level >= this.settings.requiredRCL);
 
-		if (this.colonyNames.length == 0) {
-			log.warning(`No colonies meet the requirements for SpawnGroup: ${this.ref}`);
-		}
-		this.energyCapacityAvailable = _.max(_.map(this.colonyNames,
+		this.energyCapacityAvailable = _.max(_.map(this.memory.colonies,
 												   roomName => Game.rooms[roomName].energyCapacityAvailable));
 		this._colonies = undefined;
 		Overmind.spawnGroups[this.ref] = this;
@@ -118,9 +109,13 @@ export class SpawnGroup {
 		}
 	}
 
+	get colonyNames() {
+		return this.memory.colonies;
+	}
+
 	get colonies(): Colony[] {
 		if (!this._colonies) {
-			this._colonies = _.compact(_.map(this.colonyNames, roomName => Overmind.colonies[roomName]));
+			this._colonies = _.compact(_.map(this.memory.colonies, roomName => Overmind.colonies[roomName]));
 		}
 		return this._colonies;
 	}
@@ -134,13 +129,18 @@ export class SpawnGroup {
 		this._colonies = undefined;
 	}
 
-	private recalculateColonies() { // don't use settings when recalculating colonies as spawnGroups share memory
+	private recalculateColonies() {
 		// Get all colonies in range that are of required level, then filter out ones that are too far from best
 		let coloniesInRange = _.filter(getAllColonies(), colony =>
-			Game.map.getRoomLinearDistance(colony.room.name, this.roomName) <= MAX_LINEAR_DISTANCE);
-		const maxColonyLevel = _.max(_.map(coloniesInRange, colony => colony.level));
-		coloniesInRange = _.filter(coloniesInRange,
+			Game.map.getRoomLinearDistance(colony.room.name, this.roomName) <= MAX_LINEAR_DISTANCE
+				&& colony.spawns.length > 0
+				&& colony.level >= this.settings.requiredRCL
+		);
+		if (this.settings.maxLevelDifference !== 8) {
+			const maxColonyLevel = maxBy(coloniesInRange, colony => colony.level)?.level ?? 8;
+			coloniesInRange = _.filter(coloniesInRange,
 								   colony => maxColonyLevel - colony.level <= this.settings.maxLevelDifference);
+		}
 
 		this.debug(`recalculateColonies: initial set: ${coloniesInRange.map(c => c.print)}`);
 		const colonyNames: string[] = [];
@@ -149,16 +149,20 @@ export class SpawnGroup {
 		const distances: { [colonyName: string]: number } = {};
 		for (const colony of coloniesInRange) {
 			const spawn = colony.room.spawns[0];
-			if (spawn) {
-				const path = Pathing.findPathToRoom(spawn.pos, this.roomName, { useFindRoute: true });
-				if (!path.incomplete && path.path.length <= DEFAULT_MAX_PATH_LENGTH + 25) {
-					colonyNames.push(colony.room.name);
-					// routes[colony.room.name] = route;
-					// paths[room.name] = path.path;
-					distances[colony.room.name] = path.path.length;
-				}
+			const path = Pathing.findPathToRoom(spawn.pos, this.roomName, { useFindRoute: true });
+			if (!path.incomplete && path.path.length <= this.settings.maxPathDistance) {
+				colonyNames.push(colony.room.name);
+				// routes[colony.room.name] = route;
+				// paths[room.name] = path.path;
+				distances[colony.room.name] = path.path.length;
 			}
 		}
+
+		if (colonyNames.length == 0) {
+			log.warning(`No colonies meet the requirements for SpawnGroup: ${this.ref}`);
+			return;
+		}
+
 		this.debug(`recalculateColonies: valid colonies: ${colonyNames}`);
 		this.memory.colonies = colonyNames;
 		// this.memory.routes = routes;
@@ -183,10 +187,11 @@ export class SpawnGroup {
 	init(): void {
 
 		// Most initialization needs to be done at init phase because colonies are still being constructed earlier
-		const colonies = _.compact(_.map(this.colonyNames, name => Overmind.colonies[name]));
+		const colonies = _.compact(_.map(this.memory.colonies, name => Overmind.colonies[name]));
 		const hatcheries = _.compact(_.map(colonies, colony => colony.hatchery)) as Hatchery[];
 		const distanceTo = (hatchery: Hatchery) => this.memory.distances[hatchery.pos.roomName] + 25;
 
+		this.debug(`enqueuing requests to hatcheries: ${hatcheries}`);
 		// Enqueue each requests to the hatchery with least expected wait time, which is updated after each enqueue
 		for (const request of this.requests) {
 			// const maxCost = bodyCost(request.setup.generateBody(this.energyCapacityAvailable));
@@ -194,6 +199,8 @@ export class SpawnGroup {
 			// 							  hatchery => hatchery.room.energyCapacityAvailable >= maxCost);
 			const bestHatchery = minBy(hatcheries, hatchery =>
 				hatchery.getWaitTimeForPriority(request.priority) + distanceTo(hatchery));
+
+			this.debug(`enqueuing request: ${request.setup.role}@${request.priority} to ${bestHatchery?.print}`);
 			if (bestHatchery) {
 				bestHatchery.enqueue(request);
 			} else {
