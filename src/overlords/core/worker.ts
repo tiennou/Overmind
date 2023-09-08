@@ -469,7 +469,7 @@ export class WorkerOverlord extends Overlord {
 			if (this.fortifyActions(worker, this.criticalBarriers)) return;
 		}
 		// Build new structures
-		if (this.constructionSites.length > 0) {
+		if (this.constructionSites.length > 0 && this.colony.defcon < DEFCON.playerInvasion) {
 			if (this.buildActions(worker)) return;
 		}
 		// Build ramparts to block incoming nuke
