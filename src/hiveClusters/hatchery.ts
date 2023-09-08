@@ -1,6 +1,6 @@
 import { ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH, ERR_SPECIFIED_SPAWN_BUSY } from 'utilities/errors';
 import {$} from '../caching/GlobalCache';
-import {Colony} from '../Colony';
+import {Colony, DEFCON} from '../Colony';
 import {log} from '../console/log';
 import {CombatCreepSetup} from '../creepSetups/CombatCreepSetup';
 import {bodyCost, CreepSetup} from '../creepSetups/CreepSetup';
@@ -19,6 +19,7 @@ import {ema, hasMinerals} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {Zerg} from '../zerg/Zerg';
 import {HiveCluster} from './_HiveCluster';
+import { OverlordPriority } from 'priorities/priorities_overlords';
 
 export interface SpawnRequest {
 	/** creep body generator to use */
@@ -392,12 +393,10 @@ export class Hatchery extends HiveCluster {
 	 * Enqueues a spawn request to the hatchery production queue
 	 */
 	enqueue(request: SpawnRequest): void {
-		// const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
-		// TODO: ^shouldn't need to do this at enqueue, just at spawn. Implement approximateSize() method?
 		const priority = request.priority;
+
 		// Spawn the creep yourself if you can
 		this._waitTimes = undefined; // invalidate cache
-		// this._queuedSpawnTime = undefined;
 		if (!this.productionQueue[priority]) {
 			this.productionQueue[priority] = [];
 			this.productionPriorities.push(priority); // this is necessary because keys interpret number as string
@@ -409,6 +408,12 @@ export class Hatchery extends HiveCluster {
 
 		while (this.availableSpawns.length > 0 && this.spawnRequests.length > 0) {
 			const request = this.spawnRequests.shift()!;
+
+			// don't spawn non-critical creeps during wartime
+			if (this.colony.defcon >= DEFCON.playerInvasion && request.priority > OverlordPriority.warSpawnCutoff) {
+				this.debug(`request ${this.logRequest(request)} is over war-time cut-off, ignoring`);
+				continue;
+			}
 
 			// Generate a protocreep from the request
 			const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
@@ -460,6 +465,19 @@ export class Hatchery extends HiveCluster {
 					}
 					return msg;
 				});
+			}
+
+			// We're under attack, go through the list of in-progress spawns and
+			// yank anything that's not war-time related and not close to spawning.
+			if (this.colony.defcon >= DEFCON.playerInvasion) {
+				for (const spawn of this.spawns.filter(s => s.spawning)) {
+					const spawningCreep = Memory.creeps[spawn.spawning!.name];
+					const overlord = spawningCreep[MEM.OVERLORD] ? Overmind.overlords[spawningCreep[MEM.OVERLORD]!] : undefined;
+					if (overlord && overlord.priority >= OverlordPriority.warSpawnCutoff && spawn.spawning!.remainingTime > 5) {
+						log.warning(`${this.print}: cancelling spawn of ${spawningCreep.role} because of war-time`);
+						spawn.spawning!.cancel();
+					}
+				}
 			}
 
 			// Spawn all queued creeps that you can
