@@ -93,6 +93,9 @@ interface Memory {
 		pixelGeneration: {
 			enabled: boolean;
 		},
+		colonization: {
+			maxRooms: number | undefined;
+		}
 		attitude: {
 			/**
 			 * How aggressive the AI is

@@ -8,9 +8,9 @@ import {Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
 import {Cartographer} from '../utilities/Cartographer';
 import {maxBy} from '../utilities/utils';
-import {MAX_OWNED_ROOMS, SHARD3_MAX_OWNED_ROOMS} from '../~settings';
 import {MIN_EXPANSION_DISTANCE} from './ExpansionEvaluator';
 import { DirectiveIncubate } from 'directives/colony/incubate';
+import { MAX_OWNED_ROOMS, SHARD3_MAX_OWNED_ROOMS } from '~settings';
 
 
 const CHECK_EXPANSION_FREQUENCY = 1000;
@@ -43,15 +43,17 @@ export class ExpansionPlanner implements IExpansionPlanner {
 
 	private handleExpansion(): void {
 		const allColonies = getAllColonies();
-		// If you already have max number of colonies, ignore
-		if (allColonies.length >= Math.min(Game.gcl.level, MAX_OWNED_ROOMS)) {
-			return;
+
+		let maxRooms;
+		if (Memory.settings.colonization.maxRooms === undefined) {
+			maxRooms = Game.shard.name == 'shard3' ? SHARD3_MAX_OWNED_ROOMS : Math.min(Game.gcl.level, MAX_OWNED_ROOMS);
+		} else {
+			maxRooms = Math.min(allColonies.length, Memory.settings.colonization.maxRooms);
 		}
-		// If you are on shard3, limit to 3 owned rooms // TODO: use CPU-based limiting metric
-		if (Game.shard.name == 'shard3') {
-			if (allColonies.length >= SHARD3_MAX_OWNED_ROOMS) {
-				return;
-			}
+
+		if (allColonies.length >= maxRooms) {
+			log.info(`Colonization capped at ${maxRooms}. Not expanding!`);
+			return;
 		}
 
 		const roomName = this.chooseNextColonyRoom();

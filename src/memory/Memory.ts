@@ -240,6 +240,9 @@ export class Mem {
 				pixelGeneration: {
 					enabled: false,
 				},
+				colonization: {
+					maxRooms: undefined,
+				},
 				attitude: {
 					brazenness: 0.5,
 				}
