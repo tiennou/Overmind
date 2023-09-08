@@ -285,7 +285,7 @@ export class Hatchery extends HiveCluster {
 		return (roleName + '_' + i);
 	}
 
-	private spawnCreep(protoCreep: ProtoCreep, options: SpawnRequestOptions = {}): number {
+	private spawnCreep(protoCreep: ProtoCreep, options: SpawnRequestOptions = {}) {
 		// If you can't build it, return this error
 		if (protoCreep.body.length === 0) {
 			return ERR_INVALID_ARGS;
@@ -405,42 +405,32 @@ export class Hatchery extends HiveCluster {
 		this.productionQueue[priority].push(request);
 	}
 
-	private spawnHighestPriorityCreep(): number | undefined {
-		const sortedKeys = _.sortBy(this.productionPriorities);
-		for (const priority of sortedKeys) {
-			// if (this.colony.defcon >= DEFCON.playerInvasion
-			// 	&& !this.colony.controller.safeMode
-			// 	&& priority > OverlordPriority.warSpawnCutoff) {
-			// 	continue; // don't spawn non-critical creeps during wartime
-			// }
+	private spawnHighestPriorityCreep() {
 
-			const request = this.productionQueue[priority].shift();
-			if (request) {
-				// Generate a protocreep from the request
-				const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
-				const preLog = `request ${this.logRequest(request)}, needed ${bodyCost(protoCreep.body)}, `
-					+ `stored: ${this.room.energyAvailable}, total: ${this.room.energyCapacityAvailable}`;
-				// Try to spawn the creep
-				const result = this.spawnCreep(protoCreep, request.options);
-				if (result == OK) {
-					this.debug(`${preLog}: spawn successful`);
-					return result;
-				} else if (result == ERR_SPECIFIED_SPAWN_BUSY) {
-					this.debug(`${preLog}: requested spawn is busy`);
-					return result; // continue to spawn other things while waiting on specified spawn
-				} else if (result === ERR_INVALID_ARGS) {
-					this.debug(`${preLog}: asked to spawn an invalid creep, ignoring`);
-				} else if (result === ERR_NOT_ENOUGH_ENERGY || result === ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH) {
-					// If there's not enough energyCapacity to spawn, ignore and move on, otherwise block and wait
-					this.debug(`${preLog}: not enough energy, ignoring`);
-					return result;
-				} else {
-					this.debug(`${preLog}: failed to spawn, requeuing: ${result}`);
-					this.productionQueue[priority].unshift(request);
-					return result;
+		while (this.availableSpawns.length > 0 && this.spawnRequests.length > 0) {
+			const request = this.spawnRequests.shift()!;
+
+			// Generate a protocreep from the request
+			const protoCreep = this.generateProtoCreep(request.setup, request.overlord);
+			const preLog = `request ${this.logRequest(request)}, needed ${bodyCost(protoCreep.body)}, `
+				+ `stored: ${this.room.energyAvailable}, total: ${this.room.energyCapacityAvailable}`;
+			// Try to spawn the creep
+			const result = this.spawnCreep(protoCreep, request.options);
+			if (result == OK) {
+				this.debug(`${preLog}: spawn successful`);
+			} else if (result == ERR_SPECIFIED_SPAWN_BUSY) {
+				this.debug(`${preLog}: requested spawn is busy`);
+				// continue to spawn other things while waiting on specified spawn
+			} else if (result === ERR_INVALID_ARGS) {
+				this.debug(`${preLog}: asked to spawn an invalid creep, ignoring`);
+			} else if (result === ERR_NOT_ENOUGH_ENERGY || result === ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH) {
+				// If there's not enough energyCapacity to spawn, ignore and move on, otherwise block and wait
+				this.debug(`${preLog}: not enough energy, ignoring`);
+				if (result === ERR_NOT_ENOUGH_ENERGY) {
+					this.isOverloaded = true;
 				}
 			} else {
-				this.debug(`no request at priority ${priority}`);
+				this.debug(`${preLog}: failed to spawn, requeuing: ${result}`);
 			}
 		}
 	}
@@ -473,16 +463,8 @@ export class Hatchery extends HiveCluster {
 			}
 
 			// Spawn all queued creeps that you can
-			while (this.availableSpawns.length > 0) {
-				const result = this.spawnHighestPriorityCreep();
-				if (result == ERR_NOT_ENOUGH_ENERGY) { // if you can't spawn something you want to
-					this.isOverloaded = true;
-				}
-				if (result != OK && result != ERR_SPECIFIED_SPAWN_BUSY) {
-					// Can't spawn creep right now
-					break;
-				}
-			}
+			this.spawnHighestPriorityCreep();
+
 			// Move creeps off of exit position to let the spawning creep out if necessary
 			for (const spawn of this.spawns) {
 				if (spawn.spawning && spawn.spawning.remainingTime <= 1
@@ -509,8 +491,10 @@ export class Hatchery extends HiveCluster {
 			this._spawnRequests = [];
 			const sortedKeys = _.sortBy(this.productionPriorities);
 			for (const priority of sortedKeys) {
-				const prioReqs = this.productionQueue[priority];
-				if (prioReqs) this._spawnRequests.push(...prioReqs);
+				const requests = this.productionQueue[priority];
+				if (requests.length > 0) {
+					this._spawnRequests.push(...requests)
+				}
 			}
 		}
 		return this._spawnRequests;
