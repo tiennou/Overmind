@@ -1,24 +1,18 @@
 import { GatheringOverlord } from 'overlords/mining/gatherer';
-import {Pathing} from '../../movement/Pathing';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {Cartographer, ROOMTYPE_SOURCEKEEPER} from '../../utilities/Cartographer';
-import {ema, getCacheExpiration} from '../../utilities/utils';
+import {ema} from '../../utilities/utils';
 import {Directive} from '../Directive';
 
 
 // Because harvest directives are the most common, they have special shortened memory keys to minimize memory impact
 export const enum HARVEST_MEM {
-	PATHING  = 'P',
 	USAGE    = 'u',
 	DOWNTIME = 'd',
 }
 
 interface DirectiveGatherMemory extends FlagMemory {
-	[HARVEST_MEM.PATHING]?: {
-		[MEM.DISTANCE]: number,
-		[MEM.EXPIRATION]: number
-	};
 	[HARVEST_MEM.USAGE]: number;
 	[HARVEST_MEM.DOWNTIME]: number;
 }
@@ -46,19 +40,6 @@ export class DirectiveGather extends Directive {
 	constructor(flag: Flag) {
 		super(flag);
 		_.defaultsDeep(this.memory, defaultDirectiveHarvestMemory);
-	}
-
-	// Hauling distance
-	get distance(): number {
-		if (!this.memory[HARVEST_MEM.PATHING] || Game.time >= this.memory[HARVEST_MEM.PATHING]![MEM.EXPIRATION]) {
-			const distance = Pathing.distance(this.colony.pos, this.pos) || Infinity;
-			const expiration = getCacheExpiration(this.colony.storage ? 5000 : 1000);
-			this.memory[HARVEST_MEM.PATHING] = {
-				[MEM.DISTANCE]  : distance,
-				[MEM.EXPIRATION]: expiration
-			};
-		}
-		return this.memory[HARVEST_MEM.PATHING]![MEM.DISTANCE];
 	}
 
 	spawnMoarOverlords() {
@@ -99,8 +80,8 @@ export class DirectiveGather extends Directive {
 			` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`,
 			` D: ${this.memory[HARVEST_MEM.DOWNTIME].toPercent()}`,
 		];
-		if (this.memory[HARVEST_MEM.PATHING]) {
-			data.push(` P: ${this.memory[HARVEST_MEM.PATHING][MEM.DISTANCE]}`);
+		if (this.memory[MEM.DISTANCE]) {
+			data.push(` P: ${this.memory[MEM.DISTANCE][MEM_DISTANCE.WEIGHTED]}`);
 		}
 		const { x, y, roomName } = this.pos;
 		new RoomVisual(roomName).infoBox(data, x, y, { color: '#FFE87B'});

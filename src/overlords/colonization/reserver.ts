@@ -21,7 +21,6 @@ export class ReservingOverlord extends Overlord {
 	settings = {
 		resetSignature: false,
 	};
-	distance: number;
 	reservation: { username?: string, ticksToEnd?: number }
 	reserverCount: number;
 
@@ -84,7 +83,7 @@ export class ReservingOverlord extends Overlord {
 	}
 
 	run() {
-		const distance = (<DirectiveOutpost>this.initializer).distanceFromColony.terrainWeighted;
+		const distance = (<DirectiveOutpost>this.initializer).distanceFromPOI.terrainWeighted;
 		const waitTime = this.colony.hatchery?.getWaitTimeForPriority(this.priority) ?? 0;
 		this.reserverCount = this.roomReservationRemaining() - RESERVE_BUFFER_TIME <= waitTime + distance ? 1 : 0;
 		this.debug(`remaining ${this.roomReservationRemaining()}, distance: ${distance}, waitTime: ${waitTime}: needs ${this.reserverCount} reserver`);

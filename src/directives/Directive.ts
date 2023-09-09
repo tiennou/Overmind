@@ -4,7 +4,7 @@ import {Pathing} from '../movement/Pathing';
 import {Overlord} from '../overlords/Overlord';
 import {profile} from '../profiler/decorator';
 import {randint} from '../utilities/random';
-import {equalXYR, randomHex, toColumns} from '../utilities/utils';
+import {equalXYR, getCacheExpiration, randomHex, toColumns} from '../utilities/utils';
 import {NotifierPriority} from './Notifier';
 
 interface DirectiveCreationOptions {
@@ -185,24 +185,21 @@ export abstract class Directive {
 		Overmind.overseer.notifier.alert(message, this.pos.roomName, priority);
 	}
 
+	/** The origin used for directive distance calculations */
+	get POI() {
+		return this.colony.pos;
+	}
+
 	/**
 	 * Returns values for weighted and unweighted path length from colony and recomputes if necessary.
 	 */
-	get distanceFromColony(): { unweighted: number, terrainWeighted: number } {
+	get distanceFromPOI(): { unweighted: number, terrainWeighted: number } {
 		if (!this.memory[MEM.DISTANCE] || Game.time >= this.memory[MEM.DISTANCE]![MEM.EXPIRATION]) {
-			const ret = Pathing.findPath(this.colony.pos, this.pos, {maxOps: DIRECTIVE_PATH_TIMEOUT});
-			const terrainCache: { [room: string]: RoomTerrain } = {};
-			const terrainWeighted = _.sum(ret.path, pos => {
-				if (!terrainCache[pos.roomName]) {
-					terrainCache[pos.roomName] = Game.map.getRoomTerrain(pos.roomName);
-				}
-				const terrain = terrainCache[pos.roomName];
-				return terrain.get(pos.x, pos.y) == TERRAIN_MASK_SWAMP ? 5 : 1;
-			});
+			const ret = Pathing.findPath(this.POI, this.pos, { maxOps: DIRECTIVE_PATH_TIMEOUT, allowHostile: true, avoidSK: false });
 			this.memory[MEM.DISTANCE] = {
 				[MEM_DISTANCE.UNWEIGHTED]: ret.path.length,
-				[MEM_DISTANCE.WEIGHTED]  : terrainWeighted,
-				[MEM.EXPIRATION]         : Game.time + 10000 + randint(0, 100),
+				[MEM_DISTANCE.WEIGHTED]  : ret.cost,
+				[MEM.EXPIRATION]         : getCacheExpiration(10000, randint(0, 100)),
 			};
 			if (ret.incomplete) {
 				this.memory[MEM.DISTANCE]!.incomplete = true;

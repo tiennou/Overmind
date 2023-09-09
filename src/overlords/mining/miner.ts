@@ -66,7 +66,7 @@ export class MiningOverlord extends Overlord {
 
 	constructor(directive: DirectiveHarvest, priority: number) {
 		super(directive, 'mine', priority);
-		this.distance = directive.distance;
+		this.distance = directive.distanceFromPOI.terrainWeighted;
 
 		this.priority += this.outpostIndex * OverlordPriority.remoteRoom.roomIncrement;
 		this.miners = this.zerg(Roles.drone);

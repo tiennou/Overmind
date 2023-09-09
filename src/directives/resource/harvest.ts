@@ -1,24 +1,18 @@
-import {Pathing} from '../../movement/Pathing';
 import {MiningOverlord} from '../../overlords/mining/miner';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {Cartographer, ROOMTYPE_SOURCEKEEPER} from '../../utilities/Cartographer';
-import {ema, getCacheExpiration} from '../../utilities/utils';
+import {ema} from '../../utilities/utils';
 import {Directive} from '../Directive';
 
 
 // Because harvest directives are the most common, they have special shortened memory keys to minimize memory impact
 export const enum HARVEST_MEM {
-	PATHING  = 'P',
 	USAGE    = 'u',
 	DOWNTIME = 'd',
 }
 
 interface DirectiveHarvestMemory extends FlagMemory {
-	[HARVEST_MEM.PATHING]?: {
-		[MEM.DISTANCE]: number,
-		[MEM.EXPIRATION]: number
-	};
 	[HARVEST_MEM.USAGE]: number;
 	[HARVEST_MEM.DOWNTIME]: number;
 }
@@ -51,19 +45,6 @@ export class DirectiveHarvest extends Directive {
 		_.defaultsDeep(this.memory, defaultDirectiveHarvestMemory);
 	}
 
-	// Hauling distance
-	get distance(): number {
-		if (!this.memory[HARVEST_MEM.PATHING] || Game.time >= this.memory[HARVEST_MEM.PATHING]![MEM.EXPIRATION]) {
-			const distance = Pathing.distance(this.colony.pos, this.pos) || Infinity;
-			const expiration = getCacheExpiration(this.colony.storage ? 5000 : 1000);
-			this.memory[HARVEST_MEM.PATHING] = {
-				[MEM.DISTANCE]  : distance,
-				[MEM.EXPIRATION]: expiration
-			};
-		}
-		return this.memory[HARVEST_MEM.PATHING]![MEM.DISTANCE];
-	}
-
 	spawnMoarOverlords() {
 		// Create a mining overlord for this
 		let priority = OverlordPriority.ownedRoom.mine;
@@ -77,6 +58,21 @@ export class DirectiveHarvest extends Directive {
 	init() {
 		const harvestPos = this.overlords.mine.harvestPos ?? this.pos;
 		this.colony.destinations.push({pos: harvestPos, order: this.memory[MEM.TICK] || Game.time});
+	}
+
+	get energyAvailable() {
+		let energy = 0;
+		const mine = this.overlords.mine;
+		if (!(mine.source instanceof Source)) return energy;
+		if (mine.container) {
+			energy += mine.container.store.getUsedCapacity(RESOURCE_ENERGY);
+		}
+		if (mine.link) {
+			energy += mine.link.store.getUsedCapacity(RESOURCE_ENERGY);
+		}
+		const drops = mine.pos.findInRange(FIND_DROPPED_RESOURCES, 1, { filter: RESOURCE_ENERGY });
+		energy += drops.reduce((sum, res) => sum += res.amount, 0);
+		return energy;
 	}
 
 	run() {
@@ -102,8 +98,8 @@ export class DirectiveHarvest extends Directive {
 			` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`,
 			` D: ${this.memory[HARVEST_MEM.DOWNTIME].toPercent()}`,
 		];
-		if (this.memory[HARVEST_MEM.PATHING]) {
-			data.push(` P: ${this.memory[HARVEST_MEM.PATHING][MEM.DISTANCE]}`);
+		if (this.memory[MEM.DISTANCE]) {
+			data.push(` P: ${this.memory[MEM.DISTANCE][MEM_DISTANCE.WEIGHTED]}`);
 		}
 		const { x, y, roomName } = this.pos;
 		new RoomVisual(roomName).infoBox(data, x, y, { color: '#FFE87B'});

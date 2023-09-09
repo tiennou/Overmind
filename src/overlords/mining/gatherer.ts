@@ -38,7 +38,6 @@ export class GatheringOverlord extends Overlord {
 	memory: GatheringOverlordMemory;
 
 	room: Room | undefined;
-	distance: number;
 	deposit: Deposit | undefined;
 	isDisabled: boolean;
 	container: StructureContainer | undefined;
@@ -62,7 +61,6 @@ export class GatheringOverlord extends Overlord {
 
 	constructor(directive: DirectiveGather, priority: number) {
 		super(directive, 'mine', priority);
-		this.distance = directive.distance;
 
 		this.priority += this.outpostIndex * OverlordPriority.remoteRoom.roomIncrement;
 		this.miners = this.zerg(Roles.drone);
