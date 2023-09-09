@@ -132,11 +132,6 @@ export class PowerHaulingOverlord extends Overlord {
 		if (Game.time >= this.tickToSpawnOn && this.directive.memory.state < PowerMineState.haulingComplete) {
 			this.wishlist(this.numHaulers, Setups.transporters.default);
 		}
-		for (const hauler of this.haulers) {
-			if (hauler.isIdle) {
-				this.handleHauler(hauler);
-			}
-			hauler.run();
-		}
+		this.autoRun(this.haulers, hauler => this.handleHauler(hauler));
 	}
 }
