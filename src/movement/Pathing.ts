@@ -255,8 +255,7 @@ export class Pathing {
 		const linearDistance = Game.map.getRoomLinearDistance(origin, destination);
 		const maxRooms = opts.maxRooms || linearDistance + 10;
 
-		const myZoneStatus = RoomIntel.getMyZoneStatus();
-		if (RoomIntel.getRoomStatus(destination).status != myZoneStatus) {
+		if (RoomIntel.getRoomStatus(origin).status != RoomIntel.getRoomStatus(destination).status) {
 			return ERR_NO_PATH;
 		}
 
@@ -283,7 +282,7 @@ export class Pathing {
 				roomName !== destination && roomName !== origin) { // room is marked as "avoid" in room memory
 				return Infinity;
 			}
-			if (RoomIntel.getRoomStatus(roomName).status != myZoneStatus) {
+			if (RoomIntel.getRoomStatus(origin).status != RoomIntel.getRoomStatus(roomName).status) {
 				return Infinity; // can't path outside of your local newbie/respawn zone
 			}
 			return 1;
@@ -315,7 +314,7 @@ export class Pathing {
 					roomName !== destination && roomName !== origin) { // room is marked as "avoid" in room memory
 					return Infinity;
 				}
-				if (RoomIntel.getRoomStatus(roomName).status != myZoneStatus) {
+				if (RoomIntel.getRoomStatus(origin).status != RoomIntel.getRoomStatus(roomName).status) {
 					return Infinity; // can't path outside of your local newbie/respawn zone
 				}
 				return 1;

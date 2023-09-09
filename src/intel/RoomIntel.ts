@@ -1,6 +1,5 @@
 // Room intel - provides information related to room structure and occupation
 
-import { Colony } from 'Colony';
 import {profile} from '../profiler/decorator';
 import {ExpansionEvaluator} from '../strategy/ExpansionEvaluator';
 import {Cartographer, ROOMTYPE_CORE} from '../utilities/Cartographer';
@@ -876,14 +875,6 @@ export class RoomIntel {
 			case RMEM_ROOM_STATUS.respawn:
 				return {status: 'respawn', timestamp: timestamp};
 		}
-	}
-
-	/**
-	 * Returns the type of zone that your empire is in
-	 */
-	static getMyZoneStatus(): 'normal' | 'novice' | 'respawn' {
-		const oneOfMyColonies = _.first<Colony>(_.values(Overmind.colonies)) ;
-		return RoomIntel.getRoomStatus(oneOfMyColonies.name).status as 'normal' | 'novice' | 'respawn';
 	}
 
 	/**
