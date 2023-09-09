@@ -12,6 +12,7 @@ const POSITION_KEY = 'p';
 const LIST_KEY = 'l';
 const OBJECT_KEY = 'o';
 const COSTMATRIX_KEY = 'm';
+const ID_KEY = '$';
 
 /**
  * The GlobalCache ($) module saves frequently accessed deserialized objects in temporary, volatile global memory
@@ -117,7 +118,7 @@ export class $ { // $ = cash = cache... get it? :D
 	static set<T extends HasRef, K extends keyof T>(thing: T, key: K,
 													callback: () => (T[K] & (undefined | _HasId | _HasId[])),
 													timeout = CACHE_TIMEOUT): void {
-		const cacheKey = thing.ref + '$' + <string>key;
+		const cacheKey = thing.ref + ID_KEY + <string>key;
 		if (!_cache.things[cacheKey] || Game.time > _cache.expiration[cacheKey]) {
 			// Recache if new entry or entry is expired
 			_cache.things[cacheKey] = callback();
