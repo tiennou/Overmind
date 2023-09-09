@@ -44,6 +44,9 @@ export class PowerHaulingOverlord extends Overlord {
 	}
 
 	init() {
+		if (Game.time >= this.tickToSpawnOn && this.directive.memory.state < PowerMineState.haulingComplete) {
+			this.wishlist(this.numHaulers, Setups.transporters.default);
+		}
 	}
 
 	private handleHauler(hauler: Zerg) {
@@ -129,9 +132,6 @@ export class PowerHaulingOverlord extends Overlord {
 	}
 
 	run() {
-		if (Game.time >= this.tickToSpawnOn && this.directive.memory.state < PowerMineState.haulingComplete) {
-			this.wishlist(this.numHaulers, Setups.transporters.default);
-		}
 		this.autoRun(this.haulers, hauler => this.handleHauler(hauler));
 	}
 }
