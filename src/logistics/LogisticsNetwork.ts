@@ -570,7 +570,7 @@ export class LogisticsNetwork {
 	/**
 	 * Generate requestor preferences in terms of transporters
 	 */
-	requestPreferences(request: LogisticsRequest, transporters: Zerg[]): Zerg[] {
+	private requestPreferences(request: LogisticsRequest, transporters: Zerg[]): Zerg[] {
 		// Requestors priortize transporters by change in resources per tick until pickup/delivery
 		return _.sortBy(transporters, transporter => -1 * this.resourceChangeRate(transporter, request)); // -1 -> desc
 	}
@@ -578,7 +578,7 @@ export class LogisticsNetwork {
 	/**
 	 * Generate transporter preferences in terms of store structures
 	 */
-	transporterPreferences(transporter: Zerg): LogisticsRequest[] {
+	private transporterPreferences(transporter: Zerg): LogisticsRequest[] {
 		// Transporters prioritize requestors by change in resources per tick until pickup/delivery
 		return _.sortBy(this.requests, request => -1 * this.resourceChangeRate(transporter, request)); // -1 -> desc
 	}
@@ -712,5 +712,20 @@ export class LogisticsNetwork {
 		return requestMatch;
 	}
 
+	bestRequestForTransporter(transporter: Zerg) {
+		const canUseFullMatching = transporter.store.getCapacity() >= LogisticsNetwork.settings.carryThreshold;
+		const canAffordCPU = (Memory.stats.persistent.avgBucketDelta ?? 0) >= 10;
+		if (canUseFullMatching && canAffordCPU) {
+			return this.colony.logisticsNetwork.matching[transporter.name];
+		} else {
+			const requests = this.transporterPreferences(transporter);
+			// Just perform a single-sided greedy selection of all requests
+			// WIP: this doesn't really work, as it causes each transporter to pick the same "best" request,
+			// look at it and either go grab it, or park
+			const bestRequestViaGreedy = _.first(requests);
+			this.debug(() => `requests:\n${requests.map(r => `\t- ${LogisticsNetwork.logRequest(r)} rate: ${this.resourceChangeRate(transporter, r)}${bestRequestViaGreedy.id === r.id ? " (*)" : ""}`).join("\n")}`);
+			return bestRequestViaGreedy;
+		}
+	}
 }
 

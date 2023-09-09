@@ -202,51 +202,19 @@ export class TransportOverlord extends Overlord {
 		}
 	}
 
-	private handleBigTransporter(bigTransporter: Zerg) {
-		const bestRequestViaStableMatching = this.colony.logisticsNetwork.matching[bigTransporter.name];
-		this.handleTransporter(bigTransporter, bestRequestViaStableMatching);
-	}
-
-	/* Handles small transporters, which don't do well with the logisticsNetwork's stable matching system */
-	private handleSmolTransporter(smolTransporter: Zerg) {
-		const network = this.colony.logisticsNetwork;
-		const requests = network.transporterPreferences(smolTransporter);
-		// Just perform a single-sided greedy selection of all requests
-		// WIP: this doesn't really work, as it causes each transporter to pick the same "best" request,
-		// look at it and either go grab it, or park
-		const bestRequestViaGreedy = _.first(requests);
-		this.handleTransporter(smolTransporter, bestRequestViaGreedy);
-	}
-
-	private pickupDroppedResources(transporter: Zerg) {
-		const droppedResource = transporter.pos.lookFor(LOOK_RESOURCES)[0];
-		if (droppedResource) {
-			transporter.pickup(droppedResource);
-			return;
-		}
-		const tombstone = transporter.pos.lookFor(LOOK_TOMBSTONES)[0];
-		if (tombstone) {
-			const resourceType = _.last(_.sortBy(_.keys(tombstone.store),
-				resourceType => (tombstone.store[<ResourceConstant>resourceType] || 0)));
-			transporter.withdraw(tombstone, <ResourceConstant>resourceType);
-		}
-	}
-
 	retarget() {
 		this.transporters.forEach(t => t.task = null);
 		this.run();
 	}
 
 	run() {
-		this.autoRun(this.transporters, transporter => {
-			const canUseFullMatching = transporter.store.getCapacity() >= LogisticsNetwork.settings.carryThreshold;
-			const canAffordCPU = (Memory.stats.persistent.avgBucketDelta ?? 0) >= 10;
-			if (canUseFullMatching && canAffordCPU) {
-				this.handleBigTransporter(transporter);
-			} else {
-				this.handleSmolTransporter(transporter);
-			}
-		}, transporter => transporter.avoidDanger({ timer: 5, dropEnergy: true }));
+		this.autoRun(this.transporters,
+			transporter => {
+				const request = this.colony.logisticsNetwork.bestRequestForTransporter(transporter);
+				this.handleTransporter(transporter, request);
+			},
+			transporter => transporter.avoidDanger({ timer: 5, dropEnergy: true })
+		);
 
 		this.stats();
 	}
