@@ -1,4 +1,4 @@
-import { ERR_SWARM_BUSY, ERR_NOT_IMPLEMENTED, NO_ACTION, errorForCode } from 'utilities/errors';
+import { ERR_SWARM_BUSY, ERR_NOT_IMPLEMENTED, NO_ACTION, errorForCode, ERR_SWARM_ROTATE_FAILED_1 } from 'utilities/errors';
 import {log} from '../console/log';
 import {hasPos} from '../declarations/typeGuards';
 import {CombatIntel} from '../intel/CombatIntel';
@@ -233,7 +233,7 @@ export class Swarm implements ProtoSwarm {
 			for (const creep of this.creeps) {
 				creep.cancelOrder('move');
 			}
-			return (-1 * _.findIndex([r1, r2, r3, r4], r => r != OK) - 100) as ZergSwarmMoveReturnCode;
+			return (-1 * _.findIndex([r1, r2, r3, r4], r => r != OK) + ERR_SWARM_ROTATE_FAILED_1) as ZergSwarmMoveReturnCode;
 		}
 	}
 
@@ -270,7 +270,7 @@ export class Swarm implements ProtoSwarm {
 			for (const creep of this.creeps) {
 				creep.cancelOrder('move');
 			}
-			return (-1 * _.findIndex([r1, r2, r3, r4], r => r != OK) - 100) as ZergSwarmMoveReturnCode;
+			return (-1 * _.findIndex([r1, r2, r3, r4], r => r != OK) + ERR_SWARM_ROTATE_FAILED_1) as ZergSwarmMoveReturnCode;
 		}
 	}
 

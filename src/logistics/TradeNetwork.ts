@@ -1,5 +1,5 @@
 import {assimilationLocked} from '../assimilation/decorator';
-import { NO_ACTION } from 'utilities/errors';
+import { ERR_BUY_DIRECT_PRICE_TOO_HIGH, ERR_CREDIT_THRESHOLDS, ERR_DONT_BUY_REACTION_INTERMEDIATES, ERR_DRY_RUN_ONLY_SUPPORTS_DIRECT_TRANSACTIONS, ERR_INSUFFICIENT_ENERGY_IN_TERMINAL, ERR_NOT_ENOUGH_MARKET_DATA, ERR_NO_ORDER_TO_BUY_FROM, ERR_NO_ORDER_TO_SELL_TO, ERR_SELL_DIRECT_PRICE_TOO_LOW, ERR_TOO_MANY_ORDERS_OF_TYPE, NO_ACTION, errorForCode } from 'utilities/errors';
 import {getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
@@ -83,17 +83,6 @@ export const maxMarketPrices: { [resourceType: string]: number } = {
 	[RESOURCE_ENERGY]                : 0.05,
 	[RESOURCE_CATALYZED_GHODIUM_ACID]: 1.2,
 };
-
-export const ERR_NO_ORDER_TO_BUY_FROM = -101;
-export const ERR_NO_ORDER_TO_SELL_TO = -102;
-export const ERR_INSUFFICIENT_ENERGY_IN_TERMINAL = -103; // ERR_NOT_ENOUGH_ENERGY is same as ERR_NOT_ENOUGH_RESOURCES
-export const ERR_NOT_ENOUGH_MARKET_DATA = -104;
-export const ERR_TOO_MANY_ORDERS_OF_TYPE = -105;
-export const ERR_SELL_DIRECT_PRICE_TOO_LOW = -106;
-export const ERR_BUY_DIRECT_PRICE_TOO_HIGH = -107;
-export const ERR_CREDIT_THRESHOLDS = -108;
-export const ERR_DONT_BUY_REACTION_INTERMEDIATES = -109;
-export const ERR_DRY_RUN_ONLY_SUPPORTS_DIRECT_TRANSACTIONS = -110;
 
 const defaultTradeOpts: TradeOpts = {
 	preferDirect              : false,
@@ -457,7 +446,7 @@ export class TraderJoe implements ITradeNetwork {
 	 * Create or maintain an order, extending and repricing as needed
 	 */
 	private maintainOrder(terminal: StructureTerminal, type: ORDER_SELL | ORDER_BUY,
-						  resource: ResourceConstant, amount: number, opts: TradeOpts): number {
+						  resource: ResourceConstant, amount: number, opts: TradeOpts) {
 		this.debug(`maintain ${type} order for ${terminal.room.print}: ${amount} ${resource}`);
 
 		// This is all somewhat expensive so only do this occasionally
@@ -499,7 +488,7 @@ export class TraderJoe implements ITradeNetwork {
 				const addAmount = amount - existingOrder.remainingAmount;
 				const ret = Game.market.extendOrder(existingOrder.id, addAmount);
 				this.notify(`${terminal.room.print}: extending ${type} order for ${resource} by ${addAmount}.` +
-							` Response: ${ret}`);
+							` Response: ${errorForCode(ret)}`);
 				return ret;
 			}
 
@@ -507,7 +496,7 @@ export class TraderJoe implements ITradeNetwork {
 			if (!normalFluctuation && Math.random() < 1 / 2000) {
 				const ret = Game.market.changeOrderPrice(existingOrder.id, price);
 				this.notify(`${terminal.room.print}: changing ${type} order price for ${resource} from ` +
-							`${existingOrder.price} to ${price}. Response: ${ret}`);
+							`${existingOrder.price} to ${price}. Response: ${errorForCode(ret)}`);
 				return ret;
 			}
 
@@ -563,7 +552,7 @@ export class TraderJoe implements ITradeNetwork {
 			if (ret == OK) {
 				this.ordersPlacedThisTick++;
 			} else {
-				msg += ` ERROR: ${ret}`;
+				msg += ` ERROR: ${errorForCode(ret)}`;
 			}
 			this.debug(msg);
 			this.notify(msg);
@@ -796,7 +785,7 @@ export class TraderJoe implements ITradeNetwork {
 				return result;
 			}
 			this.notify(`Buy direct request: ${amount} ${resource} to ${printRoomName(terminal.room.name)} ` +
-						`was unsuccessful; allowing fallthrough to TradeNetwork.maintainOrder()`);
+						`was unsuccessful (${errorForCode(result)}); allowing fallthrough to TradeNetwork.maintainOrder()`);
 		}
 
 		if (opts.dryRun) {
@@ -824,7 +813,7 @@ export class TraderJoe implements ITradeNetwork {
 					return result; // if there's nowhere to sensibly sell, allow creating an order
 				}
 				this.notify(`Sell direct request: ${amount} ${resource} from ${printRoomName(terminal.room.name)} ` +
-							`was unsuccessful; allowing fallthrough to TradeNetwork.maintainOrder()`);
+							`was unsuccessful (${errorForCode(result)}); allowing fallthrough to TradeNetwork.maintainOrder()`);
 			}
 		}
 
