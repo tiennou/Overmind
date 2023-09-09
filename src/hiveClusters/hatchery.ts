@@ -74,23 +74,37 @@ const getDefaultHatcheryMemory: () => HatcheryMemory = () => ({
 export class Hatchery extends HiveCluster {
 
 	memory: HatcheryMemory;
-	spawns: StructureSpawn[]; 								// List of spawns in the hatchery
-	availableSpawns: StructureSpawn[]; 						// Spawns that are available to make stuff right now
-	extensions: StructureExtension[]; 						// List of extensions in the hatchery
-	energyStructures: (StructureSpawn | StructureExtension)[]; 	// All spawns and extensions
-	link: StructureLink | undefined; 						// The input link
-	towers: StructureTower[]; 								// All towers that aren't in the command center
-	batteries: StructureContainer[];				// The container to provide an energy buffer
-	transportRequests: TransportRequestGroup;				// Box for energy requests
-	overlord: QueenOverlord | BunkerQueenOverlord;			// Hatchery overlord if past larva stage
-	settings: {												// Settings for hatchery operation
-		refillTowersBelow: number,  							// What value to refill towers at?
-		linksRequestEnergyBelow: number, 						// What value will links store more energy at?
-		suppressSpawning: boolean,             					// Prevents the hatchery from spawning this tick
+	/** List of spawns in the hatchery */
+	spawns: StructureSpawn[];
+	/** Spawns that are available to make stuff right now */
+	availableSpawns: StructureSpawn[];
+	/** List of extensions in the hatchery */
+	extensions: StructureExtension[];
+	/** All spawns and extensions */
+	energyStructures: (StructureSpawn | StructureExtension)[];
+	/** The input link */
+	link: StructureLink | undefined;
+	/** All towers that aren't in the command center */
+	towers: StructureTower[];
+	/** The container to provide an energy buffer */
+	batteries: StructureContainer[];
+	/** Box for energy requests */
+	transportRequests: TransportRequestGroup;
+	/** Hatchery overlord if past larva stage */
+	overlord: QueenOverlord | BunkerQueenOverlord;
+	/** Settings for hatchery operation */
+	settings: {
+		/** What value to refill towers at? */
+		refillTowersBelow: number,
+		/** What value will links store more energy at? */
+		linksRequestEnergyBelow: number,
+		/** Prevents the hatchery from spawning this tick */
+		suppressSpawning: boolean,
 	};
 
 	private productionPriorities: number[];
-	private productionQueue: {								// Prioritized spawning queue
+	/** Prioritized spawning queue */
+	private productionQueue: {
 		[priority: number]: SpawnRequest[]
 	};
 
