@@ -237,9 +237,9 @@ export class Colony {
 	bunker: BunkerData | undefined;
 	// Creeps and subsets
 	/** Creeps bound to the colony */
-	creeps: Creep[];
+	creeps: AnyCreep[];
 	/** Creeps hashed by their role name */
-	creepsByRole: { [roleName: string]: Creep[] };
+	creepsByRole: { [roleName: string]: AnyCreep[] };
 	// Resource requests
 	linkNetwork: LinkNetwork;
 	logisticsNetwork: LogisticsNetwork;
@@ -663,7 +663,7 @@ export class Colony {
 	/**
 	 * Get a list of creeps in the colony which have a specified role name
 	 */
-	getCreepsByRole(roleName: string): Creep[] {
+	getCreepsByRole(roleName: string): AnyCreep[] {
 		return this.creepsByRole[roleName] || [];
 	}
 

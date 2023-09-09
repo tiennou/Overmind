@@ -4,6 +4,7 @@ import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
+import { isCreep } from 'declarations/typeGuards';
 
 /**
  * This overlord contains the default actions for any creeps which lack an overlord (for example, miners whose
@@ -28,7 +29,7 @@ export class DefaultOverlord extends Overlord {
 
 	init() {
 		// Zergs are collected at end of init phase; by now anything needing to be claimed already has been
-		const zergs = _.map(this.colony.creeps, creep => Overmind.zerg[creep.name] || new Zerg(creep));
+		const zergs = _.map(this.colony.creeps, creep => Overmind.zerg[creep.name] || isCreep(creep) && new Zerg(creep));
 		this.idleZerg = _.filter(zergs, zerg => !zerg.overlord);
 		for (const zerg of this.idleZerg) {
 			zerg.refresh();

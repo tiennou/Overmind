@@ -3,7 +3,7 @@ import {Matcher} from '../algorithms/galeShapley';
 import {Colony} from '../Colony';
 import {LogMessage, log} from '../console/log';
 import {Roles} from '../creepSetups/setups';
-import {isResource, isRuin, isTombstone,} from '../declarations/typeGuards';
+import {isCreep, isResource, isRuin, isTombstone,} from '../declarations/typeGuards';
 import {Mem} from '../memory/Memory';
 import {Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
@@ -597,7 +597,7 @@ export class LogisticsNetwork {
 	 */
 	summarizeMatching(): void {
 		const requests = this.requests.slice();
-		const transporters = _.filter(this.colony.getCreepsByRole(Roles.transport), creep => !creep.spawning);
+		const transporters = _.filter(this.colony.getCreepsByRole(Roles.transport), creep => isCreep(creep) && !creep.spawning);
 		const unmatchedTransporters = _.remove(transporters,
 											   transporter => !_.keys(this._matching).includes(transporter.name));
 		const unmatchedRequests = _.remove(requests, request => !_.values(this._matching).includes(request));
