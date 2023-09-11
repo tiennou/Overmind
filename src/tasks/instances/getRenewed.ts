@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type getRenewedTargetType = StructureSpawn;
 export const getRenewedTaskName = "getRenewed";
 
 @profile
-export class TaskGetRenewed extends Task<getRenewedTargetType> {
+export class TaskGetRenewed extends Task<Zerg, getRenewedTargetType> {
 	constructor(target: getRenewedTargetType, options: TaskOptions = {}) {
 		super(getRenewedTaskName, target, options);
 	}

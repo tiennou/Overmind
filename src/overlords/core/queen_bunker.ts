@@ -15,7 +15,7 @@ import {
 	insideBunkerBounds,
 	quadrantFillOrder,
 } from "../../roomPlanner/layouts/bunker";
-import { Task } from "../../tasks/Task";
+import { GenericTask } from "../../tasks/Task";
 import { Tasks } from "../../tasks/Tasks";
 import { hasMinerals, mergeSum, minBy } from "../../utilities/utils";
 import { Zerg } from "../../zerg/Zerg";
@@ -215,7 +215,7 @@ export class BunkerQueenOverlord extends Overlord {
 	}
 
 	// Builds a series of tasks to empty unnecessary carry contents, withdraw required resources, and supply structures
-	private buildSupplyTaskManifest(queen: Zerg): Task<any> | null {
+	private buildSupplyTaskManifest(queen: Zerg): GenericTask | null {
 		this.debug(`${queen.print} generating supply tasks`);
 		let tasks: (
 			| TaskWithdraw
@@ -463,8 +463,8 @@ export class BunkerQueenOverlord extends Overlord {
 	}
 
 	// Builds a series of tasks to withdraw required resources from targets
-	private buildWithdrawTaskManifest(queen: Zerg): Task<any> | null {
-		const tasks: Task<any>[] = [];
+	private buildWithdrawTaskManifest(queen: Zerg): GenericTask | null {
+		const tasks: GenericTask[] = [];
 		const transferTarget =
 			this.colony.terminal || this.colony.storage || this.batteries[0];
 		// Step 1: empty all contents (this shouldn't be necessary since queen is normally empty at this point)

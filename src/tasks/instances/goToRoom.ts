@@ -1,3 +1,4 @@
+import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type goToRoomTargetType = string;
 export const goToRoomTaskName = "goToRoom";
 
 @profile
-export class TaskGoToRoom extends Task<RoomPosition> {
+export class TaskGoToRoom extends Task<AnyZerg, RoomPosition> {
 	constructor(roomName: goToRoomTargetType, options: TaskOptions = {}) {
 		super(
 			goToRoomTaskName,

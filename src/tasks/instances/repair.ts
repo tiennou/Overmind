@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type repairTargetType = Structure;
 export const repairTaskName = "repair";
 
 @profile
-export class TaskRepair extends Task<repairTargetType> {
+export class TaskRepair extends Task<Zerg, repairTargetType> {
 	constructor(target: repairTargetType, options: TaskOptions = {}) {
 		super(repairTaskName, target, options);
 		// Settings

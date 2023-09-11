@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type dismantleTargetType = Structure;
 export const dismantleTaskName = "dismantle";
 
 @profile
-export class TaskDismantle extends Task<dismantleTargetType> {
+export class TaskDismantle extends Task<Zerg, dismantleTargetType> {
 	constructor(target: dismantleTargetType, options: TaskOptions = {}) {
 		super(dismantleTaskName, target, options);
 		this.settings.timeout = 100;

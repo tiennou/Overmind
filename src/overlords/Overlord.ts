@@ -21,6 +21,7 @@ import { Tasks } from "../tasks/Tasks";
 import { CombatZerg } from "../zerg/CombatZerg";
 import { Zerg } from "../zerg/Zerg";
 import { config } from "config";
+import { isCombatZerg } from "declarations/typeGuards";
 
 export interface OverlordInitializer {
 	ref: string;
@@ -373,7 +374,7 @@ export abstract class Overlord {
 			if (!zergNames[creep.name]) {
 				if (
 					Overmind.zerg[creep.name] &&
-					(<CombatZerg>Overmind.zerg[creep.name]).isCombatZerg
+					isCombatZerg(Overmind.zerg[creep.name])
 				) {
 					this._combatZerg[role].push(
 						<CombatZerg>Overmind.zerg[creep.name]

@@ -1,4 +1,5 @@
 /* Withdraw a resource from a target */
+import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -7,7 +8,7 @@ export type withdrawTargetType = AnyStoreStructure;
 export const withdrawTaskName = "withdraw";
 
 @profile
-export class TaskWithdraw extends Task<withdrawTargetType> {
+export class TaskWithdraw extends Task<AnyZerg, withdrawTargetType> {
 	data: {
 		resourceType: ResourceConstant;
 		amount: number | undefined;

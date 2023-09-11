@@ -102,16 +102,16 @@ import {
 	withdrawAllTargetType,
 	withdrawAllTaskName,
 } from "./instances/withdrawAll";
-import { Task } from "./Task";
+import { GenericTask } from "./Task";
 
 /**
  * The task initializer maps serialized prototasks to Task instances
  */
-export function initializeTask(protoTask: ProtoTask): Task<any> {
+export function initializeTask(protoTask: ProtoTask): GenericTask {
 	// Retrieve name and target data from the ProtoTask
 	const taskName = protoTask.name;
 	const target = deref(protoTask._target.ref);
-	let task: Task<any>;
+	let task: GenericTask;
 	// Create a task object of the correct type
 	switch (taskName) {
 		case attackTaskName:

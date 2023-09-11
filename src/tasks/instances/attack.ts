@@ -1,6 +1,7 @@
 import { ZergMoveReturnCode } from "movement/types";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
+import { Zerg } from "zerg/Zerg";
 
 // Attack task, includes attack and ranged attack if applicable.
 // Use meleeAttack and rangedAttack for the exclusive variants.
@@ -14,7 +15,7 @@ export type attackTargetType = Creep | Structure;
 export const attackTaskName = "attack";
 
 @profile
-export class TaskAttack extends Task<attackTargetType> {
+export class TaskAttack extends Task<Zerg, attackTargetType> {
 	constructor(target: attackTargetType, options: TaskOptions = {}) {
 		super(attackTaskName, { ref: target.ref, _pos: target.pos }, options);
 		// Settings

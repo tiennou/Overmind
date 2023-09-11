@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -11,7 +12,7 @@ interface TaskReserveOptions extends TaskOptions {
 }
 
 @profile
-export class TaskReserve extends Task<reserveTargetType> {
+export class TaskReserve extends Task<Zerg, reserveTargetType> {
 	options: TaskReserveOptions;
 	constructor(target: reserveTargetType, options: TaskOptions = {}) {
 		_.defaults(options, { reserveAmount: RESERVE_DEFAULT_AMOUNT });

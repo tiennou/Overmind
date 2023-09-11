@@ -3,12 +3,12 @@ import { log } from "../../console/log";
 import { isResource, isStandardZerg } from "../../declarations/typeGuards";
 import { profile } from "../../profiler/decorator";
 import { maxBy, minMax } from "../../utilities/utils";
-import { Task } from "../Task";
+import { GenericTask, Task } from "../Task";
 import { TaskHarvest } from "./harvest";
 import { pickupTaskName, TaskPickup } from "./pickup";
 import { TaskWithdraw, withdrawTaskName } from "./withdraw";
 import { Roles } from "creepSetups/setups";
-import { Zerg } from "zerg/Zerg";
+import { AnyZerg } from "zerg/AnyZerg";
 
 export type rechargeTargetType = null;
 export const rechargeTaskName = "recharge";
@@ -18,7 +18,7 @@ const RECHARGE_MAX_DISTANCE = 40;
 // This is a "dispenser task" which is not itself a valid task, but dispenses a task when assigned to a creep.
 
 @profile
-export class TaskRecharge extends Task<rechargeTargetType> {
+export class TaskRecharge extends Task<AnyZerg, rechargeTargetType> {
 	data: {
 		minEnergy: number;
 		sourcesIDs?: Id<Source>[];
@@ -47,7 +47,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 	}
 
 	private rechargeRateForCreep(
-		creep: Zerg,
+		creep: AnyZerg,
 		obj: rechargeObjectType
 	): number | false {
 		log.debugCreep(
@@ -119,12 +119,12 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 	}
 
 	// Override creep setter to dispense a valid recharge task
-	set creep(creep: Zerg) {
+	set creep(creep: AnyZerg) {
 		this._creep.name = creep.name;
 		if (this._parent) {
 			this.parent!.creep = creep;
 		}
-		let task: Task<any> | undefined = this.goRecharge(creep);
+		let task: GenericTask | undefined = this.goRecharge(creep);
 
 		if (!task) {
 			task = this.goHarvest(creep);
@@ -138,7 +138,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		creep.task = task!;
 	}
 
-	goRecharge(creep: Zerg) {
+	goRecharge(creep: AnyZerg) {
 		// Choose the target to maximize your energy gain subject to other targeting workers
 		const possibleTargets =
 			creep.colony && creep.inColonyRoom ?
@@ -178,7 +178,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		}
 	}
 
-	goHarvest(creep: Zerg) {
+	goHarvest(creep: AnyZerg) {
 		// workers shouldn't harvest; let drones do it (disabling this check can destabilize early economy)
 		const canHarvest =
 			isStandardZerg(creep) &&

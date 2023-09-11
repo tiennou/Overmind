@@ -13,7 +13,7 @@ const invalidTarget = {
 };
 
 @profile
-export class TaskInvalid extends Task<any> {
+export class TaskInvalid extends Task<any, any> {
 	constructor() {
 		super("INVALID", invalidTarget);
 	}

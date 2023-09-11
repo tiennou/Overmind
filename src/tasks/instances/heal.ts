@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type healTargetType = Creep;
 export const healTaskName = "heal";
 
 @profile
-export class TaskHeal extends Task<healTargetType> {
+export class TaskHeal extends Task<Zerg, healTargetType> {
 	constructor(target: healTargetType, options: TaskOptions = {}) {
 		super(healTaskName, target, options);
 		// Settings

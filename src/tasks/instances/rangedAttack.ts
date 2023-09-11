@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type rangedAttackTargetType = Creep | Structure;
 export const rangedAttackTaskName = "rangedAttack";
 
 @profile
-export class TaskRangedAttack extends Task<rangedAttackTargetType> {
+export class TaskRangedAttack extends Task<Zerg, rangedAttackTargetType> {
 	constructor(target: rangedAttackTargetType, options: TaskOptions = {}) {
 		super(rangedAttackTaskName, target, options);
 		// Settings

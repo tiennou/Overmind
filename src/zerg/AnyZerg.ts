@@ -11,7 +11,7 @@ import { Cartographer, ROOMTYPE_SOURCEKEEPER } from "../utilities/Cartographer";
 import { minBy } from "../utilities/utils";
 import { config } from "config";
 import { RANGES } from "./ranges";
-import { Task } from "tasks/Task";
+import type { GenericTask, Task } from "tasks/Task";
 import { initializeTask } from "tasks/initializer";
 import { Visualizer } from "visuals/Visualizer";
 
@@ -71,7 +71,7 @@ export abstract class AnyZerg {
 	blockMovement: boolean;
 
 	/** Cached Task object that is instantiated once per tick and on change */
-	private _task: Task<any> | null;
+	private _task: Task<AnyZerg, any> | null;
 
 	constructor(creep: AnyCreep, notifyWhenAttacked = true) {
 		this.isAnyZerg = true;
@@ -319,7 +319,7 @@ export abstract class AnyZerg {
 	/**
 	 * Wrapper for _task
 	 */
-	get task(): Task<any> | null {
+	get task(): GenericTask | null {
 		if (!this._task) {
 			this._task =
 				this.memory.task ? initializeTask(this.memory.task) : null;
@@ -330,7 +330,7 @@ export abstract class AnyZerg {
 	/**
 	 * Assign the creep a task with the setter, replacing creep.assign(Task)
 	 */
-	set task(task: Task<any> | null) {
+	set task(task: GenericTask | null) {
 		// Unregister target from old task if applicable
 		const oldProtoTask = this.memory.task;
 		if (oldProtoTask) {

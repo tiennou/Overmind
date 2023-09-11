@@ -51,7 +51,10 @@ import { Task } from "./Task";
  */
 @profile
 export class Tasks {
-	static chain(tasks: Task<any>[], setNextPos = true): Task<any> | null {
+	static chain(
+		tasks: Task<any, any>[],
+		setNextPos = true
+	): Task<any, any> | null {
 		if (tasks.length == 0) {
 			// log.error(`Tasks.chain was passed an empty array of tasks!`);
 			return null;

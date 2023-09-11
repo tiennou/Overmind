@@ -1,3 +1,4 @@
+import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -9,7 +10,7 @@ export type transferAllTargetType =
 export const transferAllTaskName = "transferAll";
 
 @profile
-export class TaskTransferAll extends Task<transferAllTargetType> {
+export class TaskTransferAll extends Task<AnyZerg, transferAllTargetType> {
 	data: {
 		skipEnergy?: boolean;
 	};

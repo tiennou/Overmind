@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type signControllerTargetType = StructureController;
 export const signControllerTaskName = "signController";
 
 @profile
-export class TaskSignController extends Task<signControllerTargetType> {
+export class TaskSignController extends Task<Zerg, signControllerTargetType> {
 	constructor(target: signControllerTargetType, options: TaskOptions = {}) {
 		super(signControllerTaskName, target, options);
 	}

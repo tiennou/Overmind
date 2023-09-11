@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type claimTargetType = StructureController;
 export const claimTaskName = "claim";
 
 @profile
-export class TaskClaim extends Task<claimTargetType> {
+export class TaskClaim extends Task<Zerg, claimTargetType> {
 	constructor(target: claimTargetType, options: TaskOptions = {}) {
 		super(claimTaskName, target, options);
 		// Settings

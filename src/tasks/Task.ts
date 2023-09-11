@@ -15,17 +15,17 @@
 import { MoveOptions, ZergMoveReturnCode } from "movement/types";
 import { log } from "../console/log";
 import { profile } from "../profiler/decorator";
-import { Zerg } from "../zerg/Zerg";
+import type { AnyZerg } from "zerg/AnyZerg";
 import { initializeTask } from "./initializer";
 import { deref, derefRoomPosition } from "utilities/utils";
-import { errorForCode } from "utilities/errors";
+import { errorForCode, OvermindReturnCode } from "utilities/errors";
 
 interface AbstractTaskTarget {
 	ref: string; // Target id or name
 	_pos: ProtoPos; // Target position's coordinates in case vision is lost
 }
 
-type ConcreteTaskTarget = HasRef | _HasRoomPosition | RoomPosition;
+export type ConcreteTaskTarget = HasRef | _HasRoomPosition | RoomPosition;
 
 function isAbstractTarget(target: any): target is AbstractTaskTarget {
 	return !!target && (<AbstractTaskTarget>target)._pos !== undefined;
@@ -39,6 +39,9 @@ function isRoomObjectTarget(target: any): target is RoomObject {
 	return !!target && (<RoomObject>target).pos !== undefined;
 }
 
+export type GenericTask = Task<AnyZerg, any>;
+// export type GenericTask<Z extends AnyZerg = AnyZerg, T extends ConcreteTaskTarget = ConcreteTaskTarget> = Task<Z, T>
+
 /**
  * An abstract class for encapsulating creep actions. This generalizes the concept of "do action X to thing Y until
  * condition Z is met" and saves a lot of convoluted and duplicated code in creep logic. A Task object contains
@@ -46,7 +49,10 @@ function isRoomObjectTarget(target: any): target is RoomObject {
  * to continue.
  */
 @profile
-export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
+export abstract class Task<
+	CreepClass extends AnyZerg,
+	TargetType extends ConcreteTaskTarget | null,
+> {
 	static taskName: string;
 
 	name: string; // Name of the task type, e.g. 'upgrade'
@@ -149,16 +155,20 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Return the wrapped creep which is executing this task
 	 */
-	get creep(): Zerg {
+	get creep(): CreepClass {
 		// Get task's own creep by its name
 		// Returns zerg wrapper instead of creep to use monkey-patched functions
-		return Overmind.zerg[this._creep.name];
+		// @ts-expect-error type substitution galore
+		return (
+			Overmind.zerg[this._creep.name] ||
+			Overmind.powerZerg[this._creep.name]
+		);
 	}
 
 	/**
 	 * Set the creep which is executing this task
 	 */
-	set creep(creep: Zerg) {
+	set creep(creep: CreepClass) {
 		this._creep.name = creep.name;
 		if (this._parent) {
 			this.parent!.creep = creep;
@@ -189,14 +199,14 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Get the Task's parent
 	 */
-	get parent(): Task<any> | null {
+	get parent(): GenericTask | null {
 		return this._parent ? initializeTask(this._parent) : null;
 	}
 
 	/**
 	 * Set the Task's parent
 	 */
-	set parent(parentTask: Task<any> | null) {
+	set parent(parentTask: GenericTask | null) {
 		this._parent = parentTask ? parentTask.proto : null;
 		// If the task is already assigned to a creep, update their memory
 		if (this.creep) {
@@ -207,8 +217,8 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Return a list of [this, this.parent, this.parent.parent, ...] as tasks
 	 */
-	get manifest(): Task<any>[] {
-		const manifest: Task<any>[] = [this];
+	get manifest(): GenericTask[] {
+		const manifest: GenericTask[] = [this];
 		let parent = this.parent;
 		while (parent) {
 			manifest.push(parent);
@@ -248,7 +258,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Fork the task, assigning a new task to the creep with this task as its parent
 	 */
-	fork(newTask: Task<any>): Task<any> {
+	fork<T extends CreepClass>(newTask: Task<T, any>): Task<T, any> {
 		newTask.parent = this;
 		if (this.creep) {
 			this.creep.task = newTask;
@@ -330,7 +340,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Execute this task each tick. Returns nothing unless work is done.
 	 */
-	run() {
+	run(): OvermindReturnCode {
 		if (this.isWorking) {
 			delete this.creep.memory._go;
 			// if (this.settings.workOffRoad) { // this is disabled as movement priorities makes it unnecessary

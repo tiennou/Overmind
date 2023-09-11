@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type upgradeTargetType = StructureController;
 export const upgradeTaskName = "upgrade";
 
 @profile
-export class TaskUpgrade extends Task<upgradeTargetType> {
+export class TaskUpgrade extends Task<Zerg, upgradeTargetType> {
 	constructor(target: upgradeTargetType, options: TaskOptions = {}) {
 		super(upgradeTaskName, target, options);
 		// Settings

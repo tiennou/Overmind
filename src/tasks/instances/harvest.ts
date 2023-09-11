@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { isSource } from "../../declarations/typeGuards";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
@@ -6,7 +7,7 @@ export type harvestTargetType = Source | Mineral;
 export const harvestTaskName = "harvest";
 
 @profile
-export class TaskHarvest extends Task<harvestTargetType> {
+export class TaskHarvest extends Task<Zerg, harvestTargetType> {
 	constructor(target: harvestTargetType, options: TaskOptions = {}) {
 		super(harvestTaskName, target, options);
 	}

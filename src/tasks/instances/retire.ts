@@ -1,12 +1,13 @@
 import { log } from "console/log";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
+import { Zerg } from "zerg/Zerg";
 
 export type retireTargetType = StructureSpawn;
 export const retireTaskName = "retire";
 
 @profile
-export class TaskRetire extends Task<retireTargetType> {
+export class TaskRetire extends Task<Zerg, retireTargetType> {
 	constructor(target: retireTargetType, options: TaskOptions = {}) {
 		super(retireTaskName, target, options);
 		// Settings

@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type buildTargetType = ConstructionSite;
 export const buildTaskName = "build";
 
 @profile
-export class TaskBuild extends Task<buildTargetType> {
+export class TaskBuild extends Task<Zerg, buildTargetType> {
 	constructor(target: buildTargetType, options: TaskOptions = {}) {
 		super(buildTaskName, target, options);
 		// Settings

@@ -1,3 +1,4 @@
+import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 
@@ -5,7 +6,7 @@ export type fortifyTargetType = StructureWall | StructureRampart;
 export const fortifyTaskName = "fortify";
 
 @profile
-export class TaskFortify extends Task<fortifyTargetType> {
+export class TaskFortify extends Task<Zerg, fortifyTargetType> {
 	data: {
 		hitsMax: number | undefined;
 	};

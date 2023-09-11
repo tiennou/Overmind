@@ -1,4 +1,5 @@
 import { deref } from "utilities/utils";
+import { Zerg } from "zerg/Zerg";
 import { log } from "../../console/log";
 import { profile } from "../../profiler/decorator";
 import { BOOST_PARTS } from "../../resources/map_resources";
@@ -12,7 +13,7 @@ export const getBoostedTaskName = "getBoosted";
 export const MIN_LIFETIME_FOR_BOOST = 0.85;
 
 @profile
-export class TaskGetBoosted extends Task<getBoostedTargetType> {
+export class TaskGetBoosted extends Task<Zerg, getBoostedTargetType> {
 	data: {
 		resourceType: ResourceConstant;
 		amount: number | undefined;
