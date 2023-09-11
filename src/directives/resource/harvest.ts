@@ -93,6 +93,7 @@ export class DirectiveHarvest extends Directive {
 	visuals(): void {
 		if (!(this.memory.debug && Memory.settings.enableVisuals)) return;
 
+		const isDisabled = this.overlords.mine.isDisabled;
 		const data = [
 			this.name,
 			` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`,
@@ -102,7 +103,7 @@ export class DirectiveHarvest extends Directive {
 			data.push(` P: ${this.memory[MEM.DISTANCE][MEM_DISTANCE.WEIGHTED]}`);
 		}
 		const { x, y, roomName } = this.pos;
-		new RoomVisual(roomName).infoBox(data, x, y, { color: '#FFE87B'});
+		new RoomVisual(roomName).infoBox(data, x, y, { color: isDisabled ? '#85783E' : '#FFE87B'});
 	}
 }
 

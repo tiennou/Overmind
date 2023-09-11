@@ -26,7 +26,6 @@ const DISMANTLE_CHECK_FREQUENCY = 1500;
 const DISMANTLE_CHECK = 'dc';
 
 interface MiningOverlordMemory extends OverlordMemory {
-	doubleSource?: boolean;
 	[DISMANTLE_CHECK]?: number;
 	dismantleNeeded?: boolean;
 }
@@ -44,6 +43,7 @@ export class MiningOverlord extends Overlord {
 	distance: number;
 	source: Source | undefined;
 	secondSource: Source | undefined;
+	/** Tracks whether we've lost to the second source miner */
 	isDisabled: boolean;
 	container: StructureContainer | undefined;
 	link: StructureLink | undefined;
@@ -98,35 +98,26 @@ export class MiningOverlord extends Overlord {
 		}
 		this.miningPowerNeeded = Math.ceil(this.energyPerTick / HARVEST_POWER) + 1;
 
-		// Check if the colony is too small to support standard miners
-		this.earlyMode = this.colony.room.energyCapacityAvailable < StandardMinerSetupCost;
-		// Allow drop mining at low levels
-		this.allowDropMining = this.colony.level < MiningOverlord.settings.dropMineUntilRCL;
-		if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_SOURCEKEEPER) {
-			this.setup = Setups.drones.miners.sourceKeeper;
-		} else if (this.earlyMode) {
-			this.setup = Setups.drones.miners.default;
-		} else if (this.isDoubleSource() && this.colony.room.energyCapacityAvailable > DoubleMinerSetupCost) {
-			this.setup = Setups.drones.miners.double;
-		} else if (this.link) {
-			if (this.colony.assets.energy >= 100000) {
-				this.setup = Setups.drones.miners.linkOptimized;
-			} else {
-				this.setup = Setups.drones.miners.default;
-			}
-		} else {
-			// this.setup = Game.cpu.bucket < 9500 ? Setups.drones.miners.standardCPU : Setups.drones.miners.standard;
-			this.setup = Setups.drones.miners.standard;
-		}
+		const canAffordStandardMiner = this.colony.room.energyCapacityAvailable >= StandardMinerSetupCost;
+		const canAffordDoubleMiner = this.colony.room.energyCapacityAvailable >= DoubleMinerSetupCost;
 
-		const miningPowerEach = this.setup.getBodyPotential(WORK, this.colony);
-		this.minersNeeded = Math.min(Math.ceil(this.miningPowerNeeded / miningPowerEach),
-									 this.pos.availableNeighbors(true).length);
-		this.minersNeeded = this.isDisabled ? 0 : this.minersNeeded;
+		this.debug(`capacity: ${this.colony.room.energyCapacityAvailable}, standard: ${canAffordStandardMiner}, double: ${canAffordDoubleMiner}`);
+		// We'll redisable if there's a second source
+		this.isDisabled = false;
 
 		// Calculate optimal location for mining
 		if (!this.earlyMode && !this.allowDropMining) {
-			if (this.container) {
+			if (canAffordDoubleMiner) {
+				const miningPos = this.canDoubleMine();
+				if (miningPos) {
+					// Disable mining from the source with greater id
+					if (this.source!.id > this.secondSource!.id) {
+						this.isDisabled = true;
+					}
+					this.debug(`other source is mineable from ${miningPos.print}, ${this.isDisabled ? "disabling" : "handling"}`);
+					this.harvestPos = miningPos;
+				}
+			} else if (this.container) {
 				this.harvestPos = this.container.pos;
 			} else if (this.link) {
 				this.harvestPos = _.find(this.link.pos.availableNeighbors(true),
@@ -135,41 +126,64 @@ export class MiningOverlord extends Overlord {
 				this.harvestPos = this.calculateContainerPos();
 			}
 		}
+
+		// Check if the colony is too small to support standard miners
+		this.earlyMode = !canAffordStandardMiner;
+		// Allow drop mining at low levels
+		this.allowDropMining = this.colony.level < MiningOverlord.settings.dropMineUntilRCL;
+		if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_SOURCEKEEPER) {
+			this.debug(`using sourceKeeper miner setup`);
+			this.setup = Setups.drones.miners.sourceKeeper;
+		} else if (this.earlyMode) {
+			this.debug(`using early miner setup`);
+			this.setup = Setups.drones.miners.default;
+		} else if (this.secondSource && canAffordDoubleMiner) {
+			this.debug(`using double miner setup`);
+			this.setup = Setups.drones.miners.double;
+		} else if (this.link) {
+			if (this.colony.assets.energy >= 100000) {
+				this.debug(`using link-optimized setup`);
+				this.setup = Setups.drones.miners.linkOptimized;
+			} else {
+				this.debug(`using early miner (link?) setup`);
+				this.setup = Setups.drones.miners.default;
+			}
+		} else {
+			this.debug(`using standard miner setup`);
+			// this.setup = Game.cpu.bucket < 9500 ? Setups.drones.miners.standardCPU : Setups.drones.miners.standard;
+			this.setup = Setups.drones.miners.standard;
+		}
+
+		const miningPowerEach = this.setup.getBodyPotential(WORK, this.colony);
+		this.minersNeeded = Math.min(Math.ceil(this.miningPowerNeeded / miningPowerEach),
+									 this.pos.availableNeighbors(true).length);
+		this.minersNeeded = this.isDisabled ? 0 : this.minersNeeded;
 	}
 
 	/**
 	 * Calculates if this source has another one very nearby that should be handled by the same miner
 	 */
-	private isDoubleSource(): boolean {
-		if (this.memory.doubleSource !== undefined) {
-			return this.memory.doubleSource;
-		}
+	private canDoubleMine() {
+		if (this.secondSource) return null;
 		const room = Game.rooms[this.pos.roomName];
-		if (room) {
-			this.source = this.source || _.first(room.sources);
-			const otherSource = _.find(this.source.pos.findInRange(FIND_SOURCES, 2),
-									   source => source.id != (this.source ? this.source.id : ''));
-			if (otherSource) {
-				this.secondSource = otherSource;
-				// If its over 1 spot away, is there spot in between to mine?
-				if (this.source.pos.getRangeTo(this.secondSource) > 1) {
-					const miningPos = this.source.pos.getPositionAtDirection(this.source.pos.getDirectionTo(this.secondSource.pos));
-					if (!miningPos.isWalkable()) {
-						// console.log(`Double mining found but there is no spot between ${this.secondSource}
-						// ${this.secondSource.pos.print} isWalkable ${miningPos}`);
-						return false;
-					}
-				}
-				// Disable mining from the source with greater id
-				if (this.source.id > this.secondSource.id) {
-					// console.log(`This is a disabled mining ${this.directive.name} via source id`);
-					this.isDisabled = true;
-				}
-				this.memory.doubleSource = true;
-				return true;
-			}
+		if (!room || !this.source) return null;
+
+		const secondSource = _.find(this.source.pos.findInRange(FIND_SOURCES, 2),
+									source => source.id != (this.source ? this.source.id : ''));
+		if (!secondSource) return null;
+		this.debug(`found other source 2 away from ${this.source.print}: ${secondSource?.print}`);
+		// If its over 1 spot away, is there spot in between to mine?
+		const myNeighbors = this.source.pos.availableNeighbors(true);
+		const theirNeighbors = secondSource.pos.availableNeighbors(true);
+		const miningPos = myNeighbors.find(pos => theirNeighbors.some(oPos => pos.x === oPos.x && pos.y === oPos.y));
+		if (!miningPos) {
+			this.debug(`Double mining found but there is no spot between ${this.source.print} and ${secondSource.print}`);
+			return null;
 		}
-		return false;
+
+		// Grab the second source and store it
+		this.secondSource = secondSource;
+		return miningPos;
 	}
 
 	/**
@@ -230,7 +244,7 @@ export class MiningOverlord extends Overlord {
 		}
 		super.refresh();
 		// Refresh your references to the objects
-		$.refresh(this, 'source', 'container', 'link', 'constructionSite');
+		$.refresh(this, 'source', 'secondSource', 'container', 'link', 'constructionSite');
 	}
 
 	static calculateContainerPos(source: RoomPosition, dropoffLocation?: RoomPosition): RoomPosition {
@@ -434,8 +448,8 @@ export class MiningOverlord extends Overlord {
 			}
 		} else {
 			result = miner.harvest(this.source);
-			this.debug(`${miner.print} harvesting from ${this.source.print}: ${result}`);
 		}
+		this.debug(`${miner.print} harvesting from ${this.source.print}: ${result}`);
 
 		// The insufficent resources takes precedence over the range check, so we have
 		// to make sure we are in range before deciding what to do
