@@ -38,7 +38,7 @@ export class $ { // $ = cash = cache... get it? :D
 		return _cache.structures[cacheKey] as T[];
 	}
 
-	// eslint-disable-next-line
+	// eslint-disable-next-line id-denylist
 	static number(saver: { ref: string }, key: string, callback: () => number, timeout = SHORT_CACHE_TIMEOUT): number {
 		const cacheKey = saver.ref + NUMBER_KEY + key;
 		if (_cache.numbers[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
@@ -138,7 +138,7 @@ export class $ { // $ = cash = cache... get it? :D
 		thing[key] = _cache.things[cacheKey] as T[K] & (undefined | _HasId | _HasId[]);
 	}
 
-	static refresh<T extends Record<K, undefined | _HasId | _HasId[]>, K extends string>(thing: T, ...keys: K[]): void {
+	static refresh<T extends Record<K, undefined | _HasId | _HasId[]>, K extends keyof T>(thing: T, ...keys: K[]): void {
 		_.forEach(keys, function(key) {
 			if (thing[key]) {
 				if (_.isArray(thing[key])) {
@@ -151,7 +151,7 @@ export class $ { // $ = cash = cache... get it? :D
 	}
 
 	static refreshObject<T extends Record<K, { [prop: string]: undefined | _HasId | _HasId[] }>,
-		K extends string>(thing: T, ...keys: K[]): void {
+		K extends keyof T>(thing: T, ...keys: K[]): void {
 		_.forEach(keys, function(key) {
 			if (_.isObject(thing[key])) {
 				for (const prop in thing[key]) {
