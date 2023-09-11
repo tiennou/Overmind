@@ -39,15 +39,6 @@ const ACTION_PIPELINES: string[][] = [
 	// ['upgradeController', 'build', 'repair', 'withdraw', 'transfer', 'drop'],
 ];
 
-const _RANGES = {
-	BUILD: 3,
-	REPAIR: 3,
-	TRANSFER: 1,
-	WITHDRAW: 1,
-	HARVEST: 1,
-	DROP: 0,
-};
-
 /**
  * The Zerg class is a wrapper for owned creeps and contains all wrapped creep methods and many additional methods for
  * direct control of a creep. As of April 2020, this class now extends the AnyZerg class to accommodate the introduction
@@ -76,7 +67,6 @@ export class Zerg extends AnyZerg {
 	saying: string;
 	spawning: boolean;
 	ticksToLive: number | undefined;
-	lifetime: number;
 	/** Tracks the actions that a creep has completed this tick */
 	actionLog: { [actionName: string]: boolean };
 	/** Whether the zerg is allowed to move or not */
@@ -211,12 +201,6 @@ export class Zerg extends AnyZerg {
 		}
 	}
 
-	// cancelOrder(methodName: string): OK | ERR_NOT_OWNER | ERR_BUSY | ERR_NOT_FOUND {
-	// 	const result = this.creep.cancelOrder(methodName);
-	// 	if (result == OK) this.actionLog[methodName] = false;
-	// 	return result;
-	// }
-
 	claimController(controller: StructureController) {
 		const result = this.creep.claimController(controller);
 		if (!this.actionLog.claimController) {
@@ -242,20 +226,6 @@ export class Zerg extends AnyZerg {
 		return res;
 	}
 
-	// drop(resourceType: ResourceConstant, amount?: number) {
-	// 	const result = this.creep.drop(resourceType, amount);
-	// 	if (!this.actionLog.drop) this.actionLog.drop = (result == OK);
-	// 	return result;
-	// }
-
-	// goDrop(pos: RoomPosition, resourceType: ResourceConstant, amount?: number) {
-	// 	if (this.pos.inRangeToPos(pos, RANGES.DROP)) {
-	// 		return this.drop(resourceType, amount);
-	// 	} else {
-	// 		return this.goTo(pos);
-	// 	}
-	// }
-
 	generateSafeMode(target: StructureController) {
 		return this.creep.generateSafeMode(target);
 	}
@@ -271,29 +241,6 @@ export class Zerg extends AnyZerg {
 			this.goTo(source);
 		}
 	}
-
-	// move(direction: DirectionConstant, force = false) {
-	// 	if (!this.blockMovement && !force) {
-	// 		const result = this.creep.move(direction);
-	// 		if (result == OK) {
-	// 			if (!this.actionLog.move) this.actionLog.move = true;
-	// 			this.nextPos = this.pos.getPositionAtDirection(direction);
-	// 		}
-	// 		return result;
-	// 	} else {
-	// 		return ERR_BUSY;
-	// 	}
-	// }
-
-	// notifyWhenAttacked(enabled: boolean) {
-	// 	return this.creep.notifyWhenAttacked(enabled);
-	// }
-
-	// pickup(resource: Resource) {
-	// 	const result = this.creep.pickup(resource);
-	// 	if (!this.actionLog.pickup) this.actionLog.pickup = (result == OK);
-	// 	return result;
-	// }
 
 	rangedAttack(target: Creep | Structure) {
 		const result = this.creep.rangedAttack(target);
@@ -350,11 +297,6 @@ export class Zerg extends AnyZerg {
 		return result;
 	}
 
-	// /* Say a message; maximum message length is 10 characters */
-	// say(message: string, pub?: boolean) {
-	// 	return this.creep.say(message, pub);
-	// }
-
 	signController(target: StructureController, text: string) {
 		const result = this.creep.signController(target, text);
 		this.actionLog.signController ??= result == OK;
@@ -364,12 +306,6 @@ export class Zerg extends AnyZerg {
 	upgradeController(controller: StructureController) {
 		const result = this.creep.upgradeController(controller);
 		this.actionLog.upgradeController ??= result == OK;
-		// Determine amount of upgrade power
-		// let weightedUpgraderParts = _.map(this.boostCounts, )
-		// let upgradeAmount = this.getActiveBodyparts(WORK) * UPGRADE_CONTROLLER_POWER;
-		// let upgrade
-
-		// Stats.accumulate(`colonies.${this.colony.name}.rcl.progressTotal`, upgradeAmount);
 		return result;
 	}
 
@@ -403,39 +339,6 @@ export class Zerg extends AnyZerg {
 		}
 		return result;
 	}
-
-	// transfer(target: Creep | Zerg | Structure, resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number) {
-	// 	let result: ScreepsReturnCode;
-	// 	if (target instanceof Zerg) {
-	// 		result = this.creep.transfer(target.creep, resourceType, amount);
-	// 	} else {
-	// 		result = this.creep.transfer(target, resourceType, amount);
-	// 	}
-	// 	if (!this.actionLog.transfer) this.actionLog.transfer = (result == OK);
-	// 	return result;
-	// }
-
-	// goTransfer(target: Creep | Zerg | Structure, resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number) {
-	// 	if (this.pos.inRangeToPos(target.pos, RANGES.TRANSFER)) {
-	// 		return this.transfer(target, resourceType, amount);
-	// 	} else {
-	// 		return this.goTo(target);
-	// 	}
-	// }
-
-	// withdraw(target: Structure | Tombstone | Ruin, resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number) {
-	// 	const result = this.creep.withdraw(target, resourceType, amount);
-	// 	if (!this.actionLog.withdraw) this.actionLog.withdraw = (result == OK);
-	// 	return result;
-	// }
-
-	// goWithdraw(target: Structure | Tombstone, resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number) {
-	// 	if (this.pos.inRangeToPos(target.pos, RANGES.WITHDRAW)) {
-	// 		return this.withdraw(target, resourceType, amount);
-	// 	} else {
-	// 		return this.goTo(target);
-	// 	}
-	// }
 
 	// Simultaneous creep actions --------------------------------------------------------------------------------------
 
@@ -476,17 +379,6 @@ export class Zerg extends AnyZerg {
 	}
 
 	// Custom creep methods ============================================================================================
-
-	// Carry methods
-
-	// get hasMineralsInCarry(): boolean {
-	// 	for (const [resourceType, amount] of this.carry.contents) {
-	// 		if (resourceType != RESOURCE_ENERGY && amount > 0) {
-	// 			return true;
-	// 		}
-	// 	}
-	// 	return false;
-	// }
 
 	// Boosting logic --------------------------------------------------------------------------------------------------
 
@@ -689,150 +581,4 @@ export class Zerg extends AnyZerg {
 		}
 		return res;
 	}
-
-	// Colony association ----------------------------------------------------------------------------------------------
-
-	// /**
-	//  * Colony that the creep belongs to.
-	//  */
-	// get colony(): Colony | null {
-	// 	if (this.memory[MEM.COLONY] != null) {
-	// 		return Overmind.colonies[this.memory[MEM.COLONY] as string];
-	// 	} else {
-	// 		return null;
-	// 	}
-	// }
-	//
-	// set colony(newColony: Colony | null) {
-	// 	if (newColony != null) {
-	// 		this.memory[MEM.COLONY] = newColony.name;
-	// 	} else {
-	// 		this.memory[MEM.COLONY] = null;
-	// 	}
-	// }
-	//
-	// /**
-	//  * If the creep is in a colony room or outpost
-	//  */
-	// get inColonyRoom(): boolean {
-	// 	return Overmind.colonyMap[this.room.name] == this.memory[MEM.COLONY];
-	// }
-
-	// Movement and location -------------------------------------------------------------------------------------------
-
-	// goTo(destination: RoomPosition | HasPos, options: MoveOptions = {}) {
-	// 	return Movement.goTo(this, destination, options);
-	// }
-	//
-	// goToRoom(roomName: string, options: MoveOptions = {}) {
-	// 	return Movement.goToRoom(this, roomName, options);
-	// }
-	//
-	// inSameRoomAs(target: HasPos): boolean {
-	// 	return this.pos.roomName == target.pos.roomName;
-	// }
-	//
-	// safelyInRoom(roomName: string): boolean {
-	// 	return this.room.name == roomName && !this.pos.isEdge;
-	// }
-	//
-	// get inRampart(): boolean {
-	// 	return this.creep.inRampart;
-	// }
-	//
-	// get isMoving(): boolean {
-	// 	const moveData = this.memory._go as MoveData | undefined;
-	// 	return !!moveData && !!moveData.path && moveData.path.length > 1;
-	// }
-	//
-	// /**
-	//  * Kite around hostiles in the room
-	//  */
-	// kite(avoidGoals: (RoomPosition | HasPos)[] = this.room.hostiles, options: MoveOptions = {}): number | undefined {
-	// 	_.defaults(options, {
-	// 		fleeRange: 5
-	// 	});
-	// 	return Movement.kite(this, avoidGoals, options);
-	// }
-	//
-	// private defaultFleeGoals() {
-	// 	let fleeGoals: (RoomPosition | HasPos)[] = [];
-	// 	fleeGoals = fleeGoals.concat(this.room.hostiles)
-	// 						 .concat(_.filter(this.room.keeperLairs, lair => (lair.ticksToSpawn || Infinity) < 10));
-	// 	return fleeGoals;
-	// }
-	//
-	// /**
-	//  * Flee from hostiles in the room, while not repathing every tick
-	//  */
-	// flee(avoidGoals: (RoomPosition | HasPos)[] = this.room.fleeDefaults,
-	// 	 fleeOptions: FleeOptions              = {},
-	// 	 moveOptions: MoveOptions              = {}): boolean {
-	// 	if (avoidGoals.length == 0 || this.room.dangerousHostiles.find(creep =>
-	// 																	   creep.pos.getRangeToXY(this.pos.x, this.pos.y) < 6) == undefined) {
-	// 		return false;
-	// 	} else if (this.room.controller && this.room.controller.my && this.room.controller.safeMode) {
-	// 		return false;
-	// 	} else {
-	// 		const fleeing = Movement.flee(this, avoidGoals, fleeOptions.dropEnergy, moveOptions) != undefined;
-	// 		if (fleeing) {
-	// 			// Drop energy if needed
-	// 			if (fleeOptions.dropEnergy && this.carry.energy > 0) {
-	// 				const nearbyContainers = this.pos.findInRange(this.room.storageUnits, 1);
-	// 				if (nearbyContainers.length > 0) {
-	// 					this.transfer(_.first(nearbyContainers), RESOURCE_ENERGY);
-	// 				} else {
-	// 					this.drop(RESOURCE_ENERGY);
-	// 				}
-	// 			}
-	// 			// Invalidate task
-	// 			if (fleeOptions.invalidateTask && !this.inRampart) {
-	// 				this.task = null;
-	// 			}
-	// 		}
-	// 		return fleeing;
-	// 	}
-	// }
-	//
-	// /**
-	//  * Park the creep off-roads
-	//  */
-	// park(pos: RoomPosition = this.pos, maintainDistance = false): number {
-	// 	return Movement.park(this, pos, maintainDistance);
-	// }
-	//
-	// /**
-	//  * Moves a creep off of the current tile to the first available neighbor
-	//  */
-	// moveOffCurrentPos(): number | undefined {
-	// 	return Movement.moveOffCurrentPos(this);
-	// }
-	//
-	// /**
-	//  * Moves onto an exit tile
-	//  */
-	// moveOnExit(): ScreepsReturnCode | undefined {
-	// 	return Movement.moveOnExit(this);
-	// }
-	//
-	// /**
-	//  * Moves off of an exit tile
-	//  */
-	// moveOffExit(avoidSwamp = true): ScreepsReturnCode {
-	// 	return Movement.moveOffExit(this, avoidSwamp);
-	// }
-	//
-	// moveOffExitToward(pos: RoomPosition, detour = true): number | undefined {
-	// 	return Movement.moveOffExitToward(this, pos, detour);
-	// }
-
-	// Miscellaneous fun stuff -----------------------------------------------------------------------------------------
-
-	// sayLoop(messageList: string[], pub?: boolean) {
-	// 	return this.say(messageList[Game.time % messageList.length], pub);
-	// }
-	//
-	// sayRandom(phrases: string[], pub?: boolean) {
-	// 	return this.say(phrases[Math.floor(Math.random() * phrases.length)], pub);
-	// }
 }

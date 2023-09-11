@@ -103,12 +103,12 @@ export abstract class PowerZerg extends AnyZerg {
 		return this.creep.enableRoom(controller);
 	}
 
-	// /**
-	//  * Rename the power creep. It must not be spawned in the world.
-	//  */
-	// rename(name: string): OK | ERR_NOT_OWNER | ERR_NAME_EXISTS | ERR_BUSY {
-	// 	return this.creep.rename(name);
-	// }
+	/**
+	 * Rename the power creep. It must not be spawned in the world.
+	 */
+	rename(name: string) {
+		return this.creep.rename(name);
+	}
 
 	/**
 	 * Instantly restore time to live to the maximum using a Power Spawn or a Power Bank nearby.
@@ -128,13 +128,6 @@ export abstract class PowerZerg extends AnyZerg {
 	upgrade(power: PowerConstant): ScreepsReturnCode {
 		return this.creep.upgrade(power);
 	}
-
-	// /**
-	//  * Apply one of the creep's powers on the specified target.
-	//  */
-	// protected usePower(power: PowerConstant, target?: RoomObject): ScreepsReturnCode {
-	// 	return this.creep.usePower(power, target);
-	// }
 
 	/**
 	 * Generate 1/2/4/6/8 ops resource units. Cooldown 50 ticks. Required creep level: 0/2/7/14/22.
