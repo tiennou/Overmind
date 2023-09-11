@@ -5,15 +5,10 @@ import {
 	isStandardZerg,
 } from "../declarations/typeGuards";
 import { CombatIntel } from "../intel/CombatIntel";
-import { Overlord } from "../overlords/Overlord";
 import { profile } from "../profiler/decorator";
 import { BOOST_PARTS } from "../resources/map_resources";
-import { initializeTask } from "../tasks/initializer";
 import { MIN_LIFETIME_FOR_BOOST } from "../tasks/instances/getBoosted";
-import { Task } from "../tasks/Task";
 import { AnyZerg } from "./AnyZerg";
-import { Visualizer } from "visuals/Visualizer";
-import { Pathing } from "movement/Pathing";
 import { EnergyUse } from "Colony";
 
 export function normalizeStandardZerg(creep: Zerg | Creep): Zerg | Creep {
@@ -74,7 +69,6 @@ export class Zerg extends AnyZerg {
 	blockMovement: boolean;
 
 	// Cached properties
-	private _task: Task<any> | null;
 	private _neededBoosts: { [boostResource: string]: number } | undefined;
 	private _spawnInfo: Spawning | undefined;
 
@@ -84,7 +78,6 @@ export class Zerg extends AnyZerg {
 		// Copy over creep references
 		this.body = creep.body;
 		this.fatigue = creep.fatigue;
-		this.roleName = creep.memory.role;
 		this.spawning = creep.spawning;
 		// Register global references
 		Overmind.zerg[this.name] = this;
@@ -99,9 +92,7 @@ export class Zerg extends AnyZerg {
 		if (creep) {
 			this.body = creep.body;
 			this.fatigue = creep.fatigue;
-			this.roleName = creep.memory.role;
 			this.spawning = creep.spawning;
-			this._task = null; // todo
 			this._neededBoosts = undefined;
 		} else {
 			delete Overmind.zerg[this.name];
@@ -451,147 +442,5 @@ export class Zerg extends AnyZerg {
 		}
 
 		return this._neededBoosts;
-	}
-
-	// Overlord logic --------------------------------------------------------------------------------------------------
-
-	/**
-	 * Reassigns the creep to work under a new overlord and as a new role.
-	 */
-	reassign(
-		newOverlord: Overlord | null,
-		newRole?: string,
-		invalidateTask = true
-	) {
-		super.reassign(newOverlord);
-		if (newRole) {
-			this.roleName = newRole;
-			this.memory.role = newRole;
-		}
-		if (invalidateTask) {
-			this.task = null;
-		}
-	}
-
-	// Task logic ------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Wrapper for _task
-	 */
-	get task(): Task<any> | null {
-		if (!this._task) {
-			this._task =
-				this.memory.task ? initializeTask(this.memory.task) : null;
-		}
-		return this._task;
-	}
-
-	/**
-	 * Assign the creep a task with the setter, replacing creep.assign(Task)
-	 */
-	set task(task: Task<any> | null) {
-		// Unregister target from old task if applicable
-		const oldProtoTask = this.memory.task;
-		if (oldProtoTask) {
-			const oldRef = oldProtoTask._target.ref;
-			if (Overmind.cache.targets[oldRef]) {
-				_.remove(
-					Overmind.cache.targets[oldRef],
-					(name) => name == this.name
-				);
-			}
-		}
-		// Set the new task
-		this.memory.task = task ? task.proto : null;
-		if (task) {
-			if (task.target) {
-				// Register task target in cache if it is actively targeting something (excludes goTo and similar)
-				if (!Overmind.cache.targets[task.target.ref]) {
-					Overmind.cache.targets[task.target.ref] = [];
-				}
-				Overmind.cache.targets[task.target.ref].push(this.name);
-			}
-			// Register references to creep
-			task.creep = this;
-		}
-		// Clear cache
-		this._task = null;
-	}
-
-	/**
-	 * Does the creep have a valid task at the moment?
-	 */
-	get hasValidTask(): boolean {
-		return !!this.task && this.task.isValid();
-	}
-
-	/**
-	 * Creeps are idle if they don't have a task.
-	 */
-	get isIdle(): boolean {
-		return !this.task || !this.task.isValid();
-	}
-
-	/**
-	 * Execute the task you currently have.
-	 */
-	run(): number | undefined {
-		let res;
-		if (this.task) {
-			res = this.task.run();
-		}
-
-		if (this.memory.debug) {
-			const data = [this.name];
-
-			if (this.task) {
-				data.push(`task: ${this.task.name}`);
-				data.push(`pos: ${this.task.targetPos.printPlain}`);
-			} else {
-				data.push(`idle`);
-			}
-
-			new RoomVisual(this.room.name).infoBox(
-				data,
-				this.pos.x,
-				this.pos.y,
-				{
-					opacity: 0.9,
-				}
-			);
-
-			// Current path
-			if (this.memory._go && this.memory._go?.path) {
-				// log.debug(`${this.creep}: ${this.nextPos.print} ${this.pos.print}`);
-				const serialPath = this.memory._go?.path.substring(1);
-				const path = Pathing.deserializePath(this.nextPos, serialPath);
-				// log.debug(`${this.print} has path: ${path.length}, ${path.map(p => p.print).join(" > ")}`);
-				Visualizer.drawPath(path, { fill: "red", lineStyle: "dashed" });
-
-				const lastStep = _.last(path);
-				if (lastStep) {
-					if (lastStep.roomName !== this.pos.roomName || true) {
-						const lastData = [
-							this.name,
-							`eta: ${
-								this.task?.eta ??
-								this.memory._go.path.length ??
-								NaN
-							}`,
-						];
-						new RoomVisual(lastStep.roomName).infoBox(
-							lastData,
-							lastStep.x,
-							lastStep.y,
-							{
-								color: "red",
-								opacity: 0.6,
-							}
-						);
-					}
-				}
-			}
-		}
-		return res;
 	}
 }

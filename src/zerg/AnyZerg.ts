@@ -11,6 +11,9 @@ import { Cartographer, ROOMTYPE_SOURCEKEEPER } from "../utilities/Cartographer";
 import { minBy } from "../utilities/utils";
 import { config } from "config";
 import { RANGES } from "./ranges";
+import { Task } from "tasks/Task";
+import { initializeTask } from "tasks/initializer";
+import { Visualizer } from "visuals/Visualizer";
 
 export function normalizeAnyZerg(
 	creep: AnyZerg | AnyCreep
@@ -57,6 +60,7 @@ export abstract class AnyZerg {
 	/** The next position the creep will be in after registering a move intent */
 	nextPos: RoomPosition;
 	ref: string;
+	roleName: string;
 	room: Room;
 	saying: string;
 	ticksToLive: number | undefined;
@@ -65,6 +69,9 @@ export abstract class AnyZerg {
 	actionLog: { [actionName: string]: boolean };
 	/** Whether the zerg is allowed to move or not */
 	blockMovement: boolean;
+
+	/** Cached Task object that is instantiated once per tick and on change */
+	private _task: Task<any> | null;
 
 	constructor(creep: AnyCreep, notifyWhenAttacked = true) {
 		this.isAnyZerg = true;
@@ -80,6 +87,7 @@ export abstract class AnyZerg {
 		this.pos = creep.pos;
 		this.nextPos = creep.pos;
 		this.ref = creep.ref;
+		this.roleName = creep.memory.role;
 		this.room = creep.room!; // only wrap actively spawned PowerCreeps
 		this.saying = creep.saying;
 		this.ticksToLive = creep.ticksToLive;
@@ -125,6 +133,7 @@ export abstract class AnyZerg {
 			this.ticksToLive = creep.ticksToLive;
 			this.actionLog = {};
 			this.blockMovement = false;
+			this._task = null;
 		} else {
 			log.debug(`Deleting ${this.print} from global`);
 			// @ts-expect-error Global getter for Zergs
@@ -305,6 +314,65 @@ export abstract class AnyZerg {
 		return false;
 	}
 
+	// Task logic ------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Wrapper for _task
+	 */
+	get task(): Task<any> | null {
+		if (!this._task) {
+			this._task =
+				this.memory.task ? initializeTask(this.memory.task) : null;
+		}
+		return this._task;
+	}
+
+	/**
+	 * Assign the creep a task with the setter, replacing creep.assign(Task)
+	 */
+	set task(task: Task<any> | null) {
+		// Unregister target from old task if applicable
+		const oldProtoTask = this.memory.task;
+		if (oldProtoTask) {
+			const oldRef = oldProtoTask._target.ref;
+			if (Overmind.cache.targets[oldRef]) {
+				_.remove(
+					Overmind.cache.targets[oldRef],
+					(name) => name == this.name
+				);
+			}
+		}
+		// Set the new task
+		this.memory.task = task ? task.proto : null;
+		if (task) {
+			if (task.target) {
+				// Register task target in cache if it is actively targeting something (excludes goTo and similar)
+				if (!Overmind.cache.targets[task.target.ref]) {
+					Overmind.cache.targets[task.target.ref] = [];
+				}
+				Overmind.cache.targets[task.target.ref].push(this.name);
+			}
+			// Register references to creep
+			task.creep = this;
+		}
+		// Clear cache
+		this._task = null;
+	}
+
+	/**
+	 * Does the creep have a valid task at the moment?
+	 */
+	get hasValidTask(): boolean {
+		return !!this.task && this.task.isValid();
+	}
+
+	/**
+	 * Creeps are idle if they don't have a task.
+	 */
+	get isIdle(): boolean {
+		return !this.task || !this.task.isValid();
+	}
+
 	// Overlord logic --------------------------------------------------------------------------------------------------
 
 	get overlord(): Overlord | null {
@@ -373,8 +441,11 @@ export abstract class AnyZerg {
 	/**
 	 * Reassigns the creep to work under a new overlord and as a new role.
 	 */
-	reassign(newOverlord: Overlord | null) {
-		delete this.memory.retired;
+	reassign(
+		newOverlord: Overlord | null,
+		newRole?: string,
+		invalidateTask = true
+	) {
 		this.overlord = newOverlord;
 		if (
 			newOverlord &&
@@ -383,6 +454,76 @@ export abstract class AnyZerg {
 		) {
 			this.colony = newOverlord.colony;
 		}
+		if (newRole) {
+			this.roleName = newRole;
+			this.memory.role = newRole;
+		}
+		if (invalidateTask) {
+			this.task = null;
+		}
+	}
+
+	/**
+	 * Execute the task you currently have.
+	 */
+	run(): number | undefined {
+		let res;
+		if (this.task) {
+			res = this.task.run();
+		}
+
+		if (this.memory.debug) {
+			const data = [this.name];
+
+			if (this.task) {
+				data.push(`task: ${this.task.name}`);
+				data.push(`pos: ${this.task.targetPos.printPlain}`);
+			} else {
+				data.push(`idle`);
+			}
+
+			new RoomVisual(this.room.name).infoBox(
+				data,
+				this.pos.x,
+				this.pos.y,
+				{
+					opacity: 0.9,
+				}
+			);
+
+			// Current path
+			if (this.memory._go && this.memory._go?.path) {
+				// log.debug(`${this.creep}: ${this.nextPos.print} ${this.pos.print}`);
+				const serialPath = this.memory._go?.path.substring(1);
+				const path = Pathing.deserializePath(this.nextPos, serialPath);
+				// log.debug(`${this.print} has path: ${path.length}, ${path.map(p => p.print).join(" > ")}`);
+				Visualizer.drawPath(path, { fill: "red", lineStyle: "dashed" });
+
+				const lastStep = _.last(path);
+				if (lastStep) {
+					if (lastStep.roomName !== this.pos.roomName || true) {
+						const lastData = [
+							this.name,
+							`eta: ${
+								this.task?.eta ??
+								this.memory._go.path.length ??
+								NaN
+							}`,
+						];
+						new RoomVisual(lastStep.roomName).infoBox(
+							lastData,
+							lastStep.x,
+							lastStep.y,
+							{
+								color: "red",
+								opacity: 0.6,
+							}
+						);
+					}
+				}
+			}
+		}
+		return res;
 	}
 
 	// Colony association ----------------------------------------------------------------------------------------------
