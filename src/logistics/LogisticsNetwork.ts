@@ -205,6 +205,7 @@ export class LogisticsNetwork {
 		}
 
 		let resourceType = opts.resourceType ?? RESOURCE_ALL;
+		let dAmountdt = 0;
 		if (isResource(target) && resourceType !== RESOURCE_ALL && target.resourceType !== resourceType) {
 			log.warning(`Logistics request error: target output doesn't contain ${opts.resourceType}`);
 			return;
@@ -216,12 +217,15 @@ export class LogisticsNetwork {
 				resourceType = RESOURCE_ENERGY;
 			}
 		}
+		if (isResource(target) && opts.dAmountdt) {
+			dAmountdt = Math.ceil(target.amount / 1000);
+		}
 
 		_.defaults(opts, {
 			resourceType: resourceType,
 			amount      : this.getOutputAmount(target, resourceType),
 			multiplier  : 1,
-			dAmountdt   : 0,
+			dAmountdt   : dAmountdt,
 		});
 
 		(opts.amount!) *= -1;
