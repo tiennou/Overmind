@@ -238,6 +238,9 @@ export class Mem {
 				pixelGeneration: {
 					enabled: false,
 				},
+				roomPlanner: {
+					allowDestroy: false,
+				},
 				colonization: {
 					maxRooms: undefined,
 				},

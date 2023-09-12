@@ -40,6 +40,10 @@ interface MemorySettings {
 	pixelGeneration: {
 		enabled: boolean;
 	},
+	roomPlanner: {
+		/** Whether the roomplanner can destroy structures that aren't in its plan */
+		allowDestroy: boolean;
+	},
 	colonization: {
 		maxRooms: number | undefined;
 	},

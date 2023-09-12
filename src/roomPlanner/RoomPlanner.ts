@@ -583,7 +583,7 @@ export class RoomPlanner {
 	}
 
 	private destroyStructure(structure: Structure) {
-		if (RoomPlanner.settings.allowDestroy) {
+		if (Memory.settings.roomPlanner.allowDestroy) {
 			return structure.destroy();
 		} else {
 			log.warning(`${this.colony.print}: RoomPlanner would have deleted ${structure.print} but destruction is disabled in settings`);
