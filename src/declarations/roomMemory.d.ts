@@ -8,7 +8,7 @@ interface RoomMemory {
 	[MEM.TICK]?: number;
 	[RMEM.ROOM_STATUS]?: RoomStatusCompressed;
 	[RMEM.SOURCES]?: SavedSource[];
-	[RMEM.CONTROLLER]?: SavedController;
+	[RMEM.CONTROLLER]?: SavedController | null;
 	[RMEM.PORTALS]?: SavedPortal[];
 	[RMEM.MINERAL]?: SavedMineral;
 	[RMEM.DEPOSITS]?: SavedDeposit[];

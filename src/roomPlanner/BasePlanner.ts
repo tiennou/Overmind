@@ -11,16 +11,19 @@ const MAX_TOTAL_PATH_LENGTH = 25 * 3;
 @profile
 export class BasePlanner {
 
-	static getBunkerLocation(room: Room, visualize = true): RoomPosition | undefined {
-		const colony = Overmind.colonies[room.name];
+	static getBunkerLocation(roomName: string, visualize = true): RoomPosition | undefined {
+		const colony = Overmind.colonies[roomName];
 		if (colony && colony.bunker && colony.bunker.anchor) {
 			return colony.bunker.anchor;
 		}
-		let allowableLocations = this.getAllowableBunkerLocations(room, visualize);
+		let allowableLocations = this.getAllowableBunkerLocations(roomName, visualize);
+		if (allowableLocations === undefined) return undefined;
 		if (allowableLocations.length > MAX_SAMPLE) {
 			allowableLocations = _.sample(allowableLocations, MAX_SAMPLE);
 		}
-		const minimizePathLengthTo: RoomPosition[] = _.map(_.compact([...room.sources, room.controller]),
+		const info = RoomIntel.getAllRoomObjectInfo(roomName);
+
+		const minimizePathLengthTo: RoomPosition[] = _.map(_.compact([...info!.sources, info!.controller]),
 														   obj => obj!.pos);
 		const totalPathLength = function(anchor: RoomPosition) {
 			let totalDistance = 0;
@@ -40,22 +43,25 @@ export class BasePlanner {
 		}
 	}
 
-	private static getAllowableBunkerLocations(room: Room, visualize = true): RoomPosition[] {
-		let allowableLocations = this.getNonIntersectingBunkerLocations(room.name, visualize);
+	private static getAllowableBunkerLocations(roomName: string, visualize = true): RoomPosition[] | undefined {
+		const info = RoomIntel.getAllRoomObjectInfo(roomName);
+		if (info === undefined) return undefined;
+		let allowableLocations = this.getNonIntersectingBunkerLocations(roomName, visualize);
 		if (allowableLocations.length > MAX_SAMPLE) {
 			allowableLocations = _.sample(allowableLocations, MAX_SAMPLE);
 		}
 		// Filter intersection with controller
-		if (!room.controller) return [];
+		if (info.controller === null) return [];
 		allowableLocations = _.filter(allowableLocations,
-									  anchor => !this.bunkerIntersectsWith(anchor, room.controller!.pos, 3));
+									  anchor => !this.bunkerIntersectsWith(anchor, info.controller!.pos, 3));
+
 		// Filter intersection with miningSites
-		const sitesAndMineral: RoomPosition[] = _.map(_.compact([...room.sources, room.mineral]), obj => obj!.pos);
+		const sitesAndMineral: RoomPosition[] = _.map(_.compact([...info.sources, info.mineral]), obj => obj!.pos);
 		allowableLocations = _.filter(allowableLocations,
 									  anchor => !_.any(sitesAndMineral,
 													   pos => this.bunkerIntersectsWith(anchor, pos, 1)));
 		if (visualize) {
-			const vis = room.visual;
+			const vis = new RoomVisual(roomName);
 			for (const pos of allowableLocations) {
 				vis.circle(pos.x, pos.y, {fill: 'purple'});
 			}

@@ -203,15 +203,20 @@ export class ExpansionEvaluator {
 	}
 
 	// Compute the total score for a room
-	static computeExpansionData(room: Room, verbose = false): boolean {
-		if (verbose) log.info(`Computing score for ${room.print}...`);
-		if (!room.controller) {
-			RoomIntel.setExpansionData(room.name, false);
+	static computeExpansionData(roomName: string, verbose = false): boolean {
+		if (verbose) log.info(`Computing score for ${roomName}...`);
+		const controller = RoomIntel.getControllerInfo(roomName);
+		if (controller === undefined) {
+			if (verbose) log.info(`No intel on ${roomName}, aborting score calculation!`);
+			return false;
+		}
+		if (controller === null) {
+			RoomIntel.setExpansionData(roomName, false);
 			return false;
 		}
 
 		// compute possible outposts (includes host room)
-		const possibleOutpostsInRange = Cartographer.recursiveRoomSearch(room.name, 2);
+		const possibleOutpostsInRange = Cartographer.recursiveRoomSearch(roomName, 2);
 		const possibleOutposts = _.flatten(_.values<string[]>(possibleOutpostsInRange));
 
 		// find source positions
@@ -231,10 +236,10 @@ export class ExpansionEvaluator {
 		}
 
 		// compute a possible bunker position
-		const bunkerLocation = BasePlanner.getBunkerLocation(room, false);
+		const bunkerLocation = BasePlanner.getBunkerLocation(roomName, false);
 		if (!bunkerLocation) {
-			RoomIntel.setExpansionData(room.name, false);
-			log.info(`Room ${room.name} is uninhabitable because a bunker can't be built here!`);
+			RoomIntel.setExpansionData(roomName, false);
+			log.info(`Room ${roomName} is uninhabitable because a bunker can't be built here!`);
 			return false;
 		}
 
@@ -278,24 +283,24 @@ export class ExpansionEvaluator {
 		let totalScore = 0;
 		let sourceCount = 0;
 		const roomsByScore = _.sortBy(_.keys(outpostScores), roomName => -1 * outpostScores[roomName]);
-		for (const roomName of roomsByScore) {
+		for (const scoredRoomName of roomsByScore) {
 			if (sourceCount > 9 /* Colony.settings.remoteSourcesByLevel[8]*/) break;
-			const _factor = roomName == room.name ? 2 : 1; // weight owned room scores more heavily
-			totalScore += outpostScores[roomName];
-			sourceCount += outpostSourcePositions[roomName].length;
+			const _factor = scoredRoomName == roomName ? 2 : 1; // weight owned room scores more heavily
+			totalScore += outpostScores[scoredRoomName];
+			sourceCount += outpostSourcePositions[scoredRoomName].length;
 		}
 		totalScore = Math.floor(totalScore);
 
 		if (verbose) log.info(`Score: ${totalScore}`);
 
-		const existingExpansionData = RoomIntel.getExpansionData(room.name);
+		const existingExpansionData = RoomIntel.getExpansionData(roomName);
 		if (existingExpansionData === false) {
 			log.error(`ExpansionEvaluator: shouldn't be here!`);
 			return false;
 		}
 
 		if (existingExpansionData == undefined || totalScore > existingExpansionData.score) {
-			RoomIntel.setExpansionData(room.name, {
+			RoomIntel.setExpansionData(roomName, {
 				score       : totalScore,
 				bunkerAnchor: bunkerLocation,
 				outposts    : outpostScores,

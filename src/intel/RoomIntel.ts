@@ -88,7 +88,7 @@ export interface ImportantStructureInfo {
 }
 
 export interface RoomInfo {
-	controller: ControllerInfo | undefined;
+	controller: ControllerInfo | null | undefined;
 	sources: SourceInfo[];
 	portals: PortalInfo[];
 	mineral: MineralInfo | undefined;
@@ -236,12 +236,14 @@ export class RoomIntel {
 
 	/**
 	 * Unpackages saved information about a room's controller
+	 * @returns controller info if available, null if there's no controller, undefined otherwise
 	 */
-	static getControllerInfo(roomName: string): ControllerInfo | undefined {
-		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.CONTROLLER]) {
+	static getControllerInfo(roomName: string): ControllerInfo | null | undefined {
+		if (!Memory.rooms[roomName] || Memory.rooms[roomName][RMEM.CONTROLLER] === undefined) {
 			return;
 		}
 		const ctlr = Memory.rooms[roomName][RMEM.CONTROLLER]!;
+		if (ctlr === null) return null;
 		return {
 			pos              : unpackCoordAsPos(ctlr.c, roomName),
 			level            : ctlr[RMEM_CTRL.LEVEL],
@@ -468,19 +470,20 @@ export class RoomIntel {
 		}
 	}
 
-	private static recomputeScoreIfNecessary(room: Room, force = false): boolean {
+	private static recomputeScoreIfNecessary(roomName: string, force = false): boolean {
 		if (force) {
-			return ExpansionEvaluator.computeExpansionData(room, true);
+			return ExpansionEvaluator.computeExpansionData(roomName, true);
 		}
-		if (room.memory[RMEM.EXPANSION_DATA] === 0) { // room is uninhabitable or owned
+		const memory = Memory.rooms[roomName];
+		if (memory[RMEM.EXPANSION_DATA] === 0) { // room is uninhabitable or owned
 			if (Math.random() < FALSE_SCORE_RECALC_PROB) {
 				// false scores get evaluated very occasionally
-				return ExpansionEvaluator.computeExpansionData(room);
+				return ExpansionEvaluator.computeExpansionData(roomName);
 			}
 		} else { // if the room is not uninhabitable
-			if (!room.memory[RMEM.EXPANSION_DATA] || Math.random() < SCORE_RECALC_PROB) {
+			if (!memory[RMEM.EXPANSION_DATA] || Math.random() < SCORE_RECALC_PROB) {
 				// recompute some of the time
-				return ExpansionEvaluator.computeExpansionData(room);
+				return ExpansionEvaluator.computeExpansionData(roomName);
 			}
 		}
 		return false;
@@ -987,7 +990,7 @@ export class RoomIntel {
 			if (Game.time >= (room.memory[MEM.EXPIRATION] || 0)) {
 				this.recordPermanentObjects(room);
 				if (!alreadyComputedScore) {
-					alreadyComputedScore = this.recomputeScoreIfNecessary(room);
+					alreadyComputedScore = this.recomputeScoreIfNecessary(room.name);
 				}
 				// Refresh cache
 				const recacheTime = room.owner ? OWNED_RECACHE_TIME : RECACHE_TIME;
