@@ -1,4 +1,5 @@
 import {assimilationLocked} from '../assimilation/decorator';
+import { config } from 'config';
 import {Colony} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
@@ -69,94 +70,33 @@ export const enum TN_STATE {
 	error            = 0, // this should never be used
 }
 
+const DEFAULT_TARGET = config.TERMINAL_NETWORK_DEFAULT_TARGET;
+const DEFAULT_TOLERANCE = config.TERMINAL_NETWORK_DEFAULT_TOLERANCE;
 
-const DEFAULT_TARGET = 2 * LAB_MINERAL_CAPACITY + 1000; // 7000 is default for most resources
-const DEFAULT_SURPLUS = 15 * LAB_MINERAL_CAPACITY;		// 45000 is default surplus
-const ENERGY_SURPLUS = 500000;
-const DEFAULT_TOLERANCE = LAB_MINERAL_CAPACITY / 3;		// 1000 is default tolerance
-
-const THRESHOLDS_DEFAULT: Thresholds = { // default thresholds for most resources
-	target   : DEFAULT_TARGET,
-	surplus  : DEFAULT_SURPLUS,
-	tolerance: DEFAULT_TOLERANCE,
-};
-const THRESHOLDS_BOOSTS_T3: Thresholds = { // we want to be able to stockpile a bunch of these
-	target   : DEFAULT_TARGET + 10 * LAB_MINERAL_CAPACITY, // max: 7000 + 2*30000 = 67000 -> 51% capacity for all T3
-	tolerance: DEFAULT_TOLERANCE + 10 * LAB_MINERAL_CAPACITY,
-	surplus  : 75000,
-};
-const THRESHOLDS_BOOSTS_T2: Thresholds = {
-	target   : DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY, // max: 7000 + 2*6000 = 19000 -> 14% capacity for all T2
-	tolerance: DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY,
-	surplus  : 25000,
-};
-const THRESHOLDS_BOOSTS_T1: Thresholds = {
-	target   : DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY, // max: 7000 + 2*6000 = 19000 -> 14% capacity for all T1
-	tolerance: DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY,
-	surplus  : 25000,
-};
-const THREHSOLDS_INTERMEDIATE_REACTANTS: Thresholds = {
-	target   : LAB_MINERAL_CAPACITY + 1000,
-	tolerance: LAB_MINERAL_CAPACITY / 3,
-	surplus  : 3 * LAB_MINERAL_CAPACITY,
-};
-const THRESHOLDS_GHODIUM: Thresholds = {
-	target   : 10000,
-	tolerance: 5000,
-	surplus  : 20000,
-};
-const THRESHOLDS_DONT_WANT: Thresholds = { // thresholds for stuff you actively don't want
-	target   : 0,
-	surplus  : 0, // surplus = 0 means colony will always be at activeProvider if it has any, else
-	tolerance: 0,
-};
-const THRESHOLDS_DONT_CARE: Thresholds = { // thresholds for stuff you don't need but don't not want
-	target   : 0,
-	surplus  : undefined,
-	tolerance: 0,
-};
-const THRESHOLDS_POWER: Thresholds = { // low target ensures power gets spread among room (cheaper than shipping energy)
-	target   : 2500, // should be equal to tolerance
-	surplus  : undefined,
-	tolerance: 2500, // should be equal to target to prevent active buying
-};
-const THRESHOLDS_OPS: Thresholds = { // might need to come back to this when I actually do power creeps
-	target   : 2500, // should be equal to tolerance
-	surplus  : undefined,
-	tolerance: 2500, // should be equal to target to prevent active buying
-};
-
-function getThresholds(resource: _ResourceConstantSansEnergy): Thresholds {
+function getThresholds(resource: _ResourceConstantSansEnergy): Threshold {
 	// Energy gets special treatment - see TradeNetwork.getEnergyThresholds()
 	// Power and ops get their own treatment
-	if (resource == RESOURCE_POWER) {
-		return THRESHOLDS_POWER;
+
+	const thresholds = config.TERMINAL_NETWORK_THRESHOLDS;
+	if (thresholds[resource]) {
+		return thresholds[resource]!;
 	}
-	if (resource == RESOURCE_OPS) {
-		return THRESHOLDS_OPS;
-	}
+
 	// All mineral compounds below
 	if (Abathur.isBaseMineral(resource)) { // base minerals get default treatment
-		return THRESHOLDS_DEFAULT;
+		return thresholds.default;
 	}
 	if (Abathur.isIntermediateReactant(resource)) { // reaction intermediates get default
-		if (resource == RESOURCE_HYDROXIDE) { // this takes a long time to make so let's keep a bit more of it around
-			return THRESHOLDS_DEFAULT;
-		} else {
-			return THREHSOLDS_INTERMEDIATE_REACTANTS;
-		}
-	}
-	if (resource == RESOURCE_GHODIUM) {
-		return THRESHOLDS_GHODIUM;
+		return thresholds.intermediates!;
 	}
 	if (Abathur.isBoost(resource)) {
 		const tier = Abathur.getBoostTier(resource);
 		if (tier == 'T3') {
-			return THRESHOLDS_BOOSTS_T3;
+			return thresholds.boosts_t3!;
 		} else if (tier == 'T2') {
-			return THRESHOLDS_BOOSTS_T2;
+			return thresholds.boosts_t2!;
 		} else if (tier == 'T1') {
-			return THRESHOLDS_BOOSTS_T1;
+			return thresholds.boosts_t1!;
 		}
 	}
 	// if (Abathur.isHealBoost(resource)) { // heal boosts are really important and commonly used
@@ -170,23 +110,23 @@ function getThresholds(resource: _ResourceConstantSansEnergy): Thresholds {
 	// 	return THRESHOLDS_DONT_WANT;
 	// }
 	if (Abathur.isMineralOrCompound(resource)) { // all other boosts and resources are default
-		return THRESHOLDS_DEFAULT;
+		return thresholds.default;
 	}
 	// Base deposit resources
 	if (Abathur.isDepositResource(resource)) {
-		return THRESHOLDS_DONT_CARE;
+		return thresholds.dont_care;
 	}
 	// Everything else should be a commodity
 	if (Abathur.isCommodity(resource)) {
-		return THRESHOLDS_DONT_CARE;
+		return thresholds.dont_care;
 	}
 	// Shouldn't reach here since I've handled everything above
 	log.error(`Shouldn't reach here! Unhandled resource ${resource} in getThresholds()!`);
-	return THRESHOLDS_DONT_CARE;
+	return thresholds.dont_care;
 }
 
 // Contains threshold values to use for all non-execeptional colonies so we don't recompute this every time
-const ALL_THRESHOLDS: { [resourceType: string]: Thresholds } =
+const ALL_THRESHOLDS: { [resourceType: string]: Threshold } =
 		  _.object(RESOURCES_ALL_EXCEPT_ENERGY, _.map(RESOURCES_ALL_EXCEPT_ENERGY, res => getThresholds(res)));
 
 // The order in which resources are handled within the network
@@ -268,9 +208,9 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	name: string; // for console.debug() purposes
 
 	private colonies: Colony[];
-	private colonyThresholds: { [colName: string]: { [resourceType: string]: Thresholds } };
+	private colonyThresholds: { [colName: string]: { [resourceType: string]: Threshold } };
 	private colonyLockedAmounts: { [colName: string]: { [resourceType: string]: number } };
-	private _energyThresholds: Thresholds | undefined;
+	private _energyThresholds: Threshold | undefined;
 
 	private colonyStates: { [colName: string]: { [resourceType: string]: TN_STATE } };
 	private _colonyStatesAssigned: boolean;
@@ -415,7 +355,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	/**
 	 * Computes the dynamically-changing energy thresholds object
 	 */
-	private getEnergyThresholds(): Thresholds {
+	private getEnergyThresholds(): Threshold {
 		if (!this._energyThresholds) {
 			const nonExceptionalColonies = _.filter(this.colonies, colony =>
 				colony.storage
@@ -424,7 +364,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 							  nonExceptionalColonies.length;
 			this._energyThresholds = {
 				target   : avgEnergy,
-				surplus  : ENERGY_SURPLUS,
+				surplus  : config.TERMINAL_NETWORK_ENERGY_SURPLUS,
 				tolerance: avgEnergy / 5,
 			};
 		}
@@ -467,7 +407,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	/**
 	 * Gets the thresholds for a given resource for a specific colony
 	 */
-	thresholds(colony: Colony, resource: ResourceConstant): Thresholds {
+	thresholds(colony: Colony, resource: ResourceConstant): Threshold {
 		if (this.colonyThresholds[colony.name] && this.colonyThresholds[colony.name][resource]) {
 			return this.colonyThresholds[colony.name][resource];
 		} else {
@@ -547,7 +487,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	 * selling it on the market. If thresholds is specified, the room will actively export thresholds.surplus amount of
 	 * resource and will maintain target +/- tolerance amount in the room (so in/out, not necessarily a strict export)
 	 */
-	exportResource(provider: Colony, resource: ResourceConstant, thresholds: Thresholds = THRESHOLDS_DONT_WANT): void {
+	exportResource(provider: Colony, resource: ResourceConstant, thresholds: Threshold = config.TERMINAL_NETWORK_THRESHOLDS.dont_want): void {
 		if (PHASE != 'init') log.error(`TerminalNetwork.exportResource must be called in the init() phase!`);
 		// If you already requested the resource via a different method, throw a warning and override
 		if (this.colonyThresholds[provider.name] && this.colonyThresholds[provider.name][resource] != undefined) {

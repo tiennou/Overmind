@@ -213,11 +213,17 @@ interface IOverseer {
 // 	tolerance: number;
 // }
 
-interface Thresholds {
+interface Threshold {
 	target: number;
 	surplus: number | undefined;
 	tolerance: number;
 }
+
+type TerminalNetworkThresholdSpecial = 'default' | 'dont_care' | 'dont_want'
+
+type TerminalNetworkThresholdResourceType = ResourceConstant | 'boosts_t1' | 'boosts_t2' | 'boosts_t3' | 'intermediates';
+
+type TerminalNetworkThresholds = Record<TerminalNetworkThresholdSpecial, Threshold> & Partial<Record<TerminalNetworkThresholdResourceType, Threshold>>;
 
 interface ITerminalNetwork {
 
@@ -227,7 +233,7 @@ interface ITerminalNetwork {
 
 	getAssets(): { [resourceType: string]: number };
 
-	thresholds(colony: IColony, resource: ResourceConstant): Thresholds;
+	thresholds(colony: IColony, resource: ResourceConstant): Threshold;
 
 	canObtainResource(requestor: IColony, resource: ResourceConstant, totalAmount: number): boolean;
 
@@ -235,7 +241,7 @@ interface ITerminalNetwork {
 
 	lockResource(requestor: IColony, resource: ResourceConstant, lockedAmount: number): void;
 
-	exportResource(provider: IColony, resource: ResourceConstant, thresholds?: Thresholds): void;
+	exportResource(provider: IColony, resource: ResourceConstant, thresholds?: Threshold): void;
 
 	init(): void;
 
