@@ -37,8 +37,10 @@ export class RandomWalkerScoutOverlord extends Overlord {
 
 			const roomStatus = RoomIntel.getRoomStatus(room);
 
-			let neighboringRooms = Cartographer.findRoomsInRange(room, 2);
-			neighboringRooms = neighboringRooms.filter(room => RoomIntel.getRoomStatus(room).status === roomStatus.status);
+			const nearbyRooms = Cartographer.recursiveRoomSearch(room, 3);
+			let neighboringRooms = _.flatten(_.values<string>(nearbyRooms));
+			neighboringRooms = neighboringRooms.filter(room =>
+				RoomIntel.getRoomStatus(room).status === roomStatus.status && !RoomIntel.isConsideredHostile(room));
 
 			this.debug(() =>`rooms near ${room}: ${neighboringRooms}`);
 			// Check all the room's exits + portals

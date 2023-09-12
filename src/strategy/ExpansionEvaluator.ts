@@ -211,7 +211,8 @@ export class ExpansionEvaluator {
 		}
 
 		// compute possible outposts (includes host room)
-		const possibleOutposts = Cartographer.findRoomsInRange(room.name, 2);
+		const possibleOutpostsInRange = Cartographer.recursiveRoomSearch(room.name, 2);
+		const possibleOutposts = _.flatten(_.values<string[]>(possibleOutpostsInRange));
 
 		// find source positions
 		const outpostSourcePositions: { [roomName: string]: RoomPosition[] } = {};
