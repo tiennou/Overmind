@@ -29,6 +29,7 @@ export const SEGMENTS = {
 	reinforcementLearning: 70,
 	remoteDebugger       : 97,
 	assimilator          : 98,
+	version              : 99,
 };
 
 Memory.segmenter = _.defaultsDeep(Memory.segmenter, DefaultSegmenterMemory);
