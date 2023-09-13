@@ -1,75 +1,17 @@
+import { TransportRequestGroup } from "logistics/TransportRequestGroup";
 import { $ } from "../../caching/GlobalCache";
 import { Roles, Setups } from "../../creepSetups/setups";
 import { CommandCenter } from "../../hiveClusters/commandCenter";
 import { SpawnRequestOptions } from "../../hiveClusters/hatchery";
-import { ResourceManager } from "../../logistics/ResourceManager";
-import { Priority } from "../../priorities/priorities";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
-import { Abathur } from "../../resources/Abathur";
 import { Tasks } from "../../tasks/Tasks";
 import { minBy } from "../../utilities/utils";
 import { Zerg } from "../../zerg/Zerg";
 import { Overlord } from "../Overlord";
 import { WorkerOverlord } from "./worker";
-
-const TERMINAL_THRESHOLDS = {
-	energy: {
-		target: 50000,
-		tolerance: 5000,
-	},
-	power: {
-		target: 2500,
-		tolerance: 2500,
-	},
-	ops: {
-		target: 2500,
-		tolerance: 2500,
-	},
-	baseMinerals: {
-		target: 6500, // 2 * LAB_MINERAL_CAPACITY + 500
-		tolerance: 500,
-	},
-	intermediateReactants: {
-		target: 3500, // LAB_MINERAL_CAPACITY + 500
-		tolerance: 500,
-	},
-	boosts: {
-		target: 3500, // LAB_MINERAL_CAPACITY + 500
-		tolerance: 500,
-	},
-};
-
-function getTerminalThresholds(
-	resource: ResourceConstant
-): { target: number; tolerance: number } | undefined {
-	let thresholds;
-	if (resource == RESOURCE_ENERGY) {
-		thresholds = TERMINAL_THRESHOLDS.energy;
-	} else if (resource == RESOURCE_POWER) {
-		thresholds = TERMINAL_THRESHOLDS.power;
-	} else if (resource == RESOURCE_OPS) {
-		thresholds = TERMINAL_THRESHOLDS.ops;
-	} else if (Abathur.isBaseMineral(resource)) {
-		thresholds = TERMINAL_THRESHOLDS.baseMinerals;
-	} else if (
-		Abathur.isIntermediateReactant(resource) ||
-		resource == RESOURCE_GHODIUM
-	) {
-		thresholds = TERMINAL_THRESHOLDS.intermediateReactants;
-	} else if (Abathur.isBoost(resource)) {
-		thresholds = TERMINAL_THRESHOLDS.boosts;
-	}
-	return thresholds;
-}
-
-// Needs to be after class declaration because fuck lack of class hoisting
-const TERMINAL_THRESHOLDS_ALL: {
-	[resource: string]: { target: number; tolerance: number } | undefined;
-} = _.zipObject(
-	RESOURCES_ALL,
-	_.map(RESOURCES_ALL, (resource) => getTerminalThresholds(resource))
-);
+import { log } from "console/log";
+import { ResourceManager } from "logistics/ResourceManager";
 
 /**
  * Command center overlord: spawn and run a dediated commandCenter attendant
@@ -160,24 +102,61 @@ export class CommandCenterOverlord extends Overlord {
 		// Nothing to do if creep is empty
 		if (manager.store.getUsedCapacity() == 0) {
 			return false;
-		} else {
-			this.debug(`Unloading carry: ${JSON.stringify(manager.store)}`);
-			manager.task = Tasks.transferAll(this.commandCenter.storage); // placeholder solution
-			return true;
 		}
+
+		let task;
+		for (const [resource, amount] of manager.store.contents) {
+			const target = ResourceManager.targetForResource(
+				this.colony,
+				resource,
+				amount
+			);
+			if (!target) {
+				this.debug(
+					() =>
+						`${manager.print} nothing wants to take ${amount} of ${resource}`
+				);
+				continue;
+			}
+
+			this.debug(
+				() =>
+					`${manager.print}: unloading ${amount} of ${resource} to ${target.print}`
+			);
+			const transfer = Tasks.transfer(target, resource, amount);
+			task = task ? task.fork(transfer) : transfer;
+		}
+
+		if (!task) {
+			log.warning(
+				`${this.print}: ${
+					manager.print
+				} has nowhere to unload carry ${JSON.stringify(manager.store)}`
+			);
+			return false;
+		}
+		manager.task = task;
+		return true;
 	}
 
 	/**
 	 * Handle any supply requests from your transport request group
 	 */
 	private supplyActions(manager: Zerg): boolean {
-		this.debug("supplyActions");
 		const request =
 			this.commandCenter.transportRequests.getPrioritizedClosestRequest(
 				manager.pos,
 				"supply"
 			);
 		if (request) {
+			this.debug(
+				() =>
+					`${
+						manager.print
+					} has a supply request: ${TransportRequestGroup.logRequest(
+						request
+					)}`
+			);
 			const amount = Math.min(
 				request.amount,
 				manager.store.getCapacity()
@@ -185,10 +164,18 @@ export class CommandCenterOverlord extends Overlord {
 			const resource = request.resourceType;
 			// If we have enough to fulfill the request, we're done
 			if (manager.store[request.resourceType] >= amount) {
+				this.debug(
+					() =>
+						`${manager.print} supplying ${request.target.print} with ${amount} of ${resource}`
+				);
 				manager.task = Tasks.transfer(request.target, resource, amount);
 				return true;
 			} else if (manager.store[request.resourceType] > 0) {
 				// Otherwise, if we have any currently in manager's carry, transfer it to the requestor
+				this.debug(
+					() =>
+						`${manager.print} supplying ${request.target.print} with ${amount} of ${resource}`
+				);
 				manager.task = Tasks.transfer(
 					request.target,
 					resource,
@@ -196,14 +183,14 @@ export class CommandCenterOverlord extends Overlord {
 				);
 				return true;
 			} else {
+				const storage = this.commandCenter.storage;
+				const terminal = this.commandCenter.terminal;
 				// Otherwise, we don't have any of the resource in the carry
 				if (this.unloadCarry(manager)) {
 					// if we have other crap, we should unload it
 					return true;
 				}
 				// Otherwise, we have an empty carry; withdraw the right amount of resource and transfer it
-				const storage = this.commandCenter.storage;
-				const terminal = this.commandCenter.terminal;
 				let withdrawFrom:
 					| StructureStorage
 					| StructureTerminal
@@ -217,6 +204,14 @@ export class CommandCenterOverlord extends Overlord {
 					withdrawAmount = Math.min(amount, terminal.store[resource]);
 				}
 				if (withdrawFrom) {
+					this.debug(
+						() =>
+							`${manager.print} withdraws from ${
+								withdrawFrom!.print
+							}, ${withdrawAmount} to supply ${TransportRequestGroup.logRequest(
+								request
+							)}`
+					);
 					manager.task = Tasks.chain([
 						Tasks.withdraw(withdrawFrom, resource, withdrawAmount),
 						Tasks.transfer(
@@ -240,7 +235,6 @@ export class CommandCenterOverlord extends Overlord {
 	 * Handle any withdrawal requests from your transport request group
 	 */
 	private withdrawActions(manager: Zerg): boolean {
-		this.debug("withdrawActions");
 		const freeCapacity = manager.store.getFreeCapacity();
 		if (freeCapacity > 0) {
 			const request =
@@ -249,117 +243,55 @@ export class CommandCenterOverlord extends Overlord {
 					"withdraw"
 				);
 			if (request) {
+				this.debug(
+					() =>
+						`${
+							manager.print
+						} has free space and a withdraw request: ${TransportRequestGroup.logRequest(
+							request
+						)}`
+				);
 				const amount = Math.min(request.amount, freeCapacity);
 				manager.task = Tasks.withdraw(
 					request.target,
 					request.resourceType,
 					amount
 				);
-				return true;
+				const supplyRequest =
+					this.commandCenter.transportRequests.getPrioritizedClosestRequest(
+						manager.pos,
+						"supply",
+						(req) => req.resourceType === request.resourceType
+					);
+				if (supplyRequest) {
+					this.debug(
+						() =>
+							`${
+								manager.print
+							} can supply request: ${TransportRequestGroup.logRequest(
+								supplyRequest
+							)}`
+					);
+					manager.task = Tasks.transfer(
+						supplyRequest.target,
+						supplyRequest.resourceType,
+						supplyRequest.amount
+					).fork(manager.task);
+					return true;
+				}
 			}
-		} else {
-			// Currently the only withdraw requests are energy from links so we can dump in to terminal by default
-			manager.task = Tasks.transferAll(
-				this.commandCenter.terminal || this.commandCenter.storage
-			);
+		}
+
+		// Try to supply someone with what we have stored/withdrew
+		if (this.supplyActions(manager)) {
 			return true;
 		}
-		return false;
-	}
 
-	/**
-	 * Move energy into terminal if storage is too full and into storage if storage is too empty
-	 */
-	private balanceStorageAndTerminal(manager: Zerg): boolean {
-		this.debug("balanceStorageAndTerminal");
-		const storage = this.commandCenter.storage;
-		const terminal = this.commandCenter.terminal;
-		if (!storage || !terminal) {
-			return false;
+		// Otherwise just try to unload
+		if (this.unloadCarry(manager)) {
+			return true;
 		}
 
-		const roomSellOrders = Overmind.tradeNetwork.getExistingOrders(
-			ORDER_SELL,
-			"any",
-			this.colony.name
-		);
-
-		for (const resourceType in this.colony.assets) {
-			const resource = resourceType as ResourceConstant; // to make the fucking TS compiler happy
-
-			// Skip it if you don't have it
-			if (this.colony.assets[resource] <= 0) {
-				continue;
-			}
-
-			// Get target and tolerance for the resource and skip if you don't care about it
-			const thresholds = TERMINAL_THRESHOLDS_ALL[resource];
-			if (!thresholds) {
-				continue;
-			}
-
-			let { target, tolerance } = thresholds;
-
-			// If you're selling this resource from this room, keep a bunch of it in the terminal
-			if (roomSellOrders.length > 0) {
-				const sellOrderForResource = _.find(
-					roomSellOrders,
-					(order) => order.resourceType == resourceType
-				);
-				if (sellOrderForResource) {
-					target = Math.max(
-						target,
-						sellOrderForResource.remainingAmount
-					);
-				}
-			}
-
-			// Move stuff from terminal into storage
-			if (
-				terminal.store[resource] > target + tolerance &&
-				storage.store.getFreeCapacity(resource) > 0
-			) {
-				this.debug(`Moving ${resource} from terminal into storage`);
-				if (this.unloadCarry(manager)) {
-					return true;
-				}
-				const transferAmount = Math.min(
-					terminal.store[resource] - target,
-					storage.store.getFreeCapacity(resource),
-					manager.store.getCapacity()
-				);
-				manager.task = Tasks.chain([
-					Tasks.withdraw(terminal, resource, transferAmount),
-					Tasks.transfer(storage, resource, transferAmount),
-				]);
-				// manager.debug(`Assigned task ${print(manager.task)}`)
-				return true;
-			}
-
-			// Move stuff into terminal from storage
-			if (
-				terminal.store[resource] < target - tolerance &&
-				storage.store[resource] > 0
-			) {
-				this.debug(`Moving ${resource} from storage into terminal`);
-				if (this.unloadCarry(manager)) {
-					return true;
-				}
-				const transferAmount = Math.min(
-					target - terminal.store[resource],
-					storage.store[resource],
-					manager.store.getCapacity()
-				);
-				manager.task = Tasks.chain([
-					Tasks.withdraw(storage, resource, transferAmount),
-					Tasks.transfer(terminal, resource, transferAmount),
-				]);
-				// manager.debug(`Assigned task ${print(manager.task)}`)
-				return true;
-			}
-		}
-
-		// Nothing has happened
 		return false;
 	}
 
@@ -402,32 +334,6 @@ export class CommandCenterOverlord extends Overlord {
 	// 	// Nothing has happened
 	// 	return false;
 	// }
-
-	/**
-	 * Move enough energy from a terminal which needs to be moved into storage to allow you to rebuild the terminal
-	 */
-	private moveEnergyFromRebuildingTerminal(manager: Zerg): boolean {
-		this.debug("moveEnergyFromRebuildingTerminal");
-		const storage = this.commandCenter.storage;
-		const terminal = this.commandCenter.terminal;
-		if (!storage || !terminal) {
-			return false;
-		}
-		if (
-			storage.energy <
-			ResourceManager.settings.storage.energy.destroyTerminalThreshold
-		) {
-			if (this.unloadCarry(manager)) {
-				return true;
-			}
-			manager.task = Tasks.chain([
-				Tasks.withdraw(terminal),
-				Tasks.transfer(storage),
-			]);
-			return true;
-		}
-		return false;
-	}
 
 	// private moveMineralsToTerminal(manager: Zerg): boolean {
 	// 	const storage = this.commandCenter.storage;
@@ -546,7 +452,6 @@ export class CommandCenterOverlord extends Overlord {
 	 * Suicide once you get old and make sure you don't drop and waste any resources
 	 */
 	private deathActions(manager: Zerg): boolean {
-		this.debug("deathActions");
 		const nearbyManagers = _.filter(
 			this.managers,
 			(manager) =>
@@ -604,41 +509,25 @@ export class CommandCenterOverlord extends Overlord {
 		// 	if (this.moveMineralsToTerminal(manager)) return;
 		// }
 		// Fill up storage before you destroy terminal if rebuilding room
-		if (this.colony.state.isRebuilding) {
-			if (this.moveEnergyFromRebuildingTerminal(manager)) {
-				return;
-			}
-		}
+		// if (this.colony.state.isRebuilding) {
+		// 	if (this.moveEnergyFromRebuildingTerminal(manager)) return;
+		// }
 		// Moving energy to terminal gets priority above withdraw/supply if evacuating room
-		if (this.colony.state.isEvacuating) {
-			if (this.balanceStorageAndTerminal(manager)) {
-				return;
-			}
-		}
+		// if (this.colony.state.isEvacuating) {
+		// 	if (this.balanceStorageAndTerminal(manager)) return;
+		// }
 		// Fulfill withdraw requests normal priority and above
-		if (
-			this.commandCenter.transportRequests.needsWithdrawing(
-				Priority.Normal
-			)
-		) {
-			if (this.withdrawActions(manager)) {
-				return;
-			}
-		}
+		// if (this.commandCenter.transportRequests.needsWithdrawing(Priority.Normal)) {
+		// 	if (this.withdrawActions(manager)) return;
+		// }
 		// Fulfill supply requests normal priority and above
-		if (
-			this.commandCenter.transportRequests.needsSupplying(Priority.Normal)
-		) {
-			if (this.supplyActions(manager)) {
-				return;
-			}
-		}
+		// if (this.commandCenter.transportRequests.needsSupplying(Priority.Normal)) {
+		// 	if (this.supplyActions(manager)) return;
+		// }
 		// Move resources between storage and terminal at this point if room isn't being evacuated
-		if (!this.colony.state.isEvacuating) {
-			if (this.balanceStorageAndTerminal(manager)) {
-				return;
-			}
-		}
+		// if (!this.colony.state.isEvacuating) {
+		// 	if (this.balanceStorageAndTerminal(manager)) return;
+		// }
 		// Fulfill remaining low-priority withdraw requests
 		if (this.commandCenter.transportRequests.needsWithdrawing()) {
 			if (this.withdrawActions(manager)) {
@@ -653,11 +542,7 @@ export class CommandCenterOverlord extends Overlord {
 		}
 	}
 
-	/**
-	 * Handle idle actions if the manager has nothing to do
-	 */
-	private idleActions(manager: Zerg): void {
-		this.debug("idleActions");
+	private repairActions(manager: Zerg) {
 		if (
 			this.mode == "bunker" &&
 			this.managerRepairTarget &&
@@ -666,16 +551,34 @@ export class CommandCenterOverlord extends Overlord {
 			// Repair ramparts when idle
 			if (manager.store.energy > 0) {
 				manager.repair(this.managerRepairTarget);
-			} else {
-				const storage = this.commandCenter.storage;
-				const terminal = this.commandCenter.terminal;
-				const energyTarget =
-					storage.store[RESOURCE_ENERGY] > 0 ? storage : terminal;
-				if (energyTarget) {
-					manager.withdraw(energyTarget);
-				}
+				return true;
+			}
+
+			const storage = this.commandCenter.storage;
+			const terminal = this.commandCenter.terminal;
+			const energyTarget =
+				storage.store[RESOURCE_ENERGY] > 0 ? storage : terminal;
+			if (energyTarget) {
+				manager.withdraw(energyTarget);
+				return true;
 			}
 		}
+		return false;
+	}
+
+	/**
+	 * Handle idle actions if the manager has nothing to do
+	 */
+	private idleActions(manager: Zerg): void {
+		// Look for something to repair
+		if (this.repairActions(manager)) {
+			return;
+		}
+		// Otherwise unload our carry
+		if (manager.store.getUsedCapacity() > 0 && this.unloadCarry(manager)) {
+			return;
+		}
+		// Ensure we're at our idling spot
 		if (!manager.pos.isEqualTo(this.commandCenter.idlePos)) {
 			manager.goTo(this.commandCenter.idlePos);
 		}

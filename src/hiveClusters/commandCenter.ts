@@ -12,7 +12,8 @@ import { Cartographer } from "../utilities/Cartographer";
 import { Visualizer } from "../visuals/Visualizer";
 import { HiveCluster } from "./_HiveCluster";
 import { TRANSPORT_MEM } from "overlords/core/transporter";
-import { derefRoomPosition } from "utilities/utils";
+import { derefRoomPosition, entries } from "utilities/utils";
+import { ResourceManager } from "logistics/ResourceManager";
 
 export const MAX_OBSERVE_DISTANCE = 4;
 
@@ -166,6 +167,8 @@ export class CommandCenter extends HiveCluster {
 			}
 		}
 
+		this.balanceStorageAndTerminal();
+
 		// Nothing else should request if you're trying to start a room back up again
 		if (this.colony.state.bootstrapping) {
 			return;
@@ -212,9 +215,7 @@ export class CommandCenter extends HiveCluster {
 				this.transportRequests.requestInput(
 					this.powerSpawn,
 					Priority.NormalLow,
-					{
-						resourceType: RESOURCE_POWER,
-					}
+					{ resourceType: RESOURCE_POWER }
 				);
 			}
 		}
@@ -250,6 +251,113 @@ export class CommandCenter extends HiveCluster {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Move energy into terminal if storage is too full and into storage if storage is too empty
+	 */
+	private balanceStorageAndTerminal(): boolean {
+		this.debug("balancing storage and terminal");
+		if (!this.storage || !this.terminal) {
+			return false;
+		}
+
+		const roomSellOrders = Overmind.tradeNetwork.getExistingOrders(
+			ORDER_SELL,
+			"any",
+			this.colony.name
+		);
+
+		for (const [resource, amount] of entries(this.colony.assets)) {
+			// Get target and tolerance for the resource and skip if you don't care about it or have none of it
+			const thresholds =
+				ResourceManager.getTerminalThresholdForResource(resource);
+			if (amount <= 0 || !thresholds) {
+				// this.debug(() => this.colony.assets[resource] <= 0 ? `no storage of ${resource}, ignoring` : `no threshold for ${resource}, ignoring`);
+				continue;
+			}
+
+			let { target, tolerance } = thresholds;
+
+			// If you're selling this resource from this room, keep a bunch of it in the terminal
+			if (roomSellOrders.length > 0) {
+				const sellOrderForResource = _.find(
+					roomSellOrders,
+					(order) => order.resourceType == resource
+				);
+				if (sellOrderForResource) {
+					target = Math.max(
+						target,
+						sellOrderForResource.remainingAmount
+					);
+				}
+			}
+
+			// Special case when we're rebuilding the terminal: we want to safe-guard a lot of energy into the storage
+			const isRebuildingTerminal =
+				this.colony.state.isRebuilding && resource === RESOURCE_ENERGY;
+
+			this.debug(
+				`resource ${resource}, target: ${target}, tolerance: ${tolerance}, terminal: ${this.terminal.store[resource]}, storage: ${this.storage.store[resource]}`
+			);
+
+			// Move stuff from terminal into storage
+			if (
+				this.terminal.store[resource] > target + tolerance ||
+				(isRebuildingTerminal &&
+					this.storage.store[resource] >
+						ResourceManager.settings.storage.energy
+							.destroyTerminalThreshold)
+			) {
+				const transferAmount = Math.min(
+					this.terminal.store[resource] - target,
+					this.storage.store.getFreeCapacity(resource)
+				);
+				this.debug(
+					`Moving ${transferAmount} of ${resource} from terminal${
+						isRebuildingTerminal ? " (rebuilding" : ""
+					}`
+				);
+				const priority =
+					isRebuildingTerminal ? Priority.Critical : Priority.Low;
+				this.transportRequests.requestOutput(this.terminal, priority, {
+					resourceType: resource,
+					amount: transferAmount,
+				});
+				this.transportRequests.requestInput(this.storage, priority, {
+					resourceType: resource,
+					amount: transferAmount,
+				});
+			}
+
+			// Move stuff from storage into terminal
+			if (
+				this.terminal.store[resource] < target - tolerance &&
+				this.storage.store[resource] > 0 &&
+				!isRebuildingTerminal
+			) {
+				const transferAmount = Math.min(
+					target - this.terminal.store[resource],
+					this.storage.store[resource]
+				);
+				this.debug(
+					`Moving ${transferAmount} of ${resource} from storage`
+				);
+				this.transportRequests.requestOutput(
+					this.storage,
+					Priority.Low,
+					{ resourceType: resource, amount: transferAmount }
+				);
+				this.transportRequests.requestInput(
+					this.terminal,
+					Priority.Low,
+					{ resourceType: resource, amount: transferAmount }
+				);
+			}
+		}
+
+		// Nothing has happened
+		return false;
 	}
 
 	requestRoomObservation(roomName: string) {
