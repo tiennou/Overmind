@@ -22,7 +22,7 @@ const OWNED_RECACHE_TIME = 1000;
 const SCORE_RECALC_PROB = 0.05;
 const FALSE_SCORE_RECALC_PROB = 0.01;
 
-export const ROOMINTEL_DEFAULT_VISUALS_RANGE = 10;
+export const ROOMINTEL_DEFAULT_VISUALS_RANGE = 5;
 
 export interface ExpansionData {
 	score: number;
@@ -1022,7 +1022,10 @@ export class RoomIntel {
 			this.limitedRoomVisual = new Set();
 			const range = Memory.settings.intelVisuals.range ?? ROOMINTEL_DEFAULT_VISUALS_RANGE;
 			for (const colony of Object.values(Overmind.colonies)) {
-				const rooms = Cartographer.findRoomsInRange(colony.room.name, range);
+				let rooms = Cartographer.findRoomsInRange(colony.room.name, range);
+				const scouts = colony.overlords.scout?.scouts ?? [];
+				rooms = rooms.concat(_.flatten(scouts.map(s => Cartographer.findRoomsInRange(s.room.name, range))));
+
 				for (const name of rooms) {
 					this.limitedRoomVisual?.add(name);
 				}
