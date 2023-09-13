@@ -42,7 +42,7 @@ declare var Pathing: import("movement/Pathing").Pathing;
 declare var RoomIntel: typeof import("intel/RoomIntel").RoomIntel;
 declare var CombatIntel: typeof import("intel/CombatIntel").CombatIntel;
 declare var GoalFinder: import("targeting/GoalFinder").GoalFinder;
-declare var Abathur: import("resources/Abathur").Abathur;
+declare var Abathur: import("resources/Abathur")._Abathur;
 
 declare var MatrixCache: import("matrix/MatrixLib").MatrixCache;
 declare var MatrixLib: import("matrix/MatrixLib").MatrixLib;
