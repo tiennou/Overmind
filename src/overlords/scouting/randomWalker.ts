@@ -29,11 +29,19 @@ export class RandomWalkerScoutOverlord extends Overlord {
 	}
 
 	private generateScoutMap() {
+		// A list of rooms to visit, keyed by creep name
 		const map: Record<string, string[]> = {};
+		// A list of scouts, keyed by starting room name
+		const rooms: Record<string, Zerg[]> = {};
 		for (const scout of this.scouts) {
 			const room = scout.room.name;
+			if (rooms[scout.room.name]) {
+				this.debug(`already built map for ${scout.print} in ${scout.room}`);
+				// We've already generated this, skip
+				rooms[scout.room.name].push(scout);
+				continue;
+			}
 			this.debug(`rebuilding map for ${scout.print} in ${scout.room}`);
-			if (map[room]) continue;
 
 			const roomStatus = RoomIntel.getRoomStatus(room);
 
@@ -89,8 +97,24 @@ export class RandomWalkerScoutOverlord extends Overlord {
 					};
 				}))
 			});
-			map[room] = sortedRooms;
+			map[scout.name] = sortedRooms;
+			rooms[scout.room.name] = [scout];
 		}
+
+		const competingRooms = Object.entries(rooms).filter(([_room, scouts]) => scouts.length > 1);
+		if (competingRooms.length) {
+			for (const [_room, scouts] of competingRooms) {
+				// We've got a few scouts which shared a starting location, reset their list and split it out
+				const roomList = map[scouts[0].name];
+				scouts.forEach(s => map[s.name] = []);
+				for (let idx = 0; idx < roomList.length; idx++) {
+					const name = scouts[idx % scouts.length].name;
+					map[name].push(roomList[idx])
+				}
+				this.debug(() => `scouts ${scouts.map(s => s.name)} were competing, split:\n${scouts.map(s => `\t${s.name}: ${map[s.name]}\n`)}`);
+			}
+		}
+
 		this.scoutMap = map;
 	}
 
@@ -122,15 +146,15 @@ export class RandomWalkerScoutOverlord extends Overlord {
 		// 	return;
 		// }
 
-		if (!this.scoutMap[scout.room.name]) {
+		if (!this.scoutMap[scout.name]) {
 			this.debug(`${scout.print}: scout map outdated, regenerate`);
 			this.generateScoutMap();
 		}
 
-		this.debug(`${scout.print}: available rooms: ${this.scoutMap[scout.room.name]}`);
+		this.debug(`${scout.print}: available rooms: ${this.scoutMap[scout.name]}`);
 
 		let neighboringRoom: string | undefined;
-		while ((neighboringRoom = this.scoutMap[scout.room.name].shift())) {
+		while ((neighboringRoom = this.scoutMap[scout.name].shift())) {
 			// Filter out any rooms we might have sent another scout to
 			if (this.scouts.some(scout => scout.task?.targetPos.roomName === neighboringRoom)) continue;
 
