@@ -30,6 +30,7 @@ module.exports = {
         "dist/*",
         "rollup.config.js",
         "src/**/*_obfuscated.js",
+        "tools/**/*",
         "tsc-out/**",
     ],
     "plugins": [
