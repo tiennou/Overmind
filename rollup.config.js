@@ -47,7 +47,7 @@ export default {
         console.warn(warning.message);
     },
 
-    treeshake: false,
+    treeshake: true,
 
     output: {
         file: "dist/main.js",
