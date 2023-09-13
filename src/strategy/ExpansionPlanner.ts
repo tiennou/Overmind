@@ -10,7 +10,7 @@ import {Cartographer} from '../utilities/Cartographer';
 import {maxBy} from '../utilities/utils';
 import {MIN_EXPANSION_DISTANCE} from './ExpansionEvaluator';
 import { DirectiveIncubate } from 'directives/colony/incubate';
-import { MAX_OWNED_ROOMS, SHARD3_MAX_OWNED_ROOMS } from '~settings';
+import { config } from 'config';
 
 
 const CHECK_EXPANSION_FREQUENCY = 1000;
@@ -46,7 +46,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 
 		let maxRooms;
 		if (Memory.settings.colonization.maxRooms === undefined) {
-			maxRooms = Game.shard.name == 'shard3' ? SHARD3_MAX_OWNED_ROOMS : Math.min(Game.gcl.level, MAX_OWNED_ROOMS);
+			maxRooms = Game.shard.name == 'shard3' ? config.SHARD3_MAX_OWNED_ROOMS : Math.min(Game.gcl.level, config.MAX_OWNED_ROOMS);
 		} else {
 			maxRooms = Math.min(allColonies.length, Memory.settings.colonization.maxRooms);
 		}

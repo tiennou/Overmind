@@ -3,16 +3,11 @@ import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
 import {Stats} from '../stats/stats';
 import {ema, isIVM} from '../utilities/utils';
-import {
-	DEFAULT_OPERATION_MODE,
-	DEFAULT_OVERMIND_SIGNATURE,
-	PROFILER_COLONY_LIMIT,
-	USE_SCREEPS_PROFILER
-} from '../~settings';
 import { SegmenterMemory } from './Segmenter';
 import { DebuggerMemory } from 'debug/remoteDebugger';
 import { CombatPlannerMemory } from 'strategy/CombatPlanner';
 import { NukePlannerMemory } from 'strategy/NukePlanner';
+import { config } from 'config';
 
 export enum Autonomy {
 	Manual        = 0,
@@ -30,8 +25,8 @@ export function getAutonomyLevel(): Autonomy {
 			return Autonomy.Automatic;
 		default:
 			log.warning(`ERROR: ${Memory.settings.operationMode} is not a valid operation mode! ` +
-						`Defaulting to ${DEFAULT_OPERATION_MODE}; use setMode() to change.`);
-			Memory.settings.operationMode = DEFAULT_OPERATION_MODE;
+						`Defaulting to ${config.DEFAULT_OPERATION_MODE}; use setMode() to change.`);
+			Memory.settings.operationMode = config.DEFAULT_OPERATION_MODE;
 			return getAutonomyLevel();
 	}
 }
@@ -46,6 +41,9 @@ const BUCKET_CPU_HALT = 4000;
 const BUCKET_LOW_WATERMARK = 500;
 const PIXEL_GENERATION_GRACE_PERIOD = 500;
 
+export const OVERMIND_SMALL_CAPS = '\u1D0F\u1D20\u1D07\u0280\u1D0D\u026A\u0274\u1D05';
+export const DEFAULT_OVERMIND_SIGNATURE = `«${OVERMIND_SMALL_CAPS}»`;
+
 /**
  * This module contains a number of low-level memory clearing and caching functions
  */
@@ -58,8 +56,8 @@ export class Mem {
 			log.warning(`Overmind requires isolated-VM to run. Change settings at screeps.com/a/#!/account/runtime`);
 			shouldRun = false;
 		}
-		if (USE_SCREEPS_PROFILER && Game.time % 10 == 0) {
-			log.warning(`Profiling is currently enabled; only ${PROFILER_COLONY_LIMIT} colonies will be run!`);
+		if (config.USE_SCREEPS_PROFILER && Game.time % 10 == 0) {
+			log.warning(`Profiling is currently enabled; only ${config.PROFILER_COLONY_LIMIT} colonies will be run!`);
 		}
 		if (Game.cpu.bucket < BUCKET_LOW_WATERMARK && (!Memory.pixelsTick || Game.time - Memory.pixelsTick >= PIXEL_GENERATION_GRACE_PERIOD)) {
 			if (_.keys(Game.spawns).length > 1 && !Memory.resetBucket && !Memory.haltTick) {
@@ -222,7 +220,7 @@ export class Mem {
 			nukePlanner       : <NukePlannerMemory>{},
 			settings          : {
 				signature             : DEFAULT_OVERMIND_SIGNATURE,
-				operationMode         : DEFAULT_OPERATION_MODE,
+				operationMode         : 'automatic',
 				log                   : {},
 				enableVisuals         : true,
 				resourceCollectionMode: 0,
@@ -253,7 +251,7 @@ export class Mem {
 
 	static format() {
 		// Format the memory as needed, done once every global reset
-		_.defaultsDeep(Memory, Mem.getDefaultMemory());
+		_.defaultsDeep(Memory, config.DEFAULT_SETTINGS, Mem.getDefaultMemory());
 		// Increment build counter (if global reset is due to CPU halt, the count will have been decremented)
 		Memory.build++;
 		// Make global memory

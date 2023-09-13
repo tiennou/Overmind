@@ -4,7 +4,6 @@ import {RoomPoisonerOverlord} from '../../overlords/colonization/roomPoisoner';
 import {profile} from '../../profiler/decorator';
 import {Cartographer, ROOMTYPE_CONTROLLER} from '../../utilities/Cartographer';
 import {packPos} from '../../utilities/packrat';
-import {MY_USERNAME} from '../../~settings';
 import {DirectiveOutpostDefense} from '../defense/outpostDefense';
 import {Directive} from '../Directive';
 import {DirectiveControllerAttack} from '../offense/controllerAttack';
@@ -46,7 +45,7 @@ export class DirectivePoisonRoom extends Directive {
 			remove = true;
 		}
 		// Remove if owned by other player
-		if (this.room && this.room.owner && this.room.owner != MY_USERNAME) {
+		if (this.room && this.room.owner && !this.room.my) {
 			log.error(`Removing poisonRoom directive in ${this.pos.roomName}: room already owned by another player.`);
 			remove = true;
 		}

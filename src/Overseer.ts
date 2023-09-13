@@ -33,7 +33,7 @@ import {
 } from './utilities/Cartographer';
 import {p} from './utilities/random';
 import {canClaimAnotherRoom, getAllRooms, hasJustSpawned, minBy, onPublicServer} from './utilities/utils';
-import {USE_TRY_CATCH} from './~settings';
+import { config } from 'config';
 
 
 // export const DIRECTIVE_CHECK_FREQUENCY = 2;
@@ -87,7 +87,7 @@ export class Overseer implements IOverseer {
 	}
 
 	private try(callback: () => any, identifier?: string): void {
-		if (USE_TRY_CATCH) {
+		if (config.USE_TRY_CATCH) {
 			try {
 				callback();
 			} catch (e) {

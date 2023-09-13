@@ -3,8 +3,8 @@ import {log} from '../../console/log';
 import {RoomIntel} from '../../intel/RoomIntel';
 import {HarassOverlord} from '../../overlords/offense/harass';
 import {profile} from '../../profiler/decorator';
-import {MY_USERNAME} from '../../~settings';
 import {Directive} from '../Directive';
+import { config } from 'config';
 
 interface DirectiveHarassMemory extends FlagMemory {
 	enhanced?: boolean;
@@ -31,7 +31,7 @@ export class DirectiveHarass extends Directive {
 		super(flag);
 		this.memory.targetPlayer = RoomIntel.roomOwnedBy(flag.pos.roomName);
 		this.memory.nextSpawnTime = Game.time;
-		if (this.memory.targetPlayer == MY_USERNAME) {
+		if (this.memory.targetPlayer === config.MY_USERNAME) {
 			log.error(`Ahhhhhh harassing self in room ${flag.pos.roomName}`);
 			this.remove();
 		} else {

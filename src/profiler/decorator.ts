@@ -1,4 +1,4 @@
-import {USE_SCREEPS_PROFILER} from '../~settings';
+import { config } from 'config';
 import profiler from './screeps-profiler';
 
 // export {profile} from './profiler';
@@ -9,7 +9,7 @@ export function profile(target: Profilable): void;
 export function profile(target: Profilable, key: string | symbol, _descriptor: TypedPropertyDescriptor<Function>): void;
 export function profile(target: Profilable | Function, key?: string | symbol,
 						_descriptor?: TypedPropertyDescriptor<Function>,): void {
-	if (!USE_SCREEPS_PROFILER) {
+	if (!config.USE_SCREEPS_PROFILER) {
 		return;
 	}
 

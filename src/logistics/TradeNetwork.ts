@@ -7,7 +7,7 @@ import {profile} from '../profiler/decorator';
 import {Abathur} from '../resources/Abathur';
 import {alignedNewline, bullet, leftArrow, rightArrow} from '../utilities/stringConstants';
 import {maxBy, minBy, printRoomName} from '../utilities/utils';
-import {RESERVE_CREDITS} from '../~settings';
+import { config } from 'config';
 
 interface MarketCache {
 	sell: { [resourceType: string]: { high: number, low: number } };
@@ -114,8 +114,8 @@ export class TraderJoe implements ITradeNetwork {
 				canPlaceSellOrdersAbove: 2000,
 				canBuyAbove            : 10000,
 				canBuyPassivelyAbove   : 50000,
-				canBuyBoostsAbove      : 5 * Math.max(RESERVE_CREDITS, 1e5),
-				canBuyEnergyAbove      : 10 * Math.max(RESERVE_CREDITS, 1e5),
+				canBuyBoostsAbove      : 5 * Math.max(config.RESERVE_CREDITS, 1e5),
+				canBuyEnergyAbove      : 10 * Math.max(config.RESERVE_CREDITS, 1e5),
 			},
 			orders   : {
 				/** Remove orders after this many ticks if remaining amount < cleanupAmount */

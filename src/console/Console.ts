@@ -9,13 +9,13 @@ import {EmpireAnalysis} from '../utilities/EmpireAnalysis';
 import {alignedNewline, bullet} from '../utilities/stringConstants';
 import {color, printRoomName, toColumns} from '../utilities/utils';
 import {asciiLogoRL, asciiLogoSmall} from '../visuals/logos';
-import {DEFAULT_OVERMIND_SIGNATURE, MY_USERNAME, USE_SCREEPS_PROFILER} from '../~settings';
 import {log} from './log';
 import {DirectiveOutpost} from 'directives/colony/outpost';
 import {TaskSignController} from 'tasks/instances/signController';
 import columnify from 'columnify';
 import { Zerg } from 'zerg/Zerg';
 import { COMMODITIES_ALL, RESOURCE_IMPORTANCE } from 'resources/map_resources';
+import { config } from 'config';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
 
@@ -315,7 +315,7 @@ export class OvermindConsole {
 	static info(aligned = false): string {
 		const b = bullet;
 		const checksum = Assimilator.generateChecksum();
-		const clearanceCode = Assimilator.getClearanceCode(MY_USERNAME);
+		const clearanceCode = Assimilator.getClearanceCode(config.MY_USERNAME);
 		const baseInfo = [
 			`${b}Version:        Overmind v${__VERSION__}`,
 			`${b}Checksum:       ${checksum}`,
@@ -351,12 +351,12 @@ export class OvermindConsole {
 
 
 	static setSignature(signature: string | undefined): void {
-		const sig = signature ? signature : DEFAULT_OVERMIND_SIGNATURE;
+		const sig = signature ? signature : config.DEFAULT_OVERMIND_SIGNATURE;
 		if (sig.length > 100) {
 			throw new Error(`Invalid signature: ${signature}; length is over 100 chars.`);
-		} else if (!sig.toLowerCase().includes('overmind') || !sig.includes(DEFAULT_OVERMIND_SIGNATURE)) {
+		} else if (!sig.toLowerCase().includes('overmind') && !sig.includes(__DEFAULT_OVERMIND_SIGNATURE__)) {
 			throw new Error(`Invalid signature: ${signature}; must contain the string "Overmind" or ` +
-							`${DEFAULT_OVERMIND_SIGNATURE} (accessible on global with __DEFAULT_OVERMIND_SIGNATURE__)`);
+							`${__DEFAULT_OVERMIND_SIGNATURE__} (accessible on global with __DEFAULT_OVERMIND_SIGNATURE__)`);
 		}
 
 		Memory.settings.signature = sig;
@@ -645,7 +645,7 @@ export class OvermindConsole {
 
 	static removeErrantFlags(): void {
 		// This may need to be be run several times depending on visibility
-		if (USE_SCREEPS_PROFILER) {
+		if (config.USE_SCREEPS_PROFILER) {
 			console.log(`ERROR: should not be run while profiling is enabled!`);
 			return;
 		}

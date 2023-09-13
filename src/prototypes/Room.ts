@@ -1,7 +1,7 @@
 // Room prototypes - commonly used room properties and methods
 
+import { config } from 'config';
 import {isAlly} from '../utilities/utils';
-import {MY_USERNAME} from '../~settings';
 
 // Logging =============================================================================================================
 Object.defineProperty(Room.prototype, 'print', {
@@ -44,7 +44,7 @@ Object.defineProperty(Room.prototype, 'owner', {
 
 Object.defineProperty(Room.prototype, 'reservedByMe', {
 	get(this: Room) {
-		return this.controller && this.controller.reservation && this.controller.reservation.username == MY_USERNAME;
+		return this.controller && this.controller.reservation && this.controller.reservation.username == config.MY_USERNAME;
 	},
 	configurable: true,
 });

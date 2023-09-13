@@ -1,6 +1,4 @@
 // Global settings file containing player information
-
-import {leftAngleQuote, rightAngleQuote} from './utilities/stringConstants';
 import {
 	getMyUsername,
 	getReinforcementLearningTrainingVerbosity,
@@ -50,9 +48,8 @@ export const SUPPRESS_INVALID_DIRECTIVE_ALERTS: boolean = false;
  * Operation will be penalized by skipping every 3rd tick for using a signature that does not contain the substring
  * "overmind" or the small-caps variant.
  */
-export const OVERMIND_SMALL_CAPS = '\u1D0F\u1D20\u1D07\u0280\u1D0D\u026A\u0274\u1D05';
-export const DEFAULT_OVERMIND_SIGNATURE = leftAngleQuote + OVERMIND_SMALL_CAPS + rightAngleQuote;
-global.__DEFAULT_OVERMIND_SIGNATURE__ = DEFAULT_OVERMIND_SIGNATURE;
+const OVERMIND_SMALL_CAPS = '\u1D0F\u1D20\u1D07\u0280\u1D0D\u026A\u0274\u1D05';
+export const DEFAULT_OVERMIND_SIGNATURE = `«${OVERMIND_SMALL_CAPS}»`;
 
 /**
  * If this is enabled, Memory.bot will default to true. This will not change the mode if already set - use setMode().
@@ -101,3 +98,11 @@ export const RL_TRAINING_MODE = onTrainingEnvironment();
  * 2: log every tick
  */
 export const RL_TRAINING_VERBOSITY = getReinforcementLearningTrainingVerbosity();
+
+/**
+ * This will get used as defaults when building Memory.settings.
+ * Use it to provide specific values when spawning/respawning.
+ */
+export const DEFAULT_SETTINGS: PartialDeep<MemorySettings> = {
+
+}

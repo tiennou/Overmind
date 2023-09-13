@@ -6,7 +6,6 @@ import {PioneerOverlord} from '../../overlords/colonization/pioneer';
 import {profile} from '../../profiler/decorator';
 import {Cartographer, ROOMTYPE_CONTROLLER} from '../../utilities/Cartographer';
 import {printRoomName} from '../../utilities/utils';
-import {MY_USERNAME} from '../../~settings';
 import {Directive} from '../Directive';
 import { DirectiveIncubate } from './incubate';
 
@@ -80,7 +79,7 @@ export class DirectiveColonize extends Directive {
 			// Remove the directive
 			this.remove();
 		}
-		if (Game.time % 10 == 2 && this.room && !!this.room.owner && this.room.owner != MY_USERNAME) {
+		if (Game.time % 10 == 2 && this.room && this.room.owner && !this.room.my) {
 			log.notify(`Removing Colonize directive in ${this.pos.roomName}: room already owned by another player.`);
 			this.remove();
 		}

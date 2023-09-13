@@ -1,3 +1,4 @@
+import { config } from 'config';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {DirectiveOutpost} from '../../directives/colony/outpost';
 import {RoomIntel} from '../../intel/RoomIntel';
@@ -5,7 +6,6 @@ import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
-import {MY_USERNAME} from '../../~settings';
 import {Overlord} from '../Overlord';
 
 /** Tick bias used to calculate if a reserver needs to be sent */
@@ -53,7 +53,7 @@ export class ReservingOverlord extends Overlord {
 	}
 
 	roomReservationRemaining() {
-		if (this.reservation.username !== MY_USERNAME) {
+		if (this.reservation.username !== config.MY_USERNAME) {
 			return 0;
 		}
 		return this.reservation.ticksToEnd ?? 0;

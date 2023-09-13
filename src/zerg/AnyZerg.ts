@@ -8,7 +8,7 @@ import {Overlord} from '../overlords/Overlord';
 import {profile} from '../profiler/decorator';
 import {Cartographer, ROOMTYPE_SOURCEKEEPER} from '../utilities/Cartographer';
 import {minBy} from '../utilities/utils';
-import {NEW_OVERMIND_INTERVAL} from '../~settings';
+import { config } from 'config';
 
 export function normalizeAnyZerg(creep: AnyZerg | AnyCreep): AnyZerg | AnyCreep {
 	return Overmind.zerg[creep.name] || Overmind.powerZerg[creep.name] || creep;
@@ -105,7 +105,7 @@ export abstract class AnyZerg {
 		// @ts-expect-error Global getter for Zergs
 		global[this.name] = this;
 		// Handle attack notification when at lifetime - 1
-		if (!notifyWhenAttacked && (this.ticksToLive || 0) >= this.lifetime - (NEW_OVERMIND_INTERVAL + 1)) {
+		if (!notifyWhenAttacked && (this.ticksToLive || 0) >= this.lifetime - (config.NEW_OVERMIND_INTERVAL + 1)) {
 			// creep.notifyWhenAttacked only uses the 0.2CPU intent cost if it changes the intent value
 			this.notifyWhenAttacked(notifyWhenAttacked);
 		}

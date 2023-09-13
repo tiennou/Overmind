@@ -34,7 +34,6 @@ import './prototypes/Structures'; // Prototypes for accessed structures
 import './prototypes/Miscellaneous'; // Everything else
 import './tasks/initializer'; // This line is necessary to ensure proper compilation ordering...
 import './zerg/CombatZerg'; // ...so is this one... rollup is dumb about generating reference errors
-import {RL_TRAINING_MODE, USE_SCREEPS_PROFILER} from './~settings';
 import {sandbox} from './utilities/sandbox';
 import {Mem} from './memory/Memory';
 import {OvermindConsole} from './console/Console';
@@ -44,6 +43,7 @@ import _Overmind from './Overmind_obfuscated'; // this should be './Overmind_obf
 import {VersionMigration} from './versionMigration/migrator';
 import {RemoteDebugger} from './debug/remoteDebugger';
 import {ActionParser} from './reinforcementLearning/actionParser';
+import { config } from 'config';
 // =====================================================================================================================
 
 // Main loop
@@ -103,7 +103,7 @@ function main_RL(): void {
 function onGlobalReset(): void {
 	global.LATEST_GLOBAL_RESET_TICK = Game.time;
 	global.LATEST_GLOBAL_RESET_DATE = new Date();
-	if (USE_SCREEPS_PROFILER) profiler.enable();
+	if (config.USE_SCREEPS_PROFILER) profiler.enable();
 	Mem.format();
 	OvermindConsole.init();
 	VersionMigration.run();
@@ -126,11 +126,11 @@ function onGlobalReset_RL(): void {
 
 // Decide which loop to export as the script loop
 let _loop: () => void;
-if (RL_TRAINING_MODE) {
+if (config.RL_TRAINING_MODE) {
 	// Use stripped version for training reinforcment learning model
 	_loop = main_RL;
 } else {
-	if (USE_SCREEPS_PROFILER) {
+	if (config.USE_SCREEPS_PROFILER) {
 		// Wrap the main loop in the profiler
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		_loop = () => profiler.wrap(main);
@@ -143,7 +143,7 @@ if (RL_TRAINING_MODE) {
 export const loop = _loop;
 
 // Run the appropriate global reset function
-if (RL_TRAINING_MODE) {
+if (config.RL_TRAINING_MODE) {
 	OvermindConsole.printTrainingMessage();
 	onGlobalReset_RL();
 } else {

@@ -13,6 +13,45 @@ interface RawMemory {
 	_parsed: any;
 }
 
+interface MemorySettings {
+	signature: string;
+	operationMode: operationMode;
+	log: import('console/log').LogSettings;
+	enableVisuals: boolean;
+	intelVisuals: {
+		/**
+		 * Tick until which the intel room visuals are shown
+		 */
+		until?: number;
+		range?: number;
+	},
+	allies: string[];
+	resourceCollectionMode: resourceCollectionMode;
+	powerCollection: {
+		enabled: boolean;
+		maxRange: number;
+		minPower: number;
+	};
+	autoPoison: {
+		enabled: boolean;
+		maxRange: number;
+		maxConcurrent: number;
+	},
+	pixelGeneration: {
+		enabled: boolean;
+	},
+	colonization: {
+		maxRooms: number | undefined;
+	},
+	attitude: {
+		/**
+		 * How aggressive the AI is
+		 * Only used in room hostility checks for now.
+		 */
+		brazenness: number;
+	}
+}
+
 interface Memory {
 	tick: number;
 	build: number;
@@ -69,44 +108,7 @@ interface Memory {
 
 	screepsProfiler?: any;
 
-	settings: {
-		signature: string;
-		operationMode: operationMode;
-		log: import('console/log').LogSettings;
-		enableVisuals: boolean;
-		intelVisuals: {
-			/**
-			 * Tick until which the intel room visuals are shown
-			 */
-			until?: number;
-			range?: number;
-		},
-		allies: string[];
-		resourceCollectionMode: resourceCollectionMode;
-		powerCollection: {
-			enabled: boolean;
-			maxRange: number;
-			minPower: number;
-		};
-		autoPoison: {
-			enabled: boolean;
-			maxRange: number;
-			maxConcurrent: number;
-		},
-		pixelGeneration: {
-			enabled: boolean;
-		},
-		colonization: {
-			maxRooms: number | undefined;
-		}
-		attitude: {
-			/**
-			 * How aggressive the AI is
-			 * Only used in room hostility checks for now.
-			 */
-			brazenness: number;
-		}
-	};
+	settings: MemorySettings;
 
 	remoteDebugger: import('debug/remoteDebugger').DebuggerMemory;
 	nukePlanner: import('strategy/NukePlanner').NukePlannerMemory;

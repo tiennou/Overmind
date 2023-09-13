@@ -1,9 +1,9 @@
 /* tslint:disable:no-eval */
 
+import { config } from 'config';
 import {log} from '../console/log';
 import {Segmenter, SEGMENTS} from '../memory/Segmenter';
 import {alignedNewline} from '../utilities/stringConstants';
-import {MUON, MY_USERNAME} from '../~settings';
 
 const DEBUG_TIMEOUT = 1000;
 const NO_COMMAND = 'No command';
@@ -142,7 +142,7 @@ export class RemoteDebugger {
 		if (this.memory.enabled) {
 
 			// Run the debugger
-			if (MY_USERNAME == MUON) {
+			if (config.MY_USERNAME == config.MUON) {
 				if (this.memory.username) {
 					Segmenter.requestSegments(SEGMENTS.remoteDebugger);
 					Segmenter.requestForeignSegment(this.memory.username, SEGMENTS.remoteDebugger);
@@ -151,7 +151,7 @@ export class RemoteDebugger {
 				}
 			} else {
 				Segmenter.requestSegments(SEGMENTS.remoteDebugger);
-				Segmenter.requestForeignSegment(MUON, SEGMENTS.remoteDebugger);
+				Segmenter.requestForeignSegment(config.MUON, SEGMENTS.remoteDebugger);
 				Segmenter.markSegmentAsPublic(SEGMENTS.remoteDebugger);
 				this.run_slave();
 			}

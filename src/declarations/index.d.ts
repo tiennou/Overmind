@@ -68,6 +68,10 @@ type Full<T> = {
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
+type PartialDeep<T> = T extends object ? {
+    [P in keyof T]?: PartialDeep<T[P]>;
+} : T;
+
 // declare module 'screeps-profiler'; // I stopped using the typings for this because it was fucking up the Game typings
 
 

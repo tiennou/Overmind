@@ -4,10 +4,10 @@
 /* eslint @typescript-eslint/no-unsafe-argument: "off" */
 /* eslint @typescript-eslint/dot-notation: "off" */
 
+import { config } from 'config';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
 import {packCoordList} from '../utilities/packrat';
-import {MY_USERNAME} from '../~settings';
 
 interface VersionMigratorMemory {
 	versions: { [version: string]: boolean };
@@ -389,7 +389,7 @@ export class VersionMigration {
 
 		// Find oldest tick we can find
 		log.alert(`Fetching approximate empire age...`);
-		if (MY_USERNAME == 'Muon') {
+		if (config.MY_USERNAME == 'Muon') {
 			Memory.tick = Game.time - 4461275; // oldest tick I could find
 		} else {
 			let oldestTick = Infinity;

@@ -5,7 +5,6 @@ import {profile} from '../../profiler/decorator';
 import {Cartographer, ROOMTYPE_CONTROLLER} from '../../utilities/Cartographer';
 import {printRoomName} from '../../utilities/utils';
 import {Zerg} from '../../zerg/Zerg';
-import {MY_USERNAME} from '../../~settings';
 import {Directive} from '../Directive';
 import {DirectiveHaul} from '../resource/haul';
 import {DirectiveDismantle} from '../targeting/dismantle';
@@ -158,7 +157,7 @@ export class DirectiveClearRoom extends Directive {
 		}
 
 		// Remove if owned by other player
-		if (Game.time % 10 == 2 && this.room && !!this.room.owner && this.room.owner != MY_USERNAME) {
+		if (Game.time % 10 == 2 && this.room && !!this.room.owner && !this.room.my) {
 			log.notify(`Removing clearRoom directive in ${this.pos.roomName}: room already owned by another player.`);
 			this.remove();
 		}

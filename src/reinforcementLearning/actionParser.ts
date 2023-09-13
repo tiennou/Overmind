@@ -7,9 +7,9 @@
 
 */
 
+import { config } from 'config';
 import {SEGMENTS} from '../memory/Segmenter';
 import {NeuralZerg} from '../zerg/NeuralZerg';
-import {RL_TRAINING_VERBOSITY} from '../~settings';
 import {TrainingOpponents} from './trainingOpponents';
 
 export type RLAction =
@@ -192,13 +192,13 @@ export class ActionParser {
 		}
 
 		// Log state according to verbosity
-		if (RL_TRAINING_VERBOSITY == 0) {
+		if (config.RL_TRAINING_VERBOSITY == 0) {
 			// no logigng
-		} else if (RL_TRAINING_VERBOSITY == 1) {
+		} else if (config.RL_TRAINING_VERBOSITY == 1) {
 			if (Game.time % 100 == 0 || Game.time % 100 == 1) {
 				this.logState(raw);
 			}
-		} else if (RL_TRAINING_VERBOSITY == 2) {
+		} else if (config.RL_TRAINING_VERBOSITY == 2) {
 			this.logState(raw);
 		}
 

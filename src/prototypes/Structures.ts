@@ -1,8 +1,8 @@
 // All structure prototypes
 
-// General structure prototypes ========================================================================================
+import { config } from "config";
 
-import {MY_USERNAME} from '../~settings';
+// General structure prototypes ========================================================================================
 
 PERMACACHE.structureWalkability = PERMACACHE.structureWalkability || {};
 Object.defineProperty(Structure.prototype, 'isWalkable', {
@@ -89,14 +89,14 @@ for (const structure of StorageLikeStructures) {
 
 Object.defineProperty(StructureController.prototype, 'reservedByMe', {
 	get(this: StructureController) {
-		return this.reservation && this.reservation.username == MY_USERNAME;
+		return this.reservation && this.reservation.username == config.MY_USERNAME;
 	},
 	configurable: true,
 });
 
 Object.defineProperty(StructureController.prototype, 'signedByMe', {
 	get(this: StructureController) {
-		return this.sign && this.sign.username == MY_USERNAME && Game.time - this.sign.time < 250000;
+		return this.sign && this.sign.username == config.MY_USERNAME && Game.time - this.sign.time < 250000;
 	},
 	configurable: true,
 });
