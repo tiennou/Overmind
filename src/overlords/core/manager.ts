@@ -456,12 +456,12 @@ export class CommandCenterOverlord extends Overlord {
 	/**
 	 * Pickup resources dropped on manager position or in tombstones from last manager
 	 */
-	private pickupActions(manager: Zerg, tombstonesOnly = true): boolean {
-		this.debug("pickupActions");
+	private pickupActions(manager: Zerg, tombstonesOnly = false): boolean {
 		// Look for tombstones at position
 		const tombstones = manager.pos.lookFor(LOOK_TOMBSTONES);
 		const tombstone = _.first(tombstones);
 		if (tombstone) {
+			this.debug(`picking up from tombstone ${tombstone.print}`);
 			manager.task = Tasks.chain([
 				Tasks.withdrawAll(tombstone),
 				Tasks.transferAll(this.commandCenter.storage),
@@ -475,6 +475,7 @@ export class CommandCenterOverlord extends Overlord {
 		const resources = manager.pos.lookFor(LOOK_RESOURCES);
 		const resource = _.first(resources);
 		if (resource) {
+			this.debug(`picking up from resource ${resource.print}`);
 			manager.task = Tasks.chain([
 				Tasks.pickup(resource),
 				Tasks.transferAll(this.commandCenter.storage),
