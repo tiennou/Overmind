@@ -177,7 +177,8 @@ interface CreepMemory {
 	avoidDanger?: {
 		start: number;
 		timer: number;
-		fallback: string;
+		/** The room to flee to, or just a random flee */
+		flee: string | true;
 	};
 	noNotifications?: boolean;
 	_go?: MoveData;

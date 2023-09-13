@@ -1227,9 +1227,6 @@ export class Movement {
 	static flee(creep: AnyZerg, avoidGoals: (RoomPosition | _HasRoomPosition)[],
 				dropEnergy = false, opts: MoveOptions = {}): ZergMoveReturnCode {
 
-		if (dropEnergy) {
-			log.warning("TODO: dropEnergy");
-		}
 		if (avoidGoals.length == 0) {
 			return NO_ACTION; // nothing to flee from
 		}
@@ -1307,6 +1304,16 @@ export class Movement {
 				}
 				moveData.destination = _.last(ret.path);
 				moveData.path = Pathing.serializePath(creep.pos, ret.path, 'purple');
+			}
+
+			// Drop energy if needed
+			if (dropEnergy && creep.store.energy > 0) {
+				const nearbyContainers = creep.pos.findInRange(creep.room.storageUnits, 1);
+				if (nearbyContainers.length > 0) {
+					creep.transfer(_.first(nearbyContainers), RESOURCE_ENERGY);
+				} else {
+					creep.drop(RESOURCE_ENERGY);
+				}
 			}
 
 			// Call goTo to the final position in path

@@ -20,10 +20,17 @@ interface _ParkingOptions {
 	offroad: boolean;
 }
 
+const FLEE_DEFAULT_TIMER = 10;
+const FLEE_DEFAULT_FALLBACK_RANGE = 6;
+
 interface FleeOptions {
 	timer?: number;
 	dropEnergy?: boolean;
 	invalidateTask?: boolean;
+	/**
+	 * How many rooms away should the creep look for a room to fallback to
+	 */
+	fallbackColonyRange?: number;
 }
 
 export const RANGES = {
@@ -415,19 +422,7 @@ export abstract class AnyZerg {
 		} else if (this.room.controller && this.room.controller.my && this.room.controller.safeMode) {
 			return false;
 		} else {
-			const fleeing = Movement.flee(this, avoidGoals, fleeOptions.dropEnergy, moveOptions) !== NO_ACTION;
-			if (fleeing) {
-				// Drop energy if needed
-				if (fleeOptions.dropEnergy && this.store.energy > 0) {
-					const nearbyContainers = this.pos.findInRange(this.room.storageUnits, 1);
-					if (nearbyContainers.length > 0) {
-						this.transfer(_.first(nearbyContainers), RESOURCE_ENERGY);
-					} else {
-						this.drop(RESOURCE_ENERGY);
-					}
-				}
-			}
-			return fleeing;
+			return Movement.flee(this, avoidGoals, fleeOptions.dropEnergy, moveOptions) !== NO_ACTION;
 		}
 	}
 
@@ -439,18 +434,28 @@ export abstract class AnyZerg {
 	avoidDanger(opts: FleeOptions = {}): boolean {
 
 		// If you're almost expired or you're spawning do nothing - if you get killed you're cheap and faster to replace
-		if ((this.ticksToLive || 0) < 50) {
+		if ((this.ticksToLive ?? 0) < 50) {
 			return false; // I just wanna die!!
 		}
 
-		_.defaults(opts, {timer: 10, dropEnergy: true});
+		_.defaults(opts, <FleeOptions>{
+			timer: FLEE_DEFAULT_TIMER,
+			dropEnergy: true,
+			fallbackColonyRange: FLEE_DEFAULT_FALLBACK_RANGE,
+		});
 
-		const roomIsSafe = this.room.isSafe || this.pos.findClosestByLimitedRange(this.room.dangerousHostiles, RANGES.RANGED_ATTACK + 2);
+		const closestHostile = this.pos.findClosestByLimitedRange(this.room.dangerousHostiles, RANGES.RANGED_ATTACK + 2);
+		const roomIsSafe = this.room.isSafe || closestHostile;
 
 		// If you previously determined you are in danger, wait for timer to expire
 		if (this.memory.avoidDanger) {
 			if (this.memory.avoidDanger.timer > 0 && !roomIsSafe) {
-				this.goToRoom(this.memory.avoidDanger.fallback);
+				if (this.memory.avoidDanger.flee === true) {
+					this.flee(this.room.dangerousHostiles, opts);
+					return true;
+				}
+
+				this.goToRoom(this.memory.avoidDanger.flee);
 				if (opts.dropEnergy && this.store.energy > 0) {
 					this.drop(RESOURCE_ENERGY); // transfer energy to container check is only run on first danger tick
 				}
@@ -475,15 +480,19 @@ export abstract class AnyZerg {
 				}
 			}
 
-			let fallback: string;
-			const maxLinearRange = 6;
+			let flee: string | true;
+			const maxLinearRange = opts.fallbackColonyRange!;
+			const isInColonyRoom = this.colony ? this.colony.name === this.room.name : false;
 			// Like 99.999% of the time this will be the case
-			if (this.colony && Game.map.getRoomLinearDistance(this.room.name, this.colony.name) <= maxLinearRange) {
-				fallback = this.colony.name;
+			// FIXME: this doesn't handle portals
+			if (this.colony && Game.map.getRoomLinearDistance(this.room.name, this.colony.name) <= maxLinearRange && !isInColonyRoom) {
+				flee = this.colony.name;
 			} else {
-				// But this could happen if the creep was working remotely through a portal
-				const nearbyColonies = _.filter(getAllColonies(), colony =>
-					Game.map.getRoomLinearDistance(this.room.name, colony.name) <= maxLinearRange);
+				// Pick the closest colony we can find, ignoring our own if it's under attack
+				const nearbyColonies = _.filter(getAllColonies(), colony => {
+					if (isInColonyRoom && colony.name === this.colony!.name) return false;
+					return Game.map.getRoomLinearDistance(this.room.name, colony.name) <= maxLinearRange;
+				});
 				const closestColony = minBy(nearbyColonies, colony => {
 					const route = Pathing.findRoute(this.room.name, colony.room.name);
 					if (route == ERR_NO_PATH) {
@@ -492,18 +501,24 @@ export abstract class AnyZerg {
 						return route.length;
 					}
 				});
-				if (!closestColony) {
+				if (closestColony) {
+					flee = closestColony.name;
+				} else {
 					log.error(`${this.print} is all alone in a dangerous place and can't find their way home!`);
-					return false;
+					flee = true;
 				}
-				fallback = closestColony.name;
 			}
 
 			this.memory.avoidDanger = {
-				start   : Game.time,
-				timer   : opts.timer!,
-				fallback: fallback,
+				start: Game.time,
+				timer: opts.timer!,
+				flee: flee,
 			};
+
+			if (flee === true) {
+				this.flee(this.room.dangerousHostiles, opts);
+				return true;
+			}
 
 			if (opts.dropEnergy && this.store.energy > 0) {
 				const containersInRange = this.pos.findInRange(this.room.containers, 1);
@@ -513,7 +528,7 @@ export abstract class AnyZerg {
 				}
 			}
 
-			this.goToRoom(fallback);
+			this.goToRoom(flee);
 			return true;
 
 		}

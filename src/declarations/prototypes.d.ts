@@ -80,6 +80,9 @@ interface Room {
 	threatLevel: number;
 	instantaneousThreatLevel: 0 | 0.5 | 1;
 
+	/**
+	 * Things to stay away from in the room
+	 */
 	fleeDefaults: _HasRoomPosition[];
 
 	structures: Structure[];
