@@ -1,7 +1,11 @@
 // A stripped-down version of the logistics network intended for local deliveries
 
 import { log } from "console/log";
-import { blankPriorityQueue, Priority } from "../priorities/priorities";
+import {
+	blankPriorityQueue,
+	Priority,
+	priorityToString,
+} from "../priorities/priorities";
 import { profile } from "../profiler/decorator";
 
 // export type TransportRequestTarget =
@@ -25,6 +29,7 @@ export interface TransportRequest {
 	target: TransportRequestTarget;
 	amount: number;
 	resourceType: ResourceConstant;
+	priority: Priority;
 }
 
 interface TransportRequestOptions {
@@ -38,6 +43,12 @@ interface TransportRequestOptions {
  */
 @profile
 export class TransportRequestGroup {
+	static logRequest(request: TransportRequest) {
+		return `${request.amount} of ${request.resourceType} in ${
+			request.target.print
+		} at ${priorityToString(request.priority)} priority`;
+	}
+
 	name: string;
 	supply: { [priority: number]: TransportRequest[] };
 	withdraw: { [priority: number]: TransportRequest[] };
@@ -141,6 +152,7 @@ export class TransportRequestGroup {
 			target: target,
 			resourceType: opts.resourceType!,
 			amount: opts.amount,
+			priority: priority,
 		};
 		if (opts.amount > 0) {
 			this.supply[priority].push(req);
@@ -172,6 +184,7 @@ export class TransportRequestGroup {
 			target: target,
 			resourceType: opts.resourceType!,
 			amount: opts.amount,
+			priority: priority,
 		};
 		if (opts.amount > 0) {
 			this.withdraw[priority].push(req);
@@ -214,7 +227,11 @@ export class TransportRequestGroup {
 		console.log(`Supply requests ==========================`);
 		for (const priority in this.supply) {
 			if (this.supply[priority].length > 0) {
-				console.log(`Priority: ${priority}`);
+				console.log(
+					`Priority: ${priorityToString(
+						<Priority>(<unknown>priority)
+					)}`
+				);
 			}
 			for (const request of this.supply[priority]) {
 				if (ignoreEnergy && request.resourceType == RESOURCE_ENERGY) {
@@ -231,7 +248,11 @@ export class TransportRequestGroup {
 		console.log(`Withdraw requests ========================`);
 		for (const priority in this.withdraw) {
 			if (this.withdraw[priority].length > 0) {
-				console.log(`Priority: ${priority}`);
+				console.log(
+					`Priority: ${priorityToString(
+						<Priority>(<unknown>priority)
+					)}`
+				);
 			}
 			for (const request of this.withdraw[priority]) {
 				if (ignoreEnergy && request.resourceType == RESOURCE_ENERGY) {

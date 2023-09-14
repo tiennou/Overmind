@@ -7,6 +7,19 @@ export enum Priority {
 	Low = 5, // Unimportant operations
 }
 
+const priorityLevels = {
+	[Priority.Critical]: "critical",
+	[Priority.High]: "high",
+	[Priority.NormalHigh]: "normal-high",
+	[Priority.Normal]: "normal",
+	[Priority.NormalLow]: "normal-low",
+	[Priority.Low]: "low",
+};
+
+export function priorityToString(priority: Priority): string {
+	return priorityLevels[priority] ?? `unknown ${priority}`;
+}
+
 export function blankPriorityQueue() {
 	const queue: { [priority: number]: any[] } = {};
 	for (const priority in Priority) {
