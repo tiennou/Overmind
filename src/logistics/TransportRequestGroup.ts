@@ -38,12 +38,14 @@ interface TransportRequestOptions {
  */
 @profile
 export class TransportRequestGroup {
+	name: string;
 	supply: { [priority: number]: TransportRequest[] };
 	withdraw: { [priority: number]: TransportRequest[] };
 	supplyByID: { [id: string]: TransportRequest[] };
 	withdrawByID: { [id: string]: TransportRequest[] };
 
-	constructor() {
+	constructor(name: string) {
+		this.name = name;
 		this.refresh();
 	}
 
@@ -208,6 +210,7 @@ export class TransportRequestGroup {
 	 * Summarize the state of the transport request group to the console; useful for debugging.
 	 */
 	summarize(ignoreEnergy = false): void {
+		console.log(`TransportRequestGroup #${this.name}`);
 		console.log(`Supply requests ==========================`);
 		for (const priority in this.supply) {
 			if (this.supply[priority].length > 0) {

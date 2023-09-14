@@ -711,7 +711,7 @@ export class Colony {
 		// Resource requests
 		this.linkNetwork = new LinkNetwork(this);
 		this.logisticsNetwork = new LogisticsNetwork(this);
-		this.transportRequests = new TransportRequestGroup();
+		this.transportRequests = new TransportRequestGroup("colony");
 		// Register a room planner
 		this.roomPlanner = new RoomPlanner(this);
 		if (

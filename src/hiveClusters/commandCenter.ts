@@ -72,7 +72,7 @@ export class CommandCenter extends HiveCluster {
 			this.colony.linkNetwork.claimLink(this.link);
 			this.towers = this.pos.findInRange(colony.towers, 3);
 		}
-		this.transportRequests = new TransportRequestGroup(); // commandCenter always gets its own request group
+		this.transportRequests = new TransportRequestGroup("commandCenter"); // commandCenter always gets its own request group
 		this.observeRoom = undefined;
 	}
 
