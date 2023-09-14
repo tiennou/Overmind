@@ -350,8 +350,7 @@ export class TraderJoe implements ITradeNetwork {
 	private getPriceForBaseIngredients(resource: ResourceConstant): number {
 		const ingredients = Abathur.enumerateReactionBaseIngredients(resource);
 		if (ingredients.length > 0) { // a synthesizeable compound
-			return _.sum(ingredients, res =>
-				this.memory.cache.history[res] ? this.memory.cache.history[res].avg14 || Infinity : Infinity);
+			return _.sum(ingredients, res => this.memory.cache.history[res]?.avg14 ?? Infinity);
 		} else { // not synthesizeable
 			if (this.memory.cache.history[resource]) {
 				return this.memory.cache.history[resource].avg14;
