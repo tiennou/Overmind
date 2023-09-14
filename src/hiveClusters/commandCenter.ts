@@ -17,6 +17,7 @@ import { derefRoomPosition } from "utilities/utils";
 export const MAX_OBSERVE_DISTANCE = 4;
 
 export interface CommandCenterMemory {
+	debug?: boolean;
 	idlePos?: ProtoPos;
 }
 
@@ -319,6 +320,9 @@ export class CommandCenter extends HiveCluster {
 	}
 
 	run(): void {
+		if (this.memory.debug) {
+			this.transportRequests.summarize();
+		}
 		this.runObserver();
 		this.runPowerSpawn();
 	}
