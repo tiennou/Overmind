@@ -2,7 +2,7 @@ import { LogMessage, log } from "console/log";
 import { Colony, getAllColonies } from "../Colony";
 import { maxMarketPrices, TraderJoe } from "../logistics/TradeNetwork";
 import { profile } from "../profiler/decorator";
-import { onPublicServer } from "../utilities/utils";
+import { entries, onPublicServer } from "../utilities/utils";
 import {
 	_baseResourcesLookup,
 	_boostTierLookupAllTypes,
@@ -129,9 +129,87 @@ export const baseStockAmounts: { [key: string]: number } = {
 	[RESOURCE_HYDROGEN]: 5000,
 };
 
+/** Priorities for commodity production */
+export const COMMODITY_PRIORITIES = [
+	// Energy
+	RESOURCE_BATTERY,
+	RESOURCE_ENERGY,
+
+	// Base resources
+	RESOURCE_UTRIUM_BAR,
+	RESOURCE_UTRIUM,
+	RESOURCE_LEMERGIUM_BAR,
+	RESOURCE_LEMERGIUM,
+	RESOURCE_ZYNTHIUM_BAR,
+	RESOURCE_ZYNTHIUM,
+	RESOURCE_KEANIUM_BAR,
+	RESOURCE_KEANIUM,
+	RESOURCE_GHODIUM_MELT,
+	RESOURCE_GHODIUM,
+	RESOURCE_OXIDANT,
+	RESOURCE_OXYGEN,
+	RESOURCE_REDUCTANT,
+	RESOURCE_HYDROGEN,
+	RESOURCE_PURIFIER,
+	RESOURCE_CATALYST,
+
+	// Higher commodities
+	RESOURCE_COMPOSITE,
+	RESOURCE_CRYSTAL,
+	RESOURCE_LIQUID,
+
+	// Electronics/Silicon chain
+	RESOURCE_DEVICE,
+	RESOURCE_CIRCUIT,
+	RESOURCE_MICROCHIP,
+	RESOURCE_TRANSISTOR,
+	RESOURCE_SWITCH,
+	RESOURCE_WIRE,
+
+	// Biological/Biomass chain
+	RESOURCE_ORGANISM,
+	RESOURCE_ORGANOID,
+	RESOURCE_MUSCLE,
+	RESOURCE_TISSUE,
+	RESOURCE_PHLEGM,
+	RESOURCE_CELL,
+
+	// Mechanical/Metal chain
+	RESOURCE_MACHINE,
+	RESOURCE_HYDRAULICS,
+	RESOURCE_FRAME,
+	RESOURCE_FIXTURES,
+	RESOURCE_TUBE,
+	RESOURCE_ALLOY,
+
+	// Mystical/Mist chain
+	RESOURCE_ESSENCE,
+	RESOURCE_EMANATION,
+	RESOURCE_SPIRIT,
+	RESOURCE_EXTRACT,
+	RESOURCE_CONCENTRATE,
+	RESOURCE_CONDENSATE,
+];
+
+const PRIORITIZED_COMMODITIES = entries(COMMODITIES).sort(
+	([a], [b]) =>
+		COMMODITY_PRIORITIES.indexOf(a) - COMMODITY_PRIORITIES.indexOf(b)
+);
+
 export interface Reaction {
 	mineralType: string;
 	amount: number;
+}
+
+export interface Production {
+	/** The commodity to produce */
+	commodityType: CommodityConstant;
+
+	/** How many productions to make */
+	requested: number;
+
+	/** How much one production will output */
+	size: number;
 }
 
 /**
@@ -595,6 +673,173 @@ export class _Abathur {
 				Abathur.enumerateReactionProducts(REAGENTS[mineral][1]),
 				mineral
 			);
+		}
+	}
+
+	// Production scheduling =========================================================================================
+
+	/**
+	 * Compute the next production that a colony should undertake based on local and global stockpiles of
+	 * all target compounds.
+	 */
+	getNextProduction(colony: Colony): Production | undefined {
+		if (!colony.factory) {
+			return undefined;
+		}
+
+		const globalAssets = Overmind.terminalNetwork.getAssets();
+		const numColonies = _.filter(
+			getAllColonies(),
+			(colony) => !!colony.terminal
+		).length;
+
+		/** How much of a product we can make given its components' availability */
+		let batchAmount = Infinity;
+		let possibleProductions = PRIORITIZED_COMMODITIES;
+		possibleProductions = possibleProductions.filter(
+			([_prod, data]) => (data.level ?? 0) <= (colony.factory!.level ?? 0)
+		);
+
+		this.debug(
+			() =>
+				`${colony.print}, possibleProductions: ${possibleProductions
+					.map((p) => p[0])
+					.join(", ")}`
+		);
+
+		// Want to build up a stockpile of high tier commodities, but also to maintain and utilize a stockpile of the
+		// cheaper stuff before we start building up higher commodities, which have declining returns
+		const ingredientsUnavailable: { [resource: string]: boolean } = {}; // track what we can't make to save CPU
+
+		const nextTargetProduction = _.find(
+			possibleProductions,
+			([prodStr, data]) => {
+				const product = <CommodityConstant>prodStr;
+				const productThreshold = Overmind.terminalNetwork.thresholds(
+					colony,
+					product
+				);
+				if (
+					colony.assets[product] >=
+					(productThreshold.surplus ?? Infinity)
+				) {
+					this.debug(
+						() =>
+							`${
+								colony.print
+							}, checking ${product}: more than enough (stored: ${
+								colony.assets[product]
+							}, threshold: ${JSON.stringify(productThreshold)})`
+					);
+					return false;
+				}
+
+				batchAmount = Infinity;
+
+				this.debug(
+					() =>
+						`${
+							colony.print
+						}, checking ${product}: threshold: ${JSON.stringify(
+							productThreshold
+						)}, components: ${JSON.stringify(data.components)}`
+				);
+				return entries(data.components).every(([resource, amount]) => {
+					// If we've already figured out we can't make this in a previous pass then skip it
+					if (ingredientsUnavailable[resource]) {
+						return false;
+					}
+
+					// Check if the colony already has more of this resource than it needs
+					const resourceThreshold =
+						Overmind.terminalNetwork.thresholds(colony, resource);
+					if (colony.assets[resource] < resourceThreshold.target) {
+						this.debug(
+							() =>
+								`${
+									colony.print
+								}, checking ${product}>${resource}, not enough in stock (stored: ${
+									colony.assets[resource]
+								}, threshold: ${JSON.stringify(
+									resourceThreshold
+								)})`
+						);
+						return false;
+					}
+
+					// Otherwise, we're allowed to make more of this, so figure out what we should and can make
+					const globalShortage =
+						globalAssets[resource] / numColonies < amount;
+					const localShortage = colony.assets[resource] < amount;
+					if (globalShortage || localShortage) {
+						// Do we have enough ingredients (or can we obtain enough) to make this step of the reaction?
+						if (
+							!Overmind.terminalNetwork.canObtainResource(
+								colony,
+								resource,
+								amount
+							)
+						) {
+							this.debug(
+								`${colony.print}, checking ${product}>${resource} for ${amount}, shortage`
+							);
+							ingredientsUnavailable[resource] = true; // canObtainResource() is expensive; cache it
+							return false;
+						}
+					}
+					if (
+						colony.assets[resource] <=
+						(resourceThreshold.surplus ?? 0)
+					) {
+						this.debug(
+							() =>
+								`${
+									colony.print
+								}, checking ${product}>${resource}, not over surplus (stored: ${
+									colony.assets[resource]
+								}, threshold: ${JSON.stringify(
+									resourceThreshold
+								)})`
+						);
+						return false;
+					}
+
+					const maxBatch = Math.floor(
+						(colony.assets[resource] -
+							(resourceThreshold.surplus ?? 0)) /
+							amount
+					);
+					batchAmount = Math.max(Math.min(maxBatch, batchAmount), 0);
+					this.debug(
+						() =>
+							`${
+								colony.print
+							}, checking ${product}>${resource}, good to go for ${batchAmount} (${maxBatch}) batches, (local: ${
+								colony.assets[resource]
+							}, network: ${
+								globalAssets[resource]
+							}, threshold: ${JSON.stringify(resourceThreshold)})`
+					);
+					return true;
+				});
+			}
+		);
+
+		this.debug(
+			() =>
+				`${colony.print}: possible production ${JSON.stringify(
+					nextTargetProduction
+				)}, batch amount: ${batchAmount}`
+		);
+
+		if (nextTargetProduction && batchAmount > 0) {
+			// Cap batches at 10 so we have a chance to switch production
+			batchAmount = Math.min(batchAmount, 10);
+			return {
+				commodityType: <CommodityConstant>nextTargetProduction[0],
+				requested: batchAmount,
+				size: nextTargetProduction[1].amount,
+			};
 		}
 	}
 }

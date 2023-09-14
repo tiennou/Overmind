@@ -203,8 +203,11 @@ interface IOverseer {
 // }
 
 interface Threshold {
+	/** Amount we want to have */
 	target: number;
+	/** Max amount we're willing to have */
 	surplus: number | undefined;
+	/** Quantity we could have ±target and still be satisfied with */
 	tolerance: number;
 }
 

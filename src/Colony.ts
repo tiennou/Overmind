@@ -1,3 +1,4 @@
+import { InfestedFactory } from "hiveClusters/infestedFactory";
 import { assimilationLocked } from "./assimilation/decorator";
 import { $ } from "./caching/GlobalCache";
 import { log } from "./console/log";
@@ -100,6 +101,7 @@ export interface ColonyMemory {
 	commandCenter?: CommandCenterMemory;
 	upgradeSite?: any;
 	logisticsNetwork?: LogisticsNetworkMemory;
+	infestedFactory?: import("hiveClusters/infestedFactory").InfestedFactoryMemory;
 }
 
 // Outpost that is currently not being maintained
@@ -205,6 +207,8 @@ export class Colony {
 	spawnGroup: SpawnGroup | undefined;
 	/** Component for mineral processing */
 	evolutionChamber: EvolutionChamber | undefined;
+	/** Component for commodity processing */
+	infestedFactory: InfestedFactory | undefined;
 	/** Component to provide upgraders with uninterrupted energy */
 	upgradeSite: UpgradeSite;
 	/** Component to defend the colony */
@@ -813,6 +817,9 @@ export class Colony {
 			).length >= 3
 		) {
 			this.evolutionChamber = new EvolutionChamber(this, this.terminal);
+		}
+		if (this.factory && this.terminal && this.commandCenter) {
+			this.infestedFactory = new InfestedFactory(this, this.factory);
 		}
 		// Instantiate the upgradeSite
 		this.upgradeSite = new UpgradeSite(this, this.controller);
