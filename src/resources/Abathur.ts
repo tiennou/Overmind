@@ -1,3 +1,4 @@
+import { LogMessage, log } from "console/log";
 import { Colony, getAllColonies } from "../Colony";
 import { maxMarketPrices, TraderJoe } from "../logistics/TradeNetwork";
 import { profile } from "../profiler/decorator";
@@ -139,10 +140,20 @@ export interface Reaction {
  */
 @profile
 export class _Abathur {
-	memory: { debug?: boolean };
+	memory = { debug: false };
 	settings = {
 		batchSize: 1600,
 	};
+
+	get print(): string {
+		return "Abathur";
+	}
+
+	debug(...args: LogMessage[]) {
+		if (this.memory.debug) {
+			log.alert(this.print, ...args);
+		}
+	}
 
 	// Helper methods for identifying different types of resources
 
