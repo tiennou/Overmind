@@ -880,8 +880,8 @@ export class TraderJoe implements ITradeNetwork {
 		const maxPriceWillingToPay =
 			priceForBaseIngredients * (1.5 + Game.market.credits / 2e6);
 		this.debug(
-			`Price: ${order.price}, Adjusted: ${adjustedPrice}, BaseCost: ${priceForBaseIngredients}, ` +
-				`Max: ${maxPriceWillingToPay}`
+			`Resource: ${resource}, price: ${order.price}, adjusted: ${adjustedPrice}, base cost: ${priceForBaseIngredients}, ` +
+				`max: ${maxPriceWillingToPay}`
 		);
 		if (
 			priceForBaseIngredients == Infinity ||
