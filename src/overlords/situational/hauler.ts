@@ -1,7 +1,7 @@
 import { log } from "../../console/log";
 import { Roles, Setups } from "../../creepSetups/setups";
 import { DirectiveHaul } from "../../directives/resource/haul";
-import { Energetics } from "../../logistics/Energetics";
+import { ResourceManager } from "../../logistics/ResourceManager";
 import { Pathing } from "../../movement/Pathing";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
@@ -31,8 +31,7 @@ export class HaulingOverlord extends Overlord {
 	init() {
 		if (
 			!this.colony.storage ||
-			this.colony.storage.store.getUsedCapacity() >
-				Energetics.settings.storage.total.cap
+			ResourceManager.isOverCapacity(this.colony.storage)
 		) {
 			return;
 		}

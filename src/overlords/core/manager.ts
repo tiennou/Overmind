@@ -2,7 +2,7 @@ import { $ } from "../../caching/GlobalCache";
 import { Roles, Setups } from "../../creepSetups/setups";
 import { CommandCenter } from "../../hiveClusters/commandCenter";
 import { SpawnRequestOptions } from "../../hiveClusters/hatchery";
-import { Energetics } from "../../logistics/Energetics";
+import { ResourceManager } from "../../logistics/ResourceManager";
 import { Priority } from "../../priorities/priorities";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
@@ -415,7 +415,7 @@ export class CommandCenterOverlord extends Overlord {
 		}
 		if (
 			storage.energy <
-			Energetics.settings.storage.energy.destroyTerminalThreshold
+			ResourceManager.settings.storage.energy.destroyTerminalThreshold
 		) {
 			if (this.unloadCarry(manager)) {
 				return true;

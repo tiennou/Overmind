@@ -16,7 +16,7 @@ import { Hatchery, HatcheryMemory } from "./hiveClusters/hatchery";
 import { SporeCrawler } from "./hiveClusters/sporeCrawler";
 import { UpgradeSite } from "./hiveClusters/upgradeSite";
 import { CombatIntel } from "./intel/CombatIntel";
-import { Energetics } from "./logistics/Energetics";
+import { ResourceManager } from "./logistics/ResourceManager";
 import { LinkNetwork } from "./logistics/LinkNetwork";
 import {
 	LogisticsNetwork,
@@ -694,7 +694,7 @@ export class Colony {
 
 		// Set colony state to blank - other directives can modify this
 		this.state = {};
-		if (Energetics.lowPowerMode(this)) {
+		if (ResourceManager.lowPowerMode(this)) {
 			this.state.lowPowerMode = true;
 		}
 	}

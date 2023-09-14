@@ -4,7 +4,7 @@ import { log } from "../console/log";
 import { isOwnedStructure } from "../declarations/typeGuards";
 import { DirectiveTerminalRebuildState } from "../directives/terminalState/terminalState_rebuild";
 import { RoomIntel } from "../intel/RoomIntel";
-import { Energetics } from "../logistics/Energetics";
+import { ResourceManager } from "../logistics/ResourceManager";
 import { Autonomy, getAutonomyLevel, Mem } from "../memory/Memory";
 import { Pathing } from "../movement/Pathing";
 import {
@@ -473,9 +473,7 @@ export class RoomPlanner {
 		const structureLayout = _.mapValues(
 			bunkerLayout[level]!.buildings,
 			(obj) => obj.pos
-		) as {
-			[s: string]: Coord[];
-		};
+		) as { [s: string]: Coord[] };
 		return _.mapValues(structureLayout, (coordArr) =>
 			_.map(
 				coordArr,
@@ -893,7 +891,7 @@ export class RoomPlanner {
 								this.colony.storage.pos
 							) &&
 							this.colony.storage.energy <
-								Energetics.settings.storage.energy
+								ResourceManager.settings.storage.energy
 									.destroyTerminalThreshold
 						) {
 							log.info(
