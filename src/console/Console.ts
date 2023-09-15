@@ -1030,6 +1030,7 @@ export class OvermindConsole {
 	static showIntelVisuals(ticks: number = 100, range?: number) {
 		Memory.settings.intelVisuals.until = Game.time + ticks;
 		Memory.settings.intelVisuals.range = range && range > 0 ? range : ROOMINTEL_DEFAULT_VISUALS_RANGE;
+		RoomIntel.limitedRoomVisual = undefined;
 		console.log(`Intel visuals enabled in range ${Memory.settings.intelVisuals.range} for the next ${ticks} ticks (until ${Memory.settings.intelVisuals.until}).`);
 	}
 
