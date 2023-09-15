@@ -223,6 +223,11 @@ export function equalXYR(pos1: ProtoPos, pos2: ProtoPos): boolean {
 	return pos1.x == pos2.x && pos1.y == pos2.y && pos1.roomName == pos2.roomName;
 }
 
+/** Equivalent to Object.entries, but preserving the types */
+export function entries<K extends string, V extends {}>(obj: Partial<Record<K, V>>): [K, V][] {
+	return <[K, V][]>Object.entries(obj);
+}
+
 /**
  * Averages a list of objects by mapping object=>iteratee(object)
  */
