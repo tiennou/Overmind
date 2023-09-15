@@ -147,8 +147,8 @@ export class CommandCenter extends HiveCluster {
 		// Refill core spawn (only applicable to bunker layouts)
 		if (this.colony.bunker && this.colony.bunker.coreSpawn) {
 			if (
-				this.colony.bunker.coreSpawn.energy <
-				this.colony.bunker.coreSpawn.energyCapacity
+				this.colony.bunker.coreSpawn.store[RESOURCE_ENERGY] <
+				this.colony.bunker.coreSpawn.store.getCapacity(RESOURCE_ENERGY)
 			) {
 				this.transportRequests.requestInput(
 					this.colony.bunker.coreSpawn,
@@ -158,7 +158,7 @@ export class CommandCenter extends HiveCluster {
 		}
 
 		// If the link has energy and nothing needs it, empty it
-		if (this.link && this.link.energy > 0) {
+		if (this.link && this.link.store[RESOURCE_ENERGY] > 0) {
 			if (
 				this.colony.linkNetwork.receive.length == 0 ||
 				this.link.cooldown > 3
@@ -179,7 +179,8 @@ export class CommandCenter extends HiveCluster {
 		// If the link is empty and can send energy and something needs energy, fill it up
 		if (
 			this.link &&
-			this.link.energy < 0.9 * this.link.energyCapacity &&
+			this.link.store[RESOURCE_ENERGY] <
+				0.9 * this.link.store.getCapacity(RESOURCE_ENERGY) &&
 			this.link.cooldown <= 1
 		) {
 			if (this.colony.linkNetwork.receive.length > 0) {
@@ -201,16 +202,19 @@ export class CommandCenter extends HiveCluster {
 
 		// Refill power spawn
 		if (this.powerSpawn) {
-			if (this.powerSpawn.energy < this.powerSpawn.energyCapacity * 0.5) {
+			if (
+				this.powerSpawn.store[RESOURCE_ENERGY] <
+				this.powerSpawn.store.getCapacity(RESOURCE_ENERGY) * 0.5
+			) {
 				this.transportRequests.requestInput(
 					this.powerSpawn,
 					Priority.NormalLow
 				);
 			} else if (
-				this.powerSpawn.power < this.powerSpawn.powerCapacity * 0.5 &&
+				this.powerSpawn.store[RESOURCE_POWER] <
+					this.powerSpawn.store.getCapacity(RESOURCE_POWER) * 0.5 &&
 				this.terminal &&
-				this.terminal.store.power &&
-				this.terminal.store.power >= 100
+				this.terminal.store[RESOURCE_POWER] >= 100
 			) {
 				this.transportRequests.requestInput(
 					this.powerSpawn,
@@ -222,7 +226,8 @@ export class CommandCenter extends HiveCluster {
 		// Refill nuker with low priority
 		if (this.nuker) {
 			if (
-				this.nuker.energy < this.nuker.energyCapacity &&
+				this.nuker.store[RESOURCE_ENERGY] <
+					this.nuker.store.getCapacity(RESOURCE_ENERGY) &&
 				((this.storage.energy > 200000 &&
 					this.nuker.cooldown <= 1000) ||
 					this.storage.energy > 800000)
@@ -230,7 +235,8 @@ export class CommandCenter extends HiveCluster {
 				this.transportRequests.requestInput(this.nuker, Priority.Low);
 			}
 			if (
-				this.nuker.ghodium < this.nuker.ghodiumCapacity &&
+				this.nuker.store[RESOURCE_GHODIUM] <
+					this.nuker.store.getCapacity(RESOURCE_GHODIUM) &&
 				this.colony.assets[RESOURCE_GHODIUM] >= LAB_MINERAL_CAPACITY
 			) {
 				this.transportRequests.requestInput(this.nuker, Priority.Low, {
