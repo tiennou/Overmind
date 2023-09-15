@@ -1,5 +1,3 @@
-import { Colony } from "../Colony";
-
 type ManagedResourceStructure = StructureStorage | StructureTerminal;
 
 /**
@@ -32,19 +30,5 @@ export class ResourceManager {
 			store.store.getCapacity() -
 				this.settings[store.structureType].total.overfill
 		);
-	}
-
-	static lowPowerMode(colony: Colony): boolean {
-		const storage = colony.storage;
-		const terminal = colony.terminal;
-		if (
-			storage &&
-			this.isOverCapacity(storage) &&
-			terminal &&
-			this.isOverCapacity(terminal)
-		) {
-			return true;
-		}
-		return false;
 	}
 }

@@ -243,6 +243,8 @@ export class Colony {
 		lowPowerMode?: boolean;
 		/** If colony is doing major reconstruction (e.g. moving in room) */
 		isRebuilding?: boolean;
+		/** If the colony storage/terminal are currently overfilled */
+		isOverfilled?: boolean;
 		/** If we're clearing the terminal if colony is about to fail */
 		isEvacuating?: boolean;
 		/** If the colony is currently targetted by a nuke */
@@ -694,9 +696,12 @@ export class Colony {
 
 		// Set colony state to blank - other directives can modify this
 		this.state = {};
-		if (ResourceManager.lowPowerMode(this)) {
-			this.state.lowPowerMode = true;
-		}
+		this.state.isOverfilled =
+			this.storage &&
+			this.terminal &&
+			ResourceManager.isOverCapacity(this.storage) &&
+			ResourceManager.isOverCapacity(this.terminal);
+		this.state.lowPowerMode = this.state.isOverfilled && this.level === 8;
 	}
 
 	/**
