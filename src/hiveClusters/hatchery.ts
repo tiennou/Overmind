@@ -578,10 +578,16 @@ export class Hatchery extends HiveCluster {
 		Visualizer.barGraph(overload, {x: boxX + 4, y: y, roomName: this.room.name}, 5);
 		y += 1;
 
-		const queue = _.sum(this.productionQueue, q => q.length).toString();
-		Visualizer.text('Queued', {x: boxX, y: y, roomName: this.room.name});
-		Visualizer.text(queue, {x: boxX + 4, y: y, roomName: this.room.name});
-		y += 1;
+		const numSpawning = this.spawns.reduce((v, s) => v += s.spawning ? 1 : 0, 0);
+		let queued = this.spawnRequests.slice(numSpawning).map(r => r.setup.role[0]).join('');
+		if (queued.length > 9) {
+			queued = queued.substring(0, 9) + '…';
+		}
+		if (queued.length > 0) {
+			Visualizer.text('Queued', {x: boxX, y: y, roomName: this.room.name});
+			Visualizer.text(queued, {x: boxX + 4, y: y, roomName: this.room.name}, undefined, { font: `0.8 Courier` });
+			y += 1;
+		}
 
 		for (const [_id, [name, elapsed, total]] of spawnMap) {
 			Visualizer.text(name, {x: boxX, y: y, roomName: this.room.name});
