@@ -63,7 +63,7 @@ export const _baseResourcesLookup: { [resource: string]: boolean | undefined } =
 		_.map(BASE_RESOURCES, () => true)
 	);
 
-export const RESOURCE_IMPORTANCE = [
+export const RESOURCE_IMPORTANCE: ResourceConstant[] = [
 	RESOURCE_CATALYZED_GHODIUM_ALKALIDE,
 	RESOURCE_CATALYZED_GHODIUM_ACID,
 	RESOURCE_CATALYZED_ZYNTHIUM_ALKALIDE,
@@ -115,8 +115,13 @@ export const RESOURCE_IMPORTANCE = [
 	RESOURCE_POWER,
 	RESOURCE_ENERGY,
 
-	// All other resources are
+	// All other resources are unimportant
 ];
+
+export const RESOURCE_IMPORTANCE_ALL = _.sortBy(RESOURCES_ALL, (r) => {
+	const idx = RESOURCE_IMPORTANCE.indexOf(r);
+	return idx === -1 ? Infinity : idx;
+});
 
 export const REAGENTS: {
 	[product: string]: [ResourceConstant, ResourceConstant];

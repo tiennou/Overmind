@@ -18,8 +18,6 @@ import { ResourceManager } from "logistics/ResourceManager";
  */
 @profile
 export class CommandCenterOverlord extends Overlord {
-	static MAX_TERMINAL_FILLED_PERCENTAGE: number = 0.98;
-
 	mode: "twoPart" | "bunker";
 	managers: Zerg[];
 	commandCenter: CommandCenter;
@@ -295,74 +293,15 @@ export class CommandCenterOverlord extends Overlord {
 		return false;
 	}
 
-	// /**
-	//  * Move energy into terminal if storage is too full and into storage if storage is too empty
-	//  */
-	// private equalizeStorageAndTerminal_old(manager: Zerg): boolean {
-	// 	this.debug('equalizeStorageAndTerminal');
-	// 	const storage = this.commandCenter.storage;
-	// 	const terminal = this.commandCenter.terminal;
-	// 	if (!storage || !terminal) return false;
-	//
-	// 	const equilibrium = Energetics.settings.terminal.energy.equilibrium;
-	// 	const tolerance = Energetics.settings.terminal.energy.tolerance;
-	// 	const storageTolerance = Energetics.settings.storage.total.tolerance;
-	// 	const storageEnergyCap = Energetics.settings.storage.total.cap;
-	// 	// const terminalState = this.colony.terminalState;
-	// 	// // Adjust max energy allowable in storage if there's an exception state happening
-	// 	// if (terminalState && terminalState.type == 'out') {
-	// 	// 	storageEnergyCap = terminalState.amounts[RESOURCE_ENERGY] || 0;
-	// 	// }
-	//
-	// 	// Move energy from storage to terminal if there is not enough in terminal or if there's terminal evacuation
-	// 	if ((terminal.energy < equilibrium - tolerance || storage.energy > storageEnergyCap + storageTolerance)
-	// 		&& storage.energy > 0) {
-	// 		if (this.unloadCarry(manager)) return true;
-	// 		manager.task = Tasks.withdraw(storage);
-	// 		manager.task.parent = Tasks.transfer(terminal);
-	// 		return true;
-	// 	}
-	//
-	// 	// Move energy from terminal to storage if there is too much in terminal and there is space in storage
-	// 	if (terminal.energy > equilibrium + tolerance && storage.energy < storageEnergyCap) {
-	// 		if (this.unloadCarry(manager)) return true;
-	// 		manager.task = Tasks.withdraw(terminal);
-	// 		manager.task.parent = Tasks.transfer(storage);
-	// 		return true;
-	// 	}
-	//
-	// 	// Nothing has happened
-	// 	return false;
-	// }
-
-	// private moveMineralsToTerminal(manager: Zerg): boolean {
-	// 	const storage = this.commandCenter.storage;
-	// 	const terminal = this.commandCenter.terminal;
-	// 	if (!storage || !terminal) {
-	// 		return false;
-	// 	}
-	// 	// Don't do this if terminal is critically full
-	// 	if (terminal.store.getFreeCapacity() < (1 - CommandCenterOverlord.MAX_TERMINAL_FILLED_PERCENTAGE)
-	// 		* terminal.store.getCapacity()) {
-	// 		return false;
-	// 	}
-	// 	// Move all non-energy resources from storage to terminal
-	// 	for (const [resourceType, amount] of storage.store.contents) {
-	// 		if (resourceType != RESOURCE_ENERGY && resourceType != RESOURCE_OPS && amount > 0
-	// 			&& terminal.store[resourceType] < 5000) {
-	// 			if (this.unloadCarry(manager)) return true;
-	// 			manager.task = Tasks.withdraw(storage, resourceType);
-	// 			manager.task.parent = Tasks.transfer(terminal, resourceType);
-	// 			return true;
-	// 		}
-	// 	}
-	// 	return false;
-	// }
-
 	/**
 	 * Pickup resources dropped on manager position or in tombstones from last manager
 	 */
 	private pickupActions(manager: Zerg, tombstonesOnly = false): boolean {
+		// Don't pickup anything if we're over-filled; it's likely we were the one who dropped it
+		if (this.colony.state.isOverfilled) {
+			return false;
+		}
+
 		// Look for tombstones at position
 		const tombstones = manager.pos.lookFor(LOOK_TOMBSTONES);
 		const tombstone = _.first(tombstones);
@@ -396,62 +335,65 @@ export class CommandCenterOverlord extends Overlord {
 	 * This should rarely be run; added in Feb 2020 to fix a critical issue where I hadn't added factory code and all
 	 * my terminals and storage filled up with crap.
 	 */
-	// private emergencyDumpingActions(manager: Zerg): boolean {
-	// 	this.debug('emergencyDumpingActions');
-	// 	const storage = this.commandCenter.storage;
-	// 	const terminal = this.commandCenter.terminal;
-	// 	if (!storage && !terminal) {
-	// 		return false;
-	// 	}
-	// 	const storageCapacity = storage ? storage.store.getFreeCapacity() : 0;
-	// 	const terminalCapacity = terminal ? terminal.store.getFreeCapacity() : 0;
-	// 	const storageEnergy = storage ? storage.store.energy : 0;
-	// 	const terminalEnergy = terminal ? terminal.store.energy : 0;
-	// 	// const freeCapacity = (storage ? storage.store.getFreeCapacity() : 0) +
-	// 	// 					 (terminal ? terminal.store.getFreeCapacity() : 0);
-	// 	// const energy = (storage ? storage.store.energy : 0) +
-	// 	// 			   (terminal ? terminal.store.energy : 0);
-	// 	// if (energy >= 5000) {
-	// 	// 	return false;
-	// 	// }
-	// 	const DUMP_THRESHOLD = 5000;
-	// 	if (terminal && terminalCapacity < DUMP_THRESHOLD && terminalEnergy < DUMP_THRESHOLD) {
-	// 		return this.dumpFrom(manager, terminal);
-	// 	}
-	// 	if (storage && storageCapacity < DUMP_THRESHOLD && storageEnergy < DUMP_THRESHOLD) {
-	// 		return this.dumpFrom(manager, storage);
-	// 	}
-	// 	return false;
-	// }
+	private emergencyDumpingActions(manager: Zerg): boolean {
+		// We only need to consider dumping if we're already overfilled
+		if (!this.colony.state.isOverfilled) {
+			return false;
+		}
+
+		const storage = this.commandCenter.storage;
+		const terminal = this.commandCenter.terminal;
+		if (!storage && !terminal) {
+			return false;
+		}
+
+		if (terminal && ResourceManager.shouldDump(terminal)) {
+			log.alert(
+				`${this.print}: ${manager.print} is currently dumping from ${terminal.print}!`
+			);
+			return this.dumpFrom(manager, terminal);
+		}
+		if (storage && ResourceManager.shouldDump(storage)) {
+			log.alert(
+				`${this.print}: ${manager.print} is currently dumping from ${storage.print}!`
+			);
+			return this.dumpFrom(manager, storage);
+		}
+		return false;
+	}
 
 	/**
 	 * Dump resources on ground from a target that is critically full
 	 */
-	// private dumpFrom(manager: Zerg, target: StructureTerminal | StructureStorage): boolean {
-	// 	this.say('Dump!');
-	// 	// Start dumping least valuable shit on the ground
-	// 	const toDump = _.sortBy(BASE_RESOURCES, resource => (target.store[resource] || 0) * -1);
-	// 	const toDumpInCarry = _.first(_.filter(toDump, res => manager.carry[res] > 0));
-	// 	// Drop anything you have in carry that is dumpable
-	// 	if (toDumpInCarry) {
-	// 		manager.drop(toDumpInCarry);
-	// 		return true;
-	// 	}
-	// 	// Take out stuff to dump
-	// 	for (const resource of toDump) {
-	// 		if (target.store[resource] > 0) {
-	// 			manager.task = Tasks.drop(manager.pos, resource).fork(Tasks.withdraw(target, resource));
-	// 			return true;
-	// 		}
-	// 	}
-	// 	log.warning('No shit to drop! Shouldn\'t reach here!');
-	// 	return false;
-	// }
+	private dumpFrom(
+		manager: Zerg,
+		target: StructureTerminal | StructureStorage
+	): boolean {
+		// Start by dumping unimportant stuff from the manager
+		let resource = ResourceManager.getNextResourceToDump(manager);
+		if (resource) {
+			manager.drop(resource);
+			return true;
+		}
+
+		// Then go through the target and do the same thing
+		resource = ResourceManager.getNextResourceToDump(target);
+		if (resource) {
+			manager.task = Tasks.drop(manager.pos, resource).fork(
+				Tasks.withdraw(target, resource)
+			);
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Suicide once you get old and make sure you don't drop and waste any resources
 	 */
 	private deathActions(manager: Zerg): boolean {
+		if (manager.ticksToLive! >= 150) {
+			return false;
+		}
 		const nearbyManagers = _.filter(
 			this.managers,
 			(manager) =>
@@ -470,64 +412,22 @@ export class CommandCenterOverlord extends Overlord {
 		return false;
 	}
 
-	// private preventTerminalFlooding(manager: Zerg): boolean {
-	// 	// Prevent terminal flooding
-	// 	if (this.room && this.room.terminal && this.room.storage && _.sum(this.room.terminal.store)
-	// 		> this.room.terminal.store.getCapacity() * CommandCenterOverlord.MAX_TERMINAL_FILLED_PERCENTAGE) {
-	// 		let max = 0;
-	// 		let resType: ResourceConstant = RESOURCE_ENERGY;
-	// 		for (const res in this.room.terminal.store) {
-	// 			const amount = this.room.terminal.store[<ResourceConstant>res];
-	// 			if (amount && amount > max && res !== RESOURCE_ENERGY) {
-	// 				max = amount;
-	// 				resType = <ResourceConstant>res;
-	// 			}
-	// 		}
-	//
-	// 		manager.task = Tasks.transferAll(this.room.storage).fork(Tasks.withdraw(this.room.terminal, resType));
-	// 		return true;
-	// 	}
-	// 	return false;
-	// }
-
 	private handleManager(manager: Zerg): void {
 		// Handle switching to next manager
-		if (manager.ticksToLive! < 150) {
-			if (this.deathActions(manager)) {
-				return;
-			}
+		if (this.deathActions(manager)) {
+			return;
 		}
-		// if (this.preventTerminalFlooding(manager)) return;
+
 		// Emergency dumping actions for critically clogged terminals and storages
-		// if (this.emergencyDumpingActions(manager)) return;
+		if (this.emergencyDumpingActions(manager)) {
+			return;
+		}
+
 		// Pick up any dropped resources on ground
 		if (this.pickupActions(manager)) {
 			return;
 		}
-		// // Move minerals from storage to terminal if needed
-		// if (hasMinerals(this.commandCenter.storage.store)) {
-		// 	if (this.moveMineralsToTerminal(manager)) return;
-		// }
-		// Fill up storage before you destroy terminal if rebuilding room
-		// if (this.colony.state.isRebuilding) {
-		// 	if (this.moveEnergyFromRebuildingTerminal(manager)) return;
-		// }
-		// Moving energy to terminal gets priority above withdraw/supply if evacuating room
-		// if (this.colony.state.isEvacuating) {
-		// 	if (this.balanceStorageAndTerminal(manager)) return;
-		// }
-		// Fulfill withdraw requests normal priority and above
-		// if (this.commandCenter.transportRequests.needsWithdrawing(Priority.Normal)) {
-		// 	if (this.withdrawActions(manager)) return;
-		// }
-		// Fulfill supply requests normal priority and above
-		// if (this.commandCenter.transportRequests.needsSupplying(Priority.Normal)) {
-		// 	if (this.supplyActions(manager)) return;
-		// }
-		// Move resources between storage and terminal at this point if room isn't being evacuated
-		// if (!this.colony.state.isEvacuating) {
-		// 	if (this.balanceStorageAndTerminal(manager)) return;
-		// }
+
 		// Fulfill remaining low-priority withdraw requests
 		if (this.commandCenter.transportRequests.needsWithdrawing()) {
 			if (this.withdrawActions(manager)) {

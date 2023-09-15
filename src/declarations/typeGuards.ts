@@ -7,7 +7,7 @@ import { NeuralZerg } from "../zerg/NeuralZerg";
 import { PowerZerg } from "../zerg/PowerZerg";
 import { Zerg } from "../zerg/Zerg";
 
-export function isStructure(obj: RoomObject): obj is Structure {
+export function isStructure(obj: unknown): obj is Structure {
 	return obj instanceof Structure;
 }
 

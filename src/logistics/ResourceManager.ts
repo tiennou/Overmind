@@ -1,6 +1,8 @@
 import { Abathur } from "resources/Abathur";
 import { Colony } from "../Colony";
 import { log } from "console/log";
+import { RESOURCE_IMPORTANCE_ALL } from "resources/map_resources";
+import { isStructure } from "declarations/typeGuards";
 
 type ManagedResourceStructure = StructureStorage | StructureTerminal;
 
@@ -98,6 +100,44 @@ export class ResourceManager {
 			store.store.getCapacity() -
 				this.settings[store.structureType].total.overfill
 		);
+	}
+
+	/** Check if we should dump instead of trying to transfer to the given structure */
+	static shouldDump(store: ManagedResourceStructure) {
+		return (
+			store.store.getUsedCapacity() >
+			store.store.getCapacity() -
+				this.settings[store.structureType].total.dump
+		);
+	}
+
+	/** Get the next resource that can be dumped from the given structure */
+	static getNextResourceToDump(store: { store: StoreDefinition }) {
+		// Gather the list of resource that aren't tracked or are over threshold and reverse-sort them by importance
+		const contents = store.store.contents
+			.filter(([resource, amount]) => {
+				const threshold =
+					(
+						isStructure(store) &&
+						store.structureType === STRUCTURE_TERMINAL
+					) ?
+						this.getTerminalThresholdForResource(resource)
+					:	undefined;
+				return (
+					!threshold ||
+					threshold.target + threshold.tolerance <= amount
+				);
+			})
+			.map<[ResourceConstant, number, number]>(([res, amount]) => [
+				res,
+				amount,
+				RESOURCE_IMPORTANCE_ALL.indexOf(res),
+			])
+			.sort(([_aRes, _aAmt, aId], [_bRes, _bAmt, bId]) => {
+				return bId - aId;
+			});
+
+		return contents.length > 0 ? contents[0][0] : undefined;
 	}
 
 	static getTerminalThresholdForResource(resource: ResourceConstant) {
