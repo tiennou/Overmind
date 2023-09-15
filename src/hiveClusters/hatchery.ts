@@ -109,7 +109,7 @@ export class Hatchery extends HiveCluster {
 	};
 
 	/** Flattened list of spawn requests */
-	private _spawnRequests: SpawnRequest[];
+	private _spawnRequests: SpawnRequest[] | undefined;
 	private isOverloaded: boolean;
 	private _waitTimes: { [priority: number]: number } | undefined;
 
@@ -156,7 +156,7 @@ export class Hatchery extends HiveCluster {
 		this.availableSpawns = _.filter(this.spawns, spawn => !spawn.spawning);
 		this.productionPriorities = [];
 		this.productionQueue = {};
-		this._spawnRequests = [];
+		this._spawnRequests = undefined;
 		this.isOverloaded = false;
 		this._waitTimes = undefined;
 	}
