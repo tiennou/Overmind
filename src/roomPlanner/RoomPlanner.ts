@@ -665,8 +665,10 @@ export class RoomPlanner {
 						&& structureType == STRUCTURE_TERMINAL && hasMinerals((<StructureTerminal>structure).store)) {
 						break; // don't destroy terminal when under RCL6 if there are resources available.
 					}
-					if (structureType != STRUCTURE_WALL && structureType != STRUCTURE_RAMPART) {
-						this.memory.relocating = true;
+
+					// Don't destroy spawn when below RCL7
+					if (this.colony.level < 7 && structureType === STRUCTURE_SPAWN && this.colony.spawns.length <= 1) {
+						break;
 					}
 
 					// Don't remove the terminal until you have rebuilt storage
@@ -685,6 +687,11 @@ export class RoomPlanner {
 							log.info(`${this.colony.name}: waiting to move energy to storage before removing terminal`);
 							return;
 						}
+					}
+
+					// Enable relocating only after checking we can do it
+					if (structureType != STRUCTURE_WALL && structureType != STRUCTURE_RAMPART) {
+						this.memory.relocating = true;
 					}
 
 					// Only remove a maximum number of structures at a time
@@ -919,7 +926,7 @@ export class RoomPlanner {
 
 	run(): void {
 		if (this.memory.relocating) {
-			Overmind.overseer.notifier.alert(`Colony ${this.colony.name} relocating!`, this.colony.room.name, NotifierPriority.High);
+			Overmind.overseer.notifier.alert(`Colony relocating!`, this.colony.room.name, NotifierPriority.High);
 		}
 		if (this.active || this.visualize) {
 			this.make();
