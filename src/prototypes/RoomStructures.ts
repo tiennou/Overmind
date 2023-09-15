@@ -126,7 +126,7 @@ Object.defineProperty(Room.prototype, 'repairables', {
 				let repairables: Structure[] = [];
 				for (const structureType of singleList) {
 					const o = this[structureType];
-					if (!o) continue;
+					if (!o || notRepairable.includes(structureType)) continue;
 					repairables.push(o);
 				}
 				for (const structureType of multipleList) {
