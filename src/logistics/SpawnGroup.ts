@@ -236,11 +236,11 @@ export class SpawnGroup {
 		this.requests.push(request);
 	}
 
-	/**
-	 * SpawnGroup.init() must be called AFTER all hatcheries have been initialized
-	 */
-	init(): void {
-		// Most initialization needs to be done at init phase because colonies are still being constructed earlier
+	init(): void {}
+
+	run(): void {
+		// This needs to happen in run, after colonies & hatcheries are initialized, and
+		// getWaitTimeForPriority can construct boosted creeps
 		const colonies = _.compact(
 			_.map(this.memory.colonies, (name) => Overmind.colonies[name])
 		);
@@ -275,9 +275,5 @@ export class SpawnGroup {
 				);
 			}
 		}
-	}
-
-	run(): void {
-		// Nothing goes here
 	}
 }
