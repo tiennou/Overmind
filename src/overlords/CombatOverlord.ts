@@ -1,3 +1,4 @@
+import { OutpostSuspensionReason } from "Colony";
 import { Directive } from "../directives/Directive";
 import { SpawnGroup } from "../logistics/SpawnGroup";
 import { profile } from "../profiler/decorator";
@@ -44,6 +45,18 @@ export abstract class CombatOverlord extends Overlord {
 
 	get age(): number {
 		return Game.time - this.memory[MEM.TICK];
+	}
+
+	/**
+	 * A list of suspension reasons that will cause the overlord to deactivate itself.
+	 *
+	 * Subclasses should override this.
+	 */
+	get deactivationReasons() {
+		return new Set([
+			OutpostSuspensionReason.cpu,
+			OutpostSuspensionReason.upkeep,
+		]);
 	}
 
 	// Standard sequence of actions for running combat creeps

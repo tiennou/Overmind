@@ -1,4 +1,4 @@
-import { Colony } from "../Colony";
+import { Colony, OutpostSuspensionReason } from "../Colony";
 import { LogMessage, log } from "../console/log";
 import { CombatCreepSetup } from "../creepSetups/CombatCreepSetup";
 import { CreepSetup } from "../creepSetups/CreepSetup";
@@ -181,14 +181,41 @@ export abstract class Overlord {
 	}
 
 	/**
+	 * A list of suspension reasons that will cause the overlord to deactivate itself.
+	 *
+	 * Subclasses should override this.
+	 */
+	get deactivationReasons() {
+		return new Set([
+			OutpostSuspensionReason.cpu,
+			OutpostSuspensionReason.upkeep,
+			OutpostSuspensionReason.harassment,
+			OutpostSuspensionReason.reserved,
+			OutpostSuspensionReason.stronghold,
+		]);
+	}
+
+	/**
 	 * Returns whether the overlord is currently active
 	 */
 	get isActive() {
-		// Only consider room active state if the room we're in is part of a colony
-		return (
-			!this.colony.memory.outposts[this.pos.roomName] ||
-			this.colony.isRoomActive(this.pos.roomName)
-		);
+		const outpostMemory = this.colony.memory.outposts[this.pos.roomName];
+
+		// Consider the overlord active if the room it's in isn't part of a colony
+		if (!outpostMemory) {
+			return true;
+		}
+
+		// If the outpost is disabled and its suspension reason should cause deactivation, deactivate
+		if (
+			!outpostMemory.active &&
+			(!outpostMemory.suspendReason ||
+				this.deactivationReasons.has(outpostMemory.suspendReason))
+		) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
