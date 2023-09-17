@@ -1016,6 +1016,7 @@ export class Colony {
 	 * Initializes the state of the colony each tick
 	 */
 	init(): void {
+		this.handleReactivatingOutposts();
 		_.forEach(this.hiveClusters, (hiveCluster) => hiveCluster.init()); // Initialize each hive cluster
 		this.roadLogistics.init(); // Initialize the road network
 		this.linkNetwork.init(); // Initialize link network
