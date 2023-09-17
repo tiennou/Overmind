@@ -567,7 +567,7 @@ export class Swarm implements ProtoSwarm {
 				this.getFormationPositionsFromAnchor(assemblyPoint);
 			console.log(`assemble: ${JSON.stringify(formationPositions)}`);
 			for (const creep of this.creeps) {
-				if (creep.hasValidTask) {
+				if (creep.hasValidTask || creep.spawning) {
 					// Ignore creeps which have tasks (usually getting boosted)
 					continue;
 				}
