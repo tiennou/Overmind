@@ -1,16 +1,16 @@
+import { CombatOverlord } from "overlords/CombatOverlord";
 import { CombatSetups, Roles } from "../../creepSetups/setups";
 import { DirectiveGuard } from "../../directives/defense/guard";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import { CombatZerg } from "../../zerg/CombatZerg";
 import { Zerg } from "../../zerg/Zerg";
-import { Overlord } from "../Overlord";
 
 /**
  * Guard swarm overlord: spawns lots of smaller guards to deal with swarm-like attacks or harassments
  */
 @profile
-export class GuardSwarmOverlord extends Overlord {
+export class GuardSwarmOverlord extends CombatOverlord {
 	directive: DirectiveGuard;
 	guards: CombatZerg[];
 
@@ -18,9 +18,32 @@ export class GuardSwarmOverlord extends Overlord {
 		directive: DirectiveGuard,
 		priority = OverlordPriority.outpostDefense.guard
 	) {
-		super(directive, "swarmGuard", priority);
-		this.directive = directive;
+		super(directive, "swarmGuard", priority, { requiredRCL: 0 });
 		this.guards = this.combatZerg(Roles.guardMelee);
+	}
+
+	init() {
+		if (this.directive.memory.amount) {
+			this.wishlist(
+				this.directive.memory.amount,
+				CombatSetups.broodlings.early
+			);
+		} else {
+			if (this.room) {
+				const smallHostiles = _.filter(
+					this.room.dangerousHostiles,
+					(creep) => creep.body.length < 10
+				);
+				if (smallHostiles.length > 2) {
+					this.wishlist(
+						Math.round(smallHostiles.length),
+						CombatSetups.broodlings.early
+					);
+				}
+			} else {
+				this.wishlist(2, CombatSetups.broodlings.early);
+			}
+		}
 	}
 
 	private findAttackTarget(
@@ -55,38 +78,7 @@ export class GuardSwarmOverlord extends Overlord {
 		}
 	}
 
-	init() {
-		if (this.directive.memory.amount) {
-			this.wishlist(
-				this.directive.memory.amount,
-				CombatSetups.broodlings.early
-			);
-		} else {
-			if (this.room) {
-				const smallHostiles = _.filter(
-					this.room.dangerousHostiles,
-					(creep) => creep.body.length < 10
-				);
-				if (smallHostiles.length > 2) {
-					this.wishlist(
-						Math.round(smallHostiles.length),
-						CombatSetups.broodlings.early
-					);
-				}
-			} else {
-				this.wishlist(2, CombatSetups.broodlings.early);
-			}
-		}
-	}
-
 	run() {
-		for (const guard of this.guards) {
-			// Run the creep if it has a task given to it by something else; otherwise, proceed with non-task actions
-			if (guard.hasValidTask) {
-				guard.run();
-			} else {
-				this.handleGuard(guard);
-			}
-		}
+		this.autoRun(this.guards, (guard) => this.handleGuard(guard));
 	}
 }

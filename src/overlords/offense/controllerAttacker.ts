@@ -1,30 +1,32 @@
-import { SpawnGroup } from "logistics/SpawnGroup";
 import { log } from "../../console/log";
 import { Roles, Setups } from "../../creepSetups/setups";
 import { DirectiveControllerAttack } from "../../directives/offense/controllerAttack";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import { Zerg } from "../../zerg/Zerg";
-import { Overlord } from "../Overlord";
+import { CombatOverlord } from "overlords/CombatOverlord";
 
 /**
  * Controller attacker overlord.  Spawn CLAIM creeps to mass up on a controller and attack all at once
  * This module was contributed by @sarrick and has since been modified
  */
 @profile
-export class ControllerAttackerOverlord extends Overlord {
+export class ControllerAttackerOverlord extends CombatOverlord {
 	controllerAttackers: Zerg[];
 	attackPositions: RoomPosition[];
 	assignments: { [attackerName: string]: RoomPosition };
 	readyTick: number;
 
+	static requiredRCL = 4;
+
 	constructor(
 		directive: DirectiveControllerAttack,
 		priority = OverlordPriority.offense.controllerAttack
 	) {
-		super(directive, "controllerAttack", priority);
+		super(directive, "controllerAttack", priority, {
+			requiredRCL: ControllerAttackerOverlord.requiredRCL,
+		});
 		this.controllerAttackers = this.zerg(Roles.claim);
-		this.spawnGroup = new SpawnGroup(this, { requiredRCL: 4 });
 		this.refresh();
 	}
 

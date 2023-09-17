@@ -1,3 +1,4 @@
+import { CombatOverlord } from "overlords/CombatOverlord";
 import { CombatSetups, Roles } from "../../creepSetups/setups";
 import { DirectivePairDestroy } from "../../directives/offense/pairDestroy";
 import { DirectiveTargetSiege } from "../../directives/targeting/siegeTarget";
@@ -8,13 +9,12 @@ import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import { CombatTargeting } from "../../targeting/CombatTargeting";
 import { CombatZerg } from "../../zerg/CombatZerg";
-import { Overlord } from "../Overlord";
 
 /**
  *  Destroyer overlord - spawns attacker/healer pairs for combat within a hostile room
  */
 @profile
-export class PairDestroyerOverlord extends Overlord {
+export class PairDestroyerOverlord extends CombatOverlord {
 	directive: DirectivePairDestroy;
 	attackers: CombatZerg[];
 	healers: CombatZerg[];
@@ -28,8 +28,7 @@ export class PairDestroyerOverlord extends Overlord {
 		directive: DirectivePairDestroy,
 		priority = OverlordPriority.offense.destroy
 	) {
-		super(directive, "destroy", priority);
-		this.directive = directive;
+		super(directive, "destroy", priority, { requiredRCL: 0 });
 		this.attackers = this.combatZerg(Roles.melee, {
 			notifyWhenAttacked: false,
 		});

@@ -1,16 +1,16 @@
+import { CombatOverlord } from "overlords/CombatOverlord";
 import { CombatSetups, Roles } from "../../creepSetups/setups";
 import { DirectiveGuard } from "../../directives/defense/guard";
 import { RoomIntel } from "../../intel/RoomIntel";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import { CombatZerg } from "../../zerg/CombatZerg";
-import { Overlord } from "../Overlord";
 
 /**
  * NPC defense overlord: spawns specially-optimized guards as needed to deal with standard NPC invasions
  */
 @profile
-export class DefenseNPCOverlord extends Overlord {
+export class DefenseNPCOverlord extends CombatOverlord {
 	guards: CombatZerg[];
 
 	static requiredRCL = 3;
@@ -19,7 +19,9 @@ export class DefenseNPCOverlord extends Overlord {
 		directive: DirectiveGuard,
 		priority = OverlordPriority.outpostDefense.guard
 	) {
-		super(directive, "guard", priority);
+		super(directive, "guard", priority, {
+			requiredRCL: DefenseNPCOverlord.requiredRCL,
+		});
 		this.guards = this.combatZerg(Roles.guardMelee);
 	}
 
@@ -55,14 +57,11 @@ export class DefenseNPCOverlord extends Overlord {
 		this.wishlist(amount, setup, { reassignIdle: true });
 	}
 
+	private handleGuard(guard: CombatZerg) {
+		guard.autoCombat(this.pos.roomName, true, undefined, {});
+	}
+
 	run() {
-		for (const guard of this.guards) {
-			// Run the creep if it has a task given to it by something else; otherwise, proceed with non-task actions
-			if (guard.hasValidTask) {
-				guard.run();
-			} else {
-				guard.autoCombat(this.pos.roomName, true, undefined, {});
-			}
-		}
+		this.autoRun(this.guards, (guard) => this.handleGuard(guard));
 	}
 }
