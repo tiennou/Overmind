@@ -1,5 +1,5 @@
 import { DirectiveAvoid } from "directives/targeting/avoid";
-import { Colony, getAllColonies, OutpostDisableReason } from "./Colony";
+import { Colony, getAllColonies, OutpostSuspensionReason } from "./Colony";
 import { log } from "./console/log";
 import { bodyCost } from "./creepSetups/CreepSetup";
 import { Roles } from "./creepSetups/setups";
@@ -682,7 +682,7 @@ export class Overseer implements IOverseer {
 				}
 				colony.suspendOutpost(
 					room.name,
-					OutpostDisableReason.inactiveStronghold,
+					OutpostSuspensionReason.stronghold,
 					suspensionDuration
 				);
 			}

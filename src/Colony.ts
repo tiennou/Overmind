@@ -105,16 +105,15 @@ export interface ColonyMemory {
 // Outpost that is currently not being maintained
 export interface OutpostData {
 	active: boolean;
-	suspendReason?: OutpostDisableReason;
+	suspendReason?: OutpostSuspensionReason;
 	[MEM.EXPIRATION]?: number; // Tick to recalculate
 }
 
-export enum OutpostDisableReason {
-	active = "active",
-	inactiveCPU = "i_cpu", // CPU limitations
-	inactiveUpkeep = "i_upkeep", // room can't sustain this remote because rebooting, spawn pressure, etc
-	inactiveHarassment = "i_harassment",
-	inactiveStronghold = "i_stronghold",
+export enum OutpostSuspensionReason {
+	cpu = "cpu", // CPU limitations
+	upkeep = "upkeep", // room can't sustain this remote because rebooting, spawn pressure, etc
+	harassment = "harassment",
+	stronghold = "stronghold",
 }
 
 const getDefaultColonyMemory: () => ColonyMemory = () => ({
@@ -850,7 +849,7 @@ export class Colony {
 	 */
 	suspendOutpost(
 		roomName: string,
-		reason: OutpostDisableReason,
+		reason: OutpostSuspensionReason,
 		duration: number
 	): void {
 		this.memory.outposts[roomName] = {
