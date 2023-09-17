@@ -326,19 +326,15 @@ export class Overseer implements IOverseer {
 		// TODO: plug in threatLevel infra
 		// Guard directive: defend your outposts and all rooms of colonies that you are incubating
 		for (const room of colony.outposts) {
-			if (!colony.isRoomActive(room.name)) {
-				continue;
-			}
 			if (room.dangerousPlayerHostiles.length > 0) {
-				// Handle player defense
+				// Handle player defense of the main room
 				DirectiveOutpostDefense.createIfNotPresent(
 					Pathing.findPathablePosition(room.name),
 					"room"
 				);
 			} else if (
-				Cartographer.roomType(room.name) != ROOMTYPE_SOURCEKEEPER
+				Cartographer.roomType(room.name) === ROOMTYPE_CONTROLLER
 			) {
-				// SK rooms can fend for themselves
 				// Handle NPC invasion directives
 				if (
 					room.invaders.length > 0 ||
@@ -353,6 +349,24 @@ export class Overseer implements IOverseer {
 							.pos;
 						DirectiveGuard.create(placePos);
 					}
+				}
+
+				// Suspend outpost if the controller has been reserved by someone else
+				const controller = room.controller!;
+				if (
+					room.name !== colony.room.name &&
+					controller.reservation &&
+					!controller.reservedByMe
+				) {
+					const duration = controller.reservation.ticksToEnd;
+					log.warning(
+						`Outpost ${room.name} of ${colony.print} is suspended for ${duration}: controller reserved`
+					);
+					colony.suspendOutpost(
+						room.name,
+						OutpostSuspensionReason.reserved,
+						duration
+					);
 				}
 			}
 		}

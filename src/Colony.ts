@@ -113,6 +113,7 @@ export enum OutpostSuspensionReason {
 	cpu = "cpu", // CPU limitations
 	upkeep = "upkeep", // room can't sustain this remote because rebooting, spawn pressure, etc
 	harassment = "harassment",
+	reserved = "reserved", // room controller has been reserved/claimed from us
 	stronghold = "stronghold",
 }
 
