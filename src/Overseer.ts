@@ -680,20 +680,9 @@ export class Overseer implements IOverseer {
 				room.invaderCore &&
 				room.invaderCore.level > 3
 			) {
-				const roomDirectives = Directive.find(room.flags);
-
-				for (const directive of roomDirectives) {
-					for (const name in directive.overlords) {
-						directive.overlords[name].suspendFor(
-							suspensionDuration
-						);
-					}
-				}
-				if (colony.isRoomActive(room.name)) {
-					log.notify(
-						`Disabling outpost ${room.print} due to Stronghold presence`
-					);
-				}
+				log.warning(
+					`Disabling outpost ${room.print} due to Stronghold presence`
+				);
 				colony.suspendOutpost(
 					room.name,
 					OutpostSuspensionReason.stronghold,
