@@ -9,6 +9,7 @@ import { Stats } from "../stats/stats";
 import { hasMinerals } from "../utilities/utils";
 import { HiveCluster } from "./_HiveCluster";
 import { errorForCode } from "utilities/errors";
+import { insideBunkerBounds } from "roomPlanner/layouts/bunker";
 
 interface UpgradeSiteMemory {
 	stats: { downtime: number };
@@ -183,7 +184,7 @@ export class UpgradeSite extends HiveCluster {
 		// Find all positions at range 2 from controller
 		let inputLocations: RoomPosition[] = [];
 		for (const pos of this.pos.getPositionsAtRange(2)) {
-			if (pos.isWalkable(true)) {
+			if (pos.isWalkable(true) && !insideBunkerBounds(pos, this.colony)) {
 				inputLocations.push(pos);
 			}
 		}
