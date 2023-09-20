@@ -473,9 +473,10 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 
 		// Need to have the resources to lock them
 		if (requestor.assets[resource] < newLockAmount) {
-			log.warning(`TerminalNetwork.lockResource() called for ${requestor.print} locking ${lockAmount} ` +
-						`(total: ${newLockAmount}) of ${resource}, but colony only has ` +
-						`${requestor.assets[resource]} amount!`);
+			// Disabled because the evo chamber locks its output, but we don't have it yet and this logs
+			// log.warning(`TerminalNetwork.lockResource() called for ${requestor.print} locking ${lockAmount} ` +
+			// 			`(total: ${newLockAmount}) of ${resource}, but colony only has ` +
+			// 			`${requestor.assets[resource]} amount!`);
 		}
 
 		// Lock this amount of resources
