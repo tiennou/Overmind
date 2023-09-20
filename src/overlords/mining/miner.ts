@@ -261,7 +261,7 @@ export class MiningOverlord extends Overlord {
 					const structNeighbors = struct.pos.availableNeighbors(true);
 
 					const sharedNeighbors = structNeighbors.filter(structNeighbor => {
-						return neighbors.some(neighporPos => neighporPos.isEqualTo(structNeighbor))
+						return neighbors.some(neighborPos => neighborPos.isEqualTo(structNeighbor))
 					});
 
 					// Only consider the neighboring structure if it would have that one path out
