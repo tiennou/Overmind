@@ -40,7 +40,7 @@ export class DefenseNPCOverlord extends Overlord {
 				this.room &&
 				(this.room.invaders.length > 0 ||
 					this.room.invaderCore ||
-					RoomIntel.isInvasionLikely(this.room))
+					RoomIntel.isInvasionLikely(this.room.name))
 			) ?
 				1
 			:	0;

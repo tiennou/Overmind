@@ -84,7 +84,7 @@ export class SourceReaperOverlord extends CombatOverlord {
 		if (
 			this.room &&
 			(this.room.invaders.length > 0 ||
-				RoomIntel.isInvasionLikely(this.room))
+				RoomIntel.isInvasionLikely(this.room.name))
 		) {
 			// Spawn as many defenders as there are invaders, which might be a bit wasteful
 			defenderAmount = this.room.invaders.length;

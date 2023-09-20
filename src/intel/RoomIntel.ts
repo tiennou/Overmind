@@ -110,6 +110,11 @@ export interface RoomExits extends ExitsInformation {
 	"42"?: PortalInfo[];
 }
 
+export interface InvasionData {
+	harvested: number;
+	lastSeen: number;
+}
+
 export interface RoomIntelMemory {
 	portalRooms: string[];
 }
@@ -924,24 +929,35 @@ export class RoomIntel {
 		};
 	}
 
-	static isInvasionLikely(room: Room): boolean {
-		const data = room.memory[RMEM.INVASION_DATA];
-		if (!data) {
-			return false;
+	static getInvasionData(roomName: string): InvasionData | undefined {
+		const memory = Memory.rooms[roomName];
+		if (!memory) {
+			return undefined;
 		}
-		const harvested = data[RMEM_INVASION.HARVESTED];
-		const lastSeen = data[RMEM_INVASION.LAST_SEEN];
-		if (lastSeen > 20000) {
+		const data = memory[RMEM.INVASION_DATA];
+		if (!data) {
+			return undefined;
+		}
+		return <InvasionData>{
+			harvested: data[RMEM_INVASION.HARVESTED],
+			lastSeen: data[RMEM_INVASION.LAST_SEEN],
+		};
+	}
+
+	static isInvasionLikely(roomName: string): boolean {
+		const data = this.getInvasionData(roomName);
+		if (!data || data.lastSeen > 20000) {
 			// maybe room is surrounded by owned/reserved rooms and invasions aren't possible
 			return false;
 		}
-		switch (room.sources.length) {
+		const sources = this.getSourceInfo(roomName);
+		switch (sources!.length) {
 			case 1:
-				return harvested > 90000;
+				return data.harvested > 90000;
 			case 2:
-				return harvested > 75000;
+				return data.harvested > 75000;
 			case 3:
-				return harvested > 65000;
+				return data.harvested > 65000;
 			default: // shouldn't ever get here
 				return false;
 		}
