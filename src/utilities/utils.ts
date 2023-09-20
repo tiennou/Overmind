@@ -10,7 +10,11 @@ export function deref(ref: string): RoomObject | null {
 }
 
 export function derefRoomPosition(protoPos: ProtoPos): RoomPosition {
-	return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
+	try {
+		return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
+	} catch (e) {
+		throw new Error(`Failed to deref ${JSON.stringify(protoPos)}`);
+	}
 }
 
 /** JSON-serialize arguments for output */
