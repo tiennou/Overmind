@@ -25,6 +25,11 @@ export const OverlordPriority = {
 		guard         : 251,
 	},
 
+	scouting: {
+		stationary  : 290,
+		randomWalker: 291,
+	},
+
 	warSpawnCutoff: 299, 		// Everything past this is non-critical and won't be spawned in case of emergency
 
 	offense: {					// Offensive operations like raids or sieges
@@ -77,11 +82,6 @@ export const OverlordPriority = {
 
 	collectionUrgent: { 		// Collecting resources that are time sensitive, like decaying resources on ground
 		haul: 700
-	},
-
-	scouting: {
-		stationary  : 800,
-		randomWalker: 801
 	},
 
 	colonization: { 			// Colonizing new rooms
