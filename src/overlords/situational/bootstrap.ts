@@ -32,6 +32,7 @@ export class BootstrappingOverlord extends Overlord {
 	}
 
 	refresh(): void {
+		super.refresh();
 		this.updateStructures();
 	}
 
