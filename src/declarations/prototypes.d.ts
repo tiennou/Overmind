@@ -325,6 +325,7 @@ interface StructureTerminal extends _StoreLike {
 
 	// private
 	_hasReceived: boolean;
+	_notReady: boolean;
 }
 
 interface StructureTower extends _StoreLike {

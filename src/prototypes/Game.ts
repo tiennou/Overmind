@@ -8,7 +8,7 @@ Game.market.deal = function(this: Market, orderId: string, amount: number, targe
 		if (targetRoomName && Game.rooms[targetRoomName] && Game.rooms[targetRoomName].terminal
 			&& Game.rooms[targetRoomName].terminal!.my) {
 			// Mark the terminal as being blocked
-			(<any>Game.rooms[targetRoomName].terminal!)._notReady = true;
+			Game.rooms[targetRoomName].terminal!._notReady = true;
 		}
 	}
 	return response;

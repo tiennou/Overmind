@@ -133,7 +133,7 @@ Object.defineProperty(Store.prototype, 'contents', {
 // Terminal prototypes =================================================================================================
 
 Object.defineProperty(StructureTerminal.prototype, 'isReady', { // the terminal is ready to send or deal
-	get() {
+	get(this: StructureTerminal) {
 		return this.cooldown == 0 && !this._notReady;
 	},
 	configurable: true,
