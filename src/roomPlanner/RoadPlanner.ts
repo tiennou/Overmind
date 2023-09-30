@@ -6,7 +6,7 @@ import {Mem} from '../memory/Memory';
 import {MatrixTypes, Pathing} from '../movement/Pathing';
 import {profile} from '../profiler/decorator';
 import {packCoord, packCoordList, unpackCoordListAsPosList} from '../utilities/packrat';
-import {getCacheExpiration, onPublicServer, posFromReadableName} from '../utilities/utils';
+import {derefRoomPosition, getCacheExpiration, onPublicServer, posFromReadableName} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {RoomPlanner} from './RoomPlanner';
 

@@ -4,7 +4,7 @@ import {Pathing} from '../movement/Pathing';
 import {Overlord} from '../overlords/Overlord';
 import {profile} from '../profiler/decorator';
 import {randint} from '../utilities/random';
-import {equalXYR, getCacheExpiration, randomHex, toColumns} from '../utilities/utils';
+import {derefRoomPosition, equalXYR, getCacheExpiration, randomHex, toColumns} from '../utilities/utils';
 import {NotifierPriority} from './Notifier';
 
 interface DirectiveCreationOptions {

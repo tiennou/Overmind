@@ -1,3 +1,4 @@
+import { deref } from 'utilities/utils';
 import {log} from '../../console/log';
 import {profile} from '../../profiler/decorator';
 import {BOOST_PARTS} from '../../resources/map_resources';

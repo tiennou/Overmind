@@ -6,7 +6,7 @@ import {MatrixLib, MatrixOptions} from '../matrix/MatrixLib';
 import {profile} from '../profiler/decorator';
 import {insideBunkerBounds} from '../roomPlanner/layouts/bunker';
 import {rightArrow} from '../utilities/stringConstants';
-import {minBy} from '../utilities/utils';
+import {derefRoomPosition, minBy} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {AnyZerg, normalizeAnyZerg} from '../zerg/AnyZerg';
 import {Swarm} from '../zerg/Swarm';

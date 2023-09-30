@@ -7,7 +7,7 @@ import {MoveOptions, Movement} from '../../movement/Movement';
 import {OverlordPriority} from '../../priorities/priorities_overlords';
 import {profile} from '../../profiler/decorator';
 import {CombatTargeting} from '../../targeting/CombatTargeting';
-import {minBy} from '../../utilities/utils';
+import {deref, minBy} from '../../utilities/utils';
 import {Visualizer} from '../../visuals/Visualizer';
 import {CombatZerg} from '../../zerg/CombatZerg';
 import {CombatOverlord, CombatOverlordMemory} from '../CombatOverlord';

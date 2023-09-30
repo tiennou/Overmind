@@ -12,6 +12,7 @@ import {Cartographer} from '../utilities/Cartographer';
 import {Visualizer} from '../visuals/Visualizer';
 import {HiveCluster} from './_HiveCluster';
 import { TRANSPORT_MEM } from 'overlords/core/transporter';
+import { derefRoomPosition } from 'utilities/utils';
 
 export const MAX_OBSERVE_DISTANCE = 4;
 

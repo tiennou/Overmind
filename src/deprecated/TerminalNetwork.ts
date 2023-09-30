@@ -10,7 +10,7 @@ import {Mem} from '../memory/Memory';
 import {profile} from '../profiler/decorator';
 import {RESOURCE_IMPORTANCE} from '../resources/map_resources';
 import {alignedNewline, bullet, rightArrow} from '../utilities/stringConstants';
-import {cyclicListPermutation, maxBy, mergeSum, minBy, minMax} from '../utilities/utils';
+import {cyclicListPermutation, deref, maxBy, mergeSum, minBy, minMax} from '../utilities/utils';
 
 interface TerminalNetworkMemory {
 	equalizeIndex: number;

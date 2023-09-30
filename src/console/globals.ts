@@ -1,13 +1,11 @@
+import { deref, derefRoomPosition } from "utilities/utils";
+
 global.__VERSION__ = '0.5.2';
 
-global.deref = function(ref: string): RoomObject | null { // dereference any object from identifier
-	return Game.getObjectById<any>(ref) as any as RoomObject
-		|| Game.flags[ref] || Game.creeps[ref] || Game.spawns[ref] || null;
-};
-
-global.derefRoomPosition = function(protoPos: ProtoPos): RoomPosition {
-	return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
-};
+// @ts-expect-error make available in global
+global.deref = deref;
+// @ts-expect-error make available in global
+global.derefRoomPosition = derefRoomPosition;
 
 // // Assign values to the memory key aliases declared in memory.d.ts
 // global._TICK = 'T';

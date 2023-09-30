@@ -10,7 +10,7 @@ import {Pathing} from '../movement/Pathing';
 import {BuildPriorities, DemolishStructurePriorities} from '../priorities/priorities_structures';
 import {profile} from '../profiler/decorator';
 import {bullet} from '../utilities/stringConstants';
-import {hasMinerals, maxBy, onPublicServer} from '../utilities/utils';
+import {derefRoomPosition, hasMinerals, maxBy, onPublicServer} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {BarrierPlanner} from './BarrierPlanner';
 import {bunkerLayout} from './layouts/bunker';

@@ -14,8 +14,6 @@ declare var GLOBAL_AGE: number;
 declare var __VERSION__: string;
 
 declare function print(...args: any[]): string;
-declare function deref(ref: string): RoomObject | null;
-declare function derefRoomPosition(protoPos: ProtoPos): RoomPosition;
 declare function gc(quick?: boolean): void;
 
 declare var _cache: IGlobalCache;

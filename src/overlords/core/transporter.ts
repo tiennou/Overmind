@@ -10,7 +10,7 @@ import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord, OverlordMemory} from '../Overlord';
-import { ema, minBy } from 'utilities/utils';
+import { deref, ema, minBy } from 'utilities/utils';
 import { Stats } from 'stats/stats';
 
 const MAX_TRANSPORTERS = 10;

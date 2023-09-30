@@ -3,6 +3,16 @@
 import { config } from 'config';
 import {alignedNewline, bullet} from './stringConstants';
 
+/** dereference any object from identifier */
+export function deref(ref: string): RoomObject | null {
+	return Game.getObjectById<any>(ref) as any as RoomObject
+		|| Game.flags[ref] || Game.creeps[ref] || Game.spawns[ref] || null;
+}
+
+export function derefRoomPosition(protoPos: ProtoPos): RoomPosition {
+	return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
+}
+
 export function getAllRooms(): Room[] {
 	if (!Game._allRooms) {
 		Game._allRooms = _.values(Game.rooms); // this is cleared every tick

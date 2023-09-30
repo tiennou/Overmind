@@ -1,3 +1,4 @@
+import { deref } from 'utilities/utils';
 import {profile} from '../../../profiler/decorator';
 import {powerId} from './generateOps';
 

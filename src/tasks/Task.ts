@@ -17,6 +17,7 @@ import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
 import {Zerg} from '../zerg/Zerg';
 import {initializeTask} from './initializer';
+import { deref, derefRoomPosition } from 'utilities/utils';
 
 interface AbstractTaskTarget {
 	ref: string; 	// Target id or name

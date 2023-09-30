@@ -13,7 +13,7 @@ import {getPosFromBunkerCoord, reagentLabSpots} from '../roomPlanner/layouts/bun
 import {Stats} from '../stats/stats';
 import {randint} from '../utilities/random';
 import {rightArrow} from '../utilities/stringConstants';
-import {ema} from '../utilities/utils';
+import {deref, ema} from '../utilities/utils';
 import {Visualizer} from '../visuals/Visualizer';
 import {HiveCluster} from './_HiveCluster';
 

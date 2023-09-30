@@ -31,7 +31,7 @@ import {RoomPlanner} from './roomPlanner/RoomPlanner';
 import {LOG_STATS_INTERVAL, Stats} from './stats/stats';
 import {ColonyExpansionData, EXPANSION_EVALUATION_FREQ, ExpansionEvaluator} from './strategy/ExpansionEvaluator';
 import {Cartographer, ROOMTYPE_CONTROLLER} from './utilities/Cartographer';
-import {maxBy, mergeSum, minBy} from './utilities/utils';
+import {derefRoomPosition, maxBy, mergeSum, minBy} from './utilities/utils';
 import {Visualizer} from './visuals/Visualizer';
 import {Zerg} from './zerg/Zerg';
 import { CombatCreepSetup } from 'creepSetups/CombatCreepSetup';

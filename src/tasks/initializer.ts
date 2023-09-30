@@ -1,4 +1,5 @@
 // Reinstantiation of a task object from ProtoTask data
+import { deref, derefRoomPosition } from 'utilities/utils';
 import {log} from '../console/log';
 import profiler from '../profiler/screeps-profiler';
 import {attackTargetType, attackTaskName, TaskAttack} from './instances/attack';
