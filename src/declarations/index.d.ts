@@ -13,7 +13,6 @@ declare var GLOBAL_AGE: number;
 
 declare var __VERSION__: string;
 
-declare function print(...args: any[]): string;
 declare function gc(quick?: boolean): void;
 
 declare var _cache: IGlobalCache;

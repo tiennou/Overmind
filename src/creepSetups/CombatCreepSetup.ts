@@ -1,3 +1,4 @@
+import { dump } from 'utilities/utils';
 import {Colony} from '../Colony';
 import {log} from '../console/log';
 import {profile} from '../profiler/decorator';
@@ -170,7 +171,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 			}
 		}
 		if (_.sum(opts.boosts, b => ['dismantle', 'upgrade', 'construct', 'harvest'].includes(b) ? 1 : 0) > 1) {
-			log.warning(`Multiple boost types requested for work part! opts.boosts: ${print(opts.boosts)}`);
+			log.warning(`Multiple boost types requested for work part! opts.boosts: ${dump(opts.boosts)}`);
 		}
 		return availableBoosts;
 	}

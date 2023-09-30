@@ -4,7 +4,7 @@ import {Pathing} from '../movement/Pathing';
 import {Overlord} from '../overlords/Overlord';
 import {profile} from '../profiler/decorator';
 import {randint} from '../utilities/random';
-import {derefRoomPosition, equalXYR, getCacheExpiration, randomHex, toColumns} from '../utilities/utils';
+import {derefRoomPosition, dump, equalXYR, getCacheExpiration, randomHex, toColumns} from '../utilities/utils';
 import {NotifierPriority} from './Notifier';
 
 interface DirectiveCreationOptions {
@@ -143,7 +143,7 @@ export abstract class Directive {
 			olInfo[tab + tab + 'CombatZerg:'] = overlord.getAllCombatZerg().map(z => z.print).join(', ');
 			msg += toColumns(olInfo).join('\n');
 		}
-		msg += 'Memory:\n' + print(this.memory);
+		msg += 'Memory:\n' + dump(this.memory);
 		return msg;
 	}
 

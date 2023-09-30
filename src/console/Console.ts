@@ -7,7 +7,7 @@ import {ExpansionEvaluator} from '../strategy/ExpansionEvaluator';
 import {Cartographer} from '../utilities/Cartographer';
 import {EmpireAnalysis} from '../utilities/EmpireAnalysis';
 import {alignedNewline, bullet} from '../utilities/stringConstants';
-import {color, printRoomName, toColumns} from '../utilities/utils';
+import {color, dump, printRoomName, toColumns} from '../utilities/utils';
 import {asciiLogoRL, asciiLogoSmall} from '../visuals/logos';
 import {log} from './log';
 import {DirectiveOutpost} from 'directives/colony/outpost';
@@ -416,33 +416,7 @@ export class OvermindConsole {
 	}
 
 	static print(...args: any[]): void {
-		let message = '';
-		for (const arg of args) {
-			let cache: any[] = [];
-			const msg = JSON.stringify(arg, function(key, value: any): any {
-				if (typeof value === 'object' && value !== null) {
-					if (cache.indexOf(value) !== -1) {
-						// Duplicate reference found
-						try {
-							// If this value does not reference a parent it can be deduped
-							// eslint-disable-next-line
-							return JSON.parse(JSON.stringify(value));
-						} catch (error) {
-							// discard key if value cannot be deduped
-							return;
-						}
-					}
-					// Store value in our collection
-					cache.push(value);
-				}
-				// eslint-disable-next-line
-				return value;
-			}, '\t');
-			// @ts-expect-error Clear out the cache
-			cache = null;
-			message += '\n' + msg;
-		}
-		console.log(message);
+		console.log(dump(args));
 	}
 
 	static timeit(callback: () => any, repeat = 1): void {

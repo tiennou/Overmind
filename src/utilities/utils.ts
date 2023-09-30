@@ -13,6 +13,37 @@ export function derefRoomPosition(protoPos: ProtoPos): RoomPosition {
 	return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
 }
 
+/** JSON-serialize arguments for output */
+export function dump(...args: any[]): string {
+	let message = '';
+	for (const arg of args) {
+		let cache: any[] = [];
+		const msg = JSON.stringify(arg, function(key, value: any): any {
+			if (typeof value === 'object' && value !== null) {
+				if (cache.indexOf(value) !== -1) {
+					// Duplicate reference found
+					try {
+						// If this value does not reference a parent it can be deduped
+						// eslint-disable-next-line
+						return JSON.parse(JSON.stringify(value));
+					} catch (error) {
+						// discard key if value cannot be deduped
+						return;
+					}
+				}
+				// Store value in our collection
+				cache.push(value);
+			}
+			// eslint-disable-next-line
+			return value;
+		}, '\t');
+		// @ts-expect-error Clear out the cache
+		cache = null;
+		message += '\n' + msg;
+	}
+	return message;
+}
+
 export function getAllRooms(): Room[] {
 	if (!Game._allRooms) {
 		Game._allRooms = _.values(Game.rooms); // this is cleared every tick
