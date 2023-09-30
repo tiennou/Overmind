@@ -9,9 +9,6 @@ global.derefRoomPosition = function(protoPos: ProtoPos): RoomPosition {
 	return new RoomPosition(protoPos.x, protoPos.y, protoPos.roomName);
 };
 
-// @ts-expect-error partial initialization
-global.PERMACACHE = {};
-
 // // Assign values to the memory key aliases declared in memory.d.ts
 // global._TICK = 'T';
 // global._EXPIRATION = 'X';

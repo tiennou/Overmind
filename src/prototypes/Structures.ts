@@ -1,5 +1,6 @@
 // All structure prototypes
 
+import { PERMACACHE } from "caching/PermaCache";
 import { config } from "config";
 
 // General structure prototypes ========================================================================================

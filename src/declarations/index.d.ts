@@ -20,17 +20,6 @@ declare function gc(quick?: boolean): void;
 
 declare var _cache: IGlobalCache;
 
-declare var PERMACACHE: {
-	bodypartCounts: { [creep: Id<Creep>]: Record<BodyPartConstant, number> };
-	terrainMatrices: { [key: string]: CostMatrix };
-	isPlayer: { [id: Id<Creep>]: boolean };
-	structureWalkability: { [id: Id<ConstructionSite<BuildableStructureConstant>>]: boolean };
-	cartographerRoomTypes: { [roomName: string]: import('utilities/Cartographer').RoomType };
-	_packedRoomNames: { [roomName: string]: string };
-	_unpackedRoomNames: { [roomName: string]: string };
-	positionNeighbors: { [posCoords: string]: RoomPosition[] };
-};
-
 declare var __DEFAULT_OVERMIND_SIGNATURE__: string;
 
 declare var remoteDebugger: import('debug/remoteDebugger').RemoteDebugger;

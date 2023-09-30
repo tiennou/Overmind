@@ -1,6 +1,7 @@
 /* eslint no-bitwise: "off" */
 /* eslint @typescript-eslint/prefer-for-of: "off" */
 
+import { PERMACACHE } from 'caching/PermaCache';
 import {log} from '../console/log';
 import {RoomIntel} from '../intel/RoomIntel';
 import {normalizePos} from '../movement/helpers';

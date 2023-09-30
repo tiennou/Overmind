@@ -1,6 +1,7 @@
 import { log } from 'console/log';
 import {Cartographer} from '../utilities/Cartographer';
 import {minBy, mod} from '../utilities/utils';
+import { PERMACACHE } from 'caching/PermaCache';
 
 Object.defineProperty(RoomPosition.prototype, 'print', {
 	get(this: RoomPosition) {

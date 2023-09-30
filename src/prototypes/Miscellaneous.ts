@@ -1,3 +1,5 @@
+import { PERMACACHE } from "caching/PermaCache";
+
 String.prototype.padRight = function(this: string, length: number, char = ' '): string {
 	return this + char.repeat(Math.max(length - this.length, 0));
 };

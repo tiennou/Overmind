@@ -37,6 +37,8 @@
  *
  */
 
+import { PERMACACHE } from "caching/PermaCache";
+
 /* eslint no-bitwise: "off" */
 /* eslint @typescript-eslint/prefer-for-of: "off" */
 

@@ -1,5 +1,7 @@
 // Creep properties ====================================================================================================
 
+import { PERMACACHE } from "caching/PermaCache";
+
 // Boosting logic ------------------------------------------------------------------------------------------------------
 
 Object.defineProperty(Creep.prototype, 'boosts', {

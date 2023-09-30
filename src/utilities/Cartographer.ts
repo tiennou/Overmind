@@ -1,3 +1,4 @@
+import { PERMACACHE } from 'caching/PermaCache';
 import {profile} from '../profiler/decorator';
 
 export const ROOMTYPE_SOURCEKEEPER = 'SK';
