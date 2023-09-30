@@ -437,19 +437,21 @@ export class Hatchery extends HiveCluster {
 			const result = this.spawnCreep(protoCreep, request.options);
 			if (result == OK) {
 				this.debug(`${preLog}: spawn successful`);
+				return result;
 			} else if (result == ERR_SPECIFIED_SPAWN_BUSY) {
 				this.debug(`${preLog}: requested spawn is busy`);
 				// continue to spawn other things while waiting on specified spawn
+				return result;
 			} else if (result === ERR_INVALID_ARGS) {
 				this.debug(`${preLog}: asked to spawn an invalid creep, ignoring`);
 			} else if (result === ERR_NOT_ENOUGH_ENERGY || result === ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH) {
 				// If there's not enough energyCapacity to spawn, ignore and move on, otherwise block and wait
 				this.debug(`${preLog}: not enough energy, ignoring`);
-				if (result === ERR_NOT_ENOUGH_ENERGY) {
-					this.isOverloaded = true;
-				}
+				return result;
 			} else {
 				this.debug(`${preLog}: failed to spawn, requeuing: ${result}`);
+				this.spawnRequests.unshift(request);
+				return result;
 			}
 		}
 	}
@@ -495,7 +497,16 @@ export class Hatchery extends HiveCluster {
 			}
 
 			// Spawn all queued creeps that you can
-			this.spawnHighestPriorityCreep();
+			while (this.availableSpawns.length > 0) {
+				const result = this.spawnHighestPriorityCreep();
+				if (result == ERR_NOT_ENOUGH_ENERGY) { // if you can't spawn something you want to
+					this.isOverloaded = true;
+				}
+				if (result != OK && result != ERR_SPECIFIED_SPAWN_BUSY) {
+					// Can't spawn creep right now
+					break;
+				}
+			}
 
 			// Move creeps off of exit position to let the spawning creep out if necessary
 			for (const spawn of this.spawns) {
