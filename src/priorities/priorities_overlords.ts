@@ -109,7 +109,11 @@ export const OverlordPriority = {
 	powerMine: {
 		cool: 1050,
 		drill: 1051,
-		roomIncrement: 5,
+		roomIncrement: 2,
+	},
+
+	deposit: {
+		gatherer: 1080,
 	},
 
 	tasks: {

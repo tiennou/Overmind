@@ -122,8 +122,7 @@ export const Setups = {
 			}),
 
 			deposit: new CreepSetup(Roles.drone, {
-				pattern: [WORK, WORK, CARRY, MOVE],
-				sizeLimit: 5,
+				pattern: [WORK, WORK, CARRY, MOVE, MOVE],
 			}),
 		},
 	},

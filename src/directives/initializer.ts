@@ -35,6 +35,7 @@ import { DirectiveTargetSiege } from "./targeting/siegeTarget";
 import { DirectiveTerminalEvacuateState } from "./terminalState/terminalState_evacuate";
 import { DirectiveTerminalRebuildState } from "./terminalState/terminalState_rebuild";
 import { DirectiveAvoid } from "./targeting/avoid";
+import { DirectiveGather } from "./resource/gather";
 
 /**
  * This is the initializer for directives, which maps flags by their color code to the corresponding directive
@@ -116,6 +117,8 @@ export function DirectiveWrapper(flag: Flag): Directive | undefined {
 					return new DirectiveHaul(flag);
 				case COLOR_RED:
 					return new DirectivePowerMine(flag);
+				case COLOR_GREEN:
+					return new DirectiveGather(flag);
 			}
 			break;
 
