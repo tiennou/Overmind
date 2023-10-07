@@ -120,28 +120,23 @@ export class MiningOverlord extends Overlord {
 		const canAffordDoubleMiner =
 			this.colony.room.energyCapacityAvailable >= DoubleMinerSetupCost;
 
-		this.debug(
-			`capacity: ${this.colony.room.energyCapacityAvailable}, standard: ${canAffordStandardMiner}, double: ${canAffordDoubleMiner}`
-		);
-		// We'll redisable if there's a second source
-		this.isDisabled = false;
+		// Check if the colony is too small to support standard miners
+		this.earlyMode = !canAffordStandardMiner;
+		// Allow drop mining at low levels
+		this.allowDropMining =
+			this.colony.level < MiningOverlord.settings.dropMineUntilRCL;
 
 		// Calculate optimal location for mining
+		// We'll redisable below if there's a second source
+		this.isDisabled = false;
+		const secondSourcePos = this.canDoubleMine();
 		if (!this.earlyMode && !this.allowDropMining) {
-			if (canAffordDoubleMiner) {
-				const miningPos = this.canDoubleMine();
-				if (miningPos) {
-					// Disable mining from the source with greater id
-					if (this.source!.id > this.secondSource!.id) {
-						this.isDisabled = true;
-					}
-					this.debug(
-						`other source is mineable from ${miningPos.print}, ${
-							this.isDisabled ? "disabling" : "handling"
-						}`
-					);
-					this.harvestPos = miningPos;
+			if (canAffordDoubleMiner && secondSourcePos) {
+				// Disable mining from the source with greater id
+				if (this.source!.id > this.secondSource!.id) {
+					this.isDisabled = true;
 				}
+				this.harvestPos = secondSourcePos;
 			} else if (this.container) {
 				this.harvestPos = this.container.pos;
 			} else if (this.link) {
@@ -154,11 +149,22 @@ export class MiningOverlord extends Overlord {
 			}
 		}
 
-		// Check if the colony is too small to support standard miners
-		this.earlyMode = !canAffordStandardMiner;
-		// Allow drop mining at low levels
-		this.allowDropMining =
-			this.colony.level < MiningOverlord.settings.dropMineUntilRCL;
+		this.debug(() => {
+			return (
+				`capacity: ${this.colony.room.energyCapacityAvailable}, standard: ${canAffordStandardMiner}, double: ${canAffordDoubleMiner}, ` +
+				`early mode: ${this.earlyMode}, drop mining: ${this.allowDropMining}, ` +
+				(this.canDoubleMine() ?
+					`other source is mineable from ${
+						this.canDoubleMine()!.print
+					}, ${this.isDisabled ? "disabling" : "handling"}, `
+				:	"") +
+				`optimal harvest position: ${
+					this.harvestPos ? this.harvestPos.print : undefined
+				}`
+			);
+		});
+
+		// Grab best miner setup
 		if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_SOURCEKEEPER) {
 			this.debug(`using sourceKeeper miner setup`);
 			this.setup = Setups.drones.miners.sourceKeeper;
