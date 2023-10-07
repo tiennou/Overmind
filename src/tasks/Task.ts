@@ -18,6 +18,7 @@ import { profile } from "../profiler/decorator";
 import { Zerg } from "../zerg/Zerg";
 import { initializeTask } from "./initializer";
 import { deref, derefRoomPosition } from "utilities/utils";
+import { errorForCode } from "utilities/errors";
 
 interface AbstractTaskTarget {
 	ref: string; // Target id or name
@@ -343,10 +344,10 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 			return result;
 		} else {
 			const result = this.moveToTarget();
-			if (result !== OK) {
+			if (result !== OK && result !== ERR_TIRED) {
 				log.debugCreep(
 					this.creep,
-					`failed to move to target ${result}`
+					`failed to move to target: ${errorForCode(result)}`
 				);
 			}
 			return result;
