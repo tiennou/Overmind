@@ -13,7 +13,11 @@ import { Directive } from "../directives/Directive";
 import { Mem } from "../memory/Memory";
 import { Pathing } from "../movement/Pathing";
 import { profile } from "../profiler/decorator";
-import { BOOST_TIERS } from "../resources/map_resources";
+import {
+	BOOST_TIERS,
+	BoostType,
+	BoostTypeBodyparts,
+} from "../resources/map_resources";
 import { Cartographer } from "../utilities/Cartographer";
 import { Visualizer } from "../visuals/Visualizer";
 import { toCreep, Zerg } from "../zerg/Zerg";
@@ -492,39 +496,87 @@ export class CombatIntel {
 	}
 
 	/**
+	 * Calculate the potential power of a specific type from a body definition,
+	 * taking into account boosts (from the definition or that would be applied)
+	 *
+	 * @param body - The creep's body definition
+	 * @param type - The potential type to check
+	 * @param intendedBoosts - An optional list of boosts to take into account
+	 * @returns The estimated power for that type
+	 */
+	static getBodyPotential(
+		body: BodyPartDefinition[],
+		type: BoostType,
+		intendedBoosts: ResourceConstant[] = []
+	): number {
+		return _.sum(body, function (part) {
+			if (part.hits == 0) {
+				return 0;
+			}
+			const bodyPart = BoostTypeBodyparts[type];
+			if (part.type === bodyPart) {
+				let boost = part.boost as ResourceConstant | undefined;
+				if (!boost && intendedBoosts) {
+					boost = _.find(
+						intendedBoosts,
+						(boost) =>
+							boost == BOOST_TIERS[type].T1 ||
+							boost == BOOST_TIERS[type].T2 ||
+							boost == BOOST_TIERS[type].T3
+					);
+				}
+				// @ts-expect-error mumble-mumble boost type names
+				const boosts: Partial<
+					Record<
+						BodyPartConstant,
+						Partial<
+							Record<
+								ResourceConstant,
+								Partial<Record<BoostType, number>>
+							>
+						>
+					>
+				> = BOOSTS;
+				if (!boost) {
+					return 1;
+				}
+				return boosts[bodyPart]?.[boost]?.[type] ?? 0;
+			}
+			return 0;
+		});
+	}
+
+	/**
+	 * Estimate the power of a given part type from body parts and potential boosts
+	 *
+	 * This will build a compatible definition from the body parts, given no damage.
+	 *
+	 * Prefer using one of the {@link getAttackPotential} & friends methods if you
+	 * have an actual creep to cache the results, or {@link getBodyPotential}. This
+	 * one is merely useful to do estimations before the creep exists.
+	 */
+	static getBodyPartPotential(
+		body: BodyPartConstant[],
+		type: BoostType,
+		intendedBoosts: ResourceConstant[] = []
+	) {
+		const bodyDef = body.map((part) => ({
+			type: part,
+			hits: 50,
+		}));
+		return this.getBodyPotential(bodyDef, type, intendedBoosts);
+	}
+
+	/**
 	 * Heal potential of a single creep in units of effective number of parts
 	 */
 	static getHealPotential(creep: Creep, countIntendedBoosts = false): number {
+		const intendedBoosts =
+			countIntendedBoosts && creep.my && creep.memory.needBoosts ?
+				creep.memory.needBoosts
+			:	[];
 		return this.cache(creep, "healPotential", () =>
-			_.sum(creep.body, function (part) {
-				if (part.hits == 0) {
-					return 0;
-				}
-				if (part.type == HEAL) {
-					let boost = part.boost as ResourceConstant | undefined;
-					if (!boost && countIntendedBoosts && creep.my) {
-						if (creep.memory.needBoosts) {
-							boost = _.find(
-								creep.memory.needBoosts,
-								(boost) =>
-									boost == BOOST_TIERS.heal.T1 ||
-									boost == BOOST_TIERS.heal.T2 ||
-									boost == BOOST_TIERS.heal.T3
-							);
-						}
-					}
-					if (!boost) {
-						return 1;
-					} else if (boost == BOOST_TIERS.heal.T1) {
-						return BOOSTS.heal.LO.heal;
-					} else if (boost == BOOST_TIERS.heal.T2) {
-						return BOOSTS.heal.LHO2.heal;
-					} else if (boost == BOOST_TIERS.heal.T3) {
-						return BOOSTS.heal.XLHO2.heal;
-					}
-				}
-				return 0;
-			})
+			this.getBodyPotential(creep.body, "heal", intendedBoosts)
 		);
 	}
 
@@ -562,36 +614,12 @@ export class CombatIntel {
 		creep: Creep,
 		countIntendedBoosts = false
 	): number {
+		const intendedBoosts =
+			countIntendedBoosts && creep.my && creep.memory.needBoosts ?
+				creep.memory.needBoosts
+			:	[];
 		return this.cache(creep, "attackPotential", () =>
-			_.sum(creep.body, function (part) {
-				if (part.hits == 0) {
-					return 0;
-				}
-				if (part.type == ATTACK) {
-					let boost = part.boost as ResourceConstant | undefined;
-					if (!boost && countIntendedBoosts && creep.my) {
-						if (creep.memory.needBoosts) {
-							boost = _.find(
-								creep.memory.needBoosts,
-								(boost) =>
-									boost == BOOST_TIERS.attack.T1 ||
-									boost == BOOST_TIERS.attack.T2 ||
-									boost == BOOST_TIERS.attack.T3
-							);
-						}
-					}
-					if (!boost) {
-						return 1;
-					} else if (boost == BOOST_TIERS.attack.T1) {
-						return BOOSTS.attack.UH.attack;
-					} else if (boost == BOOST_TIERS.attack.T2) {
-						return BOOSTS.attack.UH2O.attack;
-					} else if (boost == BOOST_TIERS.attack.T3) {
-						return BOOSTS.attack.XUH2O.attack;
-					}
-				}
-				return 0;
-			})
+			this.getBodyPotential(creep.body, "attack", intendedBoosts)
 		);
 	}
 
@@ -606,36 +634,12 @@ export class CombatIntel {
 		creep: Creep,
 		countIntendedBoosts = false
 	): number {
+		const intendedBoosts =
+			countIntendedBoosts && creep.my && creep.memory.needBoosts ?
+				creep.memory.needBoosts
+			:	[];
 		return this.cache(creep, "rangedAttackPotential", () =>
-			_.sum(creep.body, function (part) {
-				if (part.hits == 0) {
-					return 0;
-				}
-				if (part.type == RANGED_ATTACK) {
-					let boost = part.boost as ResourceConstant | undefined;
-					if (!boost && countIntendedBoosts && creep.my) {
-						if (creep.memory.needBoosts) {
-							boost = _.find(
-								creep.memory.needBoosts,
-								(boost) =>
-									boost == BOOST_TIERS.ranged.T1 ||
-									boost == BOOST_TIERS.ranged.T2 ||
-									boost == BOOST_TIERS.ranged.T3
-							);
-						}
-					}
-					if (!boost) {
-						return 1;
-					} else if (boost == BOOST_TIERS.ranged.T1) {
-						return BOOSTS.ranged_attack.KO.rangedAttack;
-					} else if (boost == BOOST_TIERS.ranged.T2) {
-						return BOOSTS.ranged_attack.KHO2.rangedAttack;
-					} else if (boost == BOOST_TIERS.ranged.T3) {
-						return BOOSTS.ranged_attack.XKHO2.rangedAttack;
-					}
-				}
-				return 0;
-			})
+			this.getBodyPotential(creep.body, "ranged", intendedBoosts)
 		);
 	}
 
@@ -652,36 +656,12 @@ export class CombatIntel {
 		creep: Creep,
 		countIntendedBoosts = false
 	): number {
+		const intendedBoosts =
+			countIntendedBoosts && creep.my && creep.memory.needBoosts ?
+				creep.memory.needBoosts
+			:	[];
 		return this.cache(creep, "dismantlePotential", () =>
-			_.sum(creep.body, function (part) {
-				if (part.hits == 0) {
-					return 0;
-				}
-				if (part.type == WORK) {
-					let boost = part.boost as ResourceConstant | undefined;
-					if (!boost && countIntendedBoosts && creep.my) {
-						if (creep.memory.needBoosts) {
-							boost = _.find(
-								creep.memory.needBoosts,
-								(boost) =>
-									boost == BOOST_TIERS.dismantle.T1 ||
-									boost == BOOST_TIERS.dismantle.T2 ||
-									boost == BOOST_TIERS.dismantle.T3
-							);
-						}
-					}
-					if (!boost) {
-						return 1;
-					} else if (boost == BOOST_TIERS.dismantle.T1) {
-						return BOOSTS.work.ZH.dismantle;
-					} else if (boost == BOOST_TIERS.dismantle.T2) {
-						return BOOSTS.work.ZH2O.dismantle;
-					} else if (boost == BOOST_TIERS.dismantle.T3) {
-						return BOOSTS.work.XZH2O.dismantle;
-					}
-				}
-				return 0;
-			})
+			this.getBodyPotential(creep.body, "dismantle", intendedBoosts)
 		);
 	}
 
@@ -693,36 +673,12 @@ export class CombatIntel {
 		creep: Creep,
 		countIntendedBoosts = false
 	): number {
+		const intendedBoosts =
+			countIntendedBoosts && creep.my && creep.memory.needBoosts ?
+				creep.memory.needBoosts
+			:	[];
 		return this.cache(creep, "repairPotential", () =>
-			_.sum(creep.body, function (part) {
-				if (part.hits == 0) {
-					return 0;
-				}
-				if (part.type == WORK) {
-					let boost = part.boost as ResourceConstant | undefined;
-					if (!boost && countIntendedBoosts && creep.my) {
-						if (creep.memory.needBoosts) {
-							boost = _.find(
-								creep.memory.needBoosts,
-								(boost) =>
-									boost == BOOST_TIERS.construct.T1 ||
-									boost == BOOST_TIERS.construct.T2 ||
-									boost == BOOST_TIERS.construct.T3
-							);
-						}
-					}
-					if (!boost) {
-						return 1;
-					} else if (boost == BOOST_TIERS.construct.T1) {
-						return BOOSTS.work.LH.repair;
-					} else if (boost == BOOST_TIERS.construct.T2) {
-						return BOOSTS.work.LH2O.repair;
-					} else if (boost == BOOST_TIERS.construct.T3) {
-						return BOOSTS.work.XLH2O.repair;
-					}
-				}
-				return 0;
-			})
+			this.getBodyPotential(creep.body, "construct", intendedBoosts)
 		);
 	}
 
@@ -737,36 +693,12 @@ export class CombatIntel {
 		creep: Creep,
 		countIntendedBoosts = false
 	): number {
+		const intendedBoosts =
+			countIntendedBoosts && creep.my && creep.memory.needBoosts ?
+				creep.memory.needBoosts
+			:	[];
 		return this.cache(creep, "carryPotential", () =>
-			_.sum(creep.body, function (part) {
-				if (part.hits == 0) {
-					return 0;
-				}
-				if (part.type == CARRY) {
-					let boost = part.boost as ResourceConstant | undefined;
-					if (!boost && countIntendedBoosts && creep.my) {
-						if (creep.memory.needBoosts) {
-							boost = _.find(
-								creep.memory.needBoosts,
-								(boost) =>
-									boost == BOOST_TIERS.carry.T1 ||
-									boost == BOOST_TIERS.carry.T2 ||
-									boost == BOOST_TIERS.carry.T3
-							);
-						}
-					}
-					if (!boost) {
-						return 1;
-					} else if (boost == BOOST_TIERS.carry.T1) {
-						return BOOSTS.carry.KH.capacity;
-					} else if (boost == BOOST_TIERS.carry.T2) {
-						return BOOSTS.carry.KH2O.capacity;
-					} else if (boost == BOOST_TIERS.carry.T3) {
-						return BOOSTS.carry.XKH2O.capacity;
-					}
-				}
-				return 0;
-			})
+			this.getBodyPotential(creep.body, "carry", intendedBoosts)
 		);
 	}
 
