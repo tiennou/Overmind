@@ -300,7 +300,7 @@ export class CombatZerg extends Zerg {
 
 		// Skirmish within the room
 		const goals = GoalFinder.skirmishGoals(this);
-		this.debug(JSON.stringify(goals));
+		this.debug(`goals: ${JSON.stringify(goals)}`);
 		return Movement.combatMove(this, goals.approach, goals.avoid);
 	}
 
