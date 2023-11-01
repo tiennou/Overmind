@@ -192,10 +192,10 @@ export class CommandCenterOverlord extends Overlord {
 			// Otherwise, we have an empty carry; withdraw the right amount of resource and transfer it
 			let withdrawFrom: StructureStorage | StructureTerminal | undefined;
 			let withdrawAmount = amount;
-			if (storage.store[resource] > 0) {
+			if (request.target.id !== storage.id && storage.store[resource] > 0) {
 				withdrawFrom = storage;
 				withdrawAmount = Math.min(amount, storage.store[resource]);
-			} else if (terminal && terminal.store[resource] > 0) {
+			} else if (terminal && request.target.id !== terminal.id && terminal.store[resource] > 0) {
 				withdrawFrom = terminal;
 				withdrawAmount = Math.min(amount, terminal.store[resource]);
 			}
