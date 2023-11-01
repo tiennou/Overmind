@@ -340,9 +340,7 @@ export abstract class Directive {
 					const ret = Pathing.findPath(
 						(colony.hatchery || colony).pos,
 						this.pos,
-						{
-							maxOps: DIRECTIVE_PATH_TIMEOUT,
-						}
+						{ maxOps: DIRECTIVE_PATH_TIMEOUT }
 					);
 					// TODO handle directives that can't find a path at great range
 					if (!ret.incomplete) {
@@ -368,7 +366,7 @@ export abstract class Directive {
 
 			if (nearestColony) {
 				log.info(
-					`Colony ${nearestColony.room.print} assigned to ${this.name}.`
+					`Colony ${nearestColony.room.print} assigned to ${this.print}.`
 				);
 				this.memory[MEM.COLONY] = nearestColony.room.name;
 				return nearestColony;

@@ -21,6 +21,7 @@ import {
 } from "../utilities/stringConstants";
 import { ema, maxBy, mergeSum, minBy, printRoomName } from "../utilities/utils";
 import { TraderJoe } from "./TradeNetwork";
+import { errorForCode } from "utilities/errors";
 
 export interface TerminalNetworkMemory {
 	debug?: boolean;
@@ -1255,7 +1256,7 @@ export class TerminalNetwork implements ITerminalNetwork {
 				`Selling ${provideAmount} ${resource} from ${colony.print} with ` +
 					`opts=${JSON.stringify(
 						sellOpts
-					)} via trade network (${ret})`
+					)} via trade network: ${errorForCode(ret)}`
 			);
 			if (ret >= 0) {
 				return true;

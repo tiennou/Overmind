@@ -279,7 +279,11 @@ export class CommandCenter extends HiveCluster {
 			const thresholds =
 				ResourceManager.getTerminalThresholdForResource(resource);
 			if (amount <= 0 || !thresholds) {
-				// this.debug(() => this.colony.assets[resource] <= 0 ? `no storage of ${resource}, ignoring` : `no threshold for ${resource}, ignoring`);
+				this.debug(() =>
+					this.colony.assets[resource] <= 0 ?
+						`no storage of ${resource}, ignoring`
+					:	`no threshold for ${resource}, ignoring`
+				);
 				continue;
 			}
 

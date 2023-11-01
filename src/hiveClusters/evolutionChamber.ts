@@ -1,3 +1,4 @@
+import { errorForCode } from "utilities/errors";
 import { $ } from "../caching/GlobalCache";
 import { Colony } from "../Colony";
 import { log } from "../console/log";
@@ -829,7 +830,9 @@ export class EvolutionChamber extends HiveCluster {
 							LAB_REACTION_AMOUNT;
 					} else {
 						log.warning(
-							`${this.print}: couldn't run reaction for lab @ ${lab.pos.print}! (${result})`
+							`${this.print}: couldn't run reaction for lab @ ${
+								lab.pos.print
+							}! (${errorForCode(result)})`
 						);
 					}
 				}

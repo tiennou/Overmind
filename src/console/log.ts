@@ -306,7 +306,7 @@ export class Log {
 		...args: LogMessage[]
 	) {
 		if (creep.memory && creep.memory.debug) {
-			this.debug(`${creep.name} @ ${creep.pos.print}: `, ...args);
+			this.debug(`${creep.name}@${creep.pos.print}: `, ...args);
 		}
 	}
 

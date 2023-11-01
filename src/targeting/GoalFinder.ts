@@ -1,9 +1,10 @@
+import columnify from "columnify";
 import { log } from "../console/log";
 import { isCombatZerg } from "../declarations/typeGuards";
 import { CombatIntel } from "../intel/CombatIntel";
 import { RoomIntel } from "../intel/RoomIntel";
 import { profile } from "../profiler/decorator";
-import { maxBy, minBy } from "../utilities/utils";
+import { entries, maxBy, minBy } from "../utilities/utils";
 import { CombatZerg } from "../zerg/CombatZerg";
 import { Swarm } from "../zerg/Swarm";
 
@@ -15,8 +16,6 @@ interface SkirmishAnalysis {
 	isRetreating: boolean;
 	isApproaching: boolean;
 }
-
-const DEBUG = false;
 
 @profile
 export class GoalFinder {
@@ -133,11 +132,14 @@ export class GoalFinder {
 			}
 		}
 
-		if (DEBUG) {
-			log.debug(`Report for ${zerg.name}:`, JSON.stringify(analysis));
-			log.debug(`Approach for ${zerg.name}:`, JSON.stringify(approach));
-			log.debug(`Avoid for ${zerg.name}:`, JSON.stringify(avoid));
-		}
+		log.debugCreep(zerg, () => {
+			const debugAnalysis = entries(analysis).map(([t, a]) =>
+				Object.assign({ target: t }, a)
+			);
+			return `Skirmish goals:\n${columnify(
+				debugAnalysis
+			)}\nApproach:\n${columnify(approach)}\nAvoid:\n${columnify(avoid)}`;
+		});
 
 		return { approach, avoid };
 	}
@@ -281,10 +283,11 @@ export class GoalFinder {
 			}
 		}
 
-		if (DEBUG) {
-			log.debug(`Approach for ${swarm.print}:`, JSON.stringify(approach));
-			log.debug(`Avoid for ${swarm.print}:`, JSON.stringify(avoid));
-		}
+		log.debugCreep(swarm.creeps[0], () => {
+			return `Swarm combat goals:\nApproach:\n${columnify(
+				approach
+			)}\nAvoid:\n${columnify(avoid)}`;
+		});
 
 		return { approach, avoid };
 	}
