@@ -8,9 +8,12 @@ import { TransportRequestGroup } from "logistics/TransportRequestGroup";
 import { log } from "console/log";
 import { Priority } from "priorities/priorities";
 import { Production } from "resources/Abathur";
-import { entries, getCacheExpiration, minMax } from "utilities/utils";
+import { ema, entries, getCacheExpiration, minMax } from "utilities/utils";
 import { errorForCode } from "utilities/errors";
 import { rightArrow } from "utilities/stringConstants";
+import { Stats } from "stats/stats";
+
+const FACTORY_USAGE_WINDOW = 100;
 
 export interface InfestedFactoryMemory {
 	status: number;
@@ -409,5 +412,20 @@ export class InfestedFactory extends HiveCluster {
 				);
 			}
 		}
+
+		this.stats();
+	}
+
+	private stats() {
+		const labUsage = this.factory.cooldown > 0 ? 1 : 0;
+		this.memory.stats.avgUsage = ema(
+			labUsage,
+			this.memory.stats.avgUsage,
+			FACTORY_USAGE_WINDOW
+		);
+		Stats.log(
+			`colonies.${this.colony.name}.infestedFactory.avgUsage`,
+			this.memory.stats.avgUsage
+		);
 	}
 }
