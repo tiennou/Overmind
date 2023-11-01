@@ -3,8 +3,6 @@ import { profile } from "../../profiler/decorator";
 import { Directive } from "../Directive";
 import { log } from "console/log";
 
-const DEPOSIT_COOLDOWN_CUTOFF = 500;
-
 /**
  * Standard gathering directive. Harvests from a deposit
  */
@@ -29,25 +27,14 @@ export class DirectiveGather extends Directive {
 	init() {}
 
 	run() {
-		const deposit = this.overlords.gather.deposit;
-		if (this.room && !deposit) {
+		if (
+			this.overlords.gather.isDepleted &&
+			this.overlords.gather.gatherers.length === 0
+		) {
 			log.alert(
 				`${this.print} No more deposit at ${this.pos}, removing!`
 			);
 			this.remove();
-			return;
-		}
-
-		if (
-			this.room &&
-			deposit &&
-			deposit.lastCooldown > DEPOSIT_COOLDOWN_CUTOFF
-		) {
-			log.alert(
-				`Deposit ${deposit} cooldown over cutoff ${deposit.lastCooldown} > ${DEPOSIT_COOLDOWN_CUTOFF}, removing!`
-			);
-			this.remove();
-			return;
 		}
 	}
 }

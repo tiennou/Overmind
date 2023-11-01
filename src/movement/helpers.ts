@@ -34,7 +34,8 @@ export function sameCoord(pos1: Coord, pos2: Coord): boolean {
  */
 export function getCreepWeightInfo(
 	creep: Creep,
-	analyzeCarry = true
+	analyzeCarry = true,
+	fullCarry = false
 ): { move: number; weighted: number } {
 	// Compute number of weighted and unweighted bodyparts
 	const unweightedParts = analyzeCarry ? [MOVE, CARRY] : [MOVE];
@@ -45,8 +46,10 @@ export function getCreepWeightInfo(
 	bodyParts.weighted = bodyParts.weighted || 0;
 	if (analyzeCarry && bodyParts[CARRY]) {
 		bodyParts.weighted += Math.ceil(
-			(bodyParts[CARRY] * creep.store.getUsedCapacity()) /
-				creep.store.getCapacity()
+			bodyParts[CARRY] *
+				(fullCarry ? 1 : (
+					creep.store.getUsedCapacity() / creep.store.getCapacity()
+				))
 		);
 	}
 	// Account for boosts
@@ -65,12 +68,12 @@ export function getCreepWeightInfo(
 /**
  * Get terrain costs which take into account a creep's individual fatigue stats
  */
-export function getTerrainCosts(creep: AnyCreep | AnyZerg): {
-	plainCost: number;
-	swampCost: number;
-} {
+export function getTerrainCosts(
+	creep: AnyCreep | AnyZerg,
+	fullCarry = false
+): TerrainCosts {
 	if (isStandardZerg(creep)) {
-		const data = getCreepWeightInfo(creep.creep);
+		const data = getCreepWeightInfo(creep.creep, true, fullCarry);
 		const fatigueRatio = data.weighted / data.move;
 		const costs: TerrainCosts = {
 			plainCost: Math.max(Math.ceil(fatigueRatio), 1),

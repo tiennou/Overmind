@@ -7,13 +7,26 @@ import { profile } from "../../profiler/decorator";
 import { Zerg } from "../../zerg/Zerg";
 import { Overlord, OverlordMemory } from "../Overlord";
 import { DirectiveGather } from "directives/resource/gather";
+import { Pathing } from "movement/Pathing";
+import { getTerrainCosts } from "movement/helpers";
 
-const DISMANTLE_CHECK = "dc";
+export const DEPOSIT_COOLDOWN_CUTOFF = 160;
+
+/** Some leeway in how close to death a gatherer has to be before heading back to storage */
+const GATHERER_LIFETIME_BUFFER = 50;
 
 interface GatheringOverlordMemory extends OverlordMemory {
-	[DISMANTLE_CHECK]?: number;
-	dismantleNeeded?: boolean;
+	lastCooldown: number;
+	harvested: number;
+	loadedDistance: number | null;
 }
+
+const getDefaultGatheringOverlordMemory: () => GatheringOverlordMemory =
+	() => ({
+		lastCooldown: 0,
+		harvested: 0,
+		loadedDistance: null,
+	});
 
 /**
  * Spawns miners to harvest from remote, owned, or sourcekeeper energy deposits. Standard mining actions have been
@@ -32,13 +45,15 @@ export class GatheringOverlord extends Overlord {
 		directive: DirectiveGather,
 		priority = OverlordPriority.deposit.gatherer
 	) {
-		super(directive, "gather", priority);
+		super(directive, "gather", priority, getDefaultGatheringOverlordMemory);
 
 		this.gatherers = this.zerg(Roles.drone);
 
 		if (this.room) {
 			this.deposit = this.pos.lookFor(LOOK_DEPOSITS)[0];
 		}
+
+		this.updateMemory();
 	}
 
 	refresh() {
@@ -49,6 +64,15 @@ export class GatheringOverlord extends Overlord {
 		super.refresh();
 		// Refresh your references to the objects
 		$.refresh(this, "deposit");
+		this.updateMemory();
+	}
+
+	updateMemory() {
+		if (!this.deposit) {
+			return;
+		}
+
+		this.memory.lastCooldown = this.deposit.lastCooldown;
 	}
 
 	get isActive() {
@@ -56,7 +80,37 @@ export class GatheringOverlord extends Overlord {
 	}
 
 	init() {
+		if (this.isDepleted) {
+			return;
+		}
+
 		this.wishlist(1, Setups.drones.miners.deposit);
+	}
+
+	distanceForLoadedCreep(gatherer: Zerg) {
+		if (this.colony.storage && this.memory.loadedDistance === null) {
+			const path = Pathing.findPath(this.pos, this.colony.storage.pos, {
+				terrainCosts: getTerrainCosts(gatherer, true),
+			});
+			if (path.incomplete) {
+				return Infinity;
+			}
+			this.debug(`distance for creep: ${path.cost}, ${path.path.length}`);
+			this.memory.loadedDistance = path.cost;
+		}
+		return this.memory.loadedDistance;
+	}
+
+	get isDepleted() {
+		if (this.room && !this.deposit) {
+			return true;
+		}
+
+		if (this.memory.lastCooldown > DEPOSIT_COOLDOWN_CUTOFF) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -80,6 +134,28 @@ export class GatheringOverlord extends Overlord {
 			log.error(`${gatherer.print} has no deposit??`);
 			return true;
 		}
+
+		// Check our lifetime so we're guaranteed to drop-off properly
+		const distance = this.distanceForLoadedCreep(gatherer);
+		if (
+			this.colony.storage &&
+			distance !== null &&
+			distance !== Infinity &&
+			(gatherer.ticksToLive ?? Infinity) <=
+				distance + GATHERER_LIFETIME_BUFFER
+		) {
+			this.debug(`${gatherer.print} is nearing death, emptying out`);
+			gatherer.task = Tasks.transfer(
+				this.colony.storage,
+				this.deposit.depositType
+			);
+			return true;
+		}
+
+		if (gatherer.store.getFreeCapacity() !== 0 && this.isDepleted) {
+			gatherer.retire();
+			return true;
+		}
 		return false;
 	}
 
@@ -97,7 +173,7 @@ export class GatheringOverlord extends Overlord {
 		}
 
 		// We don't have space, and we're not allowed to drop
-		if (gatherer.store.getFreeCapacity() === 0) {
+		if (gatherer.store.getFreeCapacity() === 0 || this.isDepleted) {
 			return false;
 		}
 
@@ -125,6 +201,7 @@ export class GatheringOverlord extends Overlord {
 		// to make sure we are in range before deciding what to do
 		const inRange = gatherer.pos.inRangeTo(this.pos, 1);
 		if (result === OK) {
+			this.memory.harvested += gatherer.bodypartCounts[WORK];
 			// All good!
 		} else if (
 			inRange &&
@@ -168,7 +245,7 @@ export class GatheringOverlord extends Overlord {
 	 * so it doesn't keep energy around) and transfers it over to its preferred location.
 	 */
 	private handleTransfer(gatherer: Zerg) {
-		if (gatherer.store.getFreeCapacity() !== 0) {
+		if (gatherer.store.getFreeCapacity() !== 0 && !this.isDepleted) {
 			this.debug(`${gatherer.print} not transferring`);
 			return false;
 		}
@@ -194,9 +271,8 @@ export class GatheringOverlord extends Overlord {
 		const range = 1;
 		const pos = this.pos;
 		if (!gatherer.pos.inRangeToPos(pos, range)) {
-			gatherer.goTo(pos, {
-				range: range,
-				pathOpts: { avoidSK: avoidSK },
+			gatherer.task = Tasks.goTo(pos, {
+				moveOptions: { range: 1, pathOpts: { avoidSK: avoidSK } },
 			});
 			return true;
 		}
