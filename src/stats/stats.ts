@@ -5,18 +5,24 @@ import { ema } from "../utilities/utils";
 /**
  * Operational statistics, stored in Memory.stats, will be updated every (this many) ticks
  */
-export const LOG_STATS_INTERVAL = 8;
+const LOG_STATS_INTERVAL = 8;
 
 @profile
 export class Stats {
+	static get shouldLog() {
+		return Game.time % LOG_STATS_INTERVAL === 0;
+	}
+
 	static clean() {
-		if (Game.time % LOG_STATS_INTERVAL == 0) {
-			const protectedKeys = ["persistent"];
-			for (const key in Memory.stats) {
-				if (!protectedKeys.includes(key)) {
-					// @ts-expect-error global shenaningans
-					delete Memory.stats[key];
-				}
+		if (!this.shouldLog) {
+			return;
+		}
+
+		const protectedKeys = ["persistent"];
+		for (const key in Memory.stats) {
+			if (!protectedKeys.includes(key)) {
+				// @ts-expect-error global shenaningans
+				delete Memory.stats[key];
 			}
 		}
 	}
@@ -26,19 +32,21 @@ export class Stats {
 		value: number | { [key: string]: number } | undefined,
 		truncateNumbers = true
 	): void {
-		if (Game.time % LOG_STATS_INTERVAL == 0) {
-			if (truncateNumbers && value != undefined) {
-				const decimals = 5;
-				if (typeof value == "number") {
-					value = value.truncate(decimals);
-				} else {
-					for (const i in value) {
-						value[i] = value[i].truncate(decimals);
-					}
+		if (!this.shouldLog) {
+			return;
+		}
+
+		if (truncateNumbers && value != undefined) {
+			const decimals = 5;
+			if (typeof value == "number") {
+				value = value.truncate(decimals);
+			} else {
+				for (const i in value) {
+					value[i] = value[i].truncate(decimals);
 				}
 			}
-			Mem.setDeep(Memory.stats, key, value);
 		}
+		Mem.setDeep(Memory.stats, key, value);
 	}
 
 	// static accumulate(key: string, value: number): void {
@@ -49,7 +57,7 @@ export class Stats {
 	// }
 
 	static run() {
-		if (Game.time % LOG_STATS_INTERVAL == 0) {
+		if (this.shouldLog) {
 			// Record IVM heap statistics
 			if (Game.cpu.getHeapStatistics) {
 				Memory.stats["cpu.heapStatistics"] =

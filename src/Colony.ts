@@ -37,7 +37,7 @@ import {
 	getPosFromBunkerCoord,
 } from "./roomPlanner/layouts/bunker";
 import { RoomPlanner } from "./roomPlanner/RoomPlanner";
-import { LOG_STATS_INTERVAL, Stats } from "./stats/stats";
+import { Stats } from "./stats/stats";
 import {
 	ColonyExpansionData,
 	EXPANSION_EVALUATION_FREQ,
@@ -1051,70 +1051,58 @@ export class Colony {
 	 * Register colony-wide statistics
 	 */
 	stats(): void {
-		if (Game.time % LOG_STATS_INTERVAL == 0) {
-			// Log energy and rcl
-			Stats.log(
-				`colonies.${this.name}.storage.energy`,
-				this.storage ? this.storage.energy : undefined
-			);
-			Stats.log(`colonies.${this.name}.rcl.level`, this.controller.level);
-			Stats.log(
-				`colonies.${this.name}.rcl.progress`,
-				this.controller.progress
-			);
-			Stats.log(
-				`colonies.${this.name}.rcl.progressTotal`,
-				this.controller.progressTotal
-			);
-			// Log average miningSite usage and uptime and estimated colony energy income
-			const numSites = _.keys(this.miningSites).length;
-			const avgDowntime =
-				_.sum(
-					this.miningSites,
-					(site) => site.memory[HARVEST_MEM.DOWNTIME]
-				) / numSites;
-			const avgUsage =
-				_.sum(
-					this.miningSites,
-					(site) => site.memory[HARVEST_MEM.USAGE]
-				) / numSites;
-			const energyInPerTick = _.sum(
+		if (!Stats.shouldLog) {
+			return;
+		}
+
+		// Log energy and rcl
+		Stats.log(
+			`colonies.${this.name}.storage.energy`,
+			this.storage ? this.storage.energy : undefined
+		);
+		Stats.log(`colonies.${this.name}.rcl.level`, this.controller.level);
+		Stats.log(
+			`colonies.${this.name}.rcl.progress`,
+			this.controller.progress
+		);
+		Stats.log(
+			`colonies.${this.name}.rcl.progressTotal`,
+			this.controller.progressTotal
+		);
+		// Log average miningSite usage and uptime and estimated colony energy income
+		const numSites = _.keys(this.miningSites).length;
+		const avgDowntime =
+			_.sum(
 				this.miningSites,
-				(site) =>
-					site.overlords.mine.energyPerTick *
-					site.memory[HARVEST_MEM.USAGE]
-			);
-			Stats.log(
-				`colonies.${this.name}.miningSites.avgDowntime`,
-				avgDowntime
-			);
-			Stats.log(`colonies.${this.name}.miningSites.avgUsage`, avgUsage);
-			Stats.log(
-				`colonies.${this.name}.miningSites.energyInPerTick`,
-				energyInPerTick
-			);
-			Stats.log(`colonies.${this.name}.assets`, this.assets);
-			// Log defensive properties
-			Stats.log(`colonies.${this.name}.defcon`, this.defcon);
-			Stats.log(
-				`colonies.${this.name}.threatLevel`,
-				this.room.threatLevel
-			);
-			const avgBarrierHits =
-				_.sum(this.room.barriers, (barrier) => barrier.hits) /
-				this.room.barriers.length;
-			Stats.log(`colonies.${this.name}.avgBarrierHits`, avgBarrierHits);
-			const report = Overmind.overseer.getCreepReport(this);
-			for (const [role, [current, needed]] of Object.entries(report)) {
-				Stats.log(
-					`colonies.${this.name}.creeps.${role}.current`,
-					current
-				);
-				Stats.log(
-					`colonies.${this.name}.creeps.${role}.needed`,
-					needed
-				);
-			}
+				(site) => site.memory[HARVEST_MEM.DOWNTIME]
+			) / numSites;
+		const avgUsage =
+			_.sum(this.miningSites, (site) => site.memory[HARVEST_MEM.USAGE]) /
+			numSites;
+		const energyInPerTick = _.sum(
+			this.miningSites,
+			(site) =>
+				site.overlords.mine.energyPerTick *
+				site.memory[HARVEST_MEM.USAGE]
+		);
+		Stats.log(`colonies.${this.name}.miningSites.avgDowntime`, avgDowntime);
+		Stats.log(`colonies.${this.name}.miningSites.avgUsage`, avgUsage);
+		Stats.log(
+			`colonies.${this.name}.miningSites.energyInPerTick`,
+			energyInPerTick
+		);
+		Stats.log(`colonies.${this.name}.assets`, this.assets);
+		// Log defensive properties
+		Stats.log(`colonies.${this.name}.defcon`, this.defcon);
+		Stats.log(`colonies.${this.name}.threatLevel`, this.room.threatLevel);
+		const avgBarrierHits =
+			_.sum(this.room.barriers, (barrier) => barrier.hits) /
+			this.room.barriers.length;
+		Stats.log(`colonies.${this.name}.avgBarrierHits`, avgBarrierHits);
+		const report = Overmind.overseer.getCreepReport(this);
+		for (const [role, [current, needed]] of Object.entries(report)) {
+			Stats.log(`colonies.${this.name}.creeps.${role}.current`, current);
+			Stats.log(`colonies.${this.name}.creeps.${role}.needed`, needed);
 		}
 	}
 
