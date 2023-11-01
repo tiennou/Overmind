@@ -34,12 +34,15 @@ import {
 import { p } from "./utilities/random";
 import {
 	canClaimAnotherRoom,
+	entries,
 	getAllRooms,
 	hasJustSpawned,
 	minBy,
 	onPublicServer,
 } from "./utilities/utils";
 import { config } from "config";
+import { DirectiveGather } from "directives/resource/gather";
+import { DEPOSIT_COOLDOWN_CUTOFF } from "overlords/mining/gatherer";
 
 // export const DIRECTIVE_CHECK_FREQUENCY = 2;
 
@@ -292,6 +295,39 @@ export class Overseer implements IOverseer {
 			_.forEach(colony.extractors, (extractor) =>
 				DirectiveExtract.createIfNotPresent(extractor.pos, "pos")
 			);
+		}
+	}
+
+	private placeGatheringDirectives() {
+		const gatherDirectives =
+			this.directivesByType[DirectiveGather.directiveName];
+		for (const [roomName] of entries(Memory.rooms)) {
+			const info = RoomIntel.getAllRoomObjectInfo(roomName);
+			if (!info || !info.deposits) {
+				continue;
+			}
+			for (const deposit of info.deposits) {
+				if (deposit.cooldown >= DEPOSIT_COOLDOWN_CUTOFF) {
+					continue;
+				}
+
+				if (
+					gatherDirectives.some(
+						(directive) =>
+							deposit.pos.readableName ===
+							directive.pos.readableName
+					)
+				) {
+					log.debug(
+						`Already found gather directive at ${deposit.pos.print}, skipping`
+					);
+					continue;
+				}
+
+				DirectiveGather.createIfNotPresent(deposit.pos, "pos", {
+					memory: { maxLinearRange: 6 },
+				});
+			}
 		}
 	}
 
@@ -615,6 +651,8 @@ export class Overseer implements IOverseer {
 			_.forEach(allColonies, (colony) =>
 				this.placeHarvestingDirectives(colony)
 			);
+
+			this.placeGatheringDirectives();
 		}
 
 		_.forEach(allColonies, (colony) => this.handleBootstrapping(colony));
