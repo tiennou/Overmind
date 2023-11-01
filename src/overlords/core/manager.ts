@@ -146,86 +146,77 @@ export class CommandCenterOverlord extends Overlord {
 				manager.pos,
 				"supply"
 			);
-		if (request) {
+		if (!request) {
+			this.debug(() => `${manager.print} no supply requests`);
+			return false;
+		}
+
+		this.debug(
+			() =>
+				`${
+					manager.print
+				} has a supply request: ${TransportRequestGroup.logRequest(
+					request
+				)}`
+		);
+		const amount = Math.min(request.amount, manager.store.getCapacity());
+		const resource = request.resourceType;
+		// If we have enough to fulfill the request, we're done
+		if (manager.store[request.resourceType] >= amount) {
 			this.debug(
 				() =>
-					`${
-						manager.print
-					} has a supply request: ${TransportRequestGroup.logRequest(
-						request
-					)}`
+					`${manager.print} supplying ${request.target.print} with ${amount} of ${resource}`
 			);
-			const amount = Math.min(
-				request.amount,
-				manager.store.getCapacity()
+			manager.task = Tasks.transfer(request.target, resource, amount);
+			return true;
+		} else if (manager.store[request.resourceType] > 0) {
+			// Otherwise, if we have any currently in manager's carry, transfer it to the requestor
+			this.debug(
+				() =>
+					`${manager.print} supplying ${request.target.print} with ${amount} of ${resource}`
 			);
-			const resource = request.resourceType;
-			// If we have enough to fulfill the request, we're done
-			if (manager.store[request.resourceType] >= amount) {
-				this.debug(
-					() =>
-						`${manager.print} supplying ${request.target.print} with ${amount} of ${resource}`
-				);
-				manager.task = Tasks.transfer(request.target, resource, amount);
+			manager.task = Tasks.transfer(
+				request.target,
+				resource,
+				manager.store[request.resourceType]
+			);
+			return true;
+		} else {
+			const storage = this.commandCenter.storage;
+			const terminal = this.commandCenter.terminal;
+			// Otherwise, we don't have any of the resource in the carry
+			if (this.unloadCarry(manager)) {
+				// if we have other crap, we should unload it
 				return true;
-			} else if (manager.store[request.resourceType] > 0) {
-				// Otherwise, if we have any currently in manager's carry, transfer it to the requestor
+			}
+			// Otherwise, we have an empty carry; withdraw the right amount of resource and transfer it
+			let withdrawFrom: StructureStorage | StructureTerminal | undefined;
+			let withdrawAmount = amount;
+			if (storage.store[resource] > 0) {
+				withdrawFrom = storage;
+				withdrawAmount = Math.min(amount, storage.store[resource]);
+			} else if (terminal && terminal.store[resource] > 0) {
+				withdrawFrom = terminal;
+				withdrawAmount = Math.min(amount, terminal.store[resource]);
+			}
+			if (withdrawFrom) {
 				this.debug(
 					() =>
-						`${manager.print} supplying ${request.target.print} with ${amount} of ${resource}`
+						`${manager.print} withdraws from ${
+							withdrawFrom!.print
+						}, ${withdrawAmount} to supply ${TransportRequestGroup.logRequest(
+							request
+						)}`
 				);
-				manager.task = Tasks.transfer(
-					request.target,
-					resource,
-					manager.store[request.resourceType]
-				);
+				manager.task = Tasks.chain([
+					Tasks.withdraw(withdrawFrom, resource, withdrawAmount),
+					Tasks.transfer(request.target, resource, withdrawAmount),
+				]);
 				return true;
 			} else {
-				const storage = this.commandCenter.storage;
-				const terminal = this.commandCenter.terminal;
-				// Otherwise, we don't have any of the resource in the carry
-				if (this.unloadCarry(manager)) {
-					// if we have other crap, we should unload it
-					return true;
-				}
-				// Otherwise, we have an empty carry; withdraw the right amount of resource and transfer it
-				let withdrawFrom:
-					| StructureStorage
-					| StructureTerminal
-					| undefined;
-				let withdrawAmount = amount;
-				if (storage.store[resource] > 0) {
-					withdrawFrom = storage;
-					withdrawAmount = Math.min(amount, storage.store[resource]);
-				} else if (terminal && terminal.store[resource] > 0) {
-					withdrawFrom = terminal;
-					withdrawAmount = Math.min(amount, terminal.store[resource]);
-				}
-				if (withdrawFrom) {
-					this.debug(
-						() =>
-							`${manager.print} withdraws from ${
-								withdrawFrom!.print
-							}, ${withdrawAmount} to supply ${TransportRequestGroup.logRequest(
-								request
-							)}`
-					);
-					manager.task = Tasks.chain([
-						Tasks.withdraw(withdrawFrom, resource, withdrawAmount),
-						Tasks.transfer(
-							request.target,
-							resource,
-							withdrawAmount
-						),
-					]);
-					return true;
-				} else {
-					// log.warning(`${manager.print}: could not fulfill supply request for ${resource}!`);
-					return false;
-				}
+				// log.warning(`${manager.print}: could not fulfill supply request for ${resource}!`);
+				return false;
 			}
-		} else {
-			return false;
 		}
 	}
 
