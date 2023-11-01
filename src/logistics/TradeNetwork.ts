@@ -11,6 +11,7 @@ import {
 	ERR_SELL_DIRECT_PRICE_TOO_LOW,
 	ERR_TOO_MANY_ORDERS_OF_TYPE,
 	NO_ACTION,
+	OvermindReturnCode,
 	errorForCode,
 } from "utilities/errors";
 import { getAllColonies } from "../Colony";
@@ -811,7 +812,7 @@ export class TraderJoe implements ITradeNetwork {
 		resource: ResourceConstant,
 		amount: number,
 		opts: TradeOpts
-	): number {
+	): OvermindReturnCode {
 		this.debug(
 			`buyDirect for ${terminal.room.print}: ${amount} ${resource}`
 		);
@@ -940,7 +941,7 @@ export class TraderJoe implements ITradeNetwork {
 		resource: ResourceConstant,
 		amount: number,
 		opts: TradeOpts
-	): number {
+	): OvermindReturnCode {
 		this.debug(
 			`sellDirect for ${terminal.room.print}: ${amount} ${resource}`
 		);
@@ -1074,7 +1075,7 @@ export class TraderJoe implements ITradeNetwork {
 		resource: ResourceConstant,
 		amount: number,
 		opts: TradeOpts = {}
-	): number {
+	): OvermindReturnCode {
 		_.defaults(opts, defaultTradeOpts);
 
 		if (
@@ -1167,7 +1168,7 @@ export class TraderJoe implements ITradeNetwork {
 		resource: ResourceConstant,
 		amount: number,
 		opts: TradeOpts = {}
-	): number {
+	): OvermindReturnCode {
 		_.defaults(opts, defaultTradeOpts);
 
 		// If you don't have a lot of credits or preferDirect==true, try to sell directly to an existing buy order

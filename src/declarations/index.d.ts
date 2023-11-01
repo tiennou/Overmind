@@ -290,14 +290,14 @@ interface ITradeNetwork {
 		resource: ResourceConstant,
 		amount: number,
 		opts?: TradeOpts
-	): number;
+	): import("utilities/errors").OvermindReturnCode;
 
 	sell(
 		terminal: StructureTerminal,
 		resource: ResourceConstant,
 		amount: number,
 		opts?: TradeOpts
-	): number;
+	): import("utilities/errors").OvermindReturnCode;
 
 	init(): void;
 
