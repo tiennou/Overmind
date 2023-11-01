@@ -28,6 +28,7 @@ import {
 import { TaskRecharge } from "./instances/recharge";
 import { repairTargetType, TaskRepair } from "./instances/repair";
 import { reserveTargetType, TaskReserve } from "./instances/reserve";
+import { retireTargetType, TaskRetire } from "./instances/retire";
 import {
 	signControllerTargetType,
 	TaskSignController,
@@ -248,6 +249,13 @@ export class Tasks {
 		options = {} as TaskOptions
 	): TaskGenerateSafeMode {
 		return new TaskGenerateSafeMode(target, options);
+	}
+
+	static retire(
+		target: retireTargetType,
+		options: TaskOptions = {}
+	): TaskRetire {
+		return new TaskRetire(target, options);
 	}
 }
 
