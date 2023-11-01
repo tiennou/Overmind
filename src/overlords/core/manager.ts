@@ -192,10 +192,17 @@ export class CommandCenterOverlord extends Overlord {
 			// Otherwise, we have an empty carry; withdraw the right amount of resource and transfer it
 			let withdrawFrom: StructureStorage | StructureTerminal | undefined;
 			let withdrawAmount = amount;
-			if (request.target.id !== storage.id && storage.store[resource] > 0) {
+			if (
+				request.target.id !== storage.id &&
+				storage.store[resource] > 0
+			) {
 				withdrawFrom = storage;
 				withdrawAmount = Math.min(amount, storage.store[resource]);
-			} else if (terminal && request.target.id !== terminal.id && terminal.store[resource] > 0) {
+			} else if (
+				terminal &&
+				request.target.id !== terminal.id &&
+				terminal.store[resource] > 0
+			) {
 				withdrawFrom = terminal;
 				withdrawAmount = Math.min(amount, terminal.store[resource]);
 			}
@@ -270,6 +277,10 @@ export class CommandCenterOverlord extends Overlord {
 				}
 			}
 		}
+
+		this.debug(
+			() => `${manager.print} has no free space or no withdraw request`
+		);
 
 		// Try to supply someone with what we have stored/withdrew
 		if (this.supplyActions(manager)) {
@@ -403,34 +414,35 @@ export class CommandCenterOverlord extends Overlord {
 		return false;
 	}
 
-	private handleManager(manager: Zerg): void {
+	private handleManager(manager: Zerg): boolean {
 		// Handle switching to next manager
 		if (this.deathActions(manager)) {
-			return;
+			return true;
 		}
 
 		// Emergency dumping actions for critically clogged terminals and storages
 		if (this.emergencyDumpingActions(manager)) {
-			return;
+			return true;
 		}
 
 		// Pick up any dropped resources on ground
 		if (this.pickupActions(manager)) {
-			return;
+			return true;
 		}
 
 		// Fulfill remaining low-priority withdraw requests
 		if (this.commandCenter.transportRequests.needsWithdrawing()) {
 			if (this.withdrawActions(manager)) {
-				return;
+				return true;
 			}
 		}
 		// Fulfill remaining low-priority supply requests
 		if (this.commandCenter.transportRequests.needsSupplying()) {
 			if (this.supplyActions(manager)) {
-				return;
+				return true;
 			}
 		}
+		return false;
 	}
 
 	private repairActions(manager: Zerg) {
@@ -476,18 +488,10 @@ export class CommandCenterOverlord extends Overlord {
 	}
 
 	run() {
-		for (const manager of this.managers) {
-			// Get a task if needed
-			if (manager.isIdle) {
-				this.handleManager(manager);
-			}
-			// manager.debug(print(manager.task))
-			// If you have a valid task, run it; else go to idle pos
-			if (manager.hasValidTask) {
-				manager.run();
-			} else {
+		this.autoRun(this.managers, (manager) => {
+			if (!this.handleManager(manager)) {
 				this.idleActions(manager);
 			}
-		}
+		});
 	}
 }
