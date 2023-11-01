@@ -116,21 +116,23 @@ export class UpgradingOverlord extends Overlord {
 			}
 			upgrader.task = Tasks.upgrade(this.upgradeSite.controller);
 		} else {
-			// Try recharging from link first; if the has no energy,
+			// Try recharging from link first; if the link has no energy,
 			// either some will pop up soon, or there is no energy anywhere
-			if (this.upgradeSite.link) {
-				if (this.upgradeSite.link.energy > 0) {
-					upgrader.task = Tasks.withdraw(this.upgradeSite.link);
-				}
+			if (
+				this.upgradeSite.link &&
+				this.upgradeSite.link.store[RESOURCE_ENERGY] > 0
+			) {
+				upgrader.task = Tasks.withdraw(this.upgradeSite.link);
+				return;
 			}
 			if (
-				!upgrader.task &&
 				this.upgradeSite.battery &&
 				this.upgradeSite.battery.energy > 0
 			) {
 				upgrader.task = Tasks.withdraw(this.upgradeSite.battery);
+				return;
 			}
-			if (!upgrader.task && !this.upgradeSite.link) {
+			if (!this.upgradeSite.link) {
 				// Find somewhere else to recharge from
 				// TODO: BUG HERE IF NO UPGRADE CONTAINER
 				if (
@@ -138,6 +140,7 @@ export class UpgradingOverlord extends Overlord {
 					this.upgradeSite.battery.targetedBy.length == 0
 				) {
 					upgrader.task = Tasks.recharge();
+					return;
 				}
 			}
 		}
