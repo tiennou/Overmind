@@ -16,7 +16,7 @@ export class TaskDrop extends Task<dropTargetType> {
 		target: dropTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		if (target instanceof RoomPosition) {
 			super(TaskDrop.taskName, { ref: "", _pos: target }, options);

@@ -20,7 +20,7 @@ export class TaskGetBoosted extends Task<getBoostedTargetType> {
 		target: getBoostedTargetType,
 		boostType: ResourceConstant,
 		partCount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		super(getBoostedTaskName, target, options);
 		// Settings

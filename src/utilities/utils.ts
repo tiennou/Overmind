@@ -265,7 +265,7 @@ export function bulleted(
  */
 export function toColumns(
 	obj: { [key: string]: string },
-	opts = {} as ToColumnOpts
+	opts: ToColumnOpts = {} as ToColumnOpts
 ): string[] {
 	_.defaults(opts, {
 		padChar: " ", // Character to pad with, e.g. "." would be key........val

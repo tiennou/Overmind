@@ -901,7 +901,7 @@ export class Movement {
 		leader: AnyZerg,
 		follower: AnyZerg,
 		target: _HasRoomPosition | RoomPosition,
-		opts = {} as MoveOptions,
+		opts: MoveOptions = {},
 		allowedRange = 1
 	): ZergSwarmMoveReturnCode {
 		let outcome: ZergSwarmMoveReturnCode = ERR_SWARM_BUSY;

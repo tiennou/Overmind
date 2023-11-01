@@ -6,7 +6,7 @@ export const meleeAttackTaskName = "meleeAttack";
 
 @profile
 export class TaskMeleeAttack extends Task<meleeAttackTargetType> {
-	constructor(target: meleeAttackTargetType, options = {} as TaskOptions) {
+	constructor(target: meleeAttackTargetType, options: TaskOptions = {}) {
 		super(meleeAttackTaskName, target, options);
 		// Settings
 		this.settings.targetRange = 1;

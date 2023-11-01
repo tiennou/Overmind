@@ -9,7 +9,7 @@ export const withdrawAllTaskName = "withdrawAll";
 
 @profile
 export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
-	constructor(target: withdrawAllTargetType, options = {} as TaskOptions) {
+	constructor(target: withdrawAllTargetType, options: TaskOptions = {}) {
 		super(withdrawAllTaskName, target, options);
 	}
 

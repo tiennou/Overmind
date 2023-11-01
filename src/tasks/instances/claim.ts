@@ -6,7 +6,7 @@ export const claimTaskName = "claim";
 
 @profile
 export class TaskClaim extends Task<claimTargetType> {
-	constructor(target: claimTargetType, options = {} as TaskOptions) {
+	constructor(target: claimTargetType, options: TaskOptions = {}) {
 		super(claimTaskName, target, options);
 		// Settings
 	}

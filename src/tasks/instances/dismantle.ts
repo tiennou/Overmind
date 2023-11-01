@@ -6,7 +6,7 @@ export const dismantleTaskName = "dismantle";
 
 @profile
 export class TaskDismantle extends Task<dismantleTargetType> {
-	constructor(target: dismantleTargetType, options = {} as TaskOptions) {
+	constructor(target: dismantleTargetType, options: TaskOptions = {}) {
 		super(dismantleTaskName, target, options);
 		this.settings.timeout = 100;
 	}

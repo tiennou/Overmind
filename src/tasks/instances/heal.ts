@@ -6,7 +6,7 @@ export const healTaskName = "heal";
 
 @profile
 export class TaskHeal extends Task<healTargetType> {
-	constructor(target: healTargetType, options = {} as TaskOptions) {
+	constructor(target: healTargetType, options: TaskOptions = {}) {
 		super(healTaskName, target, options);
 		// Settings
 		this.settings.targetRange = 3;

@@ -17,7 +17,7 @@ export class TaskWithdraw extends Task<withdrawTargetType> {
 		target: withdrawTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		super(withdrawTaskName, target, options);
 		// Settings

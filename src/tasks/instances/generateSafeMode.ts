@@ -6,10 +6,7 @@ export const generateSafeModeTaskName = "generateSafeMode";
 
 @profile
 export class TaskGenerateSafeMode extends Task<generateSafeModeTargetType> {
-	constructor(
-		target: generateSafeModeTargetType,
-		options = {} as TaskOptions
-	) {
+	constructor(target: generateSafeModeTargetType, options: TaskOptions = {}) {
 		super(generateSafeModeTaskName, target, options);
 	}
 

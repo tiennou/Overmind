@@ -16,7 +16,7 @@ export class TaskTransfer extends Task<transferTargetType> {
 		target: transferTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		super(transferTaskName, target, options);
 		// Settings

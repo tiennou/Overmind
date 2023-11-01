@@ -469,7 +469,7 @@ export abstract class Overlord {
 	 */
 	protected requestSquad(
 		setups: (CreepSetup | CombatCreepSetup)[],
-		opts = {} as CreepRequestOptions
+		opts: CreepRequestOptions = {}
 	) {
 		log.warning(`Overlord.requestSquad() is not finished yet!`); // TODO: finish
 		_.defaults(opts, {
@@ -506,7 +506,7 @@ export abstract class Overlord {
 	 */
 	protected requestCreep(
 		setup: CreepSetup | CombatCreepSetup,
-		opts = {} as CreepRequestOptions
+		opts: CreepRequestOptions = {}
 	) {
 		_.defaults(opts, {
 			priority: this.priority,
@@ -581,7 +581,7 @@ export abstract class Overlord {
 	protected wishlist(
 		quantity: number,
 		setup: CreepSetup | CombatCreepSetup,
-		opts = {} as CreepRequestOptions
+		opts: CreepRequestOptions = {}
 	): void {
 		_.defaults(opts, {
 			priority: this.priority,

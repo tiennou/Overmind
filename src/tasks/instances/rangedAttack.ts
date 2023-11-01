@@ -6,7 +6,7 @@ export const rangedAttackTaskName = "rangedAttack";
 
 @profile
 export class TaskRangedAttack extends Task<rangedAttackTargetType> {
-	constructor(target: rangedAttackTargetType, options = {} as TaskOptions) {
+	constructor(target: rangedAttackTargetType, options: TaskOptions = {}) {
 		super(rangedAttackTaskName, target, options);
 		// Settings
 		this.settings.targetRange = 3;

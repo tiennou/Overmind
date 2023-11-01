@@ -6,7 +6,7 @@ export const signControllerTaskName = "signController";
 
 @profile
 export class TaskSignController extends Task<signControllerTargetType> {
-	constructor(target: signControllerTargetType, options = {} as TaskOptions) {
+	constructor(target: signControllerTargetType, options: TaskOptions = {}) {
 		super(signControllerTaskName, target, options);
 	}
 

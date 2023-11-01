@@ -7,7 +7,7 @@ export const harvestTaskName = "harvest";
 
 @profile
 export class TaskHarvest extends Task<harvestTargetType> {
-	constructor(target: harvestTargetType, options = {} as TaskOptions) {
+	constructor(target: harvestTargetType, options: TaskOptions = {}) {
 		super(harvestTaskName, target, options);
 	}
 

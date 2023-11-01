@@ -7,7 +7,7 @@ export const retireTaskName = "retire";
 
 @profile
 export class TaskRetire extends Task<retireTargetType> {
-	constructor(target: retireTargetType, options = {} as TaskOptions) {
+	constructor(target: retireTargetType, options: TaskOptions = {}) {
 		super(retireTaskName, target, options);
 		// Settings
 		this.settings.timeout = Infinity;

@@ -73,28 +73,28 @@ export class Tasks {
 
 	static attack(
 		target: attackTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskAttack {
 		return new TaskAttack(target, options);
 	}
 
 	static build(
 		target: buildTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskBuild {
 		return new TaskBuild(target, options);
 	}
 
 	static claim(
 		target: claimTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskClaim {
 		return new TaskClaim(target, options);
 	}
 
 	static dismantle(
 		target: dismantleTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskDismantle {
 		return new TaskDismantle(target, options);
 	}
@@ -103,19 +103,19 @@ export class Tasks {
 		target: dropTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskDrop {
 		return new TaskDrop(target, resourceType, amount, options);
 	}
 
-	// static flee(target: fleeTargetType, options = {} as TaskOptions) {
+	// static flee(target: fleeTargetType, options: TaskOptions = {}) {
 	// 	return new TaskFlee(target, options);
 	// }
 
 	static fortify(
 		target: fortifyTargetType,
 		hitsMax?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskFortify {
 		return new TaskFortify(target, hitsMax, options);
 	}
@@ -124,82 +124,82 @@ export class Tasks {
 		target: getBoostedTargetType,
 		boostType: ResourceConstant,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskGetBoosted {
 		return new TaskGetBoosted(target, boostType, amount, options);
 	}
 
 	static getRenewed(
 		target: getRenewedTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskGetRenewed {
 		return new TaskGetRenewed(target, options);
 	}
 
-	static goTo(target: goToTargetType, options = {} as TaskOptions): TaskGoTo {
+	static goTo(target: goToTargetType, options: TaskOptions = {}): TaskGoTo {
 		return new TaskGoTo(target, options);
 	}
 
 	static goToRoom(
 		target: goToRoomTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskGoToRoom {
 		return new TaskGoToRoom(target, options);
 	}
 
 	static harvest(
 		target: harvestTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskHarvest {
 		return new TaskHarvest(target, options);
 	}
 
-	static heal(target: healTargetType, options = {} as TaskOptions): TaskHeal {
+	static heal(target: healTargetType, options: TaskOptions = {}): TaskHeal {
 		return new TaskHeal(target, options);
 	}
 
 	static meleeAttack(
 		target: meleeAttackTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskMeleeAttack {
 		return new TaskMeleeAttack(target, options);
 	}
 
 	static pickup(
 		target: pickupTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskPickup {
 		return new TaskPickup(target, options);
 	}
 
 	static rangedAttack(
 		target: rangedAttackTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskRangedAttack {
 		return new TaskRangedAttack(target, options);
 	}
 
-	static recharge(minEnergy = 0, options = {} as TaskOptions): TaskRecharge {
+	static recharge(minEnergy = 0, options: TaskOptions = {}): TaskRecharge {
 		return new TaskRecharge(minEnergy, options);
 	}
 
 	static repair(
 		target: repairTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskRepair {
 		return new TaskRepair(target, options);
 	}
 
 	static reserve(
 		target: reserveTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskReserve {
 		return new TaskReserve(target, options);
 	}
 
 	static signController(
 		target: signControllerTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskSignController {
 		return new TaskSignController(target, options);
 	}
@@ -208,7 +208,7 @@ export class Tasks {
 		target: transferTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskTransfer {
 		return new TaskTransfer(target, resourceType, amount, options);
 	}
@@ -216,14 +216,14 @@ export class Tasks {
 	static transferAll(
 		target: transferAllTargetType,
 		skipEnergy = false,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskTransferAll {
 		return new TaskTransferAll(target, skipEnergy, options);
 	}
 
 	static upgrade(
 		target: upgradeTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskUpgrade {
 		return new TaskUpgrade(target, options);
 	}
@@ -232,21 +232,21 @@ export class Tasks {
 		target: withdrawTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,
 		amount?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskWithdraw {
 		return new TaskWithdraw(target, resourceType, amount, options);
 	}
 
 	static withdrawAll(
 		target: withdrawAllTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskWithdrawAll {
 		return new TaskWithdrawAll(target, options);
 	}
 
 	static generateSafeMode(
 		target: generateSafeModeTargetType,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	): TaskGenerateSafeMode {
 		return new TaskGenerateSafeMode(target, options);
 	}

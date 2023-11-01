@@ -66,7 +66,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	constructor(
 		taskName: string,
 		target: TargetType | AbstractTaskTarget,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		// Parameters for the task
 		this.name = taskName;

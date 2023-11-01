@@ -13,7 +13,7 @@ export class TaskFortify extends Task<fortifyTargetType> {
 	constructor(
 		target: fortifyTargetType,
 		hitsMax?: number,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		super(fortifyTaskName, target, options);
 		// Settings

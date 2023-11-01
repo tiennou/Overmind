@@ -15,7 +15,7 @@
 // 		fleeFromRoom: string;
 // 	};
 //
-// 	constructor(fallback: fleeTargetType, options = {} as TaskOptions) {
+// 	constructor(fallback: fleeTargetType, options: TaskOptions = {}) {
 // 		if (fallback instanceof RoomPosition) {
 // 			super(fleeTaskName, {ref: '', pos: fallback}, options);
 // 		} else {

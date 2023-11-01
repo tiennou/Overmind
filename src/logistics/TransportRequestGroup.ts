@@ -142,7 +142,7 @@ export class TransportRequestGroup {
 	requestInput(
 		target: TransportRequestTarget,
 		priority = Priority.Normal,
-		opts = {} as TransportRequestOptions
+		opts: TransportRequestOptions = {}
 	): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
@@ -174,7 +174,7 @@ export class TransportRequestGroup {
 	requestOutput(
 		target: TransportRequestTarget,
 		priority = Priority.Normal,
-		opts = {} as TransportRequestOptions
+		opts: TransportRequestOptions = {}
 	): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,

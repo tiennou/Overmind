@@ -6,7 +6,7 @@ export const upgradeTaskName = "upgrade";
 
 @profile
 export class TaskUpgrade extends Task<upgradeTargetType> {
-	constructor(target: upgradeTargetType, options = {} as TaskOptions) {
+	constructor(target: upgradeTargetType, options: TaskOptions = {}) {
 		super(upgradeTaskName, target, options);
 		// Settings
 		this.settings.targetRange = 3;

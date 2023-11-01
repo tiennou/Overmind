@@ -20,7 +20,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		minEnergy: number;
 	};
 
-	constructor(minEnergy = 0, options = {} as TaskOptions) {
+	constructor(minEnergy = 0, options: TaskOptions = {}) {
 		super(rechargeTaskName, null, options);
 		this.data.minEnergy = minEnergy;
 	}

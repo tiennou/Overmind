@@ -17,7 +17,7 @@ export class TaskTransferAll extends Task<transferAllTargetType> {
 	constructor(
 		target: transferAllTargetType,
 		skipEnergy = false,
-		options = {} as TaskOptions
+		options: TaskOptions = {}
 	) {
 		super(transferAllTaskName, target, options);
 		this.data.skipEnergy = skipEnergy;

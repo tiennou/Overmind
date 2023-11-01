@@ -176,7 +176,7 @@ export class LogisticsNetwork {
 	/**
 	 * Request for resources to be deposited into this target
 	 */
-	requestInput(target: LogisticsTarget, opts = {} as RequestOptions): void {
+	requestInput(target: LogisticsTarget, opts: RequestOptions = {}): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 			multiplier: 1,
@@ -285,7 +285,7 @@ export class LogisticsNetwork {
 	 */
 	requestOutputMinerals(
 		target: Exclude<LogisticsTarget, Resource>,
-		opts = {} as RequestOptions
+		opts: RequestOptions = {}
 	): void {
 		for (const [resourceType, amount] of target.store.contents) {
 			if (resourceType == RESOURCE_ENERGY) {

@@ -13,7 +13,7 @@ interface TaskReserveOptions extends TaskOptions {
 @profile
 export class TaskReserve extends Task<reserveTargetType> {
 	options: TaskReserveOptions;
-	constructor(target: reserveTargetType, options = {} as TaskOptions) {
+	constructor(target: reserveTargetType, options: TaskOptions = {}) {
 		_.defaults(options, { reserveAmount: RESERVE_DEFAULT_AMOUNT });
 		super(reserveTaskName, target, options);
 	}

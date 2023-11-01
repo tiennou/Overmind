@@ -6,7 +6,7 @@ export const repairTaskName = "repair";
 
 @profile
 export class TaskRepair extends Task<repairTargetType> {
-	constructor(target: repairTargetType, options = {} as TaskOptions) {
+	constructor(target: repairTargetType, options: TaskOptions = {}) {
 		super(repairTaskName, target, options);
 		// Settings
 		this.settings.timeout = 100;
