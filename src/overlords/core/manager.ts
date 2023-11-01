@@ -273,7 +273,7 @@ export class CommandCenterOverlord extends Overlord {
 					manager.task = Tasks.transfer(
 						supplyRequest.target,
 						supplyRequest.resourceType,
-						supplyRequest.amount
+						Math.min(supplyRequest.amount, freeCapacity)
 					).fork(manager.task);
 					return true;
 				}
