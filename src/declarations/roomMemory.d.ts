@@ -90,9 +90,10 @@ declare const enum RMEM_MNRL {
 }
 
 declare const enum RMEM_DPST {
-	CONTAINERPOS = "cn",
 	DEPOSITTYPE = "t",
 	COOLDOWN = "d",
+	TTL = "l",
+	TIME = "i",
 }
 
 declare const enum MEM_AVGS {
@@ -167,9 +168,10 @@ interface SavedMineral extends SavedRoomObject {
 }
 
 interface SavedDeposit extends SavedRoomObject {
-	[RMEM_DPST.CONTAINERPOS]?: string;
 	[RMEM_DPST.DEPOSITTYPE]: DepositConstant;
 	[RMEM_DPST.COOLDOWN]: number;
+	[RMEM_DPST.TTL]: number;
+	[RMEM_DPST.TIME]: number;
 }
 
 interface SavedKeeperLair extends SavedRoomObject {

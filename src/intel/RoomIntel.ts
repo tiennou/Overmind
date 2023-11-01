@@ -82,6 +82,7 @@ export interface MineralInfo extends RoomObjectInfo {
 
 export interface DepositInfo extends RoomObjectInfo {
 	containerPos?: RoomPosition;
+	timeToDecay: number;
 	depositType: DepositConstant;
 	cooldown: number;
 }
@@ -362,8 +363,14 @@ export class RoomIntel {
 		if (mem) {
 			const savedSources = mem[RMEM.SOURCES] || [];
 			const savedMineral = mem[RMEM.MINERAL];
-			const savedDeposits = mem[RMEM.DEPOSITS] || [];
+			let savedDeposits = mem[RMEM.DEPOSITS] || [];
 			const savedSkLairs = mem[RMEM.SKLAIRS] || [];
+
+			savedDeposits = savedDeposits.filter((dpst) => {
+				const elapsed = Game.time - (dpst[RMEM_DPST.TIME] ?? 0);
+				const timeToDecay = dpst[RMEM_DPST.TTL] - elapsed;
+				return timeToDecay > 0;
+			});
 
 			const returnObject: RoomInfo = {
 				controller: this.getControllerInfo(roomName),
@@ -385,14 +392,14 @@ export class RoomIntel {
 						}
 					:	undefined,
 				deposits: savedDeposits.map((dpst) => {
+					const elapsed = Game.time - (dpst[RMEM_DPST.TIME] ?? 0);
+					const timeToDecay = dpst[RMEM_DPST.TTL] - elapsed;
 					const obj: DepositInfo = {
 						pos: unpackCoordAsPos(dpst.c, roomName),
 						depositType: dpst[RMEM_DPST.DEPOSITTYPE],
+						timeToDecay,
 						cooldown: dpst[RMEM_DPST.COOLDOWN],
 					};
-					if (dpst[RMEM_DPST.CONTAINERPOS]) {
-						obj.containerPos = unpackCoordAsPos(dpst.cn, roomName);
-					}
 					return obj;
 				}),
 				skLairs: _.map(savedSkLairs, (lair) => ({
@@ -460,25 +467,6 @@ export class RoomIntel {
 		} else {
 			delete room.memory[RMEM.MINERAL];
 		}
-		if (room.deposits) {
-			room.memory[RMEM.DEPOSITS] = room.deposits.map((deposit) => {
-				const dpst: SavedDeposit = {
-					c: packCoord(deposit.pos),
-					[RMEM_DPST.DEPOSITTYPE]: deposit.depositType,
-					[RMEM_DPST.COOLDOWN]: deposit.cooldown,
-				};
-				const container = deposit.pos.findClosestByLimitedRange(
-					room.containers,
-					2
-				);
-				if (container) {
-					dpst[RMEM_DPST.CONTAINERPOS] = packCoord(container.pos);
-				}
-				return dpst;
-			});
-		} else {
-			delete room.memory[RMEM.DEPOSITS];
-		}
 		if (room.keeperLairs.length > 0) {
 			room.memory[RMEM.SKLAIRS] = _.map(room.keeperLairs, (lair) => {
 				// Keeper logic is to just move to the first _.find([...sources, mineral], range <=5); see
@@ -504,6 +492,26 @@ export class RoomIntel {
 		}
 		this.recordOwnedRoomStructures(room);
 		this.recordPortalInfo(room);
+	}
+
+	private static recordDepositsInfo(room: Room) {
+		room.memory[RMEM.DEPOSITS] = room.memory[RMEM.DEPOSITS] ?? [];
+		if (
+			(!room.memory[RMEM.DEPOSITS].length &&
+				room.deposits.length !== 0) ||
+			room.memory[RMEM.DEPOSITS].length !== room.deposits.length
+		) {
+			room.memory[RMEM.DEPOSITS] = room.deposits.map((deposit) => {
+				const dpst: SavedDeposit = {
+					c: packCoord(deposit.pos),
+					[RMEM_DPST.DEPOSITTYPE]: deposit.depositType,
+					[RMEM_DPST.COOLDOWN]: deposit.lastCooldown,
+					[RMEM_DPST.TTL]: deposit.ticksToDecay,
+					[RMEM_DPST.TIME]: Game.time,
+				};
+				return dpst;
+			});
+		}
 	}
 
 	private static recordOwnedRoomStructures(room: Room) {
@@ -1212,6 +1220,8 @@ export class RoomIntel {
 		let alreadyComputedScore = false;
 
 		for (const roomName in Game.rooms) {
+			// log.debug(`${roomName}: collecting intel`);
+
 			const room: Room = Game.rooms[roomName];
 
 			// Track invasion data, harvesting, and casualties for all colony rooms and outposts
@@ -1227,6 +1237,13 @@ export class RoomIntel {
 			// if (room.my) {
 			// 	this.recordCreepOccupancies(room);
 			// }
+
+			if (
+				Game.time % 50 === 0 ||
+				room.memory[RMEM.DEPOSITS] === undefined
+			) {
+				this.recordDepositsInfo(room);
+			}
 
 			// Record location of permanent objects in room and recompute score as needed
 			if (Game.time >= (room.memory[MEM.EXPIRATION] || 0)) {
