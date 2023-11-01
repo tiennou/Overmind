@@ -3,7 +3,6 @@ import { log } from "../../console/log";
 import { CombatSetups, Roles } from "../../creepSetups/setups";
 import { DirectiveSKOutpost } from "../../directives/colony/outpostSK";
 import { RoomIntel } from "../../intel/RoomIntel";
-import { Mem } from "../../memory/Memory";
 import { MoveOptions, Movement } from "../../movement/Movement";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
@@ -41,7 +40,6 @@ export class SourceReaperOverlord extends CombatOverlord {
 			this.outpostIndex * OverlordPriority.remoteSKRoom.roomIncrement;
 		this.reapers = this.combatZerg(Roles.melee);
 		this.defenders = this.combatZerg(Roles.ranged);
-		this.memory = Mem.wrap(this.directive.memory, "sourceReaper");
 		this.computeTargetLair();
 	}
 

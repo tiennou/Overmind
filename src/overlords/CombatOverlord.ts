@@ -32,9 +32,10 @@ export abstract class CombatOverlord extends Overlord {
 		directive: Directive,
 		name: string,
 		priority: number,
-		options: CombatOverlordOptions
+		options: CombatOverlordOptions,
+		getDefaultMemory = getDefaultCombatOverlordMemory
 	) {
-		super(directive, name, priority, getDefaultCombatOverlordMemory);
+		super(directive, name, priority, getDefaultMemory);
 		this.directive = directive;
 		this.requiredRCL = options.requiredRCL;
 		this.spawnGroup = new SpawnGroup(this, {
