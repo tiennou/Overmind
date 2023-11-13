@@ -14,7 +14,7 @@ import { DirectiveOutpost } from "directives/colony/outpost";
 import { TaskSignController } from "tasks/instances/signController";
 import columnify from "columnify";
 import { Zerg } from "zerg/Zerg";
-import { COMMODITIES_ALL, RESOURCE_IMPORTANCE } from "resources/map_resources";
+import { RESOURCE_IMPORTANCE } from "resources/map_resources";
 import { config } from "config";
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };
@@ -1257,17 +1257,8 @@ export class OvermindConsole {
 
 	static showAssets() {
 		let count = 0;
-		const data: Record<string, number> = {};
-		for (const resourceType of RESOURCE_IMPORTANCE) {
-			if (
-				!(
-					resourceType.length == 1 ||
-					resourceType.length == 5 ||
-					resourceType == RESOURCE_ENERGY
-				)
-			) {
-				continue;
-			}
+		let data: { resourceType: ResourceConstant; count: number }[] = [];
+		for (const resourceType of RESOURCES_ALL) {
 			count = 0;
 			_.forEach(Game.rooms, (room) => {
 				if (room.my) {
@@ -1277,22 +1268,24 @@ export class OvermindConsole {
 				}
 			});
 			if (count > 0) {
-				data[resourceType] = count;
+				data.push({ resourceType, count });
 			}
 		}
-		for (const resourceType of COMMODITIES_ALL) {
-			count = 0;
-			_.forEach(Game.rooms, (room) => {
-				if (room.my) {
-					count += room.storage?.store[resourceType] ?? 0;
-					count += room.terminal?.store[resourceType] ?? 0;
-					count += room.factory?.store[resourceType] ?? 0;
-				}
-			});
-			if (count > 0) {
-				data[resourceType] = count;
+
+		data = data.sort((a, b) => {
+			const a_prio = RESOURCE_IMPORTANCE.indexOf(a.resourceType);
+			const b_prio = RESOURCE_IMPORTANCE.indexOf(b.resourceType);
+			if (a_prio === b_prio) {
+				return b.count - a.count;
 			}
-		}
+			if (a_prio === -1) {
+				return 1;
+			}
+			if (b_prio === -1) {
+				return -1;
+			}
+			return a_prio - b_prio;
+		});
 
 		const msg = "Reporting all assets:\n" + columnify(data);
 		console.log(msg);
