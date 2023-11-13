@@ -1,5 +1,6 @@
 import { PERMACACHE } from "caching/PermaCache";
 import { profile } from "../profiler/decorator";
+import { getCacheExpiration } from "./utils";
 
 export const ROOMTYPE_SOURCEKEEPER = "SK";
 export const ROOMTYPE_CORE = "CORE";
@@ -10,6 +11,7 @@ export const ROOMTYPE_CROSSROAD = "CROSSROAD";
 export type RoomType = "SK" | "CORE" | "CTRL" | "ALLEY" | "CROSSROAD";
 
 PERMACACHE.cartographerRoomTypes = PERMACACHE.cartographerRoomTypes || {};
+PERMACACHE.tunnelLocations = PERMACACHE.tunnelLocations || {};
 
 /**
  * Cartographer: provides helper methods related to Game.map. A few of these methods have been modified from BonzAI
@@ -308,6 +310,29 @@ export class Cartographer {
 			delete exits[yDirToMoveDir];
 		}
 		return exits;
+	}
+
+	static tunnelLocations(roomName: string): RoomPosition[] {
+		const room = Game.rooms[roomName];
+		if (
+			room &&
+			(!PERMACACHE.tunnelLocations[roomName] ||
+				PERMACACHE.tunnelLocations[roomName].expiration < Game.time)
+		) {
+			// eslint-disable-next-line
+			const tunnels = [];
+			for (const road of room.roads) {
+				if (road.pos.lookFor(LOOK_TERRAIN).includes("wall")) {
+					tunnels.push(road.pos);
+				}
+			}
+
+			PERMACACHE.tunnelLocations[roomName] = {
+				expiration: getCacheExpiration(100),
+				tunnels,
+			};
+		}
+		return PERMACACHE.tunnelLocations[roomName]?.tunnels ?? [];
 	}
 }
 

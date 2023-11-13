@@ -11,6 +11,12 @@ interface Permacache {
 	_packedRoomNames: { [roomName: string]: string };
 	_unpackedRoomNames: { [roomName: string]: string };
 	positionNeighbors: { [posCoords: string]: RoomPosition[] };
+	tunnelLocations: {
+		[roomName: string]: {
+			expiration: number;
+			tunnels: RoomPosition[];
+		};
+	};
 }
 
 // @ts-expect-error Partial initialization

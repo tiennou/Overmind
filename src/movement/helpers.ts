@@ -1,6 +1,10 @@
-import { isPowerZerg, isStandardZerg } from "declarations/typeGuards";
+import {
+	isCombatZerg,
+	isPowerZerg,
+	isStandardZerg,
+} from "declarations/typeGuards";
 import { AnyZerg } from "zerg/AnyZerg";
-import { getDefaultTerrainCosts } from "./Pathing";
+import { TerrainCosts, getDefaultTerrainCosts } from "./Pathing";
 
 /**
  * Returns destination.pos if destination has a position, or destination if destination is a RoomPosition
@@ -68,10 +72,17 @@ export function getTerrainCosts(creep: AnyCreep | AnyZerg): {
 	if (isStandardZerg(creep)) {
 		const data = getCreepWeightInfo(creep.creep);
 		const fatigueRatio = data.weighted / data.move;
-		return {
+		const costs: TerrainCosts = {
 			plainCost: Math.max(Math.ceil(fatigueRatio), 1),
 			swampCost: Math.max(Math.ceil(5 * fatigueRatio), 1),
 		};
+
+		// If there's a disadvantage in swamps over plains, or creep is combat-creep, allow road usage
+		if (costs.plainCost !== costs.swampCost || isCombatZerg(creep)) {
+			costs.roadCost = "auto";
+		}
+
+		return costs;
 	} else if (isPowerZerg(creep)) {
 		return { plainCost: 1, swampCost: 1 };
 	}

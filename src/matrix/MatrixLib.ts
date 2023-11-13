@@ -18,7 +18,7 @@ export interface MatrixOptions {
 	/** Name of the room */
 	roomName: string;
 	/** Whether the room is visible */
-	roomVisibile: boolean;
+	roomVisible: boolean;
 	/** If true, call MatrixLib.addTerrainCosts(matrix, roomName, terrainCosts) */
 	explicitTerrainCosts: boolean;
 	/** terrain costs, determined automatically for creep body if unspecified */
@@ -41,11 +41,12 @@ export interface MatrixOptions {
 
 export const getDefaultMatrixOptions: () => MatrixOptions = () => ({
 	roomName: "none",
-	roomVisibile: false,
+	roomVisible: false,
 	explicitTerrainCosts: false,
 	terrainCosts: {
 		plainCost: 1,
 		swampCost: 5,
+		roadCost: undefined,
 	},
 	blockExits: false,
 	avoidSK: true,
@@ -99,7 +100,7 @@ export class MatrixLib {
 		// Populate roomName and roomVisible properties
 		const room = Game.rooms[roomName] as Room | undefined;
 		opts.roomName = roomName;
-		opts.roomVisibile = !!room;
+		opts.roomVisible = !!room;
 
 		// Generate a hash to look up any previously cached matrices
 		const hash = MatrixLib.generateMatrixOptionsHash(<MatrixOptions>opts);
@@ -272,6 +273,8 @@ export class MatrixLib {
 		room: Room | undefined,
 		opts: MatrixOptions
 	): CostMatrix {
+		opts = _.defaults(opts, getDefaultMatrixOptions());
+
 		const matrix = new PathFinder.CostMatrix();
 		const roomName = opts.roomName;
 
@@ -304,6 +307,15 @@ export class MatrixLib {
 		// Explicitly specify the terrain costs if needed
 		if (opts.explicitTerrainCosts) {
 			MatrixLib.addTerrainCosts(matrix, roomName, opts.terrainCosts);
+		}
+
+		const tunnels = Cartographer.tunnelLocations(roomName);
+		for (const pos of tunnels) {
+			matrix.set(
+				pos.x,
+				pos.y,
+				opts.terrainCosts.roadCost ?? opts.terrainCosts.plainCost
+			);
 		}
 
 		if (opts.terrainCosts.roadCost) {

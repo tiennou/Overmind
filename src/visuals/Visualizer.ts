@@ -167,9 +167,12 @@ export class Visualizer {
 							255 - percentOfMax,
 							255 - percentOfMax
 						);
-						vis.text(matrix.get(x, y).toString(), x, y, {
-							color: color,
-						});
+						vis.text(
+							matrix.get(x, y).toString(16).toUpperCase(),
+							x,
+							y + 0.3,
+							{ color: color }
+						);
 					}
 				}
 			}
