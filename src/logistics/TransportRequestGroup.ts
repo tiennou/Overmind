@@ -43,7 +43,10 @@ interface TransportRequestOptions {
  */
 @profile
 export class TransportRequestGroup {
-	static logRequest(request: TransportRequest) {
+	static logRequest(request: TransportRequest | undefined) {
+		if (!request) {
+			return `not a request`;
+		}
 		return `${request.amount} of ${request.resourceType} in ${
 			request.target.print
 		} at ${priorityToString(request.priority)} priority`;
@@ -114,10 +117,14 @@ export class TransportRequestGroup {
 					filter ?
 						_.filter(requests[priority], (req) => filter(req))
 					:	requests[priority];
-				return _.find(
+				const request = _.find(
 					searchRequests,
 					(request) => request.target.ref == target.ref
 				);
+				// If this isn't a specific search, we don't fall through to lower priorities
+				if (!filter || request) {
+					return request;
+				}
 			}
 		}
 	}

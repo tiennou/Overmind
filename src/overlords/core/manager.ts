@@ -21,7 +21,6 @@ export class CommandCenterOverlord extends Overlord {
 	mode: "twoPart" | "bunker";
 	managers: Zerg[];
 	commandCenter: CommandCenter;
-	// depositTarget: StructureTerminal | StructureStorage;
 	managerRepairTarget: StructureRampart | StructureWall | undefined;
 
 	static settings: {};
@@ -34,11 +33,6 @@ export class CommandCenterOverlord extends Overlord {
 		this.commandCenter = commandCenter;
 		this.mode = this.colony.layout;
 		this.managers = this.zerg(Roles.manager);
-		// if (this.commandCenter.terminal && _.sum(this.commandCenter.terminal.store) < TERMINAL_CAPACITY - 5000) {
-		// 	this.depositTarget = this.commandCenter.terminal;
-		// } else {
-		// 	this.depositTarget = this.commandCenter.storage;
-		// }
 		if (this.colony.bunker) {
 			const anchor = this.colony.bunker.anchor;
 			$.set(this, "managerRepairTarget", () =>
@@ -68,11 +62,12 @@ export class CommandCenterOverlord extends Overlord {
 		if (this.colony.layout == "twoPart") {
 			setup = Setups.managers.twoPart;
 		}
+		const needsMobileManager =
+			this.colony.state.isEvacuating || this.colony.state.isRebuilding;
 		if (
 			this.colony.bunker &&
 			this.colony.bunker.coreSpawn &&
-			this.colony.level == 8 &&
-			!this.colony.roomPlanner.memory.relocating
+			!needsMobileManager
 		) {
 			setup = Setups.managers.stationary;
 			// // Spawn a worker manager to repair central tiles
@@ -221,7 +216,9 @@ export class CommandCenterOverlord extends Overlord {
 				]);
 				return true;
 			} else {
-				// log.warning(`${manager.print}: could not fulfill supply request for ${resource}!`);
+				this.debug(
+					() => `${manager.print}: could not fulfill supply request!`
+				);
 				return false;
 			}
 		}
@@ -274,6 +271,11 @@ export class CommandCenterOverlord extends Overlord {
 						Math.min(supplyRequest.amount, freeCapacity)
 					).fork(manager.task);
 					return true;
+				} else {
+					this.debug(
+						() =>
+							`${manager.print}: cannot fulfill withdraw request!`
+					);
 				}
 			}
 		}
