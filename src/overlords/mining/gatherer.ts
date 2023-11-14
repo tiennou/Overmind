@@ -47,7 +47,7 @@ export class GatheringOverlord extends Overlord {
 	) {
 		super(directive, "gather", priority, getDefaultGatheringOverlordMemory);
 
-		this.gatherers = this.zerg(Roles.drone);
+		this.gatherers = this.zerg(Roles.gatherer);
 
 		if (this.room) {
 			this.deposit = this.pos.lookFor(LOOK_DEPOSITS)[0];
@@ -84,7 +84,7 @@ export class GatheringOverlord extends Overlord {
 			return;
 		}
 
-		this.wishlist(1, Setups.drones.miners.deposit);
+		this.wishlist(1, Setups.gatherer.deposit);
 	}
 
 	distanceForLoadedCreep(gatherer: Zerg) {
@@ -102,6 +102,8 @@ export class GatheringOverlord extends Overlord {
 	}
 
 	get isDepleted() {
+		// DEPOSIT_EXHAUST_MULTIPLY * totalHarvested ^ DEPOSIT_EXHAUST_POW;
+		// Deposit appears to be gone?
 		if (this.room && !this.deposit) {
 			return true;
 		}

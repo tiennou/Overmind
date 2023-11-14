@@ -14,6 +14,7 @@ import { CreepSetup } from "./CreepSetup";
 export const Roles = {
 	// Civilian roles
 	drone: "drone",
+	gatherer: "gatherer",
 	filler: "filler",
 	claim: "infestor",
 	pioneer: "pioneer",
@@ -120,11 +121,13 @@ export const Setups = {
 				pattern: [WORK, WORK, CARRY, MOVE],
 				sizeLimit: 5,
 			}),
-
-			deposit: new CreepSetup(Roles.drone, {
-				pattern: [WORK, WORK, CARRY, MOVE, MOVE],
-			}),
 		},
+	},
+
+	gatherer: {
+		deposit: new CreepSetup(Roles.gatherer, {
+			pattern: [WORK, WORK, CARRY, MOVE, MOVE],
+		}),
 	},
 
 	filler: new CreepSetup(Roles.filler, {
