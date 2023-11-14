@@ -684,12 +684,16 @@ export class Colony {
 			if (defcon < this.defcon) {
 				// decay defcon level over time if defcon less than memory value
 				if (this.memory.defcon.tick + defconDecayTime < Game.time) {
-					log.info(`Colony DEFCON level lowered to ${defcon}`);
+					log.info(
+						`Colony ${this.print} DEFCON level lowered to ${defcon}`
+					);
 					this.defcon = defcon;
 				}
 			} else if (defcon > this.defcon) {
 				// refresh defcon time if it increases by a level
-				log.alert(`Colony DEFCON level raised to ${defcon}!`);
+				log.alert(
+					`Colony ${this.print} DEFCON level raised to ${defcon}!`
+				);
 				this.defcon = defcon;
 			}
 		}
