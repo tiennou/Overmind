@@ -115,6 +115,7 @@ export class Mem {
 
 	static didRun() {
 		Memory.tick++;
+		Memory.stats.persistent.time = Game.time;
 
 		// Update bucket delta tracking
 		const bucket = Game.cpu.bucket;

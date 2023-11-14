@@ -79,6 +79,7 @@ interface Memory {
 	constructionSites: { [id: string]: number };
 	stats: {
 		persistent: {
+			time?: number;
 			lastGlobalReset?: number;
 			lastMemoryReset?: number;
 			lastErrorTick?: number;
