@@ -1022,7 +1022,13 @@ export class Colony {
 	 */
 	init(): void {
 		this.handleReactivatingOutposts();
-		_.forEach(this.hiveClusters, (hiveCluster) => hiveCluster.init()); // Initialize each hive cluster
+		// Initialize each hive cluster
+		for (const hiveCluster of this.hiveClusters) {
+			if (hiveCluster.memory?.debug) {
+				log.debug(`${hiveCluster.print} init`);
+			}
+			hiveCluster.init();
+		}
 		this.roadLogistics.init(); // Initialize the road network
 		this.linkNetwork.init(); // Initialize link network
 		this.roomPlanner.init(); // Initialize the room planner
@@ -1039,7 +1045,13 @@ export class Colony {
 	 * Runs the colony, performing state-changing actions each tick
 	 */
 	run(): void {
-		_.forEach(this.hiveClusters, (hiveCluster) => hiveCluster.run()); // Run each hive cluster
+		// Run each hive cluster
+		for (const hiveCluster of this.hiveClusters) {
+			if (hiveCluster.memory?.debug) {
+				log.debug(`${hiveCluster.print} run`);
+			}
+			hiveCluster.run();
+		}
 		this.linkNetwork.run(); // Run the link network
 		this.roadLogistics.run(); // Run the road network
 		this.roomPlanner.run(); // Run the room planner
