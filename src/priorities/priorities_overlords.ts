@@ -26,6 +26,7 @@ export const OverlordPriority = {
 	outpostDefense: {
 		outpostDefense: 250,
 		guard: 251,
+		reserve: 252,
 	},
 
 	scouting: {

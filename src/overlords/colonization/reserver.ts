@@ -6,7 +6,8 @@ import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import { Tasks } from "../../tasks/Tasks";
 import { Zerg } from "../../zerg/Zerg";
-import { Overlord } from "../Overlord";
+import { Overlord, OverlordMemory } from "../Overlord";
+import { OutpostSuspensionReason } from "Colony";
 
 /** Tick bias used to calculate if a reserver needs to be sent */
 const RESERVE_BUFFER_TIME = 1000;
@@ -16,12 +17,15 @@ const RESERVE_BUFFER_TIME = 1000;
  */
 @profile
 export class ReservingOverlord extends Overlord {
+	memory: OverlordMemory & {
+		reserverCount: number;
+	};
+
 	reservers: Zerg[];
 	settings = {
 		resetSignature: false,
 	};
 	reservation: { username?: string; ticksToEnd?: number };
-	reserverCount: number;
 
 	constructor(
 		directive: DirectiveOutpost,
@@ -34,6 +38,23 @@ export class ReservingOverlord extends Overlord {
 		this.reservers = this.zerg(Roles.claim);
 		this.reserverCount = 0;
 		this.refreshReservation();
+	}
+
+	get deactivationReasons() {
+		return new Set([
+			OutpostSuspensionReason.cpu,
+			OutpostSuspensionReason.upkeep,
+			OutpostSuspensionReason.harassment,
+			OutpostSuspensionReason.reserved,
+		]);
+	}
+
+	get reserverCount() {
+		return this.memory.reserverCount ?? 0;
+	}
+
+	set reserverCount(c: number) {
+		this.memory.reserverCount = Math.max(0, c);
 	}
 
 	private refreshReservation() {
@@ -65,7 +86,17 @@ export class ReservingOverlord extends Overlord {
 	}
 
 	init() {
-		this.wishlist(this.reserverCount, Setups.infestors.reserve);
+		let priority = this.priority;
+		if (
+			this.isSuspended &&
+			this.colony.memory.outposts[this.pos.roomName].suspendReason ===
+				OutpostSuspensionReason.reserved
+		) {
+			priority = OverlordPriority.outpostDefense.reserve;
+		}
+		this.wishlist(this.reserverCount, Setups.infestors.reserve, {
+			priority,
+		});
 	}
 
 	private handleReserver(reserver: Zerg): void {
