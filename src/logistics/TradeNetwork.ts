@@ -25,7 +25,7 @@ import {
 	leftArrow,
 	rightArrow,
 } from "../utilities/stringConstants";
-import { maxBy, minBy, printRoomName } from "../utilities/utils";
+import { entries, maxBy, minBy, printRoomName } from "../utilities/utils";
 import { config } from "config";
 
 interface MarketCache {
@@ -66,6 +66,11 @@ export interface TraderStats {
 			credits: number;
 		};
 	};
+	prices: {
+		[resourceType: string]: {
+			avg: number;
+		};
+	};
 }
 
 const getDefaultTraderMemory: () => TraderMemory = () => ({
@@ -86,6 +91,7 @@ const getDefaultTraderStats: () => TraderStats = () => ({
 	credits: 0,
 	bought: {},
 	sold: {},
+	prices: {},
 });
 
 // Maximum prices I'm willing to pay to buy various resources - based on shard2 market data in June 2018
@@ -1412,6 +1418,13 @@ export class TraderJoe implements ITradeNetwork {
 					this.stats.sold[resourceType].credits += amount * price;
 				}
 			}
+		}
+		// Market prices
+		for (const [resourceType, { avg }] of entries(
+			this.memory.cache.history
+		)) {
+			this.stats.prices[resourceType] ||= { avg: 0 };
+			this.stats.prices[resourceType].avg = avg;
 		}
 	}
 }
