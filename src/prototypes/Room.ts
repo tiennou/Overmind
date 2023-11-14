@@ -185,6 +185,7 @@ Object.defineProperty(Room.prototype, "dangerousPlayerHostiles", {
 					(creep: Creep) =>
 						creep.getActiveBodyparts(ATTACK) > 0 ||
 						creep.getActiveBodyparts(RANGED_ATTACK) > 0 ||
+						creep.getActiveBodyparts(CLAIM) > 0 ||
 						creep.getActiveBodyparts(WORK) > 0
 				);
 			} else {
