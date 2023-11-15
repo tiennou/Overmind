@@ -31,6 +31,10 @@ const TERMINAL_THRESHOLDS = {
 		target: 3500, // LAB_MINERAL_CAPACITY + 500
 		tolerance: 500,
 	},
+	commodities_raw: {
+		target: 5000,
+		tolerance: 1000,
+	},
 	commodities: {
 		target: 5000,
 		tolerance: 500,
@@ -56,6 +60,8 @@ function getTerminalThresholds(
 		thresholds = TERMINAL_THRESHOLDS.intermediateReactants;
 	} else if (Abathur.isBoost(resource)) {
 		thresholds = TERMINAL_THRESHOLDS.boosts;
+	} else if (Abathur.isRawCommodity(resource)) {
+		thresholds = TERMINAL_THRESHOLDS.commodities_raw;
 	} else if (Abathur.isCommodity(resource)) {
 		thresholds = TERMINAL_THRESHOLDS.commodities;
 	}

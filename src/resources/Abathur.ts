@@ -291,7 +291,7 @@ export class _Abathur {
 		return !!_boostTypesTierLookup.carry[resource];
 	}
 
-	isDepositResource(resource: ResourceConstant): boolean {
+	isRawCommodity(resource: ResourceConstant): boolean {
 		return DEPOSITS_ALL.includes(resource);
 	}
 

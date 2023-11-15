@@ -218,7 +218,9 @@ type TerminalNetworkThresholdResourceType =
 	| "boosts_t1"
 	| "boosts_t2"
 	| "boosts_t3"
-	| "intermediates";
+	| "intermediates"
+	| "commodities_raw"
+	| `commodities_t${0 | 1 | 2 | 3 | 4 | 5}`;
 
 type TerminalNetworkThresholds = Record<
 	TerminalNetworkThresholdSpecial,

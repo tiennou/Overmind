@@ -123,13 +123,37 @@ function getThresholds(resource: _ResourceConstantSansEnergy): Threshold {
 		return thresholds.default;
 	}
 	// Base deposit resources
-	if (Abathur.isDepositResource(resource)) {
-		return thresholds.dont_care;
+	if (Abathur.isRawCommodity(resource)) {
+		return thresholds.commodities_raw ?? thresholds.dont_care;
 	}
 	// Everything else should be a commodity
 	if (Abathur.isCommodity(resource)) {
-		return thresholds.dont_care;
+		const tier = Abathur.getCommodityTier(resource);
+		let threshold: Threshold | undefined;
+		switch (tier) {
+			case 0:
+				threshold = thresholds.commodities_t0;
+				break;
+			case 1:
+				threshold = thresholds.commodities_t1;
+				break;
+			case 2:
+				threshold = thresholds.commodities_t1;
+				break;
+			case 3:
+				threshold = thresholds.commodities_t1;
+				break;
+			case 4:
+				threshold = thresholds.commodities_t1;
+				break;
+			case 5:
+				threshold = thresholds.commodities_t1;
+				break;
+		}
+
+		return threshold ?? thresholds.dont_care;
 	}
+
 	// Shouldn't reach here since I've handled everything above
 	log.error(
 		`Shouldn't reach here! Unhandled resource ${resource} in getThresholds()!`
