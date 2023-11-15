@@ -247,8 +247,10 @@ export class CombatZerg extends Zerg {
 			this.pos.inRangeToXY(c.pos.x, c.pos.y, 2)
 		);
 		if (nearbyHostiles.length && !this.inRampart) {
-			// this.say('run!');
-			this.rangedMassAttack();
+			// this.rangedMassAttack();
+			this.debug(
+				`Kiting nearby targets: ${nearbyHostiles.map((h) => h.print)}`
+			);
 			return this.kite(nearbyHostiles);
 		}
 		return NO_ACTION;
@@ -358,12 +360,15 @@ export class CombatZerg extends Zerg {
 					(h) => CombatIntel.getAttackDamage(h) > 0
 				);
 				for (const hostile of meleeHostiles) {
+					this.debug(`adding melee hostile ${hostile.print}`);
 					avoid.push({ pos: hostile.pos, range: targetRange - 1 });
 				}
 				if (this.kiteIfNecessary() !== NO_ACTION) {
+					this.debug(`kited`);
 					return;
 				}
 			}
+			this.debug(`moving closer to ${target} at range ${targetRange}`);
 			return Movement.combatMove(
 				this,
 				[{ pos: target.pos, range: targetRange }],

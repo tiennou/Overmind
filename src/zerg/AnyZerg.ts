@@ -1,6 +1,6 @@
 import { NO_ACTION } from "utilities/errors";
 import { Colony, getAllColonies } from "../Colony";
-import { log } from "../console/log";
+import { LogMessage, log } from "../console/log";
 import { isAnyZerg, isPowerCreep } from "../declarations/typeGuards";
 import { Movement, MoveOptions } from "../movement/Movement";
 import { Pathing } from "../movement/Pathing";
@@ -143,9 +143,9 @@ export abstract class AnyZerg {
 		}
 	}
 
-	debug(...args: any[]) {
+	debug(...args: LogMessage[]) {
 		if (this.memory.debug) {
-			log.alert(this.print, args);
+			log.alert(this.print, ...args);
 		}
 	}
 
@@ -519,16 +519,28 @@ export abstract class AnyZerg {
 			this.room.dangerousHostiles,
 			RANGES.RANGED_ATTACK + 2
 		);
-		const roomIsSafe = this.room.isSafe || closestHostile;
+		const roomIsSafe = this.room.isSafe || !!closestHostile;
 
 		// If you previously determined you are in danger, wait for timer to expire
 		if (this.memory.avoidDanger) {
 			if (this.memory.avoidDanger.timer > 0 && !roomIsSafe) {
 				if (this.memory.avoidDanger.flee === true) {
+					this.debug(
+						() =>
+							`in danger, random flee from ${this.room.dangerousHostiles.map(
+								(c) => c.print
+							)}!`
+					);
 					this.flee(this.room.dangerousHostiles, opts);
 					return true;
 				}
 
+				this.debug(
+					() =>
+						`in danger, fleeing from ${this.room.dangerousHostiles.map(
+							(c) => c.print
+						)} toward ${this.memory.avoidDanger!.flee}!`
+				);
 				this.goToRoom(this.memory.avoidDanger.flee);
 				if (opts.dropEnergy && this.store.energy > 0) {
 					this.drop(RESOURCE_ENERGY); // transfer energy to container check is only run on first danger tick
@@ -541,6 +553,11 @@ export abstract class AnyZerg {
 		}
 
 		if (!roomIsSafe || this.hits < this.hitsMax) {
+			this.debug(
+				() =>
+					`roomIsSafe: ${roomIsSafe}, damage: ${this.hits}/${this.hitsMax}`
+			);
+
 			if (
 				Cartographer.roomType(this.room.name) == ROOMTYPE_SOURCEKEEPER
 			) {
@@ -554,6 +571,12 @@ export abstract class AnyZerg {
 						this.pos.inRangeTo(fleeThing, 5)
 					)
 				) {
+					this.debug(
+						() =>
+							`${
+								!roomIsSafe ? "room is unsafe" : `damaged`
+							}, but in SK room, and no hostiles around, ignoring`
+					);
 					// Not actually in danger
 					return false;
 				}
@@ -616,6 +639,12 @@ export abstract class AnyZerg {
 
 			if (flee === true) {
 				this.flee(this.room.dangerousHostiles, opts);
+				this.debug(
+					() =>
+						`random flee from ${this.room.dangerousHostiles.map(
+							(c) => c.print
+						)}`
+				);
 				return true;
 			}
 
@@ -630,6 +659,7 @@ export abstract class AnyZerg {
 				}
 			}
 
+			this.debug(() => `fleeing toward room ${flee}`);
 			this.goToRoom(flee);
 			return true;
 		}
