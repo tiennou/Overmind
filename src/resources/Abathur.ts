@@ -130,28 +130,36 @@ export const baseStockAmounts: { [key: string]: number } = {
 };
 
 /** Priorities for commodity production */
-export const COMMODITY_PRIORITIES = [
+export const COMMODITY_PRIORITIES: (
+	| CommodityConstant
+	| MineralConstant
+	| RESOURCE_ENERGY
+	| RESOURCE_GHODIUM
+)[] = [
 	// Energy
 	RESOURCE_BATTERY,
-	RESOURCE_ENERGY,
 
 	// Base resources
-	RESOURCE_UTRIUM_BAR,
-	RESOURCE_UTRIUM,
-	RESOURCE_LEMERGIUM_BAR,
-	RESOURCE_LEMERGIUM,
-	RESOURCE_ZYNTHIUM_BAR,
-	RESOURCE_ZYNTHIUM,
-	RESOURCE_KEANIUM_BAR,
-	RESOURCE_KEANIUM,
-	RESOURCE_GHODIUM_MELT,
-	RESOURCE_GHODIUM,
 	RESOURCE_OXIDANT,
-	RESOURCE_OXYGEN,
 	RESOURCE_REDUCTANT,
-	RESOURCE_HYDROGEN,
 	RESOURCE_PURIFIER,
-	RESOURCE_CATALYST,
+	RESOURCE_UTRIUM_BAR,
+	RESOURCE_LEMERGIUM_BAR,
+	RESOURCE_ZYNTHIUM_BAR,
+	RESOURCE_KEANIUM_BAR,
+	RESOURCE_GHODIUM_MELT,
+
+	// Reverse commodities
+	// FIXME: Disable reverse productions for those so that we don't cycle back and forth
+	// RESOURCE_ENERGY,
+	// RESOURCE_OXYGEN,
+	// RESOURCE_HYDROGEN,
+	// RESOURCE_CATALYST,
+	// RESOURCE_UTRIUM,
+	// RESOURCE_LEMERGIUM,
+	// RESOURCE_ZYNTHIUM,
+	// RESOURCE_KEANIUM,
+	// RESOURCE_GHODIUM,
 
 	// Higher commodities
 	RESOURCE_COMPOSITE,
@@ -191,10 +199,12 @@ export const COMMODITY_PRIORITIES = [
 	RESOURCE_CONDENSATE,
 ];
 
-const PRIORITIZED_COMMODITIES = entries(COMMODITIES).sort(
-	([a], [b]) =>
-		COMMODITY_PRIORITIES.indexOf(a) - COMMODITY_PRIORITIES.indexOf(b)
-);
+const PRIORITIZED_COMMODITIES = entries(COMMODITIES)
+	.filter((c) => COMMODITY_PRIORITIES.includes(c[0]))
+	.sort(
+		([a], [b]) =>
+			COMMODITY_PRIORITIES.indexOf(a) - COMMODITY_PRIORITIES.indexOf(b)
+	);
 
 export interface Reaction {
 	mineralType: string;
@@ -299,9 +309,14 @@ export class _Abathur {
 		return resource in COMMODITIES_DATA;
 	}
 
-	getCommodityChain(resource: ResourceConstant, chain?: string): string | undefined {
+	getCommodityChain(
+		resource: ResourceConstant,
+		chain?: string
+	): string | undefined {
 		const resourceChain = COMMODITIES_DATA[resource]?.chain;
-		if (!resourceChain) return undefined;
+		if (!resourceChain) {
+			return undefined;
+		}
 
 		return chain && chain === resourceChain ? chain : resourceChain;
 	}
