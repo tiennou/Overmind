@@ -745,10 +745,7 @@ export class _Abathur {
 					colony,
 					product
 				);
-				if (
-					colony.assets[product] >=
-					(productThreshold.surplus ?? Infinity)
-				) {
+				if (colony.assets[product] >= productThreshold.target) {
 					this.debug(
 						() =>
 							`${
@@ -779,7 +776,9 @@ export class _Abathur {
 					// Check if the colony already has more of this resource than it needs
 					const resourceThreshold =
 						Overmind.terminalNetwork.thresholds(colony, resource);
-					if (colony.assets[resource] < resourceThreshold.target) {
+					const cutoff =
+						resourceThreshold.target - resourceThreshold.tolerance;
+					if (colony.assets[resource] < cutoff) {
 						this.debug(
 							() =>
 								`${
@@ -813,27 +812,9 @@ export class _Abathur {
 							return false;
 						}
 					}
-					if (
-						colony.assets[resource] <=
-						(resourceThreshold.surplus ?? 0)
-					) {
-						this.debug(
-							() =>
-								`${
-									colony.print
-								}, checking ${product}>${resource}, not over surplus (stored: ${
-									colony.assets[resource]
-								}, threshold: ${JSON.stringify(
-									resourceThreshold
-								)})`
-						);
-						return false;
-					}
 
 					const maxBatch = Math.floor(
-						(colony.assets[resource] -
-							(resourceThreshold.surplus ?? 0)) /
-							amount
+						(globalAssets[resource] - cutoff) / amount
 					);
 					batchAmount = Math.max(Math.min(maxBatch, batchAmount), 0);
 					this.debug(
