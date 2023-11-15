@@ -347,6 +347,18 @@ export class WorkerOverlord extends Overlord {
 			CONTROLLER_DOWNGRADE[this.colony.controller.level] *
 			(this.colony.controller.level < 4 ? 0.3 : 0.7);
 
+		this.debug(() => {
+			const cont = this.colony.controller;
+			const dbg = {
+				downgradeLevel,
+				upgradeBlocked: cont.upgradeBlocked,
+				ticksToDowngrade: cont.ticksToDowngrade,
+				progress: cont.progress,
+				progressTotal: cont.progressTotal,
+			};
+			return `shouldPreventControllerDowngrade: ${JSON.stringify(dbg)}`;
+		});
+
 		return (
 			(!this.colony.controller.upgradeBlocked ||
 				this.colony.controller.upgradeBlocked < 30) &&
@@ -587,7 +599,7 @@ export class WorkerOverlord extends Overlord {
 				worker.task = Tasks.withdraw(battery);
 				return true;
 			}
-			if (this.rechargeActions(worker)) {
+			if (this.rechargeActions(worker, true)) {
 				return true;
 			}
 		}
@@ -625,7 +637,7 @@ export class WorkerOverlord extends Overlord {
 		return false;
 	}
 
-	private rechargeActions(worker: Zerg) {
+	private rechargeActions(worker: Zerg, upgrading = false) {
 		if (worker.store.energy > 0) {
 			return false;
 		}
@@ -640,6 +652,18 @@ export class WorkerOverlord extends Overlord {
 			) !== 0
 		) {
 			workerWithdrawLimit = 750;
+		}
+		if (upgrading) {
+			const link = this.colony.upgradeSite.link;
+			if (
+				link &&
+				this.pos.inRangeTo(link.pos, 3) &&
+				link.store[RESOURCE_ENERGY] > 0
+			) {
+				this.debug(`${worker.print} refilling from link as upgrader`);
+				worker.task = Tasks.withdraw(link, RESOURCE_ENERGY);
+				return true;
+			}
 		}
 		// this.debug(`${worker.print} going for a refill`);
 		worker.task = Tasks.recharge(workerWithdrawLimit);
