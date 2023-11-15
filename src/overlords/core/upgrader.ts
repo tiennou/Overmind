@@ -87,6 +87,7 @@ export class UpgradingOverlord extends Overlord {
 				this.upgradeSite.link &&
 				this.upgradeSite.link.hits < this.upgradeSite.link.hitsMax
 			) {
+				this.debug(`${upgrader.print}: repairing link`);
 				upgrader.task = Tasks.repair(this.upgradeSite.link);
 				return;
 			}
@@ -95,12 +96,14 @@ export class UpgradingOverlord extends Overlord {
 				this.upgradeSite.battery &&
 				this.upgradeSite.battery.hits < this.upgradeSite.battery.hitsMax
 			) {
+				this.debug(`${upgrader.print}: repairing battery`);
 				upgrader.task = Tasks.repair(this.upgradeSite.battery);
 				return;
 			}
 			// Build construction site
 			const inputSite = this.upgradeSite.findInputConstructionSite();
 			if (inputSite) {
+				this.debug(`${upgrader.print}: building ${inputSite}`);
 				upgrader.task = Tasks.build(inputSite);
 				return;
 			}
@@ -109,11 +112,13 @@ export class UpgradingOverlord extends Overlord {
 				!this.upgradeSite.controller.signedByMe &&
 				!this.upgradeSite.controller.signedByScreeps
 			) {
+				this.debug(`${upgrader.print}: signing controller`);
 				upgrader.task = Tasks.signController(
 					this.upgradeSite.controller
 				);
 				return;
 			}
+			this.debug(`${upgrader.print}: upgrading`);
 			upgrader.task = Tasks.upgrade(this.upgradeSite.controller);
 		} else {
 			// Try recharging from link first; if the link has no energy,
@@ -122,6 +127,7 @@ export class UpgradingOverlord extends Overlord {
 				this.upgradeSite.link &&
 				this.upgradeSite.link.store[RESOURCE_ENERGY] > 0
 			) {
+				this.debug(`${upgrader.print}: withdrawing from link`);
 				upgrader.task = Tasks.withdraw(this.upgradeSite.link);
 				return;
 			}
@@ -129,20 +135,15 @@ export class UpgradingOverlord extends Overlord {
 				this.upgradeSite.battery &&
 				this.upgradeSite.battery.energy > 0
 			) {
+				this.debug(`${upgrader.print}: withdrawing from battery`);
 				upgrader.task = Tasks.withdraw(this.upgradeSite.battery);
 				return;
 			}
-			if (!this.upgradeSite.link) {
-				// Find somewhere else to recharge from
-				// TODO: BUG HERE IF NO UPGRADE CONTAINER
-				if (
-					this.upgradeSite.battery &&
-					this.upgradeSite.battery.targetedBy.length == 0
-				) {
-					upgrader.task = Tasks.recharge();
-					return;
-				}
-			}
+
+			// Find somewhere else to recharge from
+			this.debug(`${upgrader.print}: heading off to recharge`);
+			upgrader.task = Tasks.recharge();
+			return;
 		}
 	}
 
