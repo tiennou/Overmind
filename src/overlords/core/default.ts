@@ -12,53 +12,76 @@ import { isCreep } from "declarations/typeGuards";
  */
 @profile
 export class DefaultOverlord extends Overlord {
+	refreshZerg: Map<string, Zerg>;
 	idleZerg: Zerg[];
+	retiredZerg: Zerg[];
 
 	constructor(colony: Colony) {
 		super(colony, "default", OverlordPriority.default);
 		this.idleZerg = [];
-
-		// for (const zerg of this.getAllZerg()) {
-		// 	if (!this.creepUsageReport[zerg.roleName]) {
-		// 		this.creepUsageReport[zerg.roleName] = [0, 0];
-		// 	}
-		// 	this.creepUsageReport[zerg.roleName]![0] += 1;
-		// }
+		this.retiredZerg = [];
+		this.refreshZerg = new Map();
 	}
 
 	init() {
 		// Zergs are collected at end of init phase; by now anything needing to be claimed already has been
-		const zergs = _.map(
+		const colonyZergs = _.map(
 			this.colony.creeps,
 			(creep) =>
 				Overmind.zerg[creep.name] || (isCreep(creep) && new Zerg(creep))
 		);
-		this.idleZerg = _.filter(zergs, (zerg) => !zerg.overlord);
+		this.idleZerg = _.filter(colonyZergs, (zerg) => !zerg.overlord);
+
 		for (const zerg of this.idleZerg) {
-			zerg.refresh();
+			this.refreshZerg.set(zerg.id, zerg);
 		}
 
-		const retired = this.getAllZerg().filter((z) => z.memory.retired);
-		this.debug(
-			`${retired.length} retired zergs: ${retired.map(
-				(z) => `${z.print}@${z.pos.print}`
-			)}`
-		);
-		const colonySpawns = this.colony?.hatchery?.spawns ?? [];
-		for (const zerg of retired) {
+		this.retiredZerg = _.filter(colonyZergs, (zerg) => zerg.memory.retired);
+
+		for (const zerg of this.retiredZerg) {
+			this.refreshZerg.set(zerg.id, zerg);
+		}
+
+		this.debug(() => {
+			const obj = {
+				idle: this.idleZerg.map((z) => z.print).join(", "),
+				retired: this.retiredZerg.map((z) => z.print).join(", "),
+			};
+			return `${this.print}: ${JSON.stringify(obj)}`;
+		});
+
+		for (const [_id, zerg] of this.refreshZerg) {
+			zerg.refresh();
+		}
+	}
+
+	private handleIdle(_zerg: Zerg) {
+		// We do nothing here, this only exists so manually scheduled tasks to idle creeps get to run
+	}
+
+	private handleRetired(zerg: Zerg) {
+		if (zerg.memory.retired) {
+			const colonySpawns = this.colony?.hatchery?.spawns ?? [];
 			const nearbySpawn =
 				zerg.pos.findClosestByMultiRoomRange(colonySpawns);
-			if (nearbySpawn) {
-				zerg.task = new TaskRetire(nearbySpawn);
-			} else {
+
+			this.debug(
+				`retiring ${zerg.print}@${zerg.pos.print} to ${nearbySpawn?.print}`
+			);
+			if (!nearbySpawn) {
 				zerg.suicide();
+				return;
 			}
+
+			zerg.task = new TaskRetire(nearbySpawn);
+			return;
 		}
 	}
 
 	run() {
-		for (const zerg of this.getAllZerg()) {
-			zerg.run();
-		}
+		this.autoRun(this.idleZerg, (idleZerg) => this.handleIdle(idleZerg));
+		this.autoRun(this.retiredZerg, (idleZerg) =>
+			this.handleRetired(idleZerg)
+		);
 	}
 }

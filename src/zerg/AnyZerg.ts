@@ -369,6 +369,7 @@ export abstract class AnyZerg {
 	 * Reassigns the creep to work under a new overlord and as a new role.
 	 */
 	reassign(newOverlord: Overlord | null) {
+		delete this.memory.retired;
 		this.overlord = newOverlord;
 		if (
 			newOverlord &&
