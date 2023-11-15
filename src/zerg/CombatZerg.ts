@@ -206,10 +206,12 @@ export class CombatZerg extends Zerg {
 				1,
 				possibleTargets
 			) || CombatTargeting.findBestStructureTargetInRange(this, 1);
-		this.debug(`Melee target: ${target}`);
-		if (target) {
-			return this.attack(target);
+		if (!target) {
+			return NO_ACTION;
 		}
+
+		this.debug(`Melee-ing target: ${target}`);
+		return this.attack(target);
 	}
 
 	/**
@@ -223,18 +225,20 @@ export class CombatZerg extends Zerg {
 				possibleTargets
 			) || CombatTargeting.findBestStructureTargetInRange(this, 3, false);
 		// disabled allowUnowned structure attack in order not to desrtory poison walls
-		this.debug(`Ranged target: ${target}`);
-		if (target) {
-			if (
-				allowMassAttack &&
-				CombatIntel.getMassAttackDamage(this, possibleTargets) >
-					CombatIntel.getRangedAttackDamage(this)
-			) {
-				return this.rangedMassAttack();
-			} else {
-				return this.rangedAttack(target);
-			}
+		if (!target) {
+			return NO_ACTION;
 		}
+
+		if (
+			allowMassAttack &&
+			CombatIntel.getMassAttackDamage(this, possibleTargets) >
+				CombatIntel.getRangedAttackDamage(this)
+		) {
+			this.debug(`Ranged mass attack on target: ${target}`);
+			return this.rangedMassAttack();
+		}
+		this.debug(`Ranged attack on target: ${target}`);
+		return this.rangedAttack(target);
 	}
 
 	private kiteIfNecessary() {
@@ -247,6 +251,7 @@ export class CombatZerg extends Zerg {
 			this.rangedMassAttack();
 			return this.kite(nearbyHostiles);
 		}
+		return NO_ACTION;
 	}
 
 	/**
@@ -258,16 +263,17 @@ export class CombatZerg extends Zerg {
 			allowRangedHeal ? RANGES.HEAL : RANGES.RANGED_HEAL,
 			friendlies
 		);
-		if (target) {
-			this.debug(`Heal target: ${target}`);
-			if (this.pos.getRangeTo(target) <= RANGES.HEAL) {
-				return this.heal(target);
-			} else if (
-				allowRangedHeal &&
-				this.pos.getRangeTo(target) <= RANGES.RANGED_HEAL
-			) {
-				return this.rangedHeal(target);
-			}
+		if (!target) {
+			return NO_ACTION;
+		}
+		this.debug(`Heal target: ${target}`);
+		if (this.pos.getRangeTo(target) <= RANGES.HEAL) {
+			return this.heal(target);
+		} else if (
+			allowRangedHeal &&
+			this.pos.getRangeTo(target) <= RANGES.RANGED_HEAL
+		) {
+			return this.rangedHeal(target);
 		}
 	}
 
@@ -354,7 +360,7 @@ export class CombatZerg extends Zerg {
 				for (const hostile of meleeHostiles) {
 					avoid.push({ pos: hostile.pos, range: targetRange - 1 });
 				}
-				if (this.kiteIfNecessary()) {
+				if (this.kiteIfNecessary() !== NO_ACTION) {
 					return;
 				}
 			}

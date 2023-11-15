@@ -1,3 +1,4 @@
+import { NO_ACTION } from "utilities/errors";
 import { log } from "../../console/log";
 import { CombatSetups, Roles } from "../../creepSetups/setups";
 import { DirectiveSKOutpost } from "../../directives/colony/outpostSK";
@@ -122,7 +123,7 @@ export class SourceReaperOverlord extends CombatOverlord {
 			// Handle invader actions
 			if (reaper.hits >= reaper.hitsMax * 0.5) {
 				const result = reaper.autoMelee(this.room.invaders);
-				if (result == undefined) {
+				if (result === NO_ACTION) {
 					// didn't attack
 					reaper.autoHeal();
 				}
