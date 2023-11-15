@@ -351,56 +351,62 @@ export const _boostTierLookupAllTypes: {
 	[resource in ResourceConstant]: BoostTier;
 } = _.extend({}, ..._.values(_boostTypesTierLookup));
 
-export const COMMODITIES_ALL: ResourceConstant[] = [
+export const COMMODITIES_DATA: {
+	[resource: string]: { lvl: number; chain?: string };
+} = {
 	// Compressed mineral compounds
-	RESOURCE_UTRIUM_BAR,
-	RESOURCE_LEMERGIUM_BAR,
-	RESOURCE_ZYNTHIUM_BAR,
-	RESOURCE_KEANIUM_BAR,
-	RESOURCE_GHODIUM_MELT,
-	RESOURCE_OXIDANT,
-	RESOURCE_REDUCTANT,
-	RESOURCE_PURIFIER,
-	RESOURCE_BATTERY,
+	[RESOURCE_UTRIUM_BAR]: { lvl: 0 },
+	[RESOURCE_LEMERGIUM_BAR]: { lvl: 0 },
+	[RESOURCE_ZYNTHIUM_BAR]: { lvl: 0 },
+	[RESOURCE_KEANIUM_BAR]: { lvl: 0 },
+	[RESOURCE_GHODIUM_MELT]: { lvl: 0 },
+	[RESOURCE_OXIDANT]: { lvl: 0 },
+	[RESOURCE_REDUCTANT]: { lvl: 0 },
+	[RESOURCE_PURIFIER]: { lvl: 0 },
+	[RESOURCE_BATTERY]: { lvl: 0 },
 	// Higher commodities
-	RESOURCE_COMPOSITE,
-	RESOURCE_CRYSTAL,
-	RESOURCE_LIQUID,
-	// Basic regional commodities
-	RESOURCE_WIRE,
-	RESOURCE_CELL,
-	RESOURCE_ALLOY,
-	RESOURCE_CONDENSATE,
+	[RESOURCE_COMPOSITE]: { lvl: 1, chain: "common" },
+	[RESOURCE_CRYSTAL]: { lvl: 1, chain: "common" },
+	[RESOURCE_LIQUID]: { lvl: 1, chain: "common" },
 	// Mechanical chain
-	RESOURCE_TUBE,
-	RESOURCE_FIXTURES,
-	RESOURCE_FRAME,
-	RESOURCE_HYDRAULICS,
-	RESOURCE_MACHINE,
+	[RESOURCE_ALLOY]: { lvl: 0, chain: RESOURCE_METAL },
+	[RESOURCE_TUBE]: { lvl: 1, chain: RESOURCE_METAL },
+	[RESOURCE_FIXTURES]: { lvl: 2, chain: RESOURCE_METAL },
+	[RESOURCE_FRAME]: { lvl: 3, chain: RESOURCE_METAL },
+	[RESOURCE_HYDRAULICS]: { lvl: 4, chain: RESOURCE_METAL },
+	[RESOURCE_MACHINE]: { lvl: 5, chain: RESOURCE_METAL },
 	// Biological chain
-	RESOURCE_PHLEGM,
-	RESOURCE_TISSUE,
-	RESOURCE_MUSCLE,
-	RESOURCE_ORGANOID,
-	RESOURCE_ORGANISM,
+	[RESOURCE_CELL]: { lvl: 0, chain: RESOURCE_BIOMASS },
+	[RESOURCE_PHLEGM]: { lvl: 1, chain: RESOURCE_BIOMASS },
+	[RESOURCE_TISSUE]: { lvl: 2, chain: RESOURCE_BIOMASS },
+	[RESOURCE_MUSCLE]: { lvl: 3, chain: RESOURCE_BIOMASS },
+	[RESOURCE_ORGANOID]: { lvl: 4, chain: RESOURCE_BIOMASS },
+	[RESOURCE_ORGANISM]: { lvl: 5, chain: RESOURCE_BIOMASS },
 	// Electronic chain
-	RESOURCE_SWITCH,
-	RESOURCE_TRANSISTOR,
-	RESOURCE_MICROCHIP,
-	RESOURCE_CIRCUIT,
-	RESOURCE_DEVICE,
+	[RESOURCE_WIRE]: { lvl: 0, chain: RESOURCE_SILICON },
+	[RESOURCE_SWITCH]: { lvl: 1, chain: RESOURCE_SILICON },
+	[RESOURCE_TRANSISTOR]: { lvl: 2, chain: RESOURCE_SILICON },
+	[RESOURCE_MICROCHIP]: { lvl: 3, chain: RESOURCE_SILICON },
+	[RESOURCE_CIRCUIT]: { lvl: 4, chain: RESOURCE_SILICON },
+	[RESOURCE_DEVICE]: { lvl: 5, chain: RESOURCE_SILICON },
 	// Mystical chain
-	RESOURCE_CONCENTRATE,
-	RESOURCE_EXTRACT,
-	RESOURCE_SPIRIT,
-	RESOURCE_EMANATION,
-	RESOURCE_ESSENCE,
-];
-export const _commoditiesLookup: { [resource: string]: boolean | undefined } =
-	_.zipObject(
-		COMMODITIES_ALL,
-		_.map(COMMODITIES_ALL, () => true)
-	);
+	[RESOURCE_CONDENSATE]: { lvl: 0, chain: RESOURCE_MIST },
+	[RESOURCE_CONCENTRATE]: { lvl: 1, chain: RESOURCE_MIST },
+	[RESOURCE_EXTRACT]: { lvl: 2, chain: RESOURCE_MIST },
+	[RESOURCE_SPIRIT]: { lvl: 3, chain: RESOURCE_MIST },
+	[RESOURCE_EMANATION]: { lvl: 4, chain: RESOURCE_MIST },
+	[RESOURCE_ESSENCE]: { lvl: 5, chain: RESOURCE_MIST },
+};
+
+export const COMMODITIES_ALL: ResourceConstant[] = <ResourceConstant[]>(
+	Object.keys(COMMODITIES_DATA)
+);
+
+export const COMMODITIES_CHAINS: ResourceConstant[] = Object.entries(
+	COMMODITIES_DATA
+)
+	.filter(([_, data]) => data.chain)
+	.map(([res, _]) => <ResourceConstant>res);
 
 export const DEPOSITS_ALL: ResourceConstant[] = [
 	RESOURCE_SILICON,

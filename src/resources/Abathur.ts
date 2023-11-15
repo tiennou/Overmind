@@ -7,12 +7,12 @@ import {
 	_baseResourcesLookup,
 	_boostTierLookupAllTypes,
 	_boostTypesTierLookup,
-	_commoditiesLookup,
 	_mineralCompoundsAllLookup,
 	BASE_RESOURCES,
 	BOOST_PARTS,
 	BOOST_TIERS,
 	BoostTier,
+	COMMODITIES_DATA,
 	DEPOSITS_ALL,
 	INTERMEDIATE_REACTANTS,
 	REAGENTS,
@@ -306,7 +306,23 @@ export class _Abathur {
 	}
 
 	isCommodity(resource: ResourceConstant): boolean {
-		return !!_commoditiesLookup[resource];
+		return resource in COMMODITIES_DATA;
+	}
+
+	getCommodityChain(
+		resource: ResourceConstant,
+		chain?: string
+	): string | undefined {
+		const resourceChain = COMMODITIES_DATA[resource]?.chain;
+		if (!resourceChain) {
+			return undefined;
+		}
+
+		return chain && chain === resourceChain ? chain : resourceChain;
+	}
+
+	getCommodityTier(resource: ResourceConstant): number | undefined {
+		return COMMODITIES_DATA[resource].lvl ?? undefined;
 	}
 
 	getBoostTier(boost: ResourceConstant): BoostTier | "notaboost" {
