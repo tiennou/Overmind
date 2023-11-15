@@ -846,7 +846,7 @@ export class _Abathur {
 								globalAssets[resource]
 							}, threshold: ${JSON.stringify(resourceThreshold)})`
 					);
-					return true;
+					return batchAmount > 0;
 				});
 			}
 		);
