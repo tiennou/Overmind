@@ -23,7 +23,10 @@
     ]
   },
   "include": [
-    "src/**/*"
+    ".eslintrc.cjs",
+    "prettier.config.js",
+    "src/**/*",
+    "tools/**/*",
   ],
   "exclude": [
     "node_modules"
