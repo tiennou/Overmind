@@ -1,10 +1,12 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
+export type transferAllTargetType =
+	| StructureStorage
+	| StructureTerminal
+	| StructureContainer;
 
-export type transferAllTargetType = StructureStorage | StructureTerminal | StructureContainer;
-
-export const transferAllTaskName = 'transferAll';
+export const transferAllTaskName = "transferAll";
 
 @profile
 export class TaskTransferAll extends Task<transferAllTargetType> {
@@ -12,7 +14,11 @@ export class TaskTransferAll extends Task<transferAllTargetType> {
 		skipEnergy?: boolean;
 	};
 
-	constructor(target: transferAllTargetType, skipEnergy = false, options = {} as TaskOptions) {
+	constructor(
+		target: transferAllTargetType,
+		skipEnergy = false,
+		options = {} as TaskOptions
+	) {
 		super(transferAllTaskName, target, options);
 		this.data.skipEnergy = skipEnergy;
 	}
@@ -30,7 +36,10 @@ export class TaskTransferAll extends Task<transferAllTargetType> {
 	}
 
 	isValidTarget() {
-		return this.target.store.getUsedCapacity() < this.target.store.getCapacity();
+		return (
+			this.target.store.getUsedCapacity() <
+			this.target.store.getCapacity()
+		);
 	}
 
 	work() {

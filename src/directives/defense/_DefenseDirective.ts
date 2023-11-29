@@ -1,8 +1,7 @@
-import {CombatOverlord} from '../../overlords/CombatOverlord';
-import {Directive} from '../Directive';
+import { CombatOverlord } from "../../overlords/CombatOverlord";
+import { Directive } from "../Directive";
 
 export abstract class DefenseDirective extends Directive {
-
 	overlord: CombatOverlord;
 	overlords: {};
 
@@ -10,6 +9,4 @@ export abstract class DefenseDirective extends Directive {
 		super(flag);
 		Overmind.overseer.combatPlanner.directives.push(this);
 	}
-
-
 }

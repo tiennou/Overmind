@@ -1,17 +1,17 @@
-import { Cartographer } from 'utilities/Cartographer';
-import {log} from '../../console/log';
-import {RoomIntel} from '../../intel/RoomIntel';
-import {HarassOverlord} from '../../overlords/offense/harass';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import { config } from 'config';
+import { Cartographer } from "utilities/Cartographer";
+import { log } from "../../console/log";
+import { RoomIntel } from "../../intel/RoomIntel";
+import { HarassOverlord } from "../../overlords/offense/harass";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { config } from "config";
 
 interface DirectiveHarassMemory extends FlagMemory {
 	enhanced?: boolean;
 	aggressive?: boolean; // Harass EVERYONE
 	targetPlayer?: string;
 	roomsToHarass: string[];
-	nextSpawnTime: number;		// Wait till this time to spawn
+	nextSpawnTime: number; // Wait till this time to spawn
 }
 
 /**
@@ -20,8 +20,7 @@ interface DirectiveHarassMemory extends FlagMemory {
  */
 @profile
 export class DirectiveHarass extends Directive {
-
-	static directiveName = 'harass';
+	static directiveName = "harass";
 	static color = COLOR_RED;
 	static secondaryColor = COLOR_WHITE;
 
@@ -35,10 +34,15 @@ export class DirectiveHarass extends Directive {
 			log.error(`Ahhhhhh harassing self in room ${flag.pos.roomName}`);
 			this.remove();
 		} else {
-			log.alert(`Starting harass on ${flag.pos.roomName} owned by ${this.memory.targetPlayer}`);
+			log.alert(
+				`Starting harass on ${flag.pos.roomName} owned by ${this.memory.targetPlayer}`
+			);
 		}
 		if (this.memory.targetPlayer) {
-			this.memory.roomsToHarass = this.findNearbyReservedRooms(flag.pos.roomName, this.memory.targetPlayer);
+			this.memory.roomsToHarass = this.findNearbyReservedRooms(
+				flag.pos.roomName,
+				this.memory.targetPlayer
+			);
 		}
 	}
 
@@ -50,13 +54,14 @@ export class DirectiveHarass extends Directive {
 	init(): void {
 		// if
 		// if (!this.memory.roomsToHarass && this.memory.targetPlayer)
-
-
 	}
 
 	findNearbyReservedRoomsForHarassment() {
 		if (this.memory.targetPlayer) {
-			return this.findNearbyReservedRooms(this.flag.pos.roomName, this.memory.targetPlayer);
+			return this.findNearbyReservedRooms(
+				this.flag.pos.roomName,
+				this.memory.targetPlayer
+			);
 		}
 		return [];
 	}
@@ -69,31 +74,42 @@ export class DirectiveHarass extends Directive {
 	 */
 	findNearbyReservedRooms(roomName: string, playerName: string): string[] {
 		if (!this.memory.targetPlayer) {
-			log.error(`Unable to find which player to harass in room ${roomName}`);
+			log.error(
+				`Unable to find which player to harass in room ${roomName}`
+			);
 			return [];
 		}
 		const whitelist = Memory.settings.allies;
 		const reservedByTargetPlayer: string[] = [];
-		const adjacentRooms = _.values<string>(Cartographer.describeExits(roomName));
-		adjacentRooms.forEach(room => {
+		const adjacentRooms = _.values<string>(
+			Cartographer.describeExits(roomName)
+		);
+		adjacentRooms.forEach((room) => {
 			const reservation = RoomIntel.roomReservedBy(room);
-			console.log('Checking for harass in room ' + room);
-			if (reservation && this.memory.aggressive ? !whitelist.includes(reservation) : reservation == playerName) {
+			console.log("Checking for harass in room " + room);
+			if (
+				reservation && this.memory.aggressive ?
+					!whitelist.includes(reservation)
+				:	reservation == playerName
+			) {
 				reservedByTargetPlayer.push(room);
 				// TODO This will double add rooms next to owned rooms, making it more likely to harass them, reconsider
-				(_.values<string>(Cartographer.describeExits(room))).forEach(room => {
-					if (RoomIntel.roomReservedBy(room) == playerName) {
-						reservedByTargetPlayer.push(room);
+				_.values<string>(Cartographer.describeExits(room)).forEach(
+					(room) => {
+						if (RoomIntel.roomReservedBy(room) == playerName) {
+							reservedByTargetPlayer.push(room);
+						}
 					}
-				});
+				);
 			}
 		});
-		Game.notify(`Looking for nearby rooms to harass, found ${reservedByTargetPlayer}`);
+		Game.notify(
+			`Looking for nearby rooms to harass, found ${reservedByTargetPlayer}`
+		);
 		return reservedByTargetPlayer;
 	}
 
 	run(): void {
 		// Probably something modifying frequency of harassment
-
 	}
 }

@@ -1,26 +1,25 @@
-import {Colony} from '../../Colony';
-import {log} from '../../console/log';
-import {Roles} from '../../creepSetups/setups';
-import {BootstrappingOverlord} from '../../overlords/situational/bootstrap';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
+import { Colony } from "../../Colony";
+import { log } from "../../console/log";
+import { Roles } from "../../creepSetups/setups";
+import { BootstrappingOverlord } from "../../overlords/situational/bootstrap";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 /**
  * Bootstrapping directive: recover from a colony-wide crash or bootstrap from initial spawn-in
  */
 @profile
 export class DirectiveBootstrap extends Directive {
-
-	static directiveName = 'bootstrap';
+	static directiveName = "bootstrap";
 	static color = COLOR_ORANGE;
 	static secondaryColor = COLOR_ORANGE;
 
-	colony: Colony; 					// Emergency flag definitely has a colony
-	room: Room;							// Definitely has a room
-	private needsMiner: boolean;		// Whether a miner needs to be spawned
-	private needsManager: boolean;		// Whether a manager needs to be spawned
-	private needsQueen: boolean;		// Whether a supplier needs to be spawned
+	colony: Colony; // Emergency flag definitely has a colony
+	room: Room; // Definitely has a room
+	private needsMiner: boolean; // Whether a miner needs to be spawned
+	private needsManager: boolean; // Whether a manager needs to be spawned
+	private needsQueen: boolean; // Whether a supplier needs to be spawned
 
 	constructor(flag: Flag) {
 		super(flag);
@@ -30,12 +29,13 @@ export class DirectiveBootstrap extends Directive {
 	refresh() {
 		super.refresh();
 		this.colony.state.bootstrapping = true;
-		this.needsMiner = (this.colony.getCreepsByRole(Roles.drone).length == 0);
-		this.needsManager = (this.colony.commandCenter != undefined &&
-							 this.colony.commandCenter.overlord != undefined &&
-							 this.colony.commandCenter.link != undefined &&
-							 this.colony.getCreepsByRole(Roles.manager).length == 0);
-		this.needsQueen = (this.colony.getCreepsByRole(Roles.queen).length == 0);
+		this.needsMiner = this.colony.getCreepsByRole(Roles.drone).length == 0;
+		this.needsManager =
+			this.colony.commandCenter != undefined &&
+			this.colony.commandCenter.overlord != undefined &&
+			this.colony.commandCenter.link != undefined &&
+			this.colony.getCreepsByRole(Roles.manager).length == 0;
+		this.needsQueen = this.colony.getCreepsByRole(Roles.queen).length == 0;
 	}
 
 	spawnMoarOverlords() {
@@ -45,7 +45,9 @@ export class DirectiveBootstrap extends Directive {
 	init(): void {
 		this.alert(`Colony in bootstrap mode!`, NotifierPriority.High);
 		if (Game.time % 100 == 0) {
-			log.alert(`Colony ${this.room.print} is in emergency recovery mode.`);
+			log.alert(
+				`Colony ${this.room.print} is in emergency recovery mode.`
+			);
 		}
 	}
 
@@ -54,11 +56,16 @@ export class DirectiveBootstrap extends Directive {
 			if (this.colony.storage && this.colony.assets.energy < 5000) {
 				return; // wait a little while at higher levels before stopping bootstrapping
 			}
-			log.alert(`Colony ${this.room.print} has recovered from crash; removing bootstrap directive.`);
+			log.alert(
+				`Colony ${this.room.print} has recovered from crash; removing bootstrap directive.`
+			);
 			// Reassign any filler to the work force
 			const overlord = this.overlords.bootstrap as BootstrappingOverlord;
 			for (const filler of overlord.fillers) {
-				filler.reassign(this.colony.overlords.logistics, Roles.transport);
+				filler.reassign(
+					this.colony.overlords.logistics,
+					Roles.transport
+				);
 			}
 			// Remove the directive
 			this.remove();

@@ -1,21 +1,16 @@
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
 
-
-interface DirectiveEmptyMemory extends FlagMemory {
-
-}
+interface DirectiveEmptyMemory extends FlagMemory {}
 
 const getDefaultDirectiveEmptyMemory: () => DirectiveEmptyMemory = () => ({});
-
 
 /**
  * DOCUMENTATION GOES HERE
  */
 @profile
 export class DirectiveEmpty extends Directive {
-
-	static directiveName = 'empty';
+	static directiveName = "empty";
 	static color = COLOR_BROWN;
 	static secondaryColor = COLOR_BROWN;
 
@@ -41,12 +36,7 @@ export class DirectiveEmpty extends Directive {
 		// TODO
 	}
 
-	init(): void {
+	init(): void {}
 
-	}
-
-	run(): void {
-
-	}
-
+	run(): void {}
 }

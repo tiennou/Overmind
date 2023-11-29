@@ -1,8 +1,8 @@
 // Room intel - provides information related to room structure and occupation
 
-import {profile} from '../profiler/decorator';
-import {ExpansionEvaluator} from '../strategy/ExpansionEvaluator';
-import {Cartographer, ROOMTYPE_CORE} from '../utilities/Cartographer';
+import { profile } from "../profiler/decorator";
+import { ExpansionEvaluator } from "../strategy/ExpansionEvaluator";
+import { Cartographer, ROOMTYPE_CORE } from "../utilities/Cartographer";
 import {
 	packCoord,
 	packCoordList,
@@ -10,12 +10,18 @@ import {
 	packPos,
 	unpackCoordAsPos,
 	unpackCoordListAsPosList,
-	unpackPos
-} from '../utilities/packrat';
-import {ema, getCacheExpiration, interpolateColor, isAlly, minMax} from '../utilities/utils';
-import {CombatIntel} from './CombatIntel';
-import {Visualizer} from '../visuals/Visualizer';
-import { FIND_EXIT_PORTAL } from 'movement/Pathing';
+	unpackPos,
+} from "../utilities/packrat";
+import {
+	ema,
+	getCacheExpiration,
+	interpolateColor,
+	isAlly,
+	minMax,
+} from "../utilities/utils";
+import { CombatIntel } from "./CombatIntel";
+import { Visualizer } from "../visuals/Visualizer";
+import { FIND_EXIT_PORTAL } from "movement/Pathing";
 
 const RECACHE_TIME = 5000;
 const OWNED_RECACHE_TIME = 1000;
@@ -48,10 +54,12 @@ export interface PortalInfo extends RoomObjectInfo {
 export interface ControllerInfo extends RoomObjectInfo {
 	level: number | undefined;
 	owner: string | undefined;
-	reservation: {
-		username: string;
-		ticksToEnd: number;
-	} | undefined;
+	reservation:
+		| {
+				username: string;
+				ticksToEnd: number;
+		  }
+		| undefined;
 	safemode: number | undefined;
 	safemodeAvailable: number;
 	safemodeCooldown: number | undefined;
@@ -112,7 +120,6 @@ const defaultRoomIntelMemory: RoomIntelMemory = {
 
 @profile
 export class RoomIntel {
-
 	constructor() {
 		_.defaultsDeep(Memory.roomIntel, defaultRoomIntelMemory);
 	}
@@ -159,8 +166,13 @@ export class RoomIntel {
 	 * means that the room has been analyzed and determined to be unsuitable for expansion. Be sure to use === when
 	 * comparing to false!
 	 */
-	static getExpansionData(roomName: string): ExpansionData | false | undefined {
-		if (!Memory.rooms[roomName] || Memory.rooms[roomName][RMEM.EXPANSION_DATA] === undefined) {
+	static getExpansionData(
+		roomName: string
+	): ExpansionData | false | undefined {
+		if (
+			!Memory.rooms[roomName] ||
+			Memory.rooms[roomName][RMEM.EXPANSION_DATA] === undefined
+		) {
 			return undefined;
 		}
 		const data = Memory.rooms[roomName][RMEM.EXPANSION_DATA]!;
@@ -168,24 +180,32 @@ export class RoomIntel {
 			return false;
 		}
 		return {
-			score       : data[RMEM_EXPANSION_DATA.SCORE],
-			bunkerAnchor: unpackCoordAsPos(data[RMEM_EXPANSION_DATA.BUNKER_ANCHOR], roomName),
-			outposts    : data[RMEM_EXPANSION_DATA.OUTPOSTS]
+			score: data[RMEM_EXPANSION_DATA.SCORE],
+			bunkerAnchor: unpackCoordAsPos(
+				data[RMEM_EXPANSION_DATA.BUNKER_ANCHOR],
+				roomName
+			),
+			outposts: data[RMEM_EXPANSION_DATA.OUTPOSTS],
 		};
 	}
 
 	/**
 	 * Sets expansion data for a room. Setting the data to false marks the room as uninhabitable.
 	 */
-	static setExpansionData(roomName: string, data: ExpansionData | false): void {
+	static setExpansionData(
+		roomName: string,
+		data: ExpansionData | false
+	): void {
 		Memory.rooms[roomName] = Memory.rooms[roomName] || {};
 		if (data === false) {
 			Memory.rooms[roomName][RMEM.EXPANSION_DATA] = 0;
 		} else {
 			Memory.rooms[roomName][RMEM.EXPANSION_DATA] = {
-				[RMEM_EXPANSION_DATA.SCORE]        : data.score,
-				[RMEM_EXPANSION_DATA.BUNKER_ANCHOR]: packCoord(data.bunkerAnchor),
-				[RMEM_EXPANSION_DATA.OUTPOSTS]     : data.outposts,
+				[RMEM_EXPANSION_DATA.SCORE]: data.score,
+				[RMEM_EXPANSION_DATA.BUNKER_ANCHOR]: packCoord(
+					data.bunkerAnchor
+				),
+				[RMEM_EXPANSION_DATA.OUTPOSTS]: data.outposts,
 			};
 		}
 	}
@@ -197,14 +217,23 @@ export class RoomIntel {
 		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.PORTALS]) {
 			return [];
 		}
-		const localPortals = _.filter(Memory.rooms[roomName][RMEM.PORTALS]!,
-									  savedPortal => typeof savedPortal.dest == 'string');
-		const nonExpiredPortals = _.filter(localPortals, portal => Game.time < portal[MEM.EXPIRATION]);
-		return _.map(nonExpiredPortals, savedPortal => {
+		const localPortals = _.filter(
+			Memory.rooms[roomName][RMEM.PORTALS]!,
+			(savedPortal) => typeof savedPortal.dest == "string"
+		);
+		const nonExpiredPortals = _.filter(
+			localPortals,
+			(portal) => Game.time < portal[MEM.EXPIRATION]
+		);
+		return _.map(nonExpiredPortals, (savedPortal) => {
 			const pos = unpackCoordAsPos(savedPortal.c, roomName);
 			const destinationPos = unpackPos(<string>savedPortal.dest)!;
 			const expiration = savedPortal[MEM.EXPIRATION];
-			return {pos: pos, destination: destinationPos, expiration: expiration};
+			return {
+				pos: pos,
+				destination: destinationPos,
+				expiration: expiration,
+			};
 		});
 	}
 
@@ -215,9 +244,12 @@ export class RoomIntel {
 		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.SOURCES]) {
 			return;
 		}
-		return _.map(Memory.rooms[roomName][RMEM.SOURCES]!, savedSource => ({
-			pos         : unpackCoordAsPos(savedSource.c, roomName),
-			containerPos: savedSource.cn ? unpackCoordAsPos(savedSource.cn, roomName) : undefined
+		return _.map(Memory.rooms[roomName][RMEM.SOURCES]!, (savedSource) => ({
+			pos: unpackCoordAsPos(savedSource.c, roomName),
+			containerPos:
+				savedSource.cn ?
+					unpackCoordAsPos(savedSource.cn, roomName)
+				:	undefined,
 		}));
 	}
 
@@ -228,9 +260,12 @@ export class RoomIntel {
 		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.SKLAIRS]) {
 			return;
 		}
-		return _.map(Memory.rooms[roomName][RMEM.SKLAIRS]!, savedLair => ({
-			pos     : unpackCoordAsPos(savedLair.c, roomName),
-			chillPos: savedLair.cp ? unpackCoordAsPos(savedLair.cp, roomName) : undefined
+		return _.map(Memory.rooms[roomName][RMEM.SKLAIRS]!, (savedLair) => ({
+			pos: unpackCoordAsPos(savedLair.c, roomName),
+			chillPos:
+				savedLair.cp ?
+					unpackCoordAsPos(savedLair.cp, roomName)
+				:	undefined,
 		}));
 	}
 
@@ -238,45 +273,81 @@ export class RoomIntel {
 	 * Unpackages saved information about a room's controller
 	 * @returns controller info if available, null if there's no controller, undefined otherwise
 	 */
-	static getControllerInfo(roomName: string): ControllerInfo | null | undefined {
-		if (!Memory.rooms[roomName] || Memory.rooms[roomName][RMEM.CONTROLLER] === undefined) {
+	static getControllerInfo(
+		roomName: string
+	): ControllerInfo | null | undefined {
+		if (
+			!Memory.rooms[roomName] ||
+			Memory.rooms[roomName][RMEM.CONTROLLER] === undefined
+		) {
 			return;
 		}
 		const ctlr = Memory.rooms[roomName][RMEM.CONTROLLER]!;
-		if (ctlr === null) return null;
+		if (ctlr === null) {
+			return null;
+		}
 		return {
-			pos              : unpackCoordAsPos(ctlr.c, roomName),
-			level            : ctlr[RMEM_CTRL.LEVEL],
-			owner            : ctlr[RMEM_CTRL.OWNER],
-			reservation      : ctlr[RMEM_CTRL.RESERVATION] ? {
-				username  : ctlr[RMEM_CTRL.RESERVATION]![RMEM_CTRL.RES_USERNAME],
-				ticksToEnd: ctlr[RMEM_CTRL.RESERVATION]![RMEM_CTRL.RES_TICKSTOEND],
-			} : undefined,
-			safemode         : ctlr[RMEM_CTRL.SAFEMODE],
+			pos: unpackCoordAsPos(ctlr.c, roomName),
+			level: ctlr[RMEM_CTRL.LEVEL],
+			owner: ctlr[RMEM_CTRL.OWNER],
+			reservation:
+				ctlr[RMEM_CTRL.RESERVATION] ?
+					{
+						username:
+							ctlr[RMEM_CTRL.RESERVATION]![
+								RMEM_CTRL.RES_USERNAME
+							],
+						ticksToEnd:
+							ctlr[RMEM_CTRL.RESERVATION]![
+								RMEM_CTRL.RES_TICKSTOEND
+							],
+					}
+				:	undefined,
+			safemode: ctlr[RMEM_CTRL.SAFEMODE],
 			safemodeAvailable: ctlr[RMEM_CTRL.SAFEMODE_AVAILABLE],
-			safemodeCooldown : ctlr[RMEM_CTRL.SAFEMODE_COOLDOWN],
-			progress         : ctlr[RMEM_CTRL.PROGRESS],
-			progressTotal    : ctlr[RMEM_CTRL.PROGRESS_TOTAL],
+			safemodeCooldown: ctlr[RMEM_CTRL.SAFEMODE_COOLDOWN],
+			progress: ctlr[RMEM_CTRL.PROGRESS],
+			progressTotal: ctlr[RMEM_CTRL.PROGRESS_TOTAL],
 		};
 	}
 
-	static getImportantStructureInfo(roomName: string): ImportantStructureInfo | undefined {
-		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.IMPORTANT_STRUCTURES]) {
+	static getImportantStructureInfo(
+		roomName: string
+	): ImportantStructureInfo | undefined {
+		if (
+			!Memory.rooms[roomName] ||
+			!Memory.rooms[roomName][RMEM.IMPORTANT_STRUCTURES]
+		) {
 			return;
 		}
 		const data = Memory.rooms[roomName][RMEM.IMPORTANT_STRUCTURES]!;
 		return {
-			storagePos      : data[RMEM_STRUCTS.STORAGE] ?
-							  unpackCoordAsPos(data[RMEM_STRUCTS.STORAGE]!, roomName) : undefined,
-			terminalPos     : data[RMEM_STRUCTS.TERMINAL] ?
-							  unpackCoordAsPos(data[RMEM_STRUCTS.TERMINAL]!, roomName) : undefined,
-			towerPositions  : unpackCoordListAsPosList(data[RMEM_STRUCTS.TOWERS], roomName),
-			spawnPositions  : unpackCoordListAsPosList(data[RMEM_STRUCTS.SPAWNS], roomName),
-			wallPositions   : unpackCoordListAsPosList(data[RMEM_STRUCTS.WALLS], roomName),
-			rampartPositions: unpackCoordListAsPosList(data[RMEM_STRUCTS.RAMPARTS], roomName),
+			storagePos:
+				data[RMEM_STRUCTS.STORAGE] ?
+					unpackCoordAsPos(data[RMEM_STRUCTS.STORAGE]!, roomName)
+				:	undefined,
+			terminalPos:
+				data[RMEM_STRUCTS.TERMINAL] ?
+					unpackCoordAsPos(data[RMEM_STRUCTS.TERMINAL]!, roomName)
+				:	undefined,
+			towerPositions: unpackCoordListAsPosList(
+				data[RMEM_STRUCTS.TOWERS],
+				roomName
+			),
+			spawnPositions: unpackCoordListAsPosList(
+				data[RMEM_STRUCTS.SPAWNS],
+				roomName
+			),
+			wallPositions: unpackCoordListAsPosList(
+				data[RMEM_STRUCTS.WALLS],
+				roomName
+			),
+			rampartPositions: unpackCoordListAsPosList(
+				data[RMEM_STRUCTS.RAMPARTS],
+				roomName
+			),
 		};
 	}
-
 
 	/**
 	 * Retrieves all info for permanent room objects and returns it in a more readable/useful form
@@ -290,17 +361,25 @@ export class RoomIntel {
 			const savedSkLairs = mem[RMEM.SKLAIRS] || [];
 
 			const returnObject: RoomInfo = {
-				controller         : this.getControllerInfo(roomName),
-				portals            : this.getPortalInfo(roomName),
-				sources            : _.map(savedSources, src =>
-					src.cn ? {pos: unpackCoordAsPos(src.c, roomName), containerPos: unpackCoordAsPos(src.cn, roomName)}
-						   : {pos: unpackCoordAsPos(src.c, roomName)}),
-				mineral            : savedMineral ? {
-					pos        : unpackCoordAsPos(savedMineral.c, roomName),
-					mineralType: savedMineral[RMEM_MNRL.MINERALTYPE],
-					density    : savedMineral[RMEM_MNRL.DENSITY],
-				} : undefined,
-				deposits: savedDeposits.map(dpst => {
+				controller: this.getControllerInfo(roomName),
+				portals: this.getPortalInfo(roomName),
+				sources: _.map(savedSources, (src) =>
+					src.cn ?
+						{
+							pos: unpackCoordAsPos(src.c, roomName),
+							containerPos: unpackCoordAsPos(src.cn, roomName),
+						}
+					:	{ pos: unpackCoordAsPos(src.c, roomName) }
+				),
+				mineral:
+					savedMineral ?
+						{
+							pos: unpackCoordAsPos(savedMineral.c, roomName),
+							mineralType: savedMineral[RMEM_MNRL.MINERALTYPE],
+							density: savedMineral[RMEM_MNRL.DENSITY],
+						}
+					:	undefined,
+				deposits: savedDeposits.map((dpst) => {
 					const obj: DepositInfo = {
 						pos: unpackCoordAsPos(dpst.c, roomName),
 						depositType: dpst[RMEM_DPST.DEPOSITTYPE],
@@ -311,14 +390,15 @@ export class RoomIntel {
 					}
 					return obj;
 				}),
-				skLairs            : _.map(savedSkLairs, lair => ({pos: unpackCoordAsPos(lair.c, roomName)})),
-				importantStructures: this.getImportantStructureInfo(roomName)
+				skLairs: _.map(savedSkLairs, (lair) => ({
+					pos: unpackCoordAsPos(lair.c, roomName),
+				})),
+				importantStructures: this.getImportantStructureInfo(roomName),
 			};
 
 			return returnObject;
 		}
 	}
-
 
 	/**
 	 * Records all info for permanent room objects, e.g. sources, controllers, etc.
@@ -326,50 +406,66 @@ export class RoomIntel {
 	private static recordPermanentObjects(room: Room): void {
 		room.memory[MEM.TICK] = Game.time;
 		if (room.sources.length > 0) {
-			room.memory[RMEM.SOURCES] = _.map(room.sources, source => {
+			room.memory[RMEM.SOURCES] = _.map(room.sources, (source) => {
 				const coord = packCoord(source.pos);
-				const container = source.pos.findClosestByLimitedRange(room.containers, 2);
-				return container ? {c: coord, cn: packCoord(container.pos)} : {c: coord};
+				const container = source.pos.findClosestByLimitedRange(
+					room.containers,
+					2
+				);
+				return container ?
+						{ c: coord, cn: packCoord(container.pos) }
+					:	{ c: coord };
 			});
 		} else {
 			delete room.memory[RMEM.SOURCES];
 		}
 		if (room.controller) {
 			room.memory[RMEM.CONTROLLER] = {
-				c                             : packCoord(room.controller.pos),
-				[RMEM_CTRL.LEVEL]             : room.controller.level,
-				[RMEM_CTRL.OWNER]             : room.controller.owner ? room.controller.owner.username : undefined,
-				[RMEM_CTRL.RESERVATION]       : room.controller.reservation ?
-												{
-													[RMEM_CTRL.RES_USERNAME]  : room.controller.reservation.username,
-													[RMEM_CTRL.RES_TICKSTOEND]: room.controller.reservation.ticksToEnd,
-												} : undefined,
-				[RMEM_CTRL.SAFEMODE]          : room.controller.safeMode,
-				[RMEM_CTRL.SAFEMODE_AVAILABLE]: room.controller.safeModeAvailable,
-				[RMEM_CTRL.SAFEMODE_COOLDOWN] : room.controller.safeModeCooldown,
-				[RMEM_CTRL.PROGRESS]          : room.controller.progress,
-				[RMEM_CTRL.PROGRESS_TOTAL]    : room.controller.progressTotal
+				c: packCoord(room.controller.pos),
+				[RMEM_CTRL.LEVEL]: room.controller.level,
+				[RMEM_CTRL.OWNER]:
+					room.controller.owner ?
+						room.controller.owner.username
+					:	undefined,
+				[RMEM_CTRL.RESERVATION]:
+					room.controller.reservation ?
+						{
+							[RMEM_CTRL.RES_USERNAME]:
+								room.controller.reservation.username,
+							[RMEM_CTRL.RES_TICKSTOEND]:
+								room.controller.reservation.ticksToEnd,
+						}
+					:	undefined,
+				[RMEM_CTRL.SAFEMODE]: room.controller.safeMode,
+				[RMEM_CTRL.SAFEMODE_AVAILABLE]:
+					room.controller.safeModeAvailable,
+				[RMEM_CTRL.SAFEMODE_COOLDOWN]: room.controller.safeModeCooldown,
+				[RMEM_CTRL.PROGRESS]: room.controller.progress,
+				[RMEM_CTRL.PROGRESS_TOTAL]: room.controller.progressTotal,
 			};
 		} else {
 			delete room.memory[RMEM.CONTROLLER];
 		}
 		if (room.mineral) {
 			room.memory[RMEM.MINERAL] = {
-				c                      : packCoord(room.mineral.pos),
-				[RMEM_MNRL.DENSITY]    : room.mineral.density,
-				[RMEM_MNRL.MINERALTYPE]: room.mineral.mineralType
+				c: packCoord(room.mineral.pos),
+				[RMEM_MNRL.DENSITY]: room.mineral.density,
+				[RMEM_MNRL.MINERALTYPE]: room.mineral.mineralType,
 			};
 		} else {
 			delete room.memory[RMEM.MINERAL];
 		}
 		if (room.deposits) {
-			room.memory[RMEM.DEPOSITS] = room.deposits.map(deposit => {
+			room.memory[RMEM.DEPOSITS] = room.deposits.map((deposit) => {
 				const dpst: SavedDeposit = {
 					c: packCoord(deposit.pos),
 					[RMEM_DPST.DEPOSITTYPE]: deposit.depositType,
-					[RMEM_DPST.COOLDOWN]: deposit.cooldown
-				}
-				const container = deposit.pos.findClosestByLimitedRange(room.containers, 2);
+					[RMEM_DPST.COOLDOWN]: deposit.cooldown,
+				};
+				const container = deposit.pos.findClosestByLimitedRange(
+					room.containers,
+					2
+				);
 				if (container) {
 					dpst[RMEM_DPST.CONTAINERPOS] = packCoord(container.pos);
 				}
@@ -379,16 +475,24 @@ export class RoomIntel {
 			delete room.memory[RMEM.DEPOSITS];
 		}
 		if (room.keeperLairs.length > 0) {
-			room.memory[RMEM.SKLAIRS] = _.map(room.keeperLairs, lair => {
+			room.memory[RMEM.SKLAIRS] = _.map(room.keeperLairs, (lair) => {
 				// Keeper logic is to just move to the first _.find([...sources, mineral], range <=5); see
 				// https://github.com/screeps/engine/blob/master/src/processor/intents/creeps/keepers/pretick.js
-				const keeperTarget = _.find(_.compact([...room.sources, room.mineral]),
-											thing => thing!.pos.getRangeTo(lair.pos) <= 5);
+				const keeperTarget = _.find(
+					_.compact([...room.sources, room.mineral]),
+					(thing) => thing!.pos.getRangeTo(lair.pos) <= 5
+				);
 				let chillPos: RoomPosition | undefined;
-				if (keeperTarget) { // should always be true
-					chillPos = lair.pos.findClosestByPath(keeperTarget.pos.neighbors) || undefined;
+				if (keeperTarget) {
+					// should always be true
+					chillPos =
+						lair.pos.findClosestByPath(
+							keeperTarget.pos.neighbors
+						) || undefined;
 				}
-				return chillPos ? {c: packCoord(lair.pos), cp: packCoord(chillPos)} : {c: packCoord(lair.pos)};
+				return chillPos ?
+						{ c: packCoord(lair.pos), cp: packCoord(chillPos) }
+					:	{ c: packCoord(lair.pos) };
 			});
 		} else {
 			delete room.memory[RMEM.SKLAIRS];
@@ -400,12 +504,22 @@ export class RoomIntel {
 	private static recordOwnedRoomStructures(room: Room) {
 		if (room.controller && room.controller.owner) {
 			room.memory[RMEM.IMPORTANT_STRUCTURES] = {
-				[RMEM_STRUCTS.TOWERS]  : packCoordList(_.map(room.towers, t => t.pos)),
-				[RMEM_STRUCTS.SPAWNS]  : packCoordList(_.map(room.spawns, s => s.pos)),
-				[RMEM_STRUCTS.WALLS]   : packCoordList(_.map(room.walls, w => w.pos)),
-				[RMEM_STRUCTS.RAMPARTS]: packCoordList(_.map(room.ramparts, r => r.pos)),
-				[RMEM_STRUCTS.STORAGE] : room.storage ? packCoord(room.storage.pos) : undefined,
-				[RMEM_STRUCTS.TERMINAL]: room.terminal ? packCoord(room.terminal.pos) : undefined,
+				[RMEM_STRUCTS.TOWERS]: packCoordList(
+					_.map(room.towers, (t) => t.pos)
+				),
+				[RMEM_STRUCTS.SPAWNS]: packCoordList(
+					_.map(room.spawns, (s) => s.pos)
+				),
+				[RMEM_STRUCTS.WALLS]: packCoordList(
+					_.map(room.walls, (w) => w.pos)
+				),
+				[RMEM_STRUCTS.RAMPARTS]: packCoordList(
+					_.map(room.ramparts, (r) => r.pos)
+				),
+				[RMEM_STRUCTS.STORAGE]:
+					room.storage ? packCoord(room.storage.pos) : undefined,
+				[RMEM_STRUCTS.TERMINAL]:
+					room.terminal ? packCoord(room.terminal.pos) : undefined,
 			};
 		} else {
 			delete room.memory[RMEM.IMPORTANT_STRUCTURES];
@@ -414,16 +528,26 @@ export class RoomIntel {
 
 	private static recordPortalInfo(room: Room) {
 		if (room.portals.length > 0) {
-			room.memory[RMEM.PORTALS] = _.map(room.portals, portal => {
-				const dest = portal.destination instanceof RoomPosition ? packPos(portal.destination)
-																		: portal.destination;
-				const expiration = portal.ticksToDecay != undefined ? Game.time + portal.ticksToDecay
-																	: Game.time + 1000000;
-				return {c: packCoord(portal.pos), dest: dest, [MEM.EXPIRATION]: expiration};
+			room.memory[RMEM.PORTALS] = _.map(room.portals, (portal) => {
+				const dest =
+					portal.destination instanceof RoomPosition ?
+						packPos(portal.destination)
+					:	portal.destination;
+				const expiration =
+					portal.ticksToDecay != undefined ?
+						Game.time + portal.ticksToDecay
+					:	Game.time + 1000000;
+				return {
+					c: packCoord(portal.pos),
+					dest: dest,
+					[MEM.EXPIRATION]: expiration,
+				};
 			});
-			const _uniquePortals = _.unique(room.portals, portal =>
-				portal.destination instanceof RoomPosition ? packPos(portal.destination)
-														   : portal.destination);
+			const _uniquePortals = _.unique(room.portals, (portal) =>
+				portal.destination instanceof RoomPosition ?
+					packPos(portal.destination)
+				:	portal.destination
+			);
 			if (!this.memory.portalRooms.includes(room.name)) {
 				this.memory.portalRooms.push(room.name);
 			}
@@ -439,18 +563,28 @@ export class RoomIntel {
 	private static recordControllerInfo(controller: StructureController): void {
 		const savedController = controller.room.memory[RMEM.CONTROLLER];
 		if (savedController) {
-			savedController[RMEM_CTRL.RESERVATION] = controller.reservation ? {
-				[RMEM_CTRL.RES_USERNAME]  : controller.reservation.username,
-				[RMEM_CTRL.RES_TICKSTOEND]: controller.reservation.ticksToEnd,
-			} : undefined;
+			savedController[RMEM_CTRL.RESERVATION] =
+				controller.reservation ?
+					{
+						[RMEM_CTRL.RES_USERNAME]:
+							controller.reservation.username,
+						[RMEM_CTRL.RES_TICKSTOEND]:
+							controller.reservation.ticksToEnd,
+					}
+				:	undefined;
 			savedController[RMEM_CTRL.SAFEMODE] = controller.safeMode;
-			savedController[RMEM_CTRL.SAFEMODE_COOLDOWN] = controller.safeModeCooldown;
+			savedController[RMEM_CTRL.SAFEMODE_COOLDOWN] =
+				controller.safeModeCooldown;
 		}
 	}
 
 	static inSafeMode(roomName: string): boolean {
-		if (!!Memory.rooms[roomName] && !!Memory.rooms[roomName][RMEM.CONTROLLER]) {
-			const safemode = Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.SAFEMODE];
+		if (
+			!!Memory.rooms[roomName] &&
+			!!Memory.rooms[roomName][RMEM.CONTROLLER]
+		) {
+			const safemode =
+				Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.SAFEMODE];
 			const tick = Memory.rooms[roomName][MEM.EXPIRATION];
 			if (safemode && tick) {
 				return Game.time < tick + safemode;
@@ -460,9 +594,17 @@ export class RoomIntel {
 	}
 
 	static safeModeCooldown(roomName: string): number | undefined {
-		if (Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.CONTROLLER] &&
-			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.SAFEMODE_COOLDOWN]) {
-			const smcooldown = Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.SAFEMODE_COOLDOWN];
+		if (
+			Memory.rooms[roomName] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER]![
+				RMEM_CTRL.SAFEMODE_COOLDOWN
+			]
+		) {
+			const smcooldown =
+				Memory.rooms[roomName][RMEM.CONTROLLER]![
+					RMEM_CTRL.SAFEMODE_COOLDOWN
+				];
 			const tick = Memory.rooms[roomName][MEM.EXPIRATION];
 			if (smcooldown && tick) {
 				return smcooldown - (Game.time - tick);
@@ -470,18 +612,26 @@ export class RoomIntel {
 		}
 	}
 
-	private static recomputeScoreIfNecessary(roomName: string, force = false): boolean {
+	private static recomputeScoreIfNecessary(
+		roomName: string,
+		force = false
+	): boolean {
 		if (force) {
 			return ExpansionEvaluator.computeExpansionData(roomName, true);
 		}
 		const memory = Memory.rooms[roomName];
-		if (memory[RMEM.EXPANSION_DATA] === 0) { // room is uninhabitable or owned
+		if (memory[RMEM.EXPANSION_DATA] === 0) {
+			// room is uninhabitable or owned
 			if (Math.random() < FALSE_SCORE_RECALC_PROB) {
 				// false scores get evaluated very occasionally
 				return ExpansionEvaluator.computeExpansionData(roomName);
 			}
-		} else { // if the room is not uninhabitable
-			if (!memory[RMEM.EXPANSION_DATA] || Math.random() < SCORE_RECALC_PROB) {
+		} else {
+			// if the room is not uninhabitable
+			if (
+				!memory[RMEM.EXPANSION_DATA] ||
+				Math.random() < SCORE_RECALC_PROB
+			) {
 				// recompute some of the time
 				return ExpansionEvaluator.computeExpansionData(roomName);
 			}
@@ -500,7 +650,8 @@ export class RoomIntel {
 		const invasionData = room.memory[RMEM.INVASION_DATA]!;
 		for (const source of sources) {
 			if (source.ticksToRegeneration == 1) {
-				invasionData[RMEM_INVASION.HARVESTED] += source.energyCapacity - source.energy;
+				invasionData[RMEM_INVASION.HARVESTED] +=
+					source.energyCapacity - source.energy;
 			}
 		}
 		if (room.invaders.length > 0) {
@@ -602,7 +753,10 @@ export class RoomIntel {
 		if (prevPositions) {
 			const packedId = packId(creep.id);
 			if (prevPositions[packedId]) {
-				return unpackCoordAsPos(prevPositions[packedId], creep.room.name);
+				return unpackCoordAsPos(
+					prevPositions[packedId],
+					creep.room.name
+				);
 			}
 		}
 		return creep.pos; // no data
@@ -629,7 +783,6 @@ export class RoomIntel {
 	// 	creepsInRoom[Game.time] = _.map(room.hostiles, creep => creep.name);
 	// }
 
-
 	/**
 	 * Records threat levels, visibility, consecutive safe/unsafe ticks and other data on visible or invisible rooms.
 	 * Must be run in RoomIntel.init(), as it populates several room properties used elsewhere // TODO: expensive
@@ -637,14 +790,18 @@ export class RoomIntel {
 	private static recordSafety(roomName: string): void {
 		// Make sure the memory objects are there
 		Memory.rooms[roomName] = Memory.rooms[roomName] || {};
-		Memory.rooms[roomName][RMEM.SAFETY] = Memory.rooms[roomName][RMEM.SAFETY] || {
-			[RMEM_SAFETY.THREAT_LEVEL] : 0,
-			[RMEM_SAFETY.SAFE_FOR]     : 0,
-			[RMEM_SAFETY.UNSAFE_FOR]   : 0,
+		Memory.rooms[roomName][RMEM.SAFETY] = Memory.rooms[roomName][
+			RMEM.SAFETY
+		] || {
+			[RMEM_SAFETY.THREAT_LEVEL]: 0,
+			[RMEM_SAFETY.SAFE_FOR]: 0,
+			[RMEM_SAFETY.UNSAFE_FOR]: 0,
 			[RMEM_SAFETY.INVISIBLE_FOR]: 0,
 		};
 
-		const safetyData = Memory.rooms[roomName][RMEM.SAFETY] as SavedSafetyData;
+		const safetyData = Memory.rooms[roomName][
+			RMEM.SAFETY
+		] as SavedSafetyData;
 		const room = Game.rooms[roomName] as Room | undefined;
 
 		if (room) {
@@ -658,21 +815,26 @@ export class RoomIntel {
 			}
 			if (room.my || room.isOutpost) {
 				// Record combat potentials of creeps in room
-				const potentials = CombatIntel.getCombatPotentials(room.dangerousPlayerHostiles);
+				const potentials = CombatIntel.getCombatPotentials(
+					room.dangerousPlayerHostiles
+				);
 				safetyData[RMEM_SAFETY.COMBAT_POTENTIALS] = {
 					[COMBAT_POTENTIALS.ATTACK]: potentials.attack,
 					[COMBAT_POTENTIALS.RANGED]: potentials.ranged,
-					[COMBAT_POTENTIALS.HEAL]  : potentials.heal,
+					[COMBAT_POTENTIALS.HEAL]: potentials.heal,
 				};
 				if (potentials.dismantle) {
-					safetyData[RMEM_SAFETY.COMBAT_POTENTIALS]![COMBAT_POTENTIALS.DISMANTLE] = potentials.dismantle;
+					safetyData[RMEM_SAFETY.COMBAT_POTENTIALS]![
+						COMBAT_POTENTIALS.DISMANTLE
+					] = potentials.dismantle;
 				}
 
 				// Record hostile counts
 				safetyData[RMEM_SAFETY.NUM_HOSTILES] = room.hostiles.length; // this records ALL hostiles!
-				safetyData[RMEM_SAFETY.NUM_BOOSTED_HOSTILES] = _.filter(room.hostiles,
-																		hostile => hostile.boosts.length > 0).length;
-
+				safetyData[RMEM_SAFETY.NUM_BOOSTED_HOSTILES] = _.filter(
+					room.hostiles,
+					(hostile) => hostile.boosts.length > 0
+				).length;
 			} else {
 				delete safetyData[RMEM_SAFETY.COMBAT_POTENTIALS];
 				delete safetyData[RMEM_SAFETY.NUM_HOSTILES];
@@ -702,25 +864,31 @@ export class RoomIntel {
 		}
 
 		// Average it over time, using different averaging windows depending on the scenario
-		const numBoostedHostiles = safetyData[RMEM_SAFETY.NUM_BOOSTED_HOSTILES] || 0;
+		const numBoostedHostiles =
+			safetyData[RMEM_SAFETY.NUM_BOOSTED_HOSTILES] || 0;
 		switch (instantaneousThreatLevel) {
 			case 0:
-				safetyData[RMEM_SAFETY.THREAT_LEVEL] = ema(instantaneousThreatLevel,
-														   safetyData[RMEM_SAFETY.THREAT_LEVEL],
-														   CREEP_LIFE_TIME / 2);
+				safetyData[RMEM_SAFETY.THREAT_LEVEL] = ema(
+					instantaneousThreatLevel,
+					safetyData[RMEM_SAFETY.THREAT_LEVEL],
+					CREEP_LIFE_TIME / 2
+				);
 				break;
 			case 0.5:
-				safetyData[RMEM_SAFETY.THREAT_LEVEL] = ema(instantaneousThreatLevel,
-														   safetyData[RMEM_SAFETY.THREAT_LEVEL],
-														   CREEP_LIFE_TIME / (1 + numBoostedHostiles));
+				safetyData[RMEM_SAFETY.THREAT_LEVEL] = ema(
+					instantaneousThreatLevel,
+					safetyData[RMEM_SAFETY.THREAT_LEVEL],
+					CREEP_LIFE_TIME / (1 + numBoostedHostiles)
+				);
 				break;
 			case 1:
-				safetyData[RMEM_SAFETY.THREAT_LEVEL] = ema(instantaneousThreatLevel,
-														   safetyData[RMEM_SAFETY.THREAT_LEVEL],
-														   CREEP_LIFE_TIME / (4 + numBoostedHostiles));
+				safetyData[RMEM_SAFETY.THREAT_LEVEL] = ema(
+					instantaneousThreatLevel,
+					safetyData[RMEM_SAFETY.THREAT_LEVEL],
+					CREEP_LIFE_TIME / (4 + numBoostedHostiles)
+				);
 				break;
 		}
-
 
 		// // Compute rolling averages
 		// const dTime = Game.time - safetyData[RMEM_SAFETY.TICK];
@@ -729,36 +897,42 @@ export class RoomIntel {
 		// safetyData[RMEM_SAFETY.SAFETY_10K] = +(irregularEma(
 		// 	safety, safetyData[RMEM_SAFETY.SAFETY_10K], dTime, 10000)).toFixed(5);
 
-
 		// Populate the per-tick properties on the room object itself
 		if (room) {
 			room.instantaneousThreatLevel = instantaneousThreatLevel;
 			room.threatLevel = safetyData[RMEM_SAFETY.THREAT_LEVEL];
-			room.isSafe = room.instantaneousThreatLevel <= (Memory.settings.attitude.brazenness ?? 0.5) &&
-						  (room.threatLevel < 0.15 || safetyData[RMEM_SAFETY.SAFE_FOR] > 50);
+			room.isSafe =
+				room.instantaneousThreatLevel <=
+					(Memory.settings.attitude.brazenness ?? 0.5) &&
+				(room.threatLevel < 0.15 ||
+					safetyData[RMEM_SAFETY.SAFE_FOR] > 50);
 		}
-
 	}
 
 	static getSafetyData(roomName: string) {
-		const data = <SavedSafetyData>(Memory.rooms[roomName]?.[RMEM.SAFETY] ?? {});
+		const data = <SavedSafetyData>(
+			(Memory.rooms[roomName]?.[RMEM.SAFETY] ?? {})
+		);
 		return <SafetyData>{
-			threatLevel       : data[RMEM_SAFETY.THREAT_LEVEL] ?? 0.5,
-			safeFor           : data[RMEM_SAFETY.SAFE_FOR] ?? NaN,
-			unsafeFor         : data[RMEM_SAFETY.UNSAFE_FOR] ?? NaN,
-			invisibleFor      : data[RMEM_SAFETY.INVISIBLE_FOR] ?? NaN,
-			combatPotentials  : data[RMEM_SAFETY.COMBAT_POTENTIALS] ?? NaN,
-			numHostiles       : data[RMEM_SAFETY.NUM_HOSTILES] ?? NaN,
+			threatLevel: data[RMEM_SAFETY.THREAT_LEVEL] ?? 0.5,
+			safeFor: data[RMEM_SAFETY.SAFE_FOR] ?? NaN,
+			unsafeFor: data[RMEM_SAFETY.UNSAFE_FOR] ?? NaN,
+			invisibleFor: data[RMEM_SAFETY.INVISIBLE_FOR] ?? NaN,
+			combatPotentials: data[RMEM_SAFETY.COMBAT_POTENTIALS] ?? NaN,
+			numHostiles: data[RMEM_SAFETY.NUM_HOSTILES] ?? NaN,
 			numBoostedHostiles: data[RMEM_SAFETY.NUM_BOOSTED_HOSTILES] ?? NaN,
 		};
 	}
 
 	static isInvasionLikely(room: Room): boolean {
 		const data = room.memory[RMEM.INVASION_DATA];
-		if (!data) return false;
+		if (!data) {
+			return false;
+		}
 		const harvested = data[RMEM_INVASION.HARVESTED];
 		const lastSeen = data[RMEM_INVASION.LAST_SEEN];
-		if (lastSeen > 20000) { // maybe room is surrounded by owned/reserved rooms and invasions aren't possible
+		if (lastSeen > 20000) {
+			// maybe room is surrounded by owned/reserved rooms and invasions aren't possible
 			return false;
 		}
 		switch (room.sources.length) {
@@ -774,29 +948,47 @@ export class RoomIntel {
 	}
 
 	static roomOwnedBy(roomName: string): string | undefined {
-		if (Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.CONTROLLER] &&
-			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.OWNER]) {
-			if (Game.time - (Memory.rooms[roomName][MEM.TICK] || 0) < 25000) { // ownership expires after 25k ticks
-				return Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.OWNER];
+		if (
+			Memory.rooms[roomName] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.OWNER]
+		) {
+			if (Game.time - (Memory.rooms[roomName][MEM.TICK] || 0) < 25000) {
+				// ownership expires after 25k ticks
+				return Memory.rooms[roomName][RMEM.CONTROLLER]![
+					RMEM_CTRL.OWNER
+				];
 			}
 		}
 	}
 
 	static roomReservedBy(roomName: string): string | undefined {
-		if (Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.CONTROLLER] &&
-			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]) {
-			if (Game.time - (Memory.rooms[roomName][MEM.TICK] || 0) < 10000) { // reservation expires after 10k ticks
-				return Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]![RMEM_CTRL.RES_USERNAME];
+		if (
+			Memory.rooms[roomName] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]
+		) {
+			if (Game.time - (Memory.rooms[roomName][MEM.TICK] || 0) < 10000) {
+				// reservation expires after 10k ticks
+				return Memory.rooms[roomName][RMEM.CONTROLLER]![
+					RMEM_CTRL.RESERVATION
+				]![RMEM_CTRL.RES_USERNAME];
 			}
 		}
 	}
 
 	static roomReservationRemaining(roomName: string): number {
-		if (Memory.rooms[roomName] && Memory.rooms[roomName][RMEM.CONTROLLER] &&
-			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]) {
+		if (
+			Memory.rooms[roomName] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER] &&
+			Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]
+		) {
 			const ticksToEnd =
-				Memory.rooms[roomName][RMEM.CONTROLLER]![RMEM_CTRL.RESERVATION]![RMEM_CTRL.RES_TICKSTOEND];
-			const timeSinceLastSeen = Game.time - (Memory.rooms[roomName][MEM.TICK] || 0);
+				Memory.rooms[roomName][RMEM.CONTROLLER]![
+					RMEM_CTRL.RESERVATION
+				]![RMEM_CTRL.RES_TICKSTOEND];
+			const timeSinceLastSeen =
+				Game.time - (Memory.rooms[roomName][MEM.TICK] || 0);
 			return ticksToEnd - timeSinceLastSeen;
 		}
 		return 0;
@@ -805,15 +997,23 @@ export class RoomIntel {
 	/**
 	 * Returns the portals that are within a specified range of a colony indexed by their room
 	 */
-	static findPortalsInRange(roomName: string, range: number,
-							  _includeIntershard = false): { [roomName: string]: SavedPortal[] } {
-
-		const potentialPortalRooms = Cartographer.findRoomsInRange(roomName, range)
-												 .filter(roomName => Cartographer.roomType(roomName) == ROOMTYPE_CORE);
+	static findPortalsInRange(
+		roomName: string,
+		range: number,
+		_includeIntershard = false
+	): { [roomName: string]: SavedPortal[] } {
+		const potentialPortalRooms = Cartographer.findRoomsInRange(
+			roomName,
+			range
+		).filter(
+			(roomName) => Cartographer.roomType(roomName) == ROOMTYPE_CORE
+		);
 		// Examine for portals
-		const portalRooms = potentialPortalRooms.filter(roomName => Memory.rooms[roomName]
-																	&& !!Memory.rooms[roomName][RMEM.PORTALS]);
-		const rooms: { [name: string]: SavedPortal[]; } = {};
+		const portalRooms = potentialPortalRooms.filter(
+			(roomName) =>
+				Memory.rooms[roomName] && !!Memory.rooms[roomName][RMEM.PORTALS]
+		);
+		const rooms: { [name: string]: SavedPortal[] } = {};
 		for (const roomName of portalRooms) {
 			const roomPortals = Memory.rooms[roomName][RMEM.PORTALS]; // to prevent TS errors
 			if (roomPortals != undefined && roomPortals.length > 0) {
@@ -843,47 +1043,69 @@ export class RoomIntel {
 	static getRoomStatus(roomName: string): RoomStatus {
 		Memory.rooms[roomName] = Memory.rooms[roomName] || {};
 		// Recalculate if you haven't seen this room before or if the timestamp is expired
-		if (!Memory.rooms[roomName][RMEM.ROOM_STATUS] ||
-			new Date().getTime() > new Date(Memory.rooms[roomName][RMEM.ROOM_STATUS]![1] * 1000).getTime()) {
-			let {status, timestamp} = Game.map.getRoomStatus(roomName);
-			if (timestamp == null) { // null timestamp means indefinite, but not really; let's recheck in a few days
+		if (
+			!Memory.rooms[roomName][RMEM.ROOM_STATUS] ||
+			new Date().getTime() >
+				new Date(
+					Memory.rooms[roomName][RMEM.ROOM_STATUS]![1] * 1000
+				).getTime()
+		) {
+			let { status, timestamp } = Game.map.getRoomStatus(roomName);
+			if (timestamp == null) {
+				// null timestamp means indefinite, but not really; let's recheck in a few days
 				const extraMilliseconds = 3 * 24 * 60 * 60 * 1000; // check again in 3 days
 				timestamp = new Date().getTime() + extraMilliseconds;
 			}
 			timestamp = Math.floor(timestamp / 1000); // don't need milliseconds; seconds will do
 			switch (status) {
-				case 'normal':
-					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [RMEM_ROOM_STATUS.normal, timestamp];
+				case "normal":
+					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [
+						RMEM_ROOM_STATUS.normal,
+						timestamp,
+					];
 					break;
-				case 'closed':
-					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [RMEM_ROOM_STATUS.closed, timestamp];
+				case "closed":
+					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [
+						RMEM_ROOM_STATUS.closed,
+						timestamp,
+					];
 					break;
-				case 'novice':
-					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [RMEM_ROOM_STATUS.novice, timestamp];
+				case "novice":
+					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [
+						RMEM_ROOM_STATUS.novice,
+						timestamp,
+					];
 					break;
-				case 'respawn':
-					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [RMEM_ROOM_STATUS.respawn, timestamp];
+				case "respawn":
+					Memory.rooms[roomName][RMEM.ROOM_STATUS] = [
+						RMEM_ROOM_STATUS.respawn,
+						timestamp,
+					];
 					break;
 			}
 		}
-		const [statusCompressed, timestampCompressed] = Memory.rooms[roomName][RMEM.ROOM_STATUS]!;
+		const [statusCompressed, timestampCompressed] =
+			Memory.rooms[roomName][RMEM.ROOM_STATUS]!;
 		const timestamp = timestampCompressed * 1000;
 		switch (statusCompressed) {
 			case RMEM_ROOM_STATUS.normal:
-				return {status: 'normal', timestamp: null};
+				return { status: "normal", timestamp: null };
 			case RMEM_ROOM_STATUS.closed:
-				return {status: 'closed', timestamp: null};
+				return { status: "closed", timestamp: null };
 			case RMEM_ROOM_STATUS.novice:
-				return {status: 'novice', timestamp: timestamp};
+				return { status: "novice", timestamp: timestamp };
 			case RMEM_ROOM_STATUS.respawn:
-				return {status: 'respawn', timestamp: timestamp};
+				return { status: "respawn", timestamp: timestamp };
 		}
 	}
 
 	/**
 	 * Returns whether the room should be considered hostile
 	 */
-	static isConsideredHostile(roomName: string, cutoffOrBrazen?: boolean | number) {
+	static isConsideredHostile(
+		roomName: string,
+		cutoffOrBrazen?: boolean | number
+	) {
 		const roomD = this.getAllRoomObjectInfo(roomName);
 		const safety = this.getSafetyData(roomName);
 
@@ -892,12 +1114,15 @@ export class RoomIntel {
 		} else if (cutoffOrBrazen === false) {
 			cutoffOrBrazen = Memory.settings.attitude.brazenness ?? 0.5;
 		} else if (typeof cutoffOrBrazen === "number") {
-			cutoffOrBrazen = minMax(cutoffOrBrazen, 0, 1)
+			cutoffOrBrazen = minMax(cutoffOrBrazen, 0, 1);
 		} else {
-			cutoffOrBrazen = Memory.settings.attitude.brazenness ?? 0.5
+			cutoffOrBrazen = Memory.settings.attitude.brazenness ?? 0.5;
 		}
 
-		return !isAlly(roomD?.controller?.owner ?? '') && safety.threatLevel > cutoffOrBrazen;
+		return (
+			!isAlly(roomD?.controller?.owner ?? "") &&
+			safety.threatLevel > cutoffOrBrazen
+		);
 	}
 
 	/**
@@ -909,9 +1134,14 @@ export class RoomIntel {
 	 * @param roomName The room name to check
 	 * @returns
 	 */
-	static describeExits(roomName: string, allowPortals?: "interOnly" | boolean): RoomExits {
+	static describeExits(
+		roomName: string,
+		allowPortals?: "interOnly" | boolean
+	): RoomExits {
 		const exits: RoomExits = Cartographer.describeExits(roomName);
-		if (!exits) return exits;
+		if (!exits) {
+			return exits;
+		}
 		const radius = Math.ceil(Game.map.getWorldSize() / 2) - 1;
 		const coord = Cartographer.getRoomCoordinates(roomName);
 		if (coord.x >= radius) {
@@ -927,7 +1157,9 @@ export class RoomIntel {
 			let portals = this.getPortalInfo(roomName);
 			if (portals) {
 				if (allowPortals === "interOnly") {
-					portals = portals.filter(portal => portal.destination instanceof RoomPosition);
+					portals = portals.filter(
+						(portal) => portal.destination instanceof RoomPosition
+					);
 				}
 
 				exits[FIND_EXIT_PORTAL] = portals;
@@ -942,39 +1174,33 @@ export class RoomIntel {
 	 * go in here is critical and inexpensive stuff that is necessary information for this tick.
 	 */
 	static init(): void {
-
 		for (const roomName in Game.rooms) {
 			Memory.rooms[roomName] = Memory.rooms[roomName] || {};
 		}
 
 		for (const roomName in Memory.rooms) {
-
 			const room: Room | undefined = Game.rooms[roomName];
 
 			this.recordSafety(roomName);
 			if (room) {
 				this.markVisible(room);
 			}
-
 		}
-
 	}
-
 
 	/**
 	 * RoomIntel.run() is the very last thing that is run in the run phase of each tick. If something times out earlier
 	 * in the script, then this will not be fully executed, so do not put critical stuff here.
 	 */
 	static run(): void {
-
 		let alreadyComputedScore = false;
 
 		for (const roomName in Game.rooms) {
-
 			const room: Room = Game.rooms[roomName];
 
 			// Track invasion data, harvesting, and casualties for all colony rooms and outposts
-			if (Overmind.colonyMap[room.name]) { // if it is an owned or outpost room
+			if (Overmind.colonyMap[room.name]) {
+				// if it is an owned or outpost room
 				this.updateInvasionData(room);
 				// this.updateHarvestData(room);
 				// this.updateCasualtyData(room);
@@ -990,23 +1216,27 @@ export class RoomIntel {
 			if (Game.time >= (room.memory[MEM.EXPIRATION] || 0)) {
 				this.recordPermanentObjects(room);
 				if (!alreadyComputedScore) {
-					alreadyComputedScore = this.recomputeScoreIfNecessary(room.name);
+					alreadyComputedScore = this.recomputeScoreIfNecessary(
+						room.name
+					);
 				}
 				// Refresh cache
-				const recacheTime = room.owner ? OWNED_RECACHE_TIME : RECACHE_TIME;
-				room.memory[MEM.EXPIRATION] = getCacheExpiration(recacheTime, 250);
+				const recacheTime =
+					room.owner ? OWNED_RECACHE_TIME : RECACHE_TIME;
+				room.memory[MEM.EXPIRATION] = getCacheExpiration(
+					recacheTime,
+					250
+				);
 			}
 
 			if (room.controller && Game.time % 5 == 0) {
 				this.recordControllerInfo(room.controller);
 			}
-
 		}
 
 		if (Game.time % 20 == 0) {
 			this.cleanMemory();
 		}
-
 	}
 
 	static limitedRoomVisual: Set<string> | undefined;
@@ -1020,11 +1250,22 @@ export class RoomIntel {
 
 		if (!this.limitedRoomVisual) {
 			this.limitedRoomVisual = new Set();
-			const range = Memory.settings.intelVisuals.range ?? ROOMINTEL_DEFAULT_VISUALS_RANGE;
+			const range =
+				Memory.settings.intelVisuals.range ??
+				ROOMINTEL_DEFAULT_VISUALS_RANGE;
 			for (const colony of Object.values(Overmind.colonies)) {
-				let rooms = Cartographer.findRoomsInRange(colony.room.name, range);
+				let rooms = Cartographer.findRoomsInRange(
+					colony.room.name,
+					range
+				);
 				const scouts = colony.overlords.scout?.scouts ?? [];
-				rooms = rooms.concat(_.flatten(scouts.map(s => Cartographer.findRoomsInRange(s.room.name, range))));
+				rooms = rooms.concat(
+					_.flatten(
+						scouts.map((s) =>
+							Cartographer.findRoomsInRange(s.room.name, range)
+						)
+					)
+				);
 
 				for (const name of rooms) {
 					this.limitedRoomVisual?.add(name);
@@ -1033,48 +1274,86 @@ export class RoomIntel {
 		}
 
 		for (const [name, _name] of this.limitedRoomVisual.entries()) {
-			if (!Memory.rooms[name]) continue;
+			if (!Memory.rooms[name]) {
+				continue;
+			}
 
 			const expData = [];
 
 			const exp = RoomIntel.getExpansionData(name);
 			const sec = RoomIntel.getSafetyData(name);
 			const objs = RoomIntel.getAllRoomObjectInfo(name);
-			const threatColor = interpolateColor("#00FF00", "#FF0000", sec.threatLevel);
-			Game.map.visual.rect(new RoomPosition(2, 2, name), 4, 4, { fill: threatColor, stroke: "#FFFFFF", opacity: 1 });
+			const threatColor = interpolateColor(
+				"#00FF00",
+				"#FF0000",
+				sec.threatLevel
+			);
+			Game.map.visual.rect(new RoomPosition(2, 2, name), 4, 4, {
+				fill: threatColor,
+				stroke: "#FFFFFF",
+				opacity: 1,
+			});
 
 			if (name in Game.rooms) {
-				Game.map.visual.circle(new RoomPosition(4 + 4 + 2, 4, name), { radius: 2, fill: "#00CCCC", stroke: "#000000" });
+				Game.map.visual.circle(new RoomPosition(4 + 4 + 2, 4, name), {
+					radius: 2,
+					fill: "#00CCCC",
+					stroke: "#000000",
+				});
 			}
 
 			const expPos = new RoomPosition(45, 5, name);
 			const expSize = 10;
 			if (objs?.controller === undefined && exp === undefined) {
-				Game.map.visual.text("?", expPos, { fontSize: expSize, color: "#AAAAAA" });
+				Game.map.visual.text("?", expPos, {
+					fontSize: expSize,
+					color: "#AAAAAA",
+				});
 				expData.push(["Incomplete"]);
 			} else if (exp === undefined) {
-				Game.map.visual.text("!", expPos, { fontSize: expSize, color: "#FFFF00" });
+				Game.map.visual.text("!", expPos, {
+					fontSize: expSize,
+					color: "#FFFF00",
+				});
 				expData.push(["Incomplete"]);
 			} else if (exp === false) {
-				Game.map.visual.text("X", expPos, { fontSize: expSize, color: "#FF0000" });
+				Game.map.visual.text("X", expPos, {
+					fontSize: expSize,
+					color: "#FF0000",
+				});
 
 				expData.push(["Uninhabitable"]);
 			} else {
 				Game.map.visual.text("🏠", expPos, { fontSize: expSize });
-				Game.map.visual.text(exp.score.toFixed(0), new RoomPosition(48, 14, name), { fontSize: 4, color: "#00FF00", align: "right" });
+				Game.map.visual.text(
+					exp.score.toFixed(0),
+					new RoomPosition(48, 14, name),
+					{ fontSize: 4, color: "#00FF00", align: "right" }
+				);
 
 				expData.push(["Score", exp.score.toFixed(0)]);
-				expData.push(["Anchor", `${exp.bunkerAnchor.x}, ${exp.bunkerAnchor.y}`]);
+				expData.push([
+					"Anchor",
+					`${exp.bunkerAnchor.x}, ${exp.bunkerAnchor.y}`,
+				]);
 				expData.push(["Outposts:"]);
 				if (_.keys(exp.outposts).length !== 0) {
 					for (const outpost in exp.outposts) {
-						expData.push([outpost, exp.outposts[outpost].toString()]);
+						expData.push([
+							outpost,
+							exp.outposts[outpost].toString(),
+						]);
 					}
 				}
 			}
 
 			let boxY = 7;
-			boxY = Visualizer.infoBox(`Expansion`, expData, { x: 40, y: boxY, roomName: name}, 6);
+			boxY = Visualizer.infoBox(
+				`Expansion`,
+				expData,
+				{ x: 40, y: boxY, roomName: name },
+				6
+			);
 
 			const objData = [];
 			// Room objects
@@ -1084,38 +1363,64 @@ export class RoomIntel {
 					objData.push(["Controller"]);
 					objData.push([` ${c.owner}@${c.level}`]);
 					if (c.level !== 8 && c.progressTotal) {
-						objData.push(["Progress", `${(c.progress! / c.progressTotal * 100).toFixed(1)}%`]);
+						objData.push([
+							"Progress",
+							`${((c.progress! / c.progressTotal) * 100).toFixed(
+								1
+							)}%`,
+						]);
 					}
 				}
 				if (c.reservation) {
-					objData.push(["Reserved", `${c.reservation.username} until ${c.reservation.ticksToEnd}`]);
+					objData.push([
+						"Reserved",
+						`${c.reservation.username} until ${c.reservation.ticksToEnd}`,
+					]);
 				}
 			}
 			if (objs?.sources.length) {
 				objData.push(["Sources", `${objs.sources.length}`]);
 			}
 			if (objs?.mineral) {
-				objData.push(["Mineral", `${objs.mineral.mineralType}@${objs.mineral.density}`]);
+				objData.push([
+					"Mineral",
+					`${objs.mineral.mineralType}@${objs.mineral.density}`,
+				]);
 			}
 			if (objs?.importantStructures) {
 				const s = objs.importantStructures;
 				objData.push(["Structures:"]);
-				if (s.spawnPositions.length) objData.push(["Spawns", `${s.spawnPositions.length}`]);
-				if (s.storagePos) objData.push(["Storage", `Yes`]);
-				if (s.terminalPos) objData.push(["Terminal", `Yes`]);
-				if (s.towerPositions.length) objData.push(["Towers", `${s.towerPositions.length}`]);
+				if (s.spawnPositions.length) {
+					objData.push(["Spawns", `${s.spawnPositions.length}`]);
+				}
+				if (s.storagePos) {
+					objData.push(["Storage", `Yes`]);
+				}
+				if (s.terminalPos) {
+					objData.push(["Terminal", `Yes`]);
+				}
+				if (s.towerPositions.length) {
+					objData.push(["Towers", `${s.towerPositions.length}`]);
+				}
 				if (s.rampartPositions.length + s.rampartPositions.length) {
-					objData.push(["Walls/Ramp.", `${s.wallPositions.length}/${s.rampartPositions.length}`]);
+					objData.push([
+						"Walls/Ramp.",
+						`${s.wallPositions.length}/${s.rampartPositions.length}`,
+					]);
 				}
 			}
 			if (!objData.length) {
 				objData.push(["Unexplored"]);
 			}
-			boxY = Visualizer.infoBox(`Structures`, objData, { x: 40, y: boxY, roomName: name}, 8);
+			boxY = Visualizer.infoBox(
+				`Structures`,
+				objData,
+				{ x: 40, y: boxY, roomName: name },
+				8
+			);
 		}
 	}
 }
 
 // For debugging purposes
 global.RoomIntel = RoomIntel;
-

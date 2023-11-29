@@ -1,13 +1,12 @@
-import {getAllColonies} from '../Colony';
-import {DirectiveSKOutpost} from '../directives/colony/outpostSK';
-import {profile} from '../profiler/decorator';
+import { getAllColonies } from "../Colony";
+import { DirectiveSKOutpost } from "../directives/colony/outpostSK";
+import { profile } from "../profiler/decorator";
 
 /**
  * Empire: Utilities on analyzing the overall empire
  */
 @profile
 export class EmpireAnalysis {
-
 	static empireMineralDistribution(): { [mineralType: string]: number } {
 		const colonies = getAllColonies();
 		const minedSKRooms = DirectiveSKOutpost.find(Object.values(Game.flags));

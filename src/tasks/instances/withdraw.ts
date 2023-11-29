@@ -1,20 +1,24 @@
 /* Withdraw a resource from a target */
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
-export type withdrawTargetType = AnyStoreStructure
+export type withdrawTargetType = AnyStoreStructure;
 
-export const withdrawTaskName = 'withdraw';
+export const withdrawTaskName = "withdraw";
 
 @profile
 export class TaskWithdraw extends Task<withdrawTargetType> {
 	data: {
-		resourceType: ResourceConstant,
-		amount: number | undefined,
+		resourceType: ResourceConstant;
+		amount: number | undefined;
 	};
 
-	constructor(target: withdrawTargetType,
-				resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number, options = {} as TaskOptions) {
+	constructor(
+		target: withdrawTargetType,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number,
+		options = {} as TaskOptions
+	) {
 		super(withdrawTaskName, target, options);
 		// Settings
 		this.settings.oneShot = true;
@@ -24,17 +28,25 @@ export class TaskWithdraw extends Task<withdrawTargetType> {
 
 	isValidTask() {
 		const amount = this.data.amount || 1;
-		return (this.creep.store.getUsedCapacity() <= this.creep.store.getCapacity() - amount);
+		return (
+			this.creep.store.getUsedCapacity() <=
+			this.creep.store.getCapacity() - amount
+		);
 	}
 
 	isValidTarget() {
 		const amount = this.data.amount || 1;
-		return (this.target.store.getUsedCapacity(this.data.resourceType) || 0) >= amount;
+		return (
+			(this.target.store.getUsedCapacity(this.data.resourceType) || 0) >=
+			amount
+		);
 	}
 
 	work() {
-		return this.creep.withdraw(this.target, this.data.resourceType, this.data.amount);
+		return this.creep.withdraw(
+			this.target,
+			this.data.resourceType,
+			this.data.amount
+		);
 	}
-
 }
-

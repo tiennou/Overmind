@@ -1,13 +1,16 @@
-import {log} from '../../console/log';
-import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectivePowerMine, PowerMineState} from '../../directives/resource/powerMine';
-import {Mem} from '../../memory/Memory';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Visualizer} from '../../visuals/Visualizer';
-import {CombatZerg} from '../../zerg/CombatZerg';
-import {Zerg} from '../../zerg/Zerg';
-import {CombatOverlord, CombatOverlordMemory} from '../CombatOverlord';
+import { log } from "../../console/log";
+import { CombatSetups, Roles } from "../../creepSetups/setups";
+import {
+	DirectivePowerMine,
+	PowerMineState,
+} from "../../directives/resource/powerMine";
+import { Mem } from "../../memory/Memory";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Visualizer } from "../../visuals/Visualizer";
+import { CombatZerg } from "../../zerg/CombatZerg";
+import { Zerg } from "../../zerg/Zerg";
+import { CombatOverlord, CombatOverlordMemory } from "../CombatOverlord";
 
 interface PowerDrillOverlordMemory extends CombatOverlordMemory {
 	targetPBID?: string;
@@ -18,7 +21,6 @@ interface PowerDrillOverlordMemory extends CombatOverlordMemory {
  */
 @profile
 export class PowerDrillOverlord extends CombatOverlord {
-
 	directive: DirectivePowerMine;
 	memory: PowerDrillOverlordMemory;
 	partnerMap: Map<string, string[]>;
@@ -26,22 +28,26 @@ export class PowerDrillOverlord extends CombatOverlord {
 	drills: CombatZerg[];
 	coolant: CombatZerg[];
 
-	constructor(directive: DirectivePowerMine, priority = OverlordPriority.powerMine.drill) {
-		super(directive, 'powerDrill', priority, {
+	constructor(
+		directive: DirectivePowerMine,
+		priority = OverlordPriority.powerMine.drill
+	) {
+		super(directive, "powerDrill", priority, {
 			requiredRCL: DirectivePowerMine.requiredRCL,
 			maxSpawnDistance: DirectivePowerMine.maxSpawnDistance,
 		});
 		this.directive = directive;
-		this.priority += this.outpostIndex * OverlordPriority.powerMine.roomIncrement;
+		this.priority +=
+			this.outpostIndex * OverlordPriority.powerMine.roomIncrement;
 		this.drills = this.combatZerg(Roles.drill);
 		this.coolant = this.combatZerg(Roles.coolant);
-		this.memory = Mem.wrap(this.directive.memory, 'powerDrill');
+		this.memory = Mem.wrap(this.directive.memory, "powerDrill");
 		this.partnerMap = new Map();
 	}
 
 	refresh() {
 		super.refresh();
-		this.memory = Mem.wrap(this.directive.memory, 'powerDrill');
+		this.memory = Mem.wrap(this.directive.memory, "powerDrill");
 	}
 
 	init() {
@@ -50,11 +56,19 @@ export class PowerDrillOverlord extends CombatOverlord {
 	}
 
 	private getHostileDrill(powerBank: StructurePowerBank) {
-		return powerBank.hits < powerBank.hitsMax && powerBank.pos.findInRange(FIND_HOSTILE_CREEPS, 2)[0];
+		return (
+			powerBank.hits < powerBank.hitsMax &&
+			powerBank.pos.findInRange(FIND_HOSTILE_CREEPS, 2)[0]
+		);
 	}
 
-	private handleHostileDrill(hostileDrill: Creep, powerBank: StructurePowerBank) {
-		Game.notify(`${hostileDrill.owner.username} power harvesting ${powerBank.room.name}, competing for same power bank.`);
+	private handleHostileDrill(
+		hostileDrill: Creep,
+		powerBank: StructurePowerBank
+	) {
+		Game.notify(
+			`${hostileDrill.owner.username} power harvesting ${powerBank.room.name}, competing for same power bank.`
+		);
 		// this.directive.remove();
 	}
 
@@ -67,20 +81,30 @@ export class PowerDrillOverlord extends CombatOverlord {
 				// We are not there yet
 			} else {
 				// If power bank is dead
-				if (this.directive.powerBank == undefined && this.directive.memory.state < PowerMineState.haulingStarted) {
+				if (
+					this.directive.powerBank == undefined &&
+					this.directive.memory.state < PowerMineState.haulingStarted
+				) {
 					Game.notify(`Power bank in ${this.room.print} is dead.`);
 					const result = drill.retire();
 					if (result == ERR_BUSY) {
 						// drill spawning, find something else to do with them
 					}
-					log.notify(`FINISHED POWER MINING IN ${this.room.name} DELETING CREEP at time: ${Game.time}: ${result}.`);
+					log.notify(
+						`FINISHED POWER MINING IN ${this.room.name} DELETING CREEP at time: ${Game.time}: ${result}.`
+					);
 					return;
 				}
 			}
 		}
 
 		// Go to power room
-		if (!this.room || drill.room != this.room || drill.pos.isEdge || !this.directive.powerBank) {
+		if (
+			!this.room ||
+			drill.room != this.room ||
+			drill.pos.isEdge ||
+			!this.directive.powerBank
+		) {
 			// log.debugCreep(drill, `Going to room!`);
 			// log.notify("Drill is moving to power site in " + this.pos.roomName + ".");
 			drill.goTo(this.pos);
@@ -92,10 +116,10 @@ export class PowerDrillOverlord extends CombatOverlord {
 			if (!this.partnerMap.get(drill.name)) {
 				this.partnerMap.set(drill.name, []);
 			}
-			PowerDrillOverlord.periodicSay(drill, 'Drilling⚒️');
+			PowerDrillOverlord.periodicSay(drill, "Drilling⚒️");
 			drill.attack(this.directive.powerBank);
 		} else {
-			PowerDrillOverlord.periodicSay(drill, '🚗Traveling🚗');
+			PowerDrillOverlord.periodicSay(drill, "🚗Traveling🚗");
 			drill.goTo(this.directive.powerBank);
 		}
 	}
@@ -119,16 +143,17 @@ export class PowerDrillOverlord extends CombatOverlord {
 		if (coolant.pos.getRangeTo(this.directive.powerBank) > 3) {
 			coolant.goTo(this.directive.powerBank);
 		} else {
-			const activeDrills = this.pos.findInRange(FIND_MY_CREEPS, 1).filter(creep => _.contains(creep.name, 'drill'));
+			const activeDrills = this.pos
+				.findInRange(FIND_MY_CREEPS, 1)
+				.filter((creep) => _.contains(creep.name, "drill"));
 			if (activeDrills.length > 0) {
 				const drill = activeDrills[0];
 				coolant.heal(drill);
 				if (coolant.pos.getRangeTo(drill) > 1) {
-					coolant.goTo(drill, {range: 1, noPush: true});
+					coolant.goTo(drill, { range: 1, noPush: true });
 				}
 			}
 		}
-
 
 		// else if (coolant.pos.findInRange(FIND_MY_CREEPS, 1).filter(creep => _.contains(creep.name, "drill")).length == 0) {
 		// 	let target = _.sample(_.filter(this.drills, drill => drill.hits < drill.hitsMax));
@@ -196,12 +221,15 @@ export class PowerDrillOverlord extends CombatOverlord {
 	}
 
 	run() {
-		this.autoRun(this.drills, drill => this.handleDrill(drill));
-		this.autoRun(this.coolant, coolant => this.handleCoolant(coolant));
+		this.autoRun(this.drills, (drill) => this.handleDrill(drill));
+		this.autoRun(this.coolant, (coolant) => this.handleCoolant(coolant));
 		if (this.directive.memory.state >= PowerMineState.miningDone) {
-			Game.notify('DELETING ALL POWER MINING CREEPS BECAUSE STATE IS >= 3 in ' + this.directive.print);
-			this.drills.forEach(drill => drill.retire());
-			this.coolant.forEach(coolant => coolant.retire());
+			Game.notify(
+				"DELETING ALL POWER MINING CREEPS BECAUSE STATE IS >= 3 in " +
+					this.directive.print
+			);
+			this.drills.forEach((drill) => drill.retire());
+			this.coolant.forEach((coolant) => coolant.retire());
 		}
 	}
 
@@ -210,5 +238,4 @@ export class PowerDrillOverlord extends CombatOverlord {
 			Visualizer.marker(this.directive.powerBank.pos);
 		}
 	}
-
 }

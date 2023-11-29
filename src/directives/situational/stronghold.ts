@@ -1,11 +1,10 @@
-import {log} from '../../console/log';
-import {StrongholdOverlord} from '../../overlords/situational/stronghold';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import {DirectiveHaul} from '../resource/haul';
-import {DirectiveModularDismantle} from '../targeting/modularDismantle';
-import {DirectiveNukeTarget} from './nukeTarget';
-
+import { log } from "../../console/log";
+import { StrongholdOverlord } from "../../overlords/situational/stronghold";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { DirectiveHaul } from "../resource/haul";
+import { DirectiveModularDismantle } from "../targeting/modularDismantle";
+import { DirectiveNukeTarget } from "./nukeTarget";
 
 export const STRONGHOLD_SETUPS = {
 	5: 9, // L5 is 1 fortifier, 8 of [1 fortifier, 7 melee, 9 rangers] 17
@@ -14,7 +13,6 @@ export const STRONGHOLD_SETUPS = {
 	2: 1,
 	1: 0,
 };
-
 
 interface DirectiveStrongholdMemory extends FlagMemory {
 	/*
@@ -38,14 +36,12 @@ interface DirectiveStrongholdMemory extends FlagMemory {
 	waveCount: number; // Count each attempt, if it fails after 6 attempts stop trying
 }
 
-
 /**
  * Stronghold directive contributed by @Davaned
  */
 @profile
 export class DirectiveStronghold extends Directive {
-
-	static directiveName = 'stronghold';
+	static directiveName = "stronghold";
 	static color = COLOR_ORANGE;
 	static secondaryColor = COLOR_PURPLE;
 	static requiredRCL = 7;
@@ -54,7 +50,10 @@ export class DirectiveStronghold extends Directive {
 	memory: DirectiveStrongholdMemory;
 
 	constructor(flag: Flag) {
-		super(flag, colony => colony.level >= DirectiveStronghold.requiredRCL);
+		super(
+			flag,
+			(colony) => colony.level >= DirectiveStronghold.requiredRCL
+		);
 		this.memory.state = this.memory.state || 0;
 		if (this.core) {
 			this.memory.strongholdLevel = this.core.level;
@@ -74,9 +73,15 @@ export class DirectiveStronghold extends Directive {
 
 	get core(): StructureInvaderCore | undefined {
 		if (this.room) {
-			return <StructureInvaderCore>this._core
-				|| this.room.find(FIND_HOSTILE_STRUCTURES)
-					.filter(struct => struct.structureType == STRUCTURE_INVADER_CORE)[0];
+			return (
+				<StructureInvaderCore>this._core ||
+				this.room
+					.find(FIND_HOSTILE_STRUCTURES)
+					.filter(
+						(struct) =>
+							struct.structureType == STRUCTURE_INVADER_CORE
+					)[0]
+			);
 		}
 	}
 
@@ -87,13 +92,21 @@ export class DirectiveStronghold extends Directive {
 			const ruins = this.room.ruins;
 			if (containers) {
 				returns = returns.concat(
-					containers.filter(container =>
-						container.pos.getRangeTo(this.pos) < 5 && container.store.getUsedCapacity() > 0));
+					containers.filter(
+						(container) =>
+							container.pos.getRangeTo(this.pos) < 5 &&
+							container.store.getUsedCapacity() > 0
+					)
+				);
 			}
 			if (ruins) {
 				returns = returns.concat(
-					ruins.filter(ruin =>
-						ruin.pos.getRangeTo(this.pos) <= 3 && ruin.store.getUsedCapacity() > 0));
+					ruins.filter(
+						(ruin) =>
+							ruin.pos.getRangeTo(this.pos) <= 3 &&
+							ruin.store.getUsedCapacity() > 0
+					)
+				);
 			}
 			return returns;
 		}
@@ -113,46 +126,64 @@ export class DirectiveStronghold extends Directive {
 				this.memory.state = 1;
 			}
 		} else if (this.room && this.memory.state == 0) {
-
-
-		} else if (this.pos.isVisible && !this.core && this.pos.lookFor(LOOK_RUINS).length > 0) {
+		} else if (
+			this.pos.isVisible &&
+			!this.core &&
+			this.pos.lookFor(LOOK_RUINS).length > 0
+		) {
 			this.memory.state = 4;
 			if (Game.time % 50 == 0) {
 				// log.notify(`Now looting stronghold ${this.print} in ${this.pos.roomName}`);
 				this.handleLooting();
 			}
-		} else if (this.pos.isVisible && !this.core && this.pos.lookFor(LOOK_RUINS).length == 0) {
+		} else if (
+			this.pos.isVisible &&
+			!this.core &&
+			this.pos.lookFor(LOOK_RUINS).length == 0
+		) {
 			// Stronghold is dead
 			this.remove();
 		}
 	}
 
-
 	handleLooting() {
 		const lootSpots = this.getResourcePickupLocations();
 		if (lootSpots && lootSpots.length > 0) {
-			lootSpots.forEach(spot => {
-				const isRamparted = spot.pos.lookFor(LOOK_STRUCTURES)
-										.filter(struct => struct.structureType == STRUCTURE_RAMPART).length > 0;
+			lootSpots.forEach((spot) => {
+				const isRamparted =
+					spot.pos
+						.lookFor(LOOK_STRUCTURES)
+						.filter(
+							(struct) =>
+								struct.structureType == STRUCTURE_RAMPART
+						).length > 0;
 				if (isRamparted) {
-					DirectiveModularDismantle.createIfNotPresent(spot.pos, 'pos');
+					DirectiveModularDismantle.createIfNotPresent(
+						spot.pos,
+						"pos"
+					);
 				} else {
-					DirectiveHaul.createIfNotPresent(spot.pos, 'pos');
+					DirectiveHaul.createIfNotPresent(spot.pos, "pos");
 				}
 			});
 
 			const openingToCore = this.pos.getPositionAtDirection(TOP);
-			const isRamparted = openingToCore.lookFor(LOOK_STRUCTURES)
-											 .filter(struct => struct.structureType == STRUCTURE_RAMPART).length > 0;
+			const isRamparted =
+				openingToCore
+					.lookFor(LOOK_STRUCTURES)
+					.filter(
+						(struct) => struct.structureType == STRUCTURE_RAMPART
+					).length > 0;
 			if (isRamparted) {
-				DirectiveModularDismantle.createIfNotPresent(openingToCore, 'pos');
+				DirectiveModularDismantle.createIfNotPresent(
+					openingToCore,
+					"pos"
+				);
 			}
 		}
 	}
 
-	checkStrongholdUnitComposition(_defenders: Creep[]) {
-
-	}
+	checkStrongholdUnitComposition(_defenders: Creep[]) {}
 
 	handleL5() {
 		// Well this, this is an L5. Can't deal with it now so just nuke it's ugly mug
@@ -166,7 +197,10 @@ export class DirectiveStronghold extends Directive {
 		}
 		// const remainingDuration = this.core.effects.find(effect => effect.effect == EFFECT_COLLAPSE_TIMER);
 		const ramparts = this.core.room.ramparts;
-		if (ramparts.length == 0 || ramparts[0].ticksToDecay < NUKE_LAND_TIME + 10000) {
+		if (
+			ramparts.length == 0 ||
+			ramparts[0].ticksToDecay < NUKE_LAND_TIME + 10000
+		) {
 			log.info(`Stronghold decaying too soon! ${this.print}`);
 			return;
 		}
@@ -181,31 +215,45 @@ export class DirectiveStronghold extends Directive {
 		const nukesPrepped = DirectiveNukeTarget.isPresent(this.core.room.name);
 		if (nukes.length < 2 && !nukesPrepped) {
 			log.alert(`Nuking Stronghold! ${this.print}`);
-			const res1 = DirectiveNukeTarget.create(bestTarget, {memory: {maxLinearRange: 10, pathNotRequired: true}});
-			const res2 = DirectiveNukeTarget.create(bestTarget, {memory: {maxLinearRange: 10, pathNotRequired: true}});
+			const res1 = DirectiveNukeTarget.create(bestTarget, {
+				memory: { maxLinearRange: 10, pathNotRequired: true },
+			});
+			const res2 = DirectiveNukeTarget.create(bestTarget, {
+				memory: { maxLinearRange: 10, pathNotRequired: true },
+			});
 			return res1 == OK && res2 == OK;
 		} else {
-			const strongholdDefenders = this.core.pos.findInRange(FIND_HOSTILE_CREEPS, 4);
-			const reinforcers = strongholdDefenders.filter(creep =>
-				creep.body.find(bodyPart => bodyPart.type == WORK) != undefined);
+			const strongholdDefenders = this.core.pos.findInRange(
+				FIND_HOSTILE_CREEPS,
+				4
+			);
+			const reinforcers = strongholdDefenders.filter(
+				(creep) =>
+					creep.body.find((bodyPart) => bodyPart.type == WORK) !=
+					undefined
+			);
 			if (reinforcers.length >= nukes.length - 1) {
-				log.alert(`Launching additional nuke against Stronghold `
-					+ `with reinforcers ${reinforcers.length}! ${this.print}`);
-				return DirectiveNukeTarget.create(bestTarget, {memory: {maxLinearRange: 11, pathNotRequired: true}});
+				log.alert(
+					`Launching additional nuke against Stronghold ` +
+						`with reinforcers ${reinforcers.length}! ${this.print}`
+				);
+				return DirectiveNukeTarget.create(bestTarget, {
+					memory: { maxLinearRange: 11, pathNotRequired: true },
+				});
 			}
 		}
 	}
 
-	manageDirectives() {
-
-	}
+	manageDirectives() {}
 
 	lootPositions() {
 		this.pos.findInRange(FIND_STRUCTURES, 4);
 	}
 
 	init(): void {
-		this.alert(`Stronghold ${this.memory.strongholdLevel} is state ${this.memory.state}`);
+		this.alert(
+			`Stronghold ${this.memory.strongholdLevel} is state ${this.memory.state}`
+		);
 	}
 
 	run(): void {
@@ -214,14 +262,14 @@ export class DirectiveStronghold extends Directive {
 			this.colony.commandCenter.requestRoomObservation(this.pos.roomName);
 		}
 
-
 		const duration = Game.time - (this.memory[MEM.TICK] || Game.time);
 		if (duration % 50000 == 0) {
-			log.notify(`DirectiveStronghold ${this.print} in ${this.pos.roomName} `
-				+ `has been active for ${duration} ticks`);
+			log.notify(
+				`DirectiveStronghold ${this.print} in ${this.pos.roomName} ` +
+					`has been active for ${duration} ticks`
+			);
 		}
 
 		this.manageState();
 	}
 }
-

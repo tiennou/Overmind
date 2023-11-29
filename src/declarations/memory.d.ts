@@ -1,4 +1,4 @@
-type operationMode = 'manual' | 'semiautomatic' | 'automatic';
+type operationMode = "manual" | "semiautomatic" | "automatic";
 
 /**
  * TODO make this an enum
@@ -16,7 +16,7 @@ interface RawMemory {
 interface MemorySettings {
 	signature: string;
 	operationMode: operationMode;
-	log: import('console/log').LogSettings;
+	log: import("console/log").LogSettings;
 	enableVisuals: boolean;
 	intelVisuals: {
 		/**
@@ -24,7 +24,7 @@ interface MemorySettings {
 		 */
 		until?: number;
 		range?: number;
-	},
+	};
 	allies: string[];
 	resourceCollectionMode: resourceCollectionMode;
 	powerCollection: {
@@ -36,49 +36,49 @@ interface MemorySettings {
 		enabled: boolean;
 		maxRange: number;
 		maxConcurrent: number;
-	},
+	};
 	pixelGeneration: {
 		enabled: boolean;
-	},
+	};
 	roomPlanner: {
 		/** Whether the roomplanner can destroy structures that aren't in its plan */
 		allowDestroy: boolean;
-	},
+	};
 	colonization: {
 		maxRooms: number | undefined;
-	},
+	};
 	attitude: {
 		/**
 		 * How aggressive the AI is
 		 * Only used in room hostility checks for now.
 		 */
 		brazenness: number;
-	}
+	};
 }
 
 interface Memory {
 	tick: number;
 	build: number;
 	Overmind: {
-		terminalNetwork?: import('logistics/TerminalNetwork_v2').TerminalNetworkMemory;
-		trader?: import('logistics/TradeNetwork').TraderMemory;
+		terminalNetwork?: import("logistics/TerminalNetwork_v2").TerminalNetworkMemory;
+		trader?: import("logistics/TradeNetwork").TraderMemory;
 		versionMigrator?: { versions: {} };
 		versionUpdater?: any;
 	};
 	profiler: any;
 	overseer: any;
-	segmenter: import('memory/Segmenter').SegmenterMemory;
-	roomIntel: import('intel/RoomIntel').RoomIntelMemory
+	segmenter: import("memory/Segmenter").SegmenterMemory;
+	roomIntel: import("intel/RoomIntel").RoomIntelMemory;
 	colonies: { [name: string]: import("Colony").ColonyMemory };
-	creeps: { [name: string]: CreepMemory; };
-	powerCreeps: {[name: string]: PowerCreepMemory};
-	flags: { [name: string]: FlagMemory; };
-	rooms: { [name: string]: RoomMemory; };
-	spawns: { [name: string]: SpawnMemory; };
+	creeps: { [name: string]: CreepMemory };
+	powerCreeps: { [name: string]: PowerCreepMemory };
+	flags: { [name: string]: FlagMemory };
+	rooms: { [name: string]: RoomMemory };
+	spawns: { [name: string]: SpawnMemory };
 	pathing: PathingMemory;
 	constructionSites: { [id: string]: number };
 	stats: {
-		persistent:{
+		persistent: {
 			lastGlobalReset?: number;
 			lastMemoryReset?: number;
 			lastErrorTick?: number;
@@ -88,8 +88,8 @@ interface Memory {
 			build?: number;
 			lastBucket?: number;
 			avgBucketDelta?: number;
-			terminalNetwork?: import('logistics/TerminalNetwork_v2').TerminalNetworkStats;
-			trader?: import('logistics/TradeNetwork').TraderStats;
+			terminalNetwork?: import("logistics/TerminalNetwork_v2").TerminalNetworkStats;
+			trader?: import("logistics/TradeNetwork").TraderStats;
 		};
 		"cpu.heapStatistics"?: HeapStatistics;
 	};
@@ -98,9 +98,10 @@ interface Memory {
 	resetBucket?: boolean;
 	haltTick?: number;
 	pixelsTick?: number;
-	combatPlanner: import('strategy/CombatPlanner').CombatPlannerMemory;
-	playerCreepTracker: { // TODO revisit for a better longterm solution
-		[playerName: string]: CreepTracker
+	combatPlanner: import("strategy/CombatPlanner").CombatPlannerMemory;
+	playerCreepTracker: {
+		// TODO revisit for a better longterm solution
+		[playerName: string]: CreepTracker;
 	};
 	// zoneRooms: { [roomName: string]: { [type: string]: number } };
 
@@ -114,8 +115,8 @@ interface Memory {
 
 	settings: MemorySettings;
 
-	remoteDebugger: import('debug/remoteDebugger').DebuggerMemory;
-	nukePlanner: import('strategy/NukePlanner').NukePlannerMemory;
+	remoteDebugger: import("debug/remoteDebugger").DebuggerMemory;
+	nukePlanner: import("strategy/NukePlanner").NukePlannerMemory;
 	[otherProperty: string]: any;
 }
 
@@ -129,8 +130,8 @@ interface StatsMemory {
 				init: number;
 				run: number;
 				visuals: number;
-			}
-		}
+			};
+		};
 	};
 	gcl: {
 		progress: number;
@@ -141,26 +142,24 @@ interface StatsMemory {
 		[colonyName: string]: {
 			hatchery: {
 				uptime: number;
-			}
+			};
 			miningSite: {
 				usage: number;
 				downtime: number;
-			}
+			};
 			storage: {
 				energy: number;
-			}
+			};
 			rcl: {
-				level: number,
-				progress: number,
-				progressTotal: number,
-			}
-		}
+				level: number;
+				progress: number;
+				progressTotal: number;
+			};
+		};
 	};
 }
 
-interface PublicSegment {
-
-}
+interface PublicSegment {}
 
 interface CreepMemory {
 	[MEM.OVERLORD]: string | null;
@@ -218,15 +217,15 @@ interface CachedPath {
 
 interface PathingMemory {
 	// paths: { [originName: string]: { [destinationName: string]: CachedPath; } };
-	distances: { [pos1Name: string]: { [pos2Name: string]: number; } };
+	distances: { [pos1Name: string]: { [pos2Name: string]: number } };
 	// weightedDistances: { [pos1Name: string]: { [pos2Name: string]: number; } };
 }
 
 interface CreepTracker {
-	creeps: { [name: string]: number }; 	// first tick seen
-	types: { [type: string]: number }; 		// amount seen
-	parts: { [bodyPart: string]: number }; 	// quantity
-	boosts: { [boostType: string]: number };	// how many boosts are spent
+	creeps: { [name: string]: number }; // first tick seen
+	types: { [type: string]: number }; // amount seen
+	parts: { [bodyPart: string]: number }; // quantity
+	boosts: { [boostType: string]: number }; // how many boosts are spent
 }
 
 interface FlagMemory {
@@ -264,20 +263,15 @@ interface FlagMemory {
 // Room memory key aliases to minimize memory size
 
 declare const enum MEM {
-	TICK       = 'T',
-	EXPIRATION = 'X',
-	COLONY     = 'C',
-	OVERLORD   = 'O',
-	DISTANCE   = 'D',
-	STATS      = 'S',
+	TICK = "T",
+	EXPIRATION = "X",
+	COLONY = "C",
+	OVERLORD = "O",
+	DISTANCE = "D",
+	STATS = "S",
 }
 
 declare const enum MEM_DISTANCE {
-	UNWEIGHTED = 'u',
-	WEIGHTED   = 'w',
+	UNWEIGHTED = "u",
+	WEIGHTED = "w",
 }
-
-
-
-
-

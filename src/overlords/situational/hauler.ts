@@ -1,49 +1,73 @@
-import {log} from '../../console/log';
-import {Roles, Setups} from '../../creepSetups/setups';
-import {DirectiveHaul} from '../../directives/resource/haul';
-import {Energetics} from '../../logistics/Energetics';
-import {Pathing} from '../../movement/Pathing';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Tasks} from '../../tasks/Tasks';
-import {Zerg} from '../../zerg/Zerg';
-import {Overlord} from '../Overlord';
+import { log } from "../../console/log";
+import { Roles, Setups } from "../../creepSetups/setups";
+import { DirectiveHaul } from "../../directives/resource/haul";
+import { Energetics } from "../../logistics/Energetics";
+import { Pathing } from "../../movement/Pathing";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Tasks } from "../../tasks/Tasks";
+import { Zerg } from "../../zerg/Zerg";
+import { Overlord } from "../Overlord";
 
 /**
  * Spawns special-purpose haulers for transporting resources to/from a specified target
  */
 @profile
 export class HaulingOverlord extends Overlord {
-
 	haulers: Zerg[];
 	directive: DirectiveHaul;
 
-	constructor(directive: DirectiveHaul, priority = directive.hasDrops ? OverlordPriority.collectionUrgent.haul :
-													 OverlordPriority.tasks.haul) {
-		super(directive, 'haul', priority);
+	constructor(
+		directive: DirectiveHaul,
+		priority = directive.hasDrops ?
+			OverlordPriority.collectionUrgent.haul
+		:	OverlordPriority.tasks.haul
+	) {
+		super(directive, "haul", priority);
 		this.directive = directive;
 		this.haulers = this.zerg(Roles.transport);
 	}
 
 	init() {
-		if (!this.colony.storage || this.colony.storage.store.getUsedCapacity() > Energetics.settings.storage.total.cap) {
+		if (
+			!this.colony.storage ||
+			this.colony.storage.store.getUsedCapacity() >
+				Energetics.settings.storage.total.cap
+		) {
 			return;
 		}
 		// Spawn a number of haulers sufficient to move all resources within a lifetime, up to a max
 		const MAX_HAULERS = 5;
 		// Calculate total needed amount of hauling power as (resource amount * trip distance)
-		const tripDistance = 2 * (Pathing.distance((this.colony.storage || this.colony).pos, this.directive.pos) || 0);
-		const haulingPowerNeeded = Math.min(this.directive.totalResources,
-											this.colony.storage.store.getCapacity()
-											- this.colony.storage.store.getUsedCapacity()) * tripDistance;
+		const tripDistance =
+			2 *
+			(Pathing.distance(
+				(this.colony.storage || this.colony).pos,
+				this.directive.pos
+			) || 0);
+		const haulingPowerNeeded =
+			Math.min(
+				this.directive.totalResources,
+				this.colony.storage.store.getCapacity() -
+					this.colony.storage.store.getUsedCapacity()
+			) * tripDistance;
 		// Calculate amount of hauling each hauler provides in a lifetime
-		const haulerCarryParts = Setups.transporters.early.getBodyPotential(CARRY, this.colony);
-		const haulingPowerPerLifetime = CREEP_LIFE_TIME * haulerCarryParts * CARRY_CAPACITY;
+		const haulerCarryParts = Setups.transporters.early.getBodyPotential(
+			CARRY,
+			this.colony
+		);
+		const haulingPowerPerLifetime =
+			CREEP_LIFE_TIME * haulerCarryParts * CARRY_CAPACITY;
 		// Calculate number of haulers
-		const numHaulers = Math.min(Math.ceil(haulingPowerNeeded / haulingPowerPerLifetime), MAX_HAULERS);
+		const numHaulers = Math.min(
+			Math.ceil(haulingPowerNeeded / haulingPowerPerLifetime),
+			MAX_HAULERS
+		);
 		// Request the haulers
 		if (this.haulers.length === 0) {
-			this.wishlist(numHaulers, Setups.transporters.early, { priority: OverlordPriority.collectionUrgent.haul });
+			this.wishlist(numHaulers, Setups.transporters.early, {
+				priority: OverlordPriority.collectionUrgent.haul,
+			});
 		} else {
 			this.wishlist(numHaulers, Setups.transporters.early);
 		}
@@ -55,8 +79,14 @@ export class HaulingOverlord extends Overlord {
 			if (hauler.inSameRoomAs(this.directive)) {
 				// Pick up drops first
 				if (this.directive.hasDrops) {
-					const allDrops: Resource[] = _.flatten(_.values(this.directive.drops));
-					const drop = _.find(allDrops, drop => drop.resourceType != 'energy') || allDrops[0];
+					const allDrops: Resource[] = _.flatten(
+						_.values(this.directive.drops)
+					);
+					const drop =
+						_.find(
+							allDrops,
+							(drop) => drop.resourceType != "energy"
+						) || allDrops[0];
 					if (drop) {
 						hauler.task = Tasks.pickup(drop);
 						return;
@@ -66,12 +96,20 @@ export class HaulingOverlord extends Overlord {
 				if (this.directive.storeStructure) {
 					const store = this.directive.store;
 					let totalDrawn = 0; // Fill to full
-					for (const resourceType of <ResourceConstant[]>Object.keys(store)) {
+					for (const resourceType of <ResourceConstant[]>(
+						Object.keys(store)
+					)) {
 						if (store[resourceType] > 0) {
 							if (hauler.task) {
-								hauler.task = Tasks.withdraw(this.directive.storeStructure, resourceType).fork(hauler.task);
+								hauler.task = Tasks.withdraw(
+									this.directive.storeStructure,
+									resourceType
+								).fork(hauler.task);
 							} else {
-								hauler.task = Tasks.withdraw(this.directive.storeStructure, resourceType);
+								hauler.task = Tasks.withdraw(
+									this.directive.storeStructure,
+									resourceType
+								);
 							}
 							totalDrawn += store[resourceType];
 							if (totalDrawn >= hauler.store.getCapacity()) {
@@ -86,38 +124,74 @@ export class HaulingOverlord extends Overlord {
 					}
 				}
 				// Shouldn't reach here
-				log.warning(`${hauler.name} in ${hauler.room.print}: nothing to collect!`);
+				log.warning(
+					`${hauler.name} in ${hauler.room.print}: nothing to collect!`
+				);
 			} else {
 				// hauler.task = Tasks.goTo(this.directive);
-				hauler.goTo(this.directive, {pathOpts: {avoidSK: true}});
+				hauler.goTo(this.directive, { pathOpts: { avoidSK: true } });
 			}
 		} else {
 			// Travel to colony room and deposit resources
 			if (hauler.inSameRoomAs(this.colony)) {
 				// Put energy in storage and minerals in terminal if there is one
 				for (const [resourceType, amount] of hauler.store.contents) {
-					if (amount == 0) continue;
-					if (resourceType == RESOURCE_ENERGY) { // prefer to put energy in storage
-						if (this.colony.storage && this.colony.storage.store.getUsedCapacity() < STORAGE_CAPACITY) {
-							hauler.task = Tasks.transfer(this.colony.storage, resourceType);
+					if (amount == 0) {
+						continue;
+					}
+					if (resourceType == RESOURCE_ENERGY) {
+						// prefer to put energy in storage
+						if (
+							this.colony.storage &&
+							this.colony.storage.store.getUsedCapacity() <
+								STORAGE_CAPACITY
+						) {
+							hauler.task = Tasks.transfer(
+								this.colony.storage,
+								resourceType
+							);
 							return;
-						} else if (this.colony.terminal && this.colony.terminal.store.getUsedCapacity() < TERMINAL_CAPACITY) {
-							hauler.task = Tasks.transfer(this.colony.terminal, resourceType);
+						} else if (
+							this.colony.terminal &&
+							this.colony.terminal.store.getUsedCapacity() <
+								TERMINAL_CAPACITY
+						) {
+							hauler.task = Tasks.transfer(
+								this.colony.terminal,
+								resourceType
+							);
 							return;
 						}
-					} else { // prefer to put minerals in terminal
-						if (this.colony.terminal && this.colony.terminal.my
-							&& this.colony.terminal.store.getUsedCapacity() < TERMINAL_CAPACITY) {
-							hauler.task = Tasks.transfer(this.colony.terminal, resourceType);
+					} else {
+						// prefer to put minerals in terminal
+						if (
+							this.colony.terminal &&
+							this.colony.terminal.my &&
+							this.colony.terminal.store.getUsedCapacity() <
+								TERMINAL_CAPACITY
+						) {
+							hauler.task = Tasks.transfer(
+								this.colony.terminal,
+								resourceType
+							);
 							return;
-						} else if (this.colony.storage && this.colony.storage.store.getUsedCapacity() < STORAGE_CAPACITY) {
-							hauler.task = Tasks.transfer(this.colony.storage, resourceType);
+						} else if (
+							this.colony.storage &&
+							this.colony.storage.store.getUsedCapacity() <
+								STORAGE_CAPACITY
+						) {
+							hauler.task = Tasks.transfer(
+								this.colony.storage,
+								resourceType
+							);
 							return;
 						}
 					}
 				}
 				// Shouldn't reach here
-				log.warning(`${hauler.name} in ${hauler.room.print}: nowhere to put resources!`);
+				log.warning(
+					`${hauler.name} in ${hauler.room.print}: nowhere to put resources!`
+				);
 			} else {
 				hauler.task = Tasks.goToRoom(this.colony.room.name);
 			}
@@ -132,7 +206,11 @@ export class HaulingOverlord extends Overlord {
 			hauler.run();
 		}
 		// TODO: fix the way this is done
-		if (this.directive.memory.totalResources == 0 && this.haulers.filter(hauler => hauler.store.getUsedCapacity() > 0).length == 0) {
+		if (
+			this.directive.memory.totalResources == 0 &&
+			this.haulers.filter((hauler) => hauler.store.getUsedCapacity() > 0)
+				.length == 0
+		) {
 			this.directive.remove();
 		}
 	}

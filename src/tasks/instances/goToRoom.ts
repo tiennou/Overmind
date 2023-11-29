@@ -1,21 +1,26 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
-
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type goToRoomTargetType = string;
-export const goToRoomTaskName = 'goToRoom';
+export const goToRoomTaskName = "goToRoom";
 
 @profile
 export class TaskGoToRoom extends Task<RoomPosition> {
-
 	constructor(roomName: goToRoomTargetType, options = {} as TaskOptions) {
-		super(goToRoomTaskName, {ref: '', _pos: new RoomPosition(25, 25, roomName)}, options);
+		super(
+			goToRoomTaskName,
+			{ ref: "", _pos: new RoomPosition(25, 25, roomName) },
+			options
+		);
 		// Settings
 		this.settings.targetRange = 23; // Target is almost always controller flag, so range of 2 is acceptable
 	}
 
 	isValidTask() {
-		return !this.creep.pos.inRangeTo(this.targetPos, this.settings.targetRange);
+		return !this.creep.pos.inRangeTo(
+			this.targetPos,
+			this.settings.targetRange
+		);
 	}
 
 	isValidTarget() {
@@ -45,4 +50,3 @@ export class TaskGoToRoom extends Task<RoomPosition> {
 		return OK;
 	}
 }
-

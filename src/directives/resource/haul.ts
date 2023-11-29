@@ -1,27 +1,24 @@
-import {HaulingOverlord} from '../../overlords/situational/hauler';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-
+import { HaulingOverlord } from "../../overlords/situational/hauler";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
 
 interface DirectiveHaulMemory extends FlagMemory {
 	totalResources?: number;
 	hasDrops?: boolean;
 	// store: { [resource: string]: number };
 	path?: {
-		plain: number,
-		swamp: number,
-		road: number
+		plain: number;
+		swamp: number;
+		road: number;
 	};
 }
-
 
 /**
  * Hauling directive: spawns hauler creeps to move large amounts of resources from a location (e.g. draining a storage)
  */
 @profile
 export class DirectiveHaul extends Directive {
-
-	static directiveName = 'haul';
+	static directiveName = "haul";
 	static color = COLOR_YELLOW;
 	static secondaryColor = COLOR_BLUE;
 
@@ -51,7 +48,9 @@ export class DirectiveHaul extends Directive {
 		}
 		if (!this._drops) {
 			const drops = this.pos.lookFor(LOOK_RESOURCES);
-			this._drops = <DropContents>_.groupBy(drops, drop => drop.resourceType);
+			this._drops = <DropContents>(
+				_.groupBy(drops, (drop) => drop.resourceType)
+			);
 		}
 		return this._drops;
 	}
@@ -61,14 +60,27 @@ export class DirectiveHaul extends Directive {
 	}
 
 	get storeStructure():
-		StructureStorage | StructureTerminal | StructureNuker | StructureContainer | Ruin | undefined {
+		| StructureStorage
+		| StructureTerminal
+		| StructureNuker
+		| StructureContainer
+		| Ruin
+		| undefined {
 		if (this.pos.isVisible) {
-			return this.pos.lookForStructure(STRUCTURE_STORAGE) ||
-				   this.pos.lookForStructure(STRUCTURE_TERMINAL) ||
-				   this.pos.lookForStructure(STRUCTURE_NUKER) ||
-				   this.pos.lookForStructure(STRUCTURE_CONTAINER) ||
-				   this.pos.lookFor(LOOK_RUINS).filter(ruin => ruin.store.getUsedCapacity() > 0)[0] ||
-				   this.pos.lookFor(LOOK_TOMBSTONES).filter(tombstone => tombstone.store.getUsedCapacity() > 0)[0];
+			return (
+				this.pos.lookForStructure(STRUCTURE_STORAGE) ||
+				this.pos.lookForStructure(STRUCTURE_TERMINAL) ||
+				this.pos.lookForStructure(STRUCTURE_NUKER) ||
+				this.pos.lookForStructure(STRUCTURE_CONTAINER) ||
+				this.pos
+					.lookFor(LOOK_RUINS)
+					.filter((ruin) => ruin.store.getUsedCapacity() > 0)[0] ||
+				this.pos
+					.lookFor(LOOK_TOMBSTONES)
+					.filter(
+						(tombstone) => tombstone.store.getUsedCapacity() > 0
+					)[0]
+			);
 		}
 		return undefined;
 	}
@@ -80,11 +92,16 @@ export class DirectiveHaul extends Directive {
 			if (this.storeStructure) {
 				store = this.storeStructure.store;
 			} else {
-				store = <StoreContents>{energy: 0};
+				store = <StoreContents>{ energy: 0 };
 			}
 			// Merge with drops
-			for (const resourceType of (_.keys(this.drops) as ResourceConstant[])) {
-				const totalResourceAmount = _.sum(this.drops[resourceType] as Resource[], drop => drop.amount);
+			for (const resourceType of _.keys(
+				this.drops
+			) as ResourceConstant[]) {
+				const totalResourceAmount = _.sum(
+					this.drops[resourceType] as Resource[],
+					(drop) => drop.amount
+				);
 				if (store[resourceType]) {
 					store[resourceType] += totalResourceAmount;
 				} else {
@@ -118,12 +135,14 @@ export class DirectiveHaul extends Directive {
 	run(): void {
 		if (this.pos.isVisible && _.sum(this.store) == 0) {
 			// If everything is picked up, crudely give enough time to bring it back
-			this._finishAtTime = this._finishAtTime || (Game.time + 300);
+			this._finishAtTime = this._finishAtTime || Game.time + 300;
 		}
-		if (Game.time >= this._finishAtTime || (this.totalResources == 0 &&
-												(this.overlords.haul as HaulingOverlord).haulers.length == 0)) {
+		if (
+			Game.time >= this._finishAtTime ||
+			(this.totalResources == 0 &&
+				(this.overlords.haul as HaulingOverlord).haulers.length == 0)
+		) {
 			// this.remove();
 		}
 	}
 }
-

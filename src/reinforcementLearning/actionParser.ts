@@ -7,88 +7,105 @@
 
 */
 
-import { config } from 'config';
-import {SEGMENTS} from '../memory/Segmenter';
-import {NeuralZerg} from '../zerg/NeuralZerg';
-import {TrainingOpponents} from './trainingOpponents';
+import { config } from "config";
+import { SEGMENTS } from "../memory/Segmenter";
+import { NeuralZerg } from "../zerg/NeuralZerg";
+import { TrainingOpponents } from "./trainingOpponents";
 
 export type RLAction =
-	['move', DirectionConstant]
-	| ['goTo', string]
-	| ['attack', string]
-	| ['rangedAttack', string]
-	| ['rangedMassAttack', null]
-	| ['heal', string]
-	| ['rangedHeal', string]
-	| ['approachHostiles', null]
-	| ['avoidHostiles', null]
-	| ['approachAllies', null]
-	| ['avoidAllies', null]
-	| ['maneuver', [string[], string[]]]
-	| ['noop', null];
+	| ["move", DirectionConstant]
+	| ["goTo", string]
+	| ["attack", string]
+	| ["rangedAttack", string]
+	| ["rangedMassAttack", null]
+	| ["heal", string]
+	| ["rangedHeal", string]
+	| ["approachHostiles", null]
+	| ["avoidHostiles", null]
+	| ["approachAllies", null]
+	| ["avoidAllies", null]
+	| ["maneuver", [string[], string[]]]
+	| ["noop", null];
 
 /**
  * The ActionParser provides a line of direct interaction for the external Python optimizers to control
  * creep actions via the Memory.reinforcementLearning object.
  */
 export class ActionParser {
-
 	/**
 	 * Parse an individual action from its serialized format and command the actor to execute it.
 	 * Returns whether the action was valid.
 	 */
-	private static parseAction(actor: NeuralZerg, action: RLAction, autoEngage = true): boolean {
-
+	private static parseAction(
+		actor: NeuralZerg,
+		action: RLAction,
+		autoEngage = true
+	): boolean {
 		const command: string = action[0];
 		const predicate = action[1];
-		const targ: _HasId | null = typeof predicate == 'string' ? Game.getObjectById(predicate) : null;
+		const targ: _HasId | null =
+			typeof predicate == "string" ? Game.getObjectById(predicate) : null;
 
 		switch (command) {
-			case 'move':
+			case "move":
 				actor.move(<DirectionConstant>predicate);
 				break;
-			case 'goTo':
-				if (targ) actor.goTo(targ as any as RoomObject);
+			case "goTo":
+				if (targ) {
+					actor.goTo(targ as any as RoomObject);
+				}
 				break;
-			case 'attack':
-				if (targ) actor.attack(<Creep>targ);
+			case "attack":
+				if (targ) {
+					actor.attack(<Creep>targ);
+				}
 				break;
-			case 'rangedAttack':
-				if (targ) actor.rangedAttack(<Creep>targ);
+			case "rangedAttack":
+				if (targ) {
+					actor.rangedAttack(<Creep>targ);
+				}
 				break;
-			case 'rangedMassAttack':
+			case "rangedMassAttack":
 				actor.rangedMassAttack();
 				break;
-			case 'heal':
+			case "heal":
 				if (targ) {
 					actor.heal(<Creep>targ);
-				} else if (typeof predicate != 'string') {
+				} else if (typeof predicate != "string") {
 					actor.heal(actor);
 				}
 				break;
-			case 'rangedHeal':
-				if (targ) actor.rangedHeal(<Creep>targ);
+			case "rangedHeal":
+				if (targ) {
+					actor.rangedHeal(<Creep>targ);
+				}
 				break;
-			case 'approachHostiles':
+			case "approachHostiles":
 				actor.approachHostiles();
 				break;
-			case 'avoidHostiles':
+			case "avoidHostiles":
 				actor.avoidHostiles();
 				break;
-			case 'approachAllies':
+			case "approachAllies":
 				actor.approachAllies();
 				break;
-			case 'avoidAllies':
+			case "avoidAllies":
 				actor.avoidAllies();
 				break;
-			case 'maneuver':
-				const approachNames = (<string[]><unknown>predicate ?? [])[0];
-				const avoidNames = (<string[]><unknown>predicate ?? [])[1];
-				const approachTargs = _.map(approachNames, name => Game.creeps[name]);
-				const avoidTargs = _.map(avoidNames, name => Game.creeps[name]);
+			case "maneuver":
+				const approachNames = (<string[]>(<unknown>predicate) ?? [])[0];
+				const avoidNames = (<string[]>(<unknown>predicate) ?? [])[1];
+				const approachTargs = _.map(
+					approachNames,
+					(name) => Game.creeps[name]
+				);
+				const avoidTargs = _.map(
+					avoidNames,
+					(name) => Game.creeps[name]
+				);
 				actor.maneuver(approachTargs, avoidTargs);
 				break;
-			case 'noop':
+			case "noop":
 				break;
 			default:
 				console.log(`[${Game.time}] Invalid command: ${command}!`);
@@ -103,14 +120,17 @@ export class ActionParser {
 	/**
 	 * Determine the list of actions for each Zerg to perform
 	 */
-	private static parseActions(actors: { [creepName: string]: NeuralZerg },
-								serializedActions: { [creepName: string]: RLAction[] }) {
-
-		const receivedOrders: { [creepName: string]: boolean } = _.mapValues(actors, () => false);
+	private static parseActions(
+		actors: { [creepName: string]: NeuralZerg },
+		serializedActions: { [creepName: string]: RLAction[] }
+	) {
+		const receivedOrders: { [creepName: string]: boolean } = _.mapValues(
+			actors,
+			() => false
+		);
 
 		// Deserialize the actions for each actor
 		for (const creepName in serializedActions) {
-
 			const creep = actors[creepName] as NeuralZerg | undefined;
 
 			if (!creep) {
@@ -125,13 +145,14 @@ export class ActionParser {
 					receivedOrders[creepName] = true;
 				}
 			}
-
 		}
 
 		// Ensure each actor was given an order (possibly noop)
 		for (const actorName in actors) {
 			if (!receivedOrders[actorName]) {
-				console.log(`[${Game.time}] Actor with name ${actorName} did not receive an order this tick!`);
+				console.log(
+					`[${Game.time}] Actor with name ${actorName} did not receive an order this tick!`
+				);
 			}
 		}
 	}
@@ -140,7 +161,10 @@ export class ActionParser {
 	 * Periodic logging functions that are used to describe state of training map and identify bugs
 	 */
 	private static logState(contents: string) {
-		console.log(`[${Game.time}] My creeps: `, _.map(Game.creeps, creep => `${creep.name} ${creep.pos}`));
+		console.log(
+			`[${Game.time}] My creeps: `,
+			_.map(Game.creeps, (creep) => `${creep.name} ${creep.pos}`)
+		);
 		if (Memory.reinforcementLearning) {
 			console.log(`[${Game.time}] RL Segment: ${contents}`);
 		}
@@ -150,14 +174,13 @@ export class ActionParser {
 	 * Wraps all creeps as Zerg
 	 */
 	private static getAllActors(): { [creepName: string]: NeuralZerg } {
-		return _.mapValues(Game.creeps, creep => new NeuralZerg(creep));
+		return _.mapValues(Game.creeps, (creep) => new NeuralZerg(creep));
 	}
 
 	/**
 	 * Read action commands from the designated memory segment, parse them, and run them
 	 */
 	static run() {
-
 		// Wrap all creep as NeuralZerg and partition actors into controllable and uncontrollable (scripted) sets
 		const allActors = ActionParser.getAllActors();
 
@@ -175,8 +198,10 @@ export class ActionParser {
 
 		// Parse memory and relay actions to controllable actors
 		const raw = RawMemory.segments[SEGMENTS.reinforcementLearning];
-		if (raw != undefined && raw != '') {
-			const actions = <{ [creepName: string]: RLAction[] }>JSON.parse(raw);
+		if (raw != undefined && raw != "") {
+			const actions = <{ [creepName: string]: RLAction[] }>(
+				JSON.parse(raw)
+			);
 			ActionParser.parseActions(controllableActors, actions);
 		} else {
 			if (_.size(controllableActors) > 0) {
@@ -203,10 +228,7 @@ export class ActionParser {
 		}
 
 		// Clear the segment and keep it requested
-		RawMemory.segments[SEGMENTS.reinforcementLearning] = '';
+		RawMemory.segments[SEGMENTS.reinforcementLearning] = "";
 		RawMemory.setActiveSegments([SEGMENTS.reinforcementLearning]);
-
 	}
-
 }
-

@@ -1,11 +1,11 @@
 /* Withdraw a resource from a target */
 
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type withdrawAllTargetType = AnyStoreStructure;
 
-export const withdrawAllTaskName = 'withdrawAll';
+export const withdrawAllTaskName = "withdrawAll";
 
 @profile
 export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
@@ -14,7 +14,9 @@ export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
 	}
 
 	isValidTask() {
-		return (this.creep.store.getUsedCapacity() < this.creep.store.getCapacity());
+		return (
+			this.creep.store.getUsedCapacity() < this.creep.store.getCapacity()
+		);
 	}
 
 	isValidTarget() {
@@ -23,7 +25,8 @@ export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
 
 	work() {
 		let resourceTransferType;
-		for (const [resourceType, amountInStore] of this.target.store.contents) {
+		for (const [resourceType, amountInStore] of this.target.store
+			.contents) {
 			if (amountInStore > 0) {
 				resourceTransferType = resourceType;
 				// Prioritize non-energy
@@ -37,6 +40,4 @@ export class TaskWithdrawAll extends Task<withdrawAllTargetType> {
 		}
 		return -1;
 	}
-
 }
-

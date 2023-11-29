@@ -1,12 +1,12 @@
-import { NO_ACTION } from 'utilities/errors';
-import {CombatIntel} from '../intel/CombatIntel';
-import {CombatMoveOptions, Movement} from '../movement/Movement';
-import {profile} from '../profiler/decorator';
-import {CombatTargeting} from '../targeting/CombatTargeting';
-import {GoalFinder} from '../targeting/GoalFinder';
-import {randomHex} from '../utilities/utils';
-import {Zerg} from './Zerg';
-import { RANGES } from './AnyZerg';
+import { NO_ACTION } from "utilities/errors";
+import { CombatIntel } from "../intel/CombatIntel";
+import { CombatMoveOptions, Movement } from "../movement/Movement";
+import { profile } from "../profiler/decorator";
+import { CombatTargeting } from "../targeting/CombatTargeting";
+import { GoalFinder } from "../targeting/GoalFinder";
+import { randomHex } from "../utilities/utils";
+import { Zerg } from "./Zerg";
+import { RANGES } from "./AnyZerg";
 
 interface CombatZergMemory extends CreepMemory {
 	recovering: boolean;
@@ -23,7 +23,6 @@ export const DEFAULT_SWARM_TICK_DIFFERENCE = 500;
  */
 @profile
 export class CombatZerg extends Zerg {
-
 	memory: CombatZergMemory;
 	isCombatZerg: boolean;
 
@@ -31,15 +30,21 @@ export class CombatZerg extends Zerg {
 		super(creep, notifyWhenAttacked);
 		this.isCombatZerg = true;
 		_.defaults(this.memory, {
-			recovering  : false,
+			recovering: false,
 			lastInDanger: 0,
-			targets     : {}
+			targets: {},
 		});
 	}
 
-	findPartner(partners: CombatZerg[], tickDifference = DEFAULT_PARTNER_TICK_DIFFERENCE): CombatZerg | undefined {
+	findPartner(
+		partners: CombatZerg[],
+		tickDifference = DEFAULT_PARTNER_TICK_DIFFERENCE
+	): CombatZerg | undefined {
 		if (this.memory.partner) {
-			const partner = _.find(partners, partner => partner.name == this.memory.partner);
+			const partner = _.find(
+				partners,
+				(partner) => partner.name == this.memory.partner
+			);
 			if (partner) {
 				return partner;
 			} else {
@@ -47,14 +52,26 @@ export class CombatZerg extends Zerg {
 				this.findPartner(partners, tickDifference);
 			}
 		} else {
-			let partner = _.find(partners, partner => partner.memory.partner == this.name);
+			let partner = _.find(
+				partners,
+				(partner) => partner.memory.partner == this.name
+			);
 			if (!partner) {
 				partner = _(partners)
-					.filter(partner => !partner.memory.partner &&
-									   Math.abs((this.ticksToLive || CREEP_LIFE_TIME)
-												- (partner.ticksToLive || CREEP_LIFE_TIME)) <= tickDifference)
-					.min(partner => Math.abs((this.ticksToLive || CREEP_LIFE_TIME)
-											 - (partner.ticksToLive || CREEP_LIFE_TIME)));
+					.filter(
+						(partner) =>
+							!partner.memory.partner &&
+							Math.abs(
+								(this.ticksToLive || CREEP_LIFE_TIME) -
+									(partner.ticksToLive || CREEP_LIFE_TIME)
+							) <= tickDifference
+					)
+					.min((partner) =>
+						Math.abs(
+							(this.ticksToLive || CREEP_LIFE_TIME) -
+								(partner.ticksToLive || CREEP_LIFE_TIME)
+						)
+					);
 			}
 			if (_.isObject(partner)) {
 				this.memory.partner = partner.name;
@@ -64,20 +81,42 @@ export class CombatZerg extends Zerg {
 		}
 	}
 
-	findSwarm(partners: CombatZerg[], maxByRole: { [role: string]: number },
-			  tickDifference = DEFAULT_SWARM_TICK_DIFFERENCE): string | undefined {
+	findSwarm(
+		partners: CombatZerg[],
+		maxByRole: { [role: string]: number },
+		tickDifference = DEFAULT_SWARM_TICK_DIFFERENCE
+	): string | undefined {
 		if (this.memory.swarm) {
 			return this.memory.swarm;
 		} else {
 			// Find a swarm that isn't too old and that has space for the creep's role
-			const partnersBySwarm = _.groupBy(partners, partner => partner.memory.swarm);
+			const partnersBySwarm = _.groupBy(
+				partners,
+				(partner) => partner.memory.swarm
+			);
 			for (const swarmRef in partnersBySwarm) {
-				if (swarmRef == undefined || swarmRef == 'undefined') continue;
-				if (_.all(partnersBySwarm[swarmRef],
-						  c => Math.abs((this.ticksToLive || CREEP_LIFE_TIME)
-										- (c.ticksToLive || CREEP_LIFE_TIME)) <= tickDifference)) {
-					const swarmCreepsByRole = _.groupBy(partnersBySwarm[swarmRef], c => c.memory.role);
-					if ((swarmCreepsByRole[this.memory.role] || []).length + 1 <= maxByRole[this.memory.role]) {
+				if (swarmRef == undefined || swarmRef == "undefined") {
+					continue;
+				}
+				if (
+					_.all(
+						partnersBySwarm[swarmRef],
+						(c) =>
+							Math.abs(
+								(this.ticksToLive || CREEP_LIFE_TIME) -
+									(c.ticksToLive || CREEP_LIFE_TIME)
+							) <= tickDifference
+					)
+				) {
+					const swarmCreepsByRole = _.groupBy(
+						partnersBySwarm[swarmRef],
+						(c) => c.memory.role
+					);
+					if (
+						(swarmCreepsByRole[this.memory.role] || []).length +
+							1 <=
+						maxByRole[this.memory.role]
+					) {
 						this.memory.swarm = swarmRef;
 						return swarmRef;
 					}
@@ -96,7 +135,7 @@ export class CombatZerg extends Zerg {
 	doMedicActions(roomName: string): boolean {
 		// Travel to the target room
 		if (!this.safelyInRoom(roomName)) {
-			this.goToRoom(roomName, {pathOpts: {ensurePath: true}});
+			this.goToRoom(roomName, { pathOpts: { ensurePath: true } });
 			return true; // en route
 		}
 		// Heal friendlies
@@ -105,7 +144,7 @@ export class CombatZerg extends Zerg {
 			// Approach the target
 			const range = this.pos.getRangeTo(target);
 			if (range > 1) {
-				this.goTo(target, {movingTarget: true});
+				this.goTo(target, { movingTarget: true });
 			}
 
 			// Heal or ranged-heal the target
@@ -122,8 +161,11 @@ export class CombatZerg extends Zerg {
 
 	healSelfIfPossible(): CreepActionReturnCode | undefined {
 		// Heal yourself if it won't interfere with attacking
-		if (this.canExecute('heal')
-			&& (this.hits < this.hitsMax || this.pos.findInRange(this.room.hostiles, 3).length > 0)) {
+		if (
+			this.canExecute("heal") &&
+			(this.hits < this.hitsMax ||
+				this.pos.findInRange(this.room.hostiles, 3).length > 0)
+		) {
 			return this.heal(this);
 		}
 	}
@@ -140,8 +182,11 @@ export class CombatZerg extends Zerg {
 			this.move(this.pos.getDirectionTo(target));
 			return ret;
 		} else {
-			if (this.pos.getRangeTo(target.pos) > 10 && target instanceof Creep) {
-				this.goTo(target, {movingTarget: true});
+			if (
+				this.pos.getRangeTo(target.pos) > 10 &&
+				target instanceof Creep
+			) {
+				this.goTo(target, { movingTarget: true });
 			} else {
 				this.goTo(target);
 			}
@@ -155,8 +200,12 @@ export class CombatZerg extends Zerg {
 	 * Automatically melee-attack the best creep in range
 	 */
 	autoMelee(possibleTargets = this.room.hostiles) {
-		const target = CombatTargeting.findBestCreepTargetInRange(this, 1, possibleTargets)
-					   || CombatTargeting.findBestStructureTargetInRange(this, 1);
+		const target =
+			CombatTargeting.findBestCreepTargetInRange(
+				this,
+				1,
+				possibleTargets
+			) || CombatTargeting.findBestStructureTargetInRange(this, 1);
 		this.debug(`Melee target: ${target}`);
 		if (target) {
 			return this.attack(target);
@@ -167,13 +216,20 @@ export class CombatZerg extends Zerg {
 	 * Automatically ranged-attack the best creep in range
 	 */
 	autoRanged(possibleTargets = this.room.hostiles, allowMassAttack = true) {
-		const target = CombatTargeting.findBestCreepTargetInRange(this, 3, possibleTargets)
-					   || CombatTargeting.findBestStructureTargetInRange(this, 3, false);
+		const target =
+			CombatTargeting.findBestCreepTargetInRange(
+				this,
+				3,
+				possibleTargets
+			) || CombatTargeting.findBestStructureTargetInRange(this, 3, false);
 		// disabled allowUnowned structure attack in order not to desrtory poison walls
 		this.debug(`Ranged target: ${target}`);
 		if (target) {
-			if (allowMassAttack
-				&& CombatIntel.getMassAttackDamage(this, possibleTargets) > CombatIntel.getRangedAttackDamage(this)) {
+			if (
+				allowMassAttack &&
+				CombatIntel.getMassAttackDamage(this, possibleTargets) >
+					CombatIntel.getRangedAttackDamage(this)
+			) {
 				return this.rangedMassAttack();
 			} else {
 				return this.rangedAttack(target);
@@ -181,8 +237,11 @@ export class CombatZerg extends Zerg {
 		}
 	}
 
-	private kiteIfNecessary() { // Should filter by melee at some point
-		const nearbyHostiles = _.filter(this.room.dangerousHostiles, c => this.pos.inRangeToXY(c.pos.x, c.pos.y, 2));
+	private kiteIfNecessary() {
+		// Should filter by melee at some point
+		const nearbyHostiles = _.filter(this.room.dangerousHostiles, (c) =>
+			this.pos.inRangeToXY(c.pos.x, c.pos.y, 2)
+		);
 		if (nearbyHostiles.length && !this.inRampart) {
 			// this.say('run!');
 			this.rangedMassAttack();
@@ -194,12 +253,19 @@ export class CombatZerg extends Zerg {
 	 * Automatically heal the best creep in range
 	 */
 	autoHeal(allowRangedHeal = true, friendlies?: Creep[]) {
-		const target = CombatTargeting.findBestHealingTargetInRange(this, allowRangedHeal ? RANGES.HEAL : RANGES.RANGED_HEAL, friendlies);
+		const target = CombatTargeting.findBestHealingTargetInRange(
+			this,
+			allowRangedHeal ? RANGES.HEAL : RANGES.RANGED_HEAL,
+			friendlies
+		);
 		if (target) {
 			this.debug(`Heal target: ${target}`);
 			if (this.pos.getRangeTo(target) <= RANGES.HEAL) {
 				return this.heal(target);
-			} else if (allowRangedHeal && this.pos.getRangeTo(target) <= RANGES.RANGED_HEAL) {
+			} else if (
+				allowRangedHeal &&
+				this.pos.getRangeTo(target) <= RANGES.RANGED_HEAL
+			) {
 				return this.rangedHeal(target);
 			}
 		}
@@ -209,7 +275,6 @@ export class CombatZerg extends Zerg {
 	 * Navigate to a room, then engage hostile creeps there, perform medic actions, etc.
 	 */
 	autoSkirmish(roomName: string, _verbose = false) {
-
 		// Do standard melee, ranged, and heal actions
 		if (this.getActiveBodyparts(ATTACK) > 0) {
 			this.autoMelee(); // Melee should be performed first
@@ -217,8 +282,8 @@ export class CombatZerg extends Zerg {
 		if (this.getActiveBodyparts(RANGED_ATTACK) > 0) {
 			this.autoRanged();
 		}
-		if (this.canExecute('heal')) {
-			this.autoHeal(this.canExecute('rangedHeal'));
+		if (this.canExecute("heal")) {
+			this.autoHeal(this.canExecute("rangedHeal"));
 		}
 
 		// Handle recovery if low on HP
@@ -230,7 +295,7 @@ export class CombatZerg extends Zerg {
 		// Travel to the target room
 		if (!this.safelyInRoom(roomName)) {
 			this.debug(`Going to room!`);
-			return this.goToRoom(roomName, {pathOpts: {ensurePath: true}});
+			return this.goToRoom(roomName, { pathOpts: { ensurePath: true } });
 		}
 
 		// Skirmish within the room
@@ -242,8 +307,12 @@ export class CombatZerg extends Zerg {
 	/**
 	 * Navigate to a room, then engage hostile creeps there, perform medic actions, etc.
 	 */
-	autoCombat(roomName: string, _verbose = false, preferredRange?: number, options?: CombatMoveOptions) {
-
+	autoCombat(
+		roomName: string,
+		_verbose = false,
+		preferredRange?: number,
+		options?: CombatMoveOptions
+	) {
 		// Do standard melee, ranged, and heal actions
 		if (this.getActiveBodyparts(ATTACK) > 0) {
 			this.autoMelee(); // Melee should be performed first
@@ -251,8 +320,8 @@ export class CombatZerg extends Zerg {
 		if (this.getActiveBodyparts(RANGED_ATTACK) > 0) {
 			this.autoRanged();
 		}
-		if (this.canExecute('heal')) {
-			this.autoHeal(this.canExecute('rangedHeal'));
+		if (this.canExecute("heal")) {
+			this.autoHeal(this.canExecute("rangedHeal"));
 		}
 
 		// Handle recovery if low on HP
@@ -264,29 +333,38 @@ export class CombatZerg extends Zerg {
 		// Travel to the target room
 		if (!this.safelyInRoom(roomName)) {
 			this.debug(`Going to room!`);
-			return this.goToRoom(roomName, {pathOpts: {ensurePath: true}});
+			return this.goToRoom(roomName, { pathOpts: { ensurePath: true } });
 		}
 
 		// Fight within the room
 		const target = CombatTargeting.findTarget(this);
-		const preferRanged = this.getActiveBodyparts(RANGED_ATTACK) > this.getActiveBodyparts(ATTACK);
+		const preferRanged =
+			this.getActiveBodyparts(RANGED_ATTACK) >
+			this.getActiveBodyparts(ATTACK);
 		const targetRange = preferredRange || preferRanged ? 3 : 1;
 		this.debug(`fighting: ${target}, ${targetRange}`);
 		if (target) {
 			const avoid = [];
 			// Avoid melee hostiles if you are a ranged creep
 			if (preferRanged) {
-				const meleeHostiles = _.filter(this.room.hostiles, h => CombatIntel.getAttackDamage(h) > 0);
+				const meleeHostiles = _.filter(
+					this.room.hostiles,
+					(h) => CombatIntel.getAttackDamage(h) > 0
+				);
 				for (const hostile of meleeHostiles) {
-					avoid.push({pos: hostile.pos, range: targetRange - 1});
+					avoid.push({ pos: hostile.pos, range: targetRange - 1 });
 				}
 				if (this.kiteIfNecessary()) {
 					return;
 				}
 			}
-			return Movement.combatMove(this, [{pos: target.pos, range: targetRange}], avoid, options);
+			return Movement.combatMove(
+				this,
+				[{ pos: target.pos, range: targetRange }],
+				avoid,
+				options
+			);
 		}
-
 	}
 
 	autoBunkerCombat(roomName: string, _verbose = false) {
@@ -300,26 +378,43 @@ export class CombatZerg extends Zerg {
 		// Travel to the target room
 		if (!this.safelyInRoom(roomName)) {
 			this.debug(`Going to room!`);
-			return this.goToRoom(roomName, {pathOpts: {ensurePath: true}});
+			return this.goToRoom(roomName, { pathOpts: { ensurePath: true } });
 		}
 
 		// TODO check if right colony, also yes colony check is in there to stop red squigglies
 		// const siegingCreeps = this.room.hostiles.filter(creep =>
 		// 	_.any(creep.pos.neighbors, pos => this.colony && insideBunkerBounds(pos, this.colony)));
 
-		const target = CombatTargeting.findTarget(this, this.colony ? this.room.playerHostiles
-																		  .filter(creep => creep.pos.getRangeTo(this.colony!.pos) <= 9) : this.room.dangerousHostiles);
+		const target = CombatTargeting.findTarget(
+			this,
+			this.colony ?
+				this.room.playerHostiles.filter(
+					(creep) => creep.pos.getRangeTo(this.colony!.pos) <= 9
+				)
+			:	this.room.dangerousHostiles
+		);
 
 		if (target) {
-			return Movement.combatMove(this, [{pos: target.pos, range: 1}], [], {
-				preferRamparts : true,
-				requireRamparts: true
-			});
+			return Movement.combatMove(
+				this,
+				[{ pos: target.pos, range: 1 }],
+				[],
+				{
+					preferRamparts: true,
+					requireRamparts: true,
+				}
+			);
 		}
 	}
 
-	needsToRecover(recoverThreshold  = CombatIntel.minimumDamageTakenMultiplier(this.creep) < 1 ? 0.85 : 0.75,
-				   reengageThreshold = 1.0): boolean {
+	needsToRecover(
+		recoverThreshold = (
+			CombatIntel.minimumDamageTakenMultiplier(this.creep) < 1
+		) ?
+			0.85
+		:	0.75,
+		reengageThreshold = 1.0
+	): boolean {
 		let recovering: boolean;
 		if (this.memory.recovering) {
 			recovering = this.hits < this.hitsMax * reengageThreshold;
@@ -334,11 +429,16 @@ export class CombatZerg extends Zerg {
 	 * Retreat and get healed
 	 */
 	recover() {
-		if (this.pos.findInRange(this.room.hostiles, 5).length > 0 || this.room.towers.length > 0) {
+		if (
+			this.pos.findInRange(this.room.hostiles, 5).length > 0 ||
+			this.room.towers.length > 0
+		) {
 			this.memory.lastInDanger = Game.time;
 		}
 		const goals = GoalFinder.retreatGoals(this);
-		const result = Movement.combatMove(this, goals.approach, goals.avoid, {allowExit: true});
+		const result = Movement.combatMove(this, goals.approach, goals.avoid, {
+			allowExit: true,
+		});
 
 		if (result == NO_ACTION && this.pos.isEdge) {
 			if (Game.time < this.memory.lastInDanger + 3) {
@@ -347,6 +447,4 @@ export class CombatZerg extends Zerg {
 		}
 		return result;
 	}
-
-
 }

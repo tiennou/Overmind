@@ -4,7 +4,13 @@ declare const require: (module: string) => any;
 
 declare const MARKET_FEE = 300; // missing in the typed-screeps declarations
 
-type TickPhase = 'assimilating' | 'build' | 'refresh' | 'init' | 'run' | 'postRun';
+type TickPhase =
+	| "assimilating"
+	| "build"
+	| "refresh"
+	| "init"
+	| "run"
+	| "postRun";
 declare var PHASE: TickPhase;
 declare var LATEST_BUILD_TICK: number;
 declare var LATEST_GLOBAL_RESET_TICK: number;
@@ -19,34 +25,34 @@ declare var _cache: IGlobalCache;
 
 declare var __DEFAULT_OVERMIND_SIGNATURE__: string;
 
-declare var remoteDebugger: import('debug/remoteDebugger').RemoteDebugger;
+declare var remoteDebugger: import("debug/remoteDebugger").RemoteDebugger;
 
 declare var Overmind: IOvermind;
 
 declare var Memory: Memory;
 declare var Assimilator: IAssimilator;
 
-declare var Segmenter: import('memory/Segmenter').Segmenter;
+declare var Segmenter: import("memory/Segmenter").Segmenter;
 
-declare var TerminalNetwork: import('logistics/TerminalNetwork_v2').TerminalNetworkV2;
-declare var TradeNetwork: import('logistics/TradeNetwork').TraderJoe;
+declare var TerminalNetwork: import("logistics/TerminalNetwork_v2").TerminalNetworkV2;
+declare var TradeNetwork: import("logistics/TradeNetwork").TraderJoe;
 
-declare var Cartographer: import('utilities/Cartographer').Cartographer;
-declare var Pathing: import('movement/Pathing').Pathing;
-declare var RoomIntel: typeof import('intel/RoomIntel').RoomIntel;
-declare var CombatIntel: typeof import('intel/CombatIntel').CombatIntel;
-declare var GoalFinder: import('targeting/GoalFinder').GoalFinder;
-declare var Abathur: import('resources/Abathur').Abathur;
+declare var Cartographer: import("utilities/Cartographer").Cartographer;
+declare var Pathing: import("movement/Pathing").Pathing;
+declare var RoomIntel: typeof import("intel/RoomIntel").RoomIntel;
+declare var CombatIntel: typeof import("intel/CombatIntel").CombatIntel;
+declare var GoalFinder: import("targeting/GoalFinder").GoalFinder;
+declare var Abathur: import("resources/Abathur").Abathur;
 
-declare var MatrixCache: import('matrix/MatrixLib').MatrixCache;
-declare var MatrixLib: import('matrix/MatrixLib').MatrixLib;
+declare var MatrixCache: import("matrix/MatrixLib").MatrixCache;
+declare var MatrixLib: import("matrix/MatrixLib").MatrixLib;
 
-declare var PackratTests: import('utilities/packrat').PackratTests;
+declare var PackratTests: import("utilities/packrat").PackratTests;
 
-declare var Setups: typeof import('creepSetups/setups').Setups;
-declare var CombatCreepSetup: typeof import('creepSetups/CombatCreepSetup').CombatCreepSetup;
-declare var DefaultCombatCreepSetups: {[type: string]: any }; // import('creepSetups/CombatCreepSetup').CombatCreepSetup }
-declare var Tasks: typeof import('tasks/Tasks').Tasks;
+declare var Setups: typeof import("creepSetups/setups").Setups;
+declare var CombatCreepSetup: typeof import("creepSetups/CombatCreepSetup").CombatCreepSetup;
+declare var DefaultCombatCreepSetups: { [type: string]: any }; // import('creepSetups/CombatCreepSetup').CombatCreepSetup }
+declare var Tasks: typeof import("tasks/Tasks").Tasks;
 
 type Full<T> = {
 	[P in keyof T]-?: T[P];
@@ -54,12 +60,14 @@ type Full<T> = {
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
-type PartialDeep<T> = T extends object ? {
-    [P in keyof T]?: PartialDeep<T[P]>;
-} : T;
+type PartialDeep<T> =
+	T extends object ?
+		{
+			[P in keyof T]?: PartialDeep<T[P]>;
+		}
+	:	T;
 
 // declare module 'screeps-profiler'; // I stopped using the typings for this because it was fucking up the Game typings
-
 
 // If TS2451 gets thrown, change "declare let Game: Game;" to "declare var Game: Game;"
 // in typed-screeps index.d.ts file. (See issue #61 until the package is updated)
@@ -67,7 +75,6 @@ interface Game {
 	_allRooms?: Room[];
 	_ownedRooms?: Room[];
 }
-
 
 interface IGlobalCache {
 	accessed: { [key: string]: number };
@@ -93,13 +100,11 @@ interface ICache {
 }
 
 interface IExpansionPlanner {
-
 	refresh(): void;
 
 	init(): void;
 
 	run(): void;
-
 }
 
 // interface IOvermindMemory {
@@ -110,7 +115,6 @@ interface IExpansionPlanner {
 declare const Assimilator: IAssimilator;
 
 interface IAssimilator {
-
 	validate(code: any): void;
 
 	generateChecksum(): string;
@@ -122,25 +126,26 @@ interface IAssimilator {
 	getClearanceCode(username: string): string | null;
 
 	run(): void;
-
 }
 
 interface IOvermind {
 	shouldBuild: boolean;
 	expiration: number;
-	cache: import('caching/GameCache').GameCache;
-	overseer: import('Overseer').Overseer;
-	directives: { [flagName: string]: import('directives/Directive').Directive };
-	zerg: { [creepName: string]: import('zerg/Zerg').Zerg };
-	powerZerg: { [creepName: string]: import('zerg/PowerZerg').PowerZerg };
-	colonies: { [roomName: string]: import('Colony').Colony };
-	overlords: { [ref: string]: import('overlords/Overlord').Overlord };
-	spawnGroups: { [ref: string]: import('logistics/SpawnGroup').SpawnGroup };
+	cache: import("caching/GameCache").GameCache;
+	overseer: import("Overseer").Overseer;
+	directives: {
+		[flagName: string]: import("directives/Directive").Directive;
+	};
+	zerg: { [creepName: string]: import("zerg/Zerg").Zerg };
+	powerZerg: { [creepName: string]: import("zerg/PowerZerg").PowerZerg };
+	colonies: { [roomName: string]: import("Colony").Colony };
+	overlords: { [ref: string]: import("overlords/Overlord").Overlord };
+	spawnGroups: { [ref: string]: import("logistics/SpawnGroup").SpawnGroup };
 	colonyMap: { [roomName: string]: string };
 	memory: IOvermindMemory;
-	terminalNetwork: ITerminalNetwork;			// is actually TerminalNetwork
-	tradeNetwork: ITradeNetwork;				// is actually TradeNetwork
-	expansionPlanner: import('strategy/ExpansionPlanner').ExpansionPlanner;
+	terminalNetwork: ITerminalNetwork; // is actually TerminalNetwork
+	tradeNetwork: ITradeNetwork; // is actually TradeNetwork
+	expansionPlanner: import("strategy/ExpansionPlanner").ExpansionPlanner;
 	exceptions: Error[];
 
 	build(): void;
@@ -165,7 +170,6 @@ interface INotifier {
 }
 
 interface IOverseer {
-
 	notifier: INotifier;
 
 	registerDirective(directive: any): void;
@@ -176,7 +180,7 @@ interface IOverseer {
 
 	getDirectivesInRoom(roomName: string): any[];
 
-	getDirectivesForColony(colony: {name: string}): any[];
+	getDirectivesForColony(colony: { name: string }): any[];
 
 	registerOverlord(overlord: any): void;
 
@@ -191,7 +195,6 @@ interface IOverseer {
 	visuals(): void;
 }
 
-
 // interface TerminalState {
 // 	name: string;
 // 	type: 'in' | 'out' | 'in/out';
@@ -205,14 +208,22 @@ interface Threshold {
 	tolerance: number;
 }
 
-type TerminalNetworkThresholdSpecial = 'default' | 'dont_care' | 'dont_want'
+type TerminalNetworkThresholdSpecial = "default" | "dont_care" | "dont_want";
 
-type TerminalNetworkThresholdResourceType = ResourceConstant | 'boosts_t1' | 'boosts_t2' | 'boosts_t3' | 'intermediates';
+type TerminalNetworkThresholdResourceType =
+	| ResourceConstant
+	| "boosts_t1"
+	| "boosts_t2"
+	| "boosts_t3"
+	| "intermediates";
 
-type TerminalNetworkThresholds = Record<TerminalNetworkThresholdSpecial, Threshold> & Partial<Record<TerminalNetworkThresholdResourceType, Threshold>>;
+type TerminalNetworkThresholds = Record<
+	TerminalNetworkThresholdSpecial,
+	Threshold
+> &
+	Partial<Record<TerminalNetworkThresholdResourceType, Threshold>>;
 
 interface ITerminalNetwork {
-
 	addColony(colony: IColony): void;
 
 	refresh(): void;
@@ -221,26 +232,42 @@ interface ITerminalNetwork {
 
 	thresholds(colony: IColony, resource: ResourceConstant): Threshold;
 
-	canObtainResource(requestor: IColony, resource: ResourceConstant, totalAmount: number): boolean;
+	canObtainResource(
+		requestor: IColony,
+		resource: ResourceConstant,
+		totalAmount: number
+	): boolean;
 
-	requestResource(requestor: IColony, resource: ResourceConstant, totalAmount: number, tolerance?: number): void;
+	requestResource(
+		requestor: IColony,
+		resource: ResourceConstant,
+		totalAmount: number,
+		tolerance?: number
+	): void;
 
-	lockResource(requestor: IColony, resource: ResourceConstant, lockedAmount: number): void;
+	lockResource(
+		requestor: IColony,
+		resource: ResourceConstant,
+		lockedAmount: number
+	): void;
 
-	exportResource(provider: IColony, resource: ResourceConstant, thresholds?: Threshold): void;
+	exportResource(
+		provider: IColony,
+		resource: ResourceConstant,
+		thresholds?: Threshold
+	): void;
 
 	init(): void;
 
 	run(): void;
 }
 
-
 interface TradeOpts {
-	preferDirect?: boolean;			// true if you prefer to sell directly via a .deal() call
-	flexibleAmount?: boolean;		// true if you're okay filling the transaction with several smaller transactions
-	ignoreMinAmounts?: boolean;		// true if you want to ignore quantity checks (e.g. T5 commodities in small amounts)
-	ignorePriceChecksForDirect?: boolean; 	// true if you want to bypass price sanity checks when .deal'ing
-	dryRun?: boolean; 				// don't actually execute the trade, just check to see if you can make it
+	preferDirect?: boolean; // true if you prefer to sell directly via a .deal() call
+	flexibleAmount?: boolean; // true if you're okay filling the transaction with several smaller transactions
+	ignoreMinAmounts?: boolean; // true if you want to ignore quantity checks (e.g. T5 commodities in small amounts)
+	ignorePriceChecksForDirect?: boolean; // true if you want to bypass price sanity checks when .deal'ing
+	dryRun?: boolean; // don't actually execute the trade, just check to see if you can make it
 }
 
 interface ITradeNetwork {
@@ -248,15 +275,29 @@ interface ITradeNetwork {
 
 	refresh(): void;
 
-	getExistingOrders(type: ORDER_BUY | ORDER_SELL, resource: ResourceConstant | 'any', roomName?: string): Order[];
+	getExistingOrders(
+		type: ORDER_BUY | ORDER_SELL,
+		resource: ResourceConstant | "any",
+		roomName?: string
+	): Order[];
 
 	priceOf(resource: ResourceConstant): number;
 
 	ordersProcessedThisTick(): boolean;
 
-	buy(terminal: StructureTerminal, resource: ResourceConstant, amount: number, opts?: TradeOpts): number;
+	buy(
+		terminal: StructureTerminal,
+		resource: ResourceConstant,
+		amount: number,
+		opts?: TradeOpts
+	): number;
 
-	sell(terminal: StructureTerminal, resource: ResourceConstant, amount: number, opts?: TradeOpts): number;
+	sell(
+		terminal: StructureTerminal,
+		resource: ResourceConstant,
+		amount: number,
+		opts?: TradeOpts
+	): number;
 
 	init(): void;
 
@@ -308,7 +349,7 @@ interface HasRef {
 }
 
 type AnyStoreStructure =
-	StructureContainer
+	| StructureContainer
 	| StructureExtension
 	| StructureFactory
 	| StructureLab
@@ -323,7 +364,7 @@ type AnyStoreStructure =
 	| Tombstone;
 
 type TransferrableStoreStructure =
-	StructureContainer
+	| StructureContainer
 	| StructureExtension
 	| StructureFactory
 	| StructureLab
@@ -335,7 +376,8 @@ type TransferrableStoreStructure =
 	| StructureTerminal
 	| StructureTower;
 
-
 type StoreContentsArray = [resourceType: ResourceConstant, amount: number][];
 type StoreContents = { [resourceType in ResourceConstant]: number };
-type DropContents = { [resourceType in ResourceConstant]: Resource[] | undefined };
+type DropContents = {
+	[resourceType in ResourceConstant]: Resource[] | undefined;
+};

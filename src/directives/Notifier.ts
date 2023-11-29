@@ -1,12 +1,12 @@
-import {printRoomName} from '../utilities/utils';
-import {Visualizer} from '../visuals/Visualizer';
+import { printRoomName } from "../utilities/utils";
+import { Visualizer } from "../visuals/Visualizer";
 
 export enum NotifierPriority {
-	Fatal    = -1,
+	Fatal = -1,
 	Critical = 0,
-	High     = 1,
-	Normal   = 2,
-	Low      = 3,
+	High = 1,
+	Normal = 2,
+	Low = 3,
 }
 
 // An alert is a one-tick notification which must be refreshed every tick, e.g. while a directive is up
@@ -31,7 +31,6 @@ interface NotifierMemory {
  * Records one-time and persistent notifications from various in-game events
  */
 export class Notifier {
-
 	memory: NotifierMemory;
 	alerts: Alert[];
 	notifications: Notification[];
@@ -45,9 +44,13 @@ export class Notifier {
 		this.alerts = [];
 	}
 
-	alert(message: string, roomName?: string | undefined, priority = NotifierPriority.Normal) {
+	alert(
+		message: string,
+		roomName?: string | undefined,
+		priority = NotifierPriority.Normal
+	) {
 		// Register an alert to be displayed this in the notifications visual box
-		const alert: Alert = {message, roomName, priority};
+		const alert: Alert = { message, roomName, priority };
 		this.alerts.push(alert);
 	}
 
@@ -65,10 +68,14 @@ export class Notifier {
 	// }
 
 	generateNotificationsList(links = false): string[] {
-		const sortedAlerts = _.sortBy(this.alerts, alert => alert.priority);
-		return _.map(sortedAlerts, alert => {
+		const sortedAlerts = _.sortBy(this.alerts, (alert) => alert.priority);
+		return _.map(sortedAlerts, (alert) => {
 			if (alert.roomName) {
-				return (links ? printRoomName(alert.roomName) : alert.roomName) + ': ' + alert.message;
+				return (
+					(links ? printRoomName(alert.roomName) : alert.roomName) +
+					": " +
+					alert.message
+				);
 			} else {
 				return alert.message;
 			}
@@ -79,5 +86,4 @@ export class Notifier {
 		const notificationMessages = this.generateNotificationsList();
 		Visualizer.drawNotifications(notificationMessages);
 	}
-
 }

@@ -1,9 +1,9 @@
-import {log} from 'console/log';
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { log } from "console/log";
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type retireTargetType = StructureSpawn;
-export const retireTaskName = 'retire';
+export const retireTaskName = "retire";
 
 @profile
 export class TaskRetire extends Task<retireTargetType> {
@@ -25,7 +25,9 @@ export class TaskRetire extends Task<retireTargetType> {
 	work() {
 		const result = this.target.recycleCreep(this.creep.creep);
 		if (result === OK) {
-			log.info(`${this.creep.print} successfully <s>recycled</s> retired`);
+			log.info(
+				`${this.creep.print} successfully <s>recycled</s> retired`
+			);
 			this.finish();
 		}
 		return result;

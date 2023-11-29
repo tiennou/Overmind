@@ -1,10 +1,9 @@
-Object.defineProperty(PowerCreep.prototype, 'inRampart', {
+Object.defineProperty(PowerCreep.prototype, "inRampart", {
 	get(this: PowerCreep) {
 		return !!this.pos.lookForStructure(STRUCTURE_RAMPART); // this assumes hostile creeps can't stand in my ramparts
 	},
 	configurable: true,
 });
-
 
 // // Redefine some properties that creeps have so that PowerCreeps can be inserted in Zerg subclass
 //

@@ -1,8 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type claimTargetType = StructureController;
-export const claimTaskName = 'claim';
+export const claimTaskName = "claim";
 
 @profile
 export class TaskClaim extends Task<claimTargetType> {
@@ -12,11 +12,11 @@ export class TaskClaim extends Task<claimTargetType> {
 	}
 
 	isValidTask() {
-		return (this.creep.getActiveBodyparts(CLAIM) > 0);
+		return this.creep.getActiveBodyparts(CLAIM) > 0;
 	}
 
 	isValidTarget() {
-		return (this.target != null && (!this.target.room || !this.target.owner));
+		return this.target != null && (!this.target.room || !this.target.owner);
 	}
 
 	work() {

@@ -1,16 +1,18 @@
-import { NO_ACTION } from 'utilities/errors';
-import {Colony, getAllColonies} from '../Colony';
-import {log} from '../console/log';
-import {isAnyZerg, isPowerCreep} from '../declarations/typeGuards';
-import {Movement, MoveOptions} from '../movement/Movement';
-import {Pathing} from '../movement/Pathing';
-import {Overlord} from '../overlords/Overlord';
-import {profile} from '../profiler/decorator';
-import {Cartographer, ROOMTYPE_SOURCEKEEPER} from '../utilities/Cartographer';
-import {minBy} from '../utilities/utils';
-import { config } from 'config';
+import { NO_ACTION } from "utilities/errors";
+import { Colony, getAllColonies } from "../Colony";
+import { log } from "../console/log";
+import { isAnyZerg, isPowerCreep } from "../declarations/typeGuards";
+import { Movement, MoveOptions } from "../movement/Movement";
+import { Pathing } from "../movement/Pathing";
+import { Overlord } from "../overlords/Overlord";
+import { profile } from "../profiler/decorator";
+import { Cartographer, ROOMTYPE_SOURCEKEEPER } from "../utilities/Cartographer";
+import { minBy } from "../utilities/utils";
+import { config } from "config";
 
-export function normalizeAnyZerg(creep: AnyZerg | AnyCreep): AnyZerg | AnyCreep {
+export function normalizeAnyZerg(
+	creep: AnyZerg | AnyCreep
+): AnyZerg | AnyCreep {
 	return Overmind.zerg[creep.name] || Overmind.powerZerg[creep.name] || creep;
 }
 
@@ -34,16 +36,16 @@ interface FleeOptions {
 }
 
 export const RANGES = {
-	BUILD   : 3,
-	REPAIR  : 3,
+	BUILD: 3,
+	REPAIR: 3,
 	TRANSFER: 1,
 	WITHDRAW: 1,
-	HARVEST : 1,
-	ATTACK  : 1,
-	HEAL    : 1,
+	HARVEST: 1,
+	ATTACK: 1,
+	HEAL: 1,
 	RANGED_ATTACK: 3,
 	RANGED_HEAL: 3,
-	DROP    : 0,
+	DROP: 0,
 };
 
 /**
@@ -52,38 +54,34 @@ export const RANGES = {
  */
 @profile
 export abstract class AnyZerg {
-
 	isAnyZerg: true;
-	creep: AnyCreep; 					// The creep that this wrapper class will control
-	// body: BodyPartDefinition[];    	 	// These properties are all wrapped from this.creep.* to this.*
-	store: StoreDefinition; 			// |
+	creep: AnyCreep; // The creep that this wrapper class will control
+	// These properties are all wrapped from this.creep.* to this.*
+	store: StoreDefinition;
 	effects: RoomObjectEffect[];
-	// fatigue: number;					// |
-	hits: number;						// |
-	hitsMax: number;					// |
-	id: string;							// |
-	memory: CreepMemory;				// | See the ICreepMemory interface for structure
-	name: string;						// |
-	pos: RoomPosition;					// |
-	nextPos: RoomPosition;				// | The next position the creep will be in after registering a move intent
-	ref: string;						// |
-	// roleName: string;					// |
-	room: Room;							// |
-	saying: string;						// |
-	// spawning: boolean;					// |
-	ticksToLive: number | undefined;	// |
+	hits: number;
+	hitsMax: number;
+	id: string;
+	memory: CreepMemory;
+	name: string;
+	pos: RoomPosition;
+	/** The next position the creep will be in after registering a move intent */
+	nextPos: RoomPosition;
+	ref: string;
+	room: Room;
+	saying: string;
+	ticksToLive: number | undefined;
 	lifetime: number;
-	actionLog: { [actionName: string]: boolean }; // Tracks the actions that a creep has completed this tick
-	blockMovement: boolean; 			// Whether the zerg is allowed to move or not
-	// private _task: Task | null; 		// Cached Task object that is instantiated once per tick and on change
+	/** Tracks the actions that a creep has completed this tick */
+	actionLog: { [actionName: string]: boolean };
+	/** Whether the zerg is allowed to move or not */
+	blockMovement: boolean;
 
 	constructor(creep: AnyCreep, notifyWhenAttacked = true) {
 		this.isAnyZerg = true;
 		// Copy over creep references
 		this.creep = creep;
-		// this.body = creep.body;
 		this.store = creep.store;
-		// this.fatigue = creep.fatigue;
 		this.effects = creep.effects;
 		this.hits = creep.hits;
 		this.hitsMax = creep.hitsMax;
@@ -93,26 +91,29 @@ export abstract class AnyZerg {
 		this.pos = creep.pos;
 		this.nextPos = creep.pos;
 		this.ref = creep.ref;
-		// this.roleName = creep.memory.role;
 		this.room = creep.room!; // only wrap actively spawned PowerCreeps
 		this.saying = creep.saying;
-		// this.spawning = creep.spawning;
 		this.ticksToLive = creep.ticksToLive;
 		// Extra properties
 		if (isPowerCreep(creep)) {
 			this.lifetime = POWER_CREEP_LIFE_TIME;
 		} else {
-			this.lifetime = _.filter(creep.body, part => part.type == CLAIM).length > 0
-							? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
+			this.lifetime =
+				_.filter(creep.body, (part) => part.type == CLAIM).length > 0 ?
+					CREEP_CLAIM_LIFE_TIME
+				:	CREEP_LIFE_TIME;
 		}
 		this.actionLog = {};
 		this.blockMovement = false;
 		// Register global references
-		// Overmind.zerg[this.name] = this;
 		// @ts-expect-error Global getter for Zergs
 		global[this.name] = this;
 		// Handle attack notification when at lifetime - 1
-		if (!notifyWhenAttacked && (this.ticksToLive || 0) >= this.lifetime - (config.NEW_OVERMIND_INTERVAL + 1)) {
+		if (
+			!notifyWhenAttacked &&
+			(this.ticksToLive || 0) >=
+				this.lifetime - (config.NEW_OVERMIND_INTERVAL + 1)
+		) {
 			// creep.notifyWhenAttacked only uses the 0.2CPU intent cost if it changes the intent value
 			this.notifyWhenAttacked(notifyWhenAttacked);
 		}
@@ -127,19 +128,14 @@ export abstract class AnyZerg {
 			this.creep = creep;
 			this.pos = creep.pos;
 			this.nextPos = creep.pos;
-			// this.body = creep.body;
 			this.store = creep.store;
-			// this.fatigue = creep.fatigue;
 			this.hits = creep.hits;
 			this.memory = creep.memory;
-			// this.roleName = creep.memory.role;
 			this.room = creep.room;
 			this.saying = creep.saying;
-			// this.spawning = creep.spawning;
 			this.ticksToLive = creep.ticksToLive;
 			this.actionLog = {};
 			this.blockMovement = false;
-			// this._task = null;
 		} else {
 			log.debug(`Deleting ${this.print} from global`);
 			// @ts-expect-error Global getter for Zergs
@@ -154,20 +150,32 @@ export abstract class AnyZerg {
 	}
 
 	get print(): string {
-		return '<a href="#!/room/' + Game.shard.name + '/' + this.pos.roomName + '">[' + this.name + ']</a>';
+		return (
+			'<a href="#!/room/' +
+			Game.shard.name +
+			"/" +
+			this.pos.roomName +
+			'">[' +
+			this.name +
+			"]</a>"
+		);
 	}
 
 	// Wrapped creep methods ===========================================================================================
 
-	cancelOrder(methodName: string): OK | ERR_NOT_OWNER | ERR_BUSY | ERR_NOT_FOUND {
+	cancelOrder(
+		methodName: string
+	): OK | ERR_NOT_OWNER | ERR_BUSY | ERR_NOT_FOUND {
 		const result = this.creep.cancelOrder(methodName);
-		if (result == OK) this.actionLog[methodName] = false;
+		if (result == OK) {
+			this.actionLog[methodName] = false;
+		}
 		return result;
 	}
 
 	drop(resourceType: ResourceConstant, amount?: number) {
 		const result = this.creep.drop(resourceType, amount);
-		if (!this.actionLog.drop) this.actionLog.drop = (result == OK);
+		this.actionLog.drop ??= result == OK;
 		return result;
 	}
 
@@ -182,8 +190,8 @@ export abstract class AnyZerg {
 	move(direction: DirectionConstant, force = false) {
 		if (!this.blockMovement || force) {
 			const result = this.creep.move(direction);
+			this.actionLog.move ??= result == OK;
 			if (result == OK) {
-				if (!this.actionLog.move) this.actionLog.move = true;
 				this.nextPos = this.pos.getPositionAtDirection(direction);
 			}
 			return result;
@@ -198,7 +206,9 @@ export abstract class AnyZerg {
 
 	pickup(resource: Resource) {
 		const result = this.creep.pickup(resource);
-		if (!this.actionLog.pickup) this.actionLog.pickup = (result == OK);
+		if (!this.actionLog.pickup) {
+			this.actionLog.pickup = result == OK;
+		}
 		return result;
 	}
 
@@ -216,19 +226,22 @@ export abstract class AnyZerg {
 	}
 
 	suicide() {
-		this.say('💀 RIP 💀', true);
+		this.say("💀 RIP 💀", true);
 		return this.creep.suicide();
 	}
 
-	transfer(target: AnyCreep | AnyZerg | Structure,
-		resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number) {
+	transfer(
+		target: AnyCreep | AnyZerg | Structure,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number
+	) {
 		let result: ScreepsReturnCode;
 		if (isAnyZerg(target)) {
 			result = this.creep.transfer(target.creep, resourceType, amount);
 		} else {
 			result = this.creep.transfer(target, resourceType, amount);
 		}
-		if (!this.actionLog.transfer) this.actionLog.transfer = (result == OK);
+		this.actionLog.transfer ??= result == OK;
 		return result;
 	}
 
@@ -240,21 +253,31 @@ export abstract class AnyZerg {
 		}
 	}
 
-	goTransfer(target: Creep | AnyZerg | Structure, resourceType: ResourceConstant = RESOURCE_ENERGY,
-			   amount?: number): void {
+	goTransfer(
+		target: Creep | AnyZerg | Structure,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number
+	): void {
 		if (this.transfer(target, resourceType, amount) == ERR_NOT_IN_RANGE) {
 			this.goTo(target);
 		}
 	}
 
-	withdraw(target: Structure | Tombstone | Ruin, resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number) {
+	withdraw(
+		target: Structure | Tombstone | Ruin,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number
+	) {
 		const result = this.creep.withdraw(target, resourceType, amount);
-		if (!this.actionLog.withdraw) this.actionLog.withdraw = (result == OK);
+		this.actionLog.withdraw ??= result == OK;
 		return result;
 	}
 
-	goWithdraw(target: Structure | Tombstone, resourceType: ResourceConstant = RESOURCE_ENERGY,
-			   amount?: number): void {
+	goWithdraw(
+		target: Structure | Tombstone,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number
+	): void {
 		if (this.withdraw(target, resourceType, amount) == ERR_NOT_IN_RANGE) {
 			this.goTo(target);
 		}
@@ -291,9 +314,17 @@ export abstract class AnyZerg {
 		// Remove cache references to old assignments
 		const roleName = this.memory.role;
 		const ref = this.memory[MEM.OVERLORD];
-		const oldOverlord: Overlord | null = ref ? Overmind.overlords[ref] : null;
-		if (ref && Overmind.cache.overlords[ref] && Overmind.cache.overlords[ref][roleName]) {
-			_.remove(Overmind.cache.overlords[ref][roleName], name => name == this.name);
+		const oldOverlord: Overlord | null =
+			ref ? Overmind.overlords[ref] : null;
+		if (
+			ref &&
+			Overmind.cache.overlords[ref] &&
+			Overmind.cache.overlords[ref][roleName]
+		) {
+			_.remove(
+				Overmind.cache.overlords[ref][roleName],
+				(name) => name == this.name
+			);
 		}
 		if (newOverlord) {
 			// Change to the new overlord's colony
@@ -311,8 +342,12 @@ export abstract class AnyZerg {
 		} else {
 			this.memory[MEM.OVERLORD] = null;
 		}
-		if (oldOverlord) oldOverlord.recalculateCreeps();
-		if (newOverlord) newOverlord.recalculateCreeps();
+		if (oldOverlord) {
+			oldOverlord.recalculateCreeps();
+		}
+		if (newOverlord) {
+			newOverlord.recalculateCreeps();
+		}
 	}
 
 	/**
@@ -335,7 +370,11 @@ export abstract class AnyZerg {
 	 */
 	reassign(newOverlord: Overlord | null) {
 		this.overlord = newOverlord;
-		if (newOverlord && newOverlord.colony && this.colony != newOverlord.colony) {
+		if (
+			newOverlord &&
+			newOverlord.colony &&
+			this.colony != newOverlord.colony
+		) {
 			this.colony = newOverlord.colony;
 		}
 	}
@@ -370,7 +409,10 @@ export abstract class AnyZerg {
 
 	// Movement and location -------------------------------------------------------------------------------------------
 
-	goTo(destination: RoomPosition | _HasRoomPosition, options: MoveOptions = {}) {
+	goTo(
+		destination: RoomPosition | _HasRoomPosition,
+		options: MoveOptions = {}
+	) {
 		return Movement.goTo(this, destination, options);
 	}
 
@@ -392,37 +434,66 @@ export abstract class AnyZerg {
 
 	get isMoving(): boolean {
 		const moveData = this.memory._go;
-		return (!!moveData && !!moveData.path && moveData.path.length > 1) || this.actionLog[MOVE];
+		return (
+			(!!moveData && !!moveData.path && moveData.path.length > 1) ||
+			this.actionLog[MOVE]
+		);
 	}
 
 	/**
 	 * Kite around hostiles in the room
 	 */
-	kite(avoidGoals: (RoomPosition | _HasRoomPosition)[] = this.room.hostiles,
-		options: MoveOptions = {}) {
+	kite(
+		avoidGoals: (RoomPosition | _HasRoomPosition)[] = this.room.hostiles,
+		options: MoveOptions = {}
+	) {
 		return Movement.kite(this, avoidGoals, options);
 	}
 
 	private defaultFleeGoals() {
 		let fleeGoals: (RoomPosition | _HasRoomPosition)[] = [];
-		fleeGoals = fleeGoals.concat(this.room.hostiles)
-							 .concat(_.filter(this.room.keeperLairs, lair => (lair.ticksToSpawn || Infinity) < 10));
+		fleeGoals = fleeGoals
+			.concat(this.room.hostiles)
+			.concat(
+				_.filter(
+					this.room.keeperLairs,
+					(lair) => (lair.ticksToSpawn || Infinity) < 10
+				)
+			);
 		return fleeGoals;
 	}
 
 	/**
 	 * Flee from hostiles in the room, while not repathing every tick // TODO: take a look at this
 	 */
-	flee(avoidGoals: (RoomPosition | _HasRoomPosition)[] = this.room.fleeDefaults,
-		 fleeOptions: FleeOptions              = {},
-		 moveOptions: MoveOptions              = {}): boolean {
-		if (avoidGoals.length == 0 || this.room.dangerousHostiles.find(
-			creep => creep.pos.getRangeToXY(this.pos.x, this.pos.y) < 6) == undefined) {
+	flee(
+		avoidGoals: (RoomPosition | _HasRoomPosition)[] = this.room
+			.fleeDefaults,
+		fleeOptions: FleeOptions = {},
+		moveOptions: MoveOptions = {}
+	): boolean {
+		if (
+			avoidGoals.length == 0 ||
+			this.room.dangerousHostiles.find(
+				(creep) => creep.pos.getRangeToXY(this.pos.x, this.pos.y) < 6
+			) == undefined
+		) {
 			return false;
-		} else if (this.room.controller && this.room.controller.my && this.room.controller.safeMode) {
+		} else if (
+			this.room.controller &&
+			this.room.controller.my &&
+			this.room.controller.safeMode
+		) {
 			return false;
 		} else {
-			return Movement.flee(this, avoidGoals, fleeOptions.dropEnergy, moveOptions) !== NO_ACTION;
+			return (
+				Movement.flee(
+					this,
+					avoidGoals,
+					fleeOptions.dropEnergy,
+					moveOptions
+				) !== NO_ACTION
+			);
 		}
 	}
 
@@ -432,7 +503,6 @@ export abstract class AnyZerg {
 	 * danger avoidance logic
 	 */
 	avoidDanger(opts: FleeOptions = {}): boolean {
-
 		// If you're almost expired or you're spawning do nothing - if you get killed you're cheap and faster to replace
 		if ((this.ticksToLive ?? 0) < 50) {
 			return false; // I just wanna die!!
@@ -444,7 +514,10 @@ export abstract class AnyZerg {
 			fallbackColonyRange: FLEE_DEFAULT_FALLBACK_RANGE,
 		});
 
-		const closestHostile = this.pos.findClosestByLimitedRange(this.room.dangerousHostiles, RANGES.RANGED_ATTACK + 2);
+		const closestHostile = this.pos.findClosestByLimitedRange(
+			this.room.dangerousHostiles,
+			RANGES.RANGED_ATTACK + 2
+		);
 		const roomIsSafe = this.room.isSafe || closestHostile;
 
 		// If you previously determined you are in danger, wait for timer to expire
@@ -467,14 +540,19 @@ export abstract class AnyZerg {
 		}
 
 		if (!roomIsSafe || this.hits < this.hitsMax) {
-
-			if (Cartographer.roomType(this.room.name) == ROOMTYPE_SOURCEKEEPER) {
+			if (
+				Cartographer.roomType(this.room.name) == ROOMTYPE_SOURCEKEEPER
+			) {
 				// If you're in an SK room, you can skip the danger avoidance as long as you have max hp, there are no
 				// player hostiles, no invaders, and you're not in range to any of the sourceKeepers or spawning lairs
-				if (this.hits == this.hitsMax &&
+				if (
+					this.hits == this.hitsMax &&
 					this.room.dangerousPlayerHostiles.length == 0 &&
 					this.room.invaders.length == 0 &&
-					!_.any(this.room.fleeDefaults, fleeThing => this.pos.inRangeTo(fleeThing, 5))) {
+					!_.any(this.room.fleeDefaults, (fleeThing) =>
+						this.pos.inRangeTo(fleeThing, 5)
+					)
+				) {
 					// Not actually in danger
 					return false;
 				}
@@ -482,19 +560,37 @@ export abstract class AnyZerg {
 
 			let flee: string | true;
 			const maxLinearRange = opts.fallbackColonyRange!;
-			const isInColonyRoom = this.colony ? this.colony.name === this.room.name : false;
+			const isInColonyRoom =
+				this.colony ? this.colony.name === this.room.name : false;
 			// Like 99.999% of the time this will be the case
 			// FIXME: this doesn't handle portals
-			if (this.colony && Game.map.getRoomLinearDistance(this.room.name, this.colony.name) <= maxLinearRange && !isInColonyRoom) {
+			if (
+				this.colony &&
+				Game.map.getRoomLinearDistance(
+					this.room.name,
+					this.colony.name
+				) <= maxLinearRange &&
+				!isInColonyRoom
+			) {
 				flee = this.colony.name;
 			} else {
 				// Pick the closest colony we can find, ignoring our own if it's under attack
-				const nearbyColonies = _.filter(getAllColonies(), colony => {
-					if (isInColonyRoom && colony.name === this.colony!.name) return false;
-					return Game.map.getRoomLinearDistance(this.room.name, colony.name) <= maxLinearRange;
+				const nearbyColonies = _.filter(getAllColonies(), (colony) => {
+					if (isInColonyRoom && colony.name === this.colony!.name) {
+						return false;
+					}
+					return (
+						Game.map.getRoomLinearDistance(
+							this.room.name,
+							colony.name
+						) <= maxLinearRange
+					);
 				});
-				const closestColony = minBy(nearbyColonies, colony => {
-					const route = Pathing.findRoute(this.room.name, colony.room.name);
+				const closestColony = minBy(nearbyColonies, (colony) => {
+					const route = Pathing.findRoute(
+						this.room.name,
+						colony.room.name
+					);
 					if (route == ERR_NO_PATH) {
 						return false;
 					} else {
@@ -504,7 +600,9 @@ export abstract class AnyZerg {
 				if (closestColony) {
 					flee = closestColony.name;
 				} else {
-					log.error(`${this.print} is all alone in a dangerous place and can't find their way home!`);
+					log.error(
+						`${this.print} is all alone in a dangerous place and can't find their way home!`
+					);
 					flee = true;
 				}
 			}
@@ -521,7 +619,10 @@ export abstract class AnyZerg {
 			}
 
 			if (opts.dropEnergy && this.store.energy > 0) {
-				const containersInRange = this.pos.findInRange(this.room.containers, 1);
+				const containersInRange = this.pos.findInRange(
+					this.room.containers,
+					1
+				);
 				const adjacentContainer = _.first(containersInRange);
 				if (adjacentContainer) {
 					this.transfer(adjacentContainer, RESOURCE_ENERGY);
@@ -530,11 +631,9 @@ export abstract class AnyZerg {
 
 			this.goToRoom(flee);
 			return true;
-
 		}
 
 		return false;
-
 	}
 
 	/**
@@ -565,7 +664,6 @@ export abstract class AnyZerg {
 		return Movement.moveOffExit(this, towardPos, avoidSwamp);
 	}
 
-
 	// Miscellaneous fun stuff -----------------------------------------------------------------------------------------
 
 	sayLoop(messageList: string[], pub?: boolean) {
@@ -573,8 +671,9 @@ export abstract class AnyZerg {
 	}
 
 	sayRandom(phrases: string[], pub?: boolean) {
-		return this.say(phrases[Math.floor(Math.random() * phrases.length)], pub);
+		return this.say(
+			phrases[Math.floor(Math.random() * phrases.length)],
+			pub
+		);
 	}
-
 }
-

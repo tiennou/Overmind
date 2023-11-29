@@ -1,7 +1,7 @@
-import {Colony} from '../Colony';
-import {profile} from '../profiler/decorator';
-import {BoostType, BoostTypeBodyparts} from '../resources/map_resources';
-import {BodyGeneratorReturn} from './CombatCreepSetup';
+import { Colony } from "../Colony";
+import { profile } from "../profiler/decorator";
+import { BoostType, BoostTypeBodyparts } from "../resources/map_resources";
+import { BodyGeneratorReturn } from "./CombatCreepSetup";
 
 export interface BodySetup {
 	/** body pattern to be repeated */
@@ -20,7 +20,7 @@ export interface BodySetup {
 
 /* Return the cost of an entire array of body parts */
 export function bodyCost(bodyparts: BodyPartConstant[]): number {
-	return _.sum(bodyparts, part => BODYPART_COST[part]);
+	return _.sum(bodyparts, (part) => BODYPART_COST[part]);
 }
 
 export function patternCost(setup: CreepSetup): number {
@@ -32,22 +32,30 @@ export function patternCost(setup: CreepSetup): number {
  */
 @profile
 export class CreepSetup {
-
 	role: string;
 	bodySetup: BodySetup;
 	private boosts: BoostType[];
-	private cache: { [colonyName: string]: { result: BodyGeneratorReturn, expiration: number } };
+	private cache: {
+		[colonyName: string]: {
+			result: BodyGeneratorReturn;
+			expiration: number;
+		};
+	};
 
-	constructor(roleName: string, bodySetup: Partial<BodySetup> = {}, boosts?: BoostType[]) {
+	constructor(
+		roleName: string,
+		bodySetup: Partial<BodySetup> = {},
+		boosts?: BoostType[]
+	) {
 		this.role = roleName;
 		// Defaults for a creep setup
 		_.defaults(bodySetup, {
-			pattern                 : [],
-			sizeLimit               : Infinity,
-			prefix                  : [],
-			suffix                  : [],
+			pattern: [],
+			sizeLimit: Infinity,
+			prefix: [],
+			suffix: [],
 			proportionalPrefixSuffix: false,
-			ordered                 : true,
+			ordered: true,
 		});
 		this.bodySetup = bodySetup as BodySetup;
 		this.boosts = boosts || [];
@@ -67,14 +75,21 @@ export class CreepSetup {
 	 */
 	create(colony: Colony, useCache = false): BodyGeneratorReturn {
 		// If you're allowed to use a cached result (e.g. for estimating wait times), return that
-		if (useCache && this.cache[colony.name] && Game.time < this.cache[colony.name].expiration) {
+		if (
+			useCache &&
+			this.cache[colony.name] &&
+			Game.time < this.cache[colony.name].expiration
+		) {
 			return this.cache[colony.name].result;
 		}
 
 		// Otherwise recompute
-		const availableEnergy = colony.state.bootstrapping ?
-			_.sum(colony.hatchery?.energyStructures ?? [], s => s.store.getUsedCapacity(RESOURCE_ENERGY))
-			: colony.room.energyCapacityAvailable;
+		const availableEnergy =
+			colony.state.bootstrapping ?
+				_.sum(colony.hatchery?.energyStructures ?? [], (s) =>
+					s.store.getUsedCapacity(RESOURCE_ENERGY)
+				)
+			:	colony.room.energyCapacityAvailable;
 		const body = this.generateBody(availableEnergy);
 		const bodyCounts = _.countBy(body);
 
@@ -83,7 +98,10 @@ export class CreepSetup {
 		if (this.boosts.length > 0 && colony.evolutionChamber) {
 			for (const boostType of this.boosts) {
 				const numParts = bodyCounts[BoostTypeBodyparts[boostType]];
-				const bestBoost = colony.evolutionChamber.bestBoostAvailable(boostType, numParts * LAB_BOOST_MINERAL);
+				const bestBoost = colony.evolutionChamber.bestBoostAvailable(
+					boostType,
+					numParts * LAB_BOOST_MINERAL
+				);
 				if (bestBoost) {
 					boosts.push(bestBoost);
 				}
@@ -91,11 +109,11 @@ export class CreepSetup {
 		}
 
 		const result = {
-			body  : body,
+			body: body,
 			boosts: boosts,
 		};
 		this.cache[colony.name] = {
-			result    : result,
+			result: result,
 			expiration: Game.time + 20,
 		};
 
@@ -111,22 +129,41 @@ export class CreepSetup {
 		const suffix = this.bodySetup.suffix;
 		let body: BodyPartConstant[] = [];
 		// calculate repetitions
-		if (this.bodySetup.proportionalPrefixSuffix) { // if prefix and suffix are to be kept proportional to body size
-			patternCost = bodyCost(prefix) + bodyCost(this.bodySetup.pattern) + bodyCost(suffix);
-			patternLength = prefix.length + this.bodySetup.pattern.length + suffix.length;
+		if (this.bodySetup.proportionalPrefixSuffix) {
+			// if prefix and suffix are to be kept proportional to body size
+			patternCost =
+				bodyCost(prefix) +
+				bodyCost(this.bodySetup.pattern) +
+				bodyCost(suffix);
+			patternLength =
+				prefix.length + this.bodySetup.pattern.length + suffix.length;
 			const energyLimit = Math.floor(availableEnergy / patternCost); // max number of repeats room can produce
 			const maxPartLimit = Math.floor(MAX_CREEP_SIZE / patternLength); // max repetitions resulting in <50 parts
-			numRepeats = Math.min(energyLimit, maxPartLimit, this.bodySetup.sizeLimit);
-		} else { // if prefix and suffix don't scale
+			numRepeats = Math.min(
+				energyLimit,
+				maxPartLimit,
+				this.bodySetup.sizeLimit
+			);
+		} else {
+			// if prefix and suffix don't scale
 			const extraCost = bodyCost(prefix) + bodyCost(suffix);
 			patternCost = bodyCost(this.bodySetup.pattern);
 			patternLength = this.bodySetup.pattern.length;
-			const energyLimit = Math.floor((availableEnergy - extraCost) / patternCost);
-			const maxPartLimit = Math.floor((MAX_CREEP_SIZE - prefix.length - suffix.length) / patternLength);
-			numRepeats = Math.min(energyLimit, maxPartLimit, this.bodySetup.sizeLimit);
+			const energyLimit = Math.floor(
+				(availableEnergy - extraCost) / patternCost
+			);
+			const maxPartLimit = Math.floor(
+				(MAX_CREEP_SIZE - prefix.length - suffix.length) / patternLength
+			);
+			numRepeats = Math.min(
+				energyLimit,
+				maxPartLimit,
+				this.bodySetup.sizeLimit
+			);
 		}
 		// build the body
-		if (this.bodySetup.proportionalPrefixSuffix) { // add the prefix
+		if (this.bodySetup.proportionalPrefixSuffix) {
+			// add the prefix
 			for (let i = 0; i < numRepeats; i++) {
 				body = body.concat(prefix);
 			}
@@ -134,7 +171,8 @@ export class CreepSetup {
 			body = body.concat(prefix);
 		}
 
-		if (this.bodySetup.ordered) { // repeated body pattern
+		if (this.bodySetup.ordered) {
+			// repeated body pattern
 			for (const part of this.bodySetup.pattern) {
 				for (let i = 0; i < numRepeats; i++) {
 					body.push(part);
@@ -146,7 +184,8 @@ export class CreepSetup {
 			}
 		}
 
-		if (this.bodySetup.proportionalPrefixSuffix) { // add the suffix
+		if (this.bodySetup.proportionalPrefixSuffix) {
+			// add the suffix
 			for (let i = 0; i < numRepeats; i++) {
 				body = body.concat(suffix);
 			}
@@ -170,12 +209,18 @@ export class CreepSetup {
 		// 							  colony.incubator ? colony.incubator.room.energyCapacityAvailable : 0);
 		let energyCapacity = colony.room.energyCapacityAvailable;
 		if (colony.spawnGroup) {
-			const colonies = _.compact(_.map(colony.spawnGroup.memory.colonies,
-											 name => Overmind.colonies[name]));
-			energyCapacity = _.max(_.map(colonies, colony => colony.room.energyCapacityAvailable));
+			const colonies = _.compact(
+				_.map(
+					colony.spawnGroup.memory.colonies,
+					(name) => Overmind.colonies[name]
+				)
+			);
+			energyCapacity = _.max(
+				_.map(colonies, (colony) => colony.room.energyCapacityAvailable)
+			);
 		}
 		const body = this.generateBody(energyCapacity);
-		return _.filter(body, (part: BodyPartConstant) => part == partType).length;
+		return _.filter(body, (part: BodyPartConstant) => part == partType)
+			.length;
 	}
-
 }

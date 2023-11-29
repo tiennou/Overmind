@@ -1,19 +1,17 @@
-import {Roles, Setups} from '../../creepSetups/setups';
-import {DirectivePoisonRoom} from '../../directives/colony/poisonRoom';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Tasks} from '../../tasks/Tasks';
-import {packPos} from '../../utilities/packrat';
-import {Zerg} from '../../zerg/Zerg';
-import {Overlord} from '../Overlord';
-
+import { Roles, Setups } from "../../creepSetups/setups";
+import { DirectivePoisonRoom } from "../../directives/colony/poisonRoom";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Tasks } from "../../tasks/Tasks";
+import { packPos } from "../../utilities/packrat";
+import { Zerg } from "../../zerg/Zerg";
+import { Overlord } from "../Overlord";
 
 /**
  * Spawn roomPoisoner - upgrqde controller to lvl2, wall in controller then sources.
  */
 @profile
 export class RoomPoisonerOverlord extends Overlord {
-
 	roomPoisoners: Zerg[];
 
 	private blockPositions: RoomPosition[];
@@ -22,18 +20,28 @@ export class RoomPoisonerOverlord extends Overlord {
 		wallHits: 1;
 	};
 
-	constructor(directive: DirectivePoisonRoom, priority = OverlordPriority.outpostOffense.roomPoisoner) {
-		super(directive, 'PoisonRoom', priority);
+	constructor(
+		directive: DirectivePoisonRoom,
+		priority = OverlordPriority.outpostOffense.roomPoisoner
+	) {
+		super(directive, "PoisonRoom", priority);
 		this.roomPoisoners = this.zerg(Roles.roomPoisoner);
 	}
 
 	init() {
 		// Re-compute the list of positions to block
 		if (this.room) {
-			const thingsToBlock = _.compact([this.room.controller, ...this.room.sources]) as RoomObject[];
-			const neighborTiles = _.unique(_.flatten(_.map(thingsToBlock, obj => obj.pos.neighbors)),
-										   pos => packPos(pos));
-			this.blockPositions = _.filter(neighborTiles, pos => pos.isWalkable(true));
+			const thingsToBlock = _.compact([
+				this.room.controller,
+				...this.room.sources,
+			]) as RoomObject[];
+			const neighborTiles = _.unique(
+				_.flatten(_.map(thingsToBlock, (obj) => obj.pos.neighbors)),
+				(pos) => packPos(pos)
+			);
+			this.blockPositions = _.filter(neighborTiles, (pos) =>
+				pos.isWalkable(true)
+			);
 		} else {
 			this.blockPositions = [];
 		}
@@ -51,7 +59,9 @@ export class RoomPoisonerOverlord extends Overlord {
 		}
 		// Go to Target Room
 		if (!posioner.inSameRoomAs(this)) {
-			posioner.goTo(this.pos, {pathOpts:{ensurePath: true, avoidSK: true}});
+			posioner.goTo(this.pos, {
+				pathOpts: { ensurePath: true, avoidSK: true },
+			});
 			return;
 		}
 		// If you're in the room
@@ -62,11 +72,21 @@ export class RoomPoisonerOverlord extends Overlord {
 				return;
 			}
 			// Fortify any walls below threshold (can't used cached room.walls here)
-			const wallsUncached = this.room.find<StructureWall>(FIND_STRUCTURES,
-												 {filter: {structureType: STRUCTURE_WALL}});
-			const fortifyTarget = _.find(wallsUncached, wall => wall.hits < RoomPoisonerOverlord.settings.wallHits);
+			const wallsUncached = this.room.find<StructureWall>(
+				FIND_STRUCTURES,
+				{
+					filter: { structureType: STRUCTURE_WALL },
+				}
+			);
+			const fortifyTarget = _.find(
+				wallsUncached,
+				(wall) => wall.hits < RoomPoisonerOverlord.settings.wallHits
+			);
 			if (fortifyTarget) {
-				posioner.task = Tasks.fortify(fortifyTarget, RoomPoisonerOverlord.settings.wallHits);
+				posioner.task = Tasks.fortify(
+					fortifyTarget,
+					RoomPoisonerOverlord.settings.wallHits
+				);
 				return;
 			}
 			// Construct walls
@@ -76,11 +96,13 @@ export class RoomPoisonerOverlord extends Overlord {
 				return;
 			}
 			// If nothing to do, then move away from possible construction site locations
-			posioner.flee(this.blockPositions, {}, {fleeRange: 4});
+			posioner.flee(this.blockPositions, {}, { fleeRange: 4 });
 		}
 	}
 
 	run() {
-		this.autoRun(this.roomPoisoners, roomPoisoner => this.handleRoomPoisoner(roomPoisoner));
+		this.autoRun(this.roomPoisoners, (roomPoisoner) =>
+			this.handleRoomPoisoner(roomPoisoner)
+		);
 	}
 }

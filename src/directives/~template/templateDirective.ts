@@ -1,11 +1,10 @@
-import {$} from '../../caching/GlobalCache';
-import {log} from '../../console/log';
-import {TemplateOverlord} from '../../overlords/~template/templateOverlord';
-import {profile} from '../../profiler/decorator';
-import {Visualizer} from '../../visuals/Visualizer';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
-
+import { $ } from "../../caching/GlobalCache";
+import { log } from "../../console/log";
+import { TemplateOverlord } from "../../overlords/~template/templateOverlord";
+import { profile } from "../../profiler/decorator";
+import { Visualizer } from "../../visuals/Visualizer";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 // Memory should have an interface extending flag memory and should not be exported
 interface DirectiveTemplateMemory extends FlagMemory {
@@ -14,15 +13,16 @@ interface DirectiveTemplateMemory extends FlagMemory {
 }
 
 // Default memory should be wrapped as a function to avoid default-modifying bugs
-const getDefaultDirectiveTemplateMemory: () => DirectiveTemplateMemory = () => ({
-	memoryProperty1: 69,
-});
+const getDefaultDirectiveTemplateMemory: () => DirectiveTemplateMemory =
+	() => ({
+		memoryProperty1: 69,
+	});
 
 // If you are using a state that can be one of only a few values, it should be an enum type
 const enum DirectiveTemplateState {
-	state1 = 'one',
-	state2 = 'two',
-	state3 = 'three',
+	state1 = "one",
+	state2 = "two",
+	state3 = "three",
 }
 
 /**
@@ -31,9 +31,8 @@ const enum DirectiveTemplateState {
  */
 @profile
 export class DirectiveTemplate extends Directive {
-
 	// All directives must have these three static properties
-	static directiveName = 'template';
+	static directiveName = "template";
 	static color = COLOR_BROWN;
 	static secondaryColor = COLOR_BROWN;
 
@@ -69,7 +68,7 @@ export class DirectiveTemplate extends Directive {
 	 *   and refresh() must be called from the constructor.
 	 */
 	constructor(flag: Flag) {
-		super(flag, colony => colony.level >= DirectiveTemplate.requriedRCL);
+		super(flag, (colony) => colony.level >= DirectiveTemplate.requriedRCL);
 		_.defaultsDeep(this.memory, getDefaultDirectiveTemplateMemory());
 		this.refresh();
 	}
@@ -84,7 +83,7 @@ export class DirectiveTemplate extends Directive {
 	 */
 	refresh(): void {
 		super.refresh();
-		this.property2 = $.number(this, 'property1', () => {
+		this.property2 = $.number(this, "property1", () => {
 			return 42; // some expensive computation
 		});
 		this.colony.state.bootstrapping = true;
@@ -114,7 +113,9 @@ export class DirectiveTemplate extends Directive {
 		this.alert(`Regular notifiaction`);
 		// this.alert(`Notification that really isn't necessary to see shouldn't go here`);
 		if (Game.time % 10 == 0) {
-			log.alert(`Very, very important stuff (or stuff that is definitely an error) may be console spammed`);
+			log.alert(
+				`Very, very important stuff (or stuff that is definitely an error) may be console spammed`
+			);
 		}
 	}
 
@@ -123,12 +124,16 @@ export class DirectiveTemplate extends Directive {
 	 * - Directive removal logic should go on run() (and only on run) if necessary
 	 */
 	run(): void {
-		if (this.room && this.room.hostiles.length == 0 && Game.time > this.memory[MEM.TICK]! + 5000) {
+		if (
+			this.room &&
+			this.room.hostiles.length == 0 &&
+			Game.time > this.memory[MEM.TICK]! + 5000
+		) {
 			this.remove();
 		}
 	}
 
 	visuals(): void {
-		Visualizer.marker(this.pos, {color: 'red'});
+		Visualizer.marker(this.pos, { color: "red" });
 	}
 }

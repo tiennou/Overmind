@@ -1,25 +1,33 @@
-import {log} from '../console/log';
-import {hasPos} from '../declarations/typeGuards';
-import {PortalInfo, RoomIntel} from '../intel/RoomIntel';
-import {getDefaultMatrixOptions, MatrixLib, MatrixOptions, VolatileMatrixOptions} from '../matrix/MatrixLib';
-import {profile} from '../profiler/decorator';
-import {packPos, packPosList} from '../utilities/packrat';
-import {minBy} from '../utilities/utils';
-import {Visualizer} from '../visuals/Visualizer';
-import {AnyZerg} from '../zerg/AnyZerg';
-import {normalizePos} from './helpers';
-import {SwarmMoveOptions} from './Movement';
-
+import { log } from "../console/log";
+import { hasPos } from "../declarations/typeGuards";
+import { PortalInfo, RoomIntel } from "../intel/RoomIntel";
+import {
+	getDefaultMatrixOptions,
+	MatrixLib,
+	MatrixOptions,
+	VolatileMatrixOptions,
+} from "../matrix/MatrixLib";
+import { profile } from "../profiler/decorator";
+import { packPos, packPosList } from "../utilities/packrat";
+import { minBy } from "../utilities/utils";
+import { Visualizer } from "../visuals/Visualizer";
+import { AnyZerg } from "../zerg/AnyZerg";
+import { normalizePos } from "./helpers";
+import { SwarmMoveOptions } from "./Movement";
 
 export type FIND_EXIT_PORTAL = 42;
 export const FIND_EXIT_PORTAL: FIND_EXIT_PORTAL = 42;
-export type AnyExitConstant = FIND_EXIT_TOP | FIND_EXIT_RIGHT | FIND_EXIT_BOTTOM | FIND_EXIT_LEFT | FIND_EXIT_PORTAL;
+export type AnyExitConstant =
+	| FIND_EXIT_TOP
+	| FIND_EXIT_RIGHT
+	| FIND_EXIT_BOTTOM
+	| FIND_EXIT_LEFT
+	| FIND_EXIT_PORTAL;
 
 const DEFAULT_MAXOPS = 20000; // default timeout for pathfinding
 const DEFAULT_FLEE_RANGE = 5;
 
-export type Route = { exit: AnyExitConstant, room: string }[];
-
+export type Route = { exit: AnyExitConstant; room: string }[];
 
 export const TERRAIN_PLAIN_DEFAULT_COST = 1;
 export const TERRAIN_SWAMP_DEFAULT_COST = 5;
@@ -28,13 +36,13 @@ export interface TerrainCosts {
 	plainCost: number;
 	swampCost: number;
 	/** road costs; 'auto' = set to ceil(plain/2); unset = ignore roads */
-	roadCost?: number | 'auto';
+	roadCost?: number | "auto";
 }
 
 export const getDefaultTerrainCosts: () => TerrainCosts = () => ({
 	plainCost: TERRAIN_PLAIN_DEFAULT_COST,
 	swampCost: TERRAIN_SWAMP_DEFAULT_COST,
-	roadCost: 'auto',
+	roadCost: "auto",
 });
 
 export interface PathingReturn extends PathFinderPath {
@@ -44,12 +52,12 @@ export interface PathingReturn extends PathFinderPath {
 }
 
 export const MatrixTypes = {
-	direct       : 'dir',
-	default      : 'def',
-	sk           : 'sk',
-	obstacle     : 'obst',
-	preferRampart: 'preframp',
-	nearRampart  : 'nearRamp'
+	direct: "dir",
+	default: "def",
+	sk: "sk",
+	obstacle: "obst",
+	preferRampart: "preframp",
+	nearRampart: "nearRamp",
 };
 
 export interface PathOptions {
@@ -97,19 +105,21 @@ export interface PathOptions {
 }
 
 export const getDefaultPathOptions: () => PathOptions = () => ({
-	range               : 1,
-	terrainCosts        : getDefaultTerrainCosts(),
-	ignoreCreeps        : true,
-	maxOps              : DEFAULT_MAXOPS,
-	maxRooms            : 20,
-	avoidSK             : true,
-	allowPortals        : true,
-	usePortalThreshold  : 10,
+	range: 1,
+	terrainCosts: getDefaultTerrainCosts(),
+	ignoreCreeps: true,
+	maxOps: DEFAULT_MAXOPS,
+	maxRooms: 20,
+	avoidSK: true,
+	allowPortals: true,
+	usePortalThreshold: 10,
 	portalsMustBeInRange: 6,
-	ensurePath          : false,
+	ensurePath: false,
 });
 
-export const pathOptionsToPathFinderOptions: (opts: PathOptions) => PathFinderOpts = (o) => ({
+export const pathOptionsToPathFinderOptions: (
+	opts: PathOptions
+) => PathFinderOpts = (o) => ({
 	plainCost: o.terrainCosts?.plainCost,
 	swampCost: o.terrainCosts?.swampCost,
 	flee: !!o.fleeRange,
@@ -123,17 +133,25 @@ export const pathOptionsToPathFinderOptions: (opts: PathOptions) => PathFinderOp
 const _defaultMatrixOptionsKeys = _.keys(getDefaultMatrixOptions());
 
 function getMatrixOptsFromPathOpts(opts: PathOptions): Partial<MatrixOptions> {
-	const matrixOpts: Partial<MatrixOptions> = _.pick(opts, _defaultMatrixOptionsKeys);
-	if (opts.obstacles) { // might need to sort this string if I start adding nondeterministic obstacles
+	const matrixOpts: Partial<MatrixOptions> = _.pick(
+		opts,
+		_defaultMatrixOptionsKeys
+	);
+	if (opts.obstacles) {
+		// might need to sort this string if I start adding nondeterministic obstacles
 		matrixOpts.obstacles = packPosList(opts.obstacles);
 	}
 	return matrixOpts;
 }
 
-function pathOptsToMatrixAndVolatileOpts(opts: PathOptions): [Partial<MatrixOptions>, VolatileMatrixOptions] {
+function pathOptsToMatrixAndVolatileOpts(
+	opts: PathOptions
+): [Partial<MatrixOptions>, VolatileMatrixOptions] {
 	const matrixOpts = getMatrixOptsFromPathOpts(opts);
 	const volatileMatrixOpts: VolatileMatrixOptions = {};
-	if (opts.blockCreeps) volatileMatrixOpts.blockCreeps = opts.blockCreeps;
+	if (opts.blockCreeps) {
+		volatileMatrixOpts.blockCreeps = opts.blockCreeps;
+	}
 	return [matrixOpts, volatileMatrixOpts];
 }
 
@@ -142,192 +160,330 @@ function pathOptsToMatrixAndVolatileOpts(opts: PathOptions): [Partial<MatrixOpti
  */
 @profile
 export class Pathing {
-
 	// Pathfinding and room callback methods ===========================================================================
 
 	/**
 	 * Find a path from origin to destination
 	 */
-	static findPath(origin: RoomPosition, destination: RoomPosition, opts: PathOptions = {}): PathingReturn {
-
+	static findPath(
+		origin: RoomPosition,
+		destination: RoomPosition,
+		opts: PathOptions = {}
+	): PathingReturn {
 		_.defaults(opts, getDefaultPathOptions());
 
 		// check to see whether findRoute should be used
-		const linearDistance = Game.map.getRoomLinearDistance(origin.roomName, destination.roomName);
-		if (opts.maxRooms && linearDistance > opts.maxRooms && !opts.allowPortals) {
-			log.warning(`Pathing from ${origin.print} to ${destination.print} exceeds max room specification ` +
-						`of ${opts.maxRooms}!`);
+		const linearDistance = Game.map.getRoomLinearDistance(
+			origin.roomName,
+			destination.roomName
+		);
+		if (
+			opts.maxRooms &&
+			linearDistance > opts.maxRooms &&
+			!opts.allowPortals
+		) {
+			log.warning(
+				`Pathing from ${origin.print} to ${destination.print} exceeds max room specification ` +
+					`of ${opts.maxRooms}!`
+			);
 		}
 
 		let route: Route | undefined = opts.route;
-		if (!route && (opts.useFindRoute == true || (opts.useFindRoute === undefined && linearDistance >= 3))) {
-			const foundRoute = this.findRoute(origin.roomName, destination.roomName, opts);
+		if (
+			!route &&
+			(opts.useFindRoute == true ||
+				(opts.useFindRoute === undefined && linearDistance >= 3))
+		) {
+			const foundRoute = this.findRoute(
+				origin.roomName,
+				destination.roomName,
+				opts
+			);
 			if (foundRoute != ERR_NO_PATH) {
 				route = foundRoute;
 			}
 		}
 
-
-		const destinationGoal: PathFinderGoal | PathFinderGoal[] = {pos: destination, range: opts.range!};
-		const callback = (roomName: string) => Pathing.roomCallback(roomName, origin, destination, route, opts);
+		const destinationGoal: PathFinderGoal | PathFinderGoal[] = {
+			pos: destination,
+			range: opts.range!,
+		};
+		const callback = (roomName: string) =>
+			Pathing.roomCallback(roomName, origin, destination, route, opts);
 		const pfOptions = pathOptionsToPathFinderOptions(opts);
 		pfOptions.roomCallback = callback;
 		let ret: PathFinderPath;
 
 		// Did the route use portals?
-		const portalExitStepIndex = _.findIndex(route || [], step => step.exit == FIND_EXIT_PORTAL);
-		const usesPortals = (portalExitStepIndex != -1); // index is -1 if not found
+		const portalExitStepIndex = _.findIndex(
+			route || [],
+			(step) => step.exit == FIND_EXIT_PORTAL
+		);
+		const usesPortals = portalExitStepIndex != -1; // index is -1 if not found
 		let portalUsed: PortalInfo | undefined;
 
 		if (usesPortals) {
 			// If we traversed a portal we need to call pathfinder twice and merge the two paths
 			const portalEntranceStepIndex = portalExitStepIndex - 1;
-			const portalEntraceRoom = portalEntranceStepIndex < 0
-									  ? origin.roomName
-									  : route![portalExitStepIndex - 1].room;
+			const portalEntraceRoom =
+				portalEntranceStepIndex < 0 ?
+					origin.roomName
+				:	route![portalExitStepIndex - 1].room;
 
 			const portals = RoomIntel.getPortalInfo(portalEntraceRoom);
-			const portalGoals = _.map(portals, portal => ({pos: portal.pos, range: 0}));
+			const portalGoals = _.map(portals, (portal) => ({
+				pos: portal.pos,
+				range: 0,
+			}));
 			const path1ret = PathFinder.search(origin, portalGoals, pfOptions);
 			// if the path is incomplete then we'll let it get handled at the end of this method
 			if (!path1ret.incomplete) {
 				const lastPosInPath = _.last(path1ret.path) ?? origin;
-				const usedPortal = _.find(portals, portal => portal.pos.isEqualTo(lastPosInPath));
+				const usedPortal = _.find(portals, (portal) =>
+					portal.pos.isEqualTo(lastPosInPath)
+				);
 				if (usedPortal) {
 					portalUsed = usedPortal;
 					const portalDest = usedPortal.destination;
-					const path2ret = PathFinder.search(portalDest, destinationGoal, pfOptions);
+					const path2ret = PathFinder.search(
+						portalDest,
+						destinationGoal,
+						pfOptions
+					);
 					ret = {
-						path      : path1ret.path.concat([usedPortal.destination]).concat(path2ret.path),
-						ops       : path1ret.ops + path2ret.ops,
-						cost      : path1ret.ops + path2ret.ops,
+						path: path1ret.path
+							.concat([usedPortal.destination])
+							.concat(path2ret.path),
+						ops: path1ret.ops + path2ret.ops,
+						cost: path1ret.ops + path2ret.ops,
 						incomplete: path1ret.incomplete || path2ret.incomplete,
 					};
 				} else {
-					log.error(`Pathing: No Portal pos in ${JSON.stringify(path1ret.path)}! (Why?)`);
+					log.error(
+						`Pathing: No Portal pos in ${JSON.stringify(
+							path1ret.path
+						)}! (Why?)`
+					);
 					ret = path1ret;
 				}
 			} else {
-				log.error(`Pathing: Incomplete first half of pathing from ${origin.print} to nearest portal!`);
+				log.error(
+					`Pathing: Incomplete first half of pathing from ${origin.print} to nearest portal!`
+				);
 				ret = path1ret;
 			}
 		} else {
 			ret = PathFinder.search(origin, destinationGoal, pfOptions);
 		}
 
-		if (ret.incomplete && opts.ensurePath && linearDistance <= 3 && !opts.route) {
+		if (
+			ret.incomplete &&
+			opts.ensurePath &&
+			linearDistance <= 3 &&
+			!opts.route
+		) {
 			// handle case where pathfinder failed at a short distance due to not using findRoute
 			// can happen for situations where the creep would have to take an uncommonly indirect path
 			// options.allowedRooms and options.routeCallback can also be used to handle this situation
-			const useRoute = this.findRoute(origin.roomName, destination.roomName, opts);
+			const useRoute = this.findRoute(
+				origin.roomName,
+				destination.roomName,
+				opts
+			);
 			if (useRoute != ERR_NO_PATH) {
-				log.warning(`Pathing: findPath from ${origin.print} to ${destination.print} failed without ` +
-							`specified route. Trying again with route: ${JSON.stringify(useRoute)}.`);
+				log.warning(
+					`Pathing: findPath from ${origin.print} to ${destination.print} failed without ` +
+						`specified route. Trying again with route: ${JSON.stringify(
+							useRoute
+						)}.`
+				);
 				opts.route = useRoute;
 				ret = this.findPath(origin, destination, opts);
 				if (ret.incomplete) {
-					log.error(`Pathing: second attempt from ${origin.print} to ${destination.print} ` +
-							  `was unsuccessful!`);
+					log.error(
+						`Pathing: second attempt from ${origin.print} to ${destination.print} ` +
+							`was unsuccessful!`
+					);
 				}
 			} else {
-				log.error(`Pathing: findPath from ${origin.print} to ${destination.print} failed and route could ` +
-						  `not be explicitly computed!`);
+				log.error(
+					`Pathing: findPath from ${origin.print} to ${destination.print} failed and route could ` +
+						`not be explicitly computed!`
+				);
 			}
 		}
 		return {
-			path       : ret.path,
-			incomplete : ret.incomplete,
-			ops        : ret.ops,
-			cost       : ret.cost,
-			route      : route,
+			path: ret.path,
+			incomplete: ret.incomplete,
+			ops: ret.ops,
+			cost: ret.cost,
+			route: route,
 			usesPortals: usesPortals,
-			portalUsed : portalUsed,
+			portalUsed: portalUsed,
 		};
 	}
 
 	/**
 	 * Find a viable sequence of rooms to narrow down Pathfinder algorithm
 	 */
-	static findRoute(origin: string, destination: string, opts: PathOptions = {}): Route | ERR_NO_PATH {
-
+	static findRoute(
+		origin: string,
+		destination: string,
+		opts: PathOptions = {}
+	): Route | ERR_NO_PATH {
 		_.defaults(opts, getDefaultPathOptions());
 
-		const linearDistance = Game.map.getRoomLinearDistance(origin, destination);
+		const linearDistance = Game.map.getRoomLinearDistance(
+			origin,
+			destination
+		);
 		const maxRooms = opts.maxRooms || linearDistance + 10;
 
-		if (RoomIntel.getRoomStatus(origin).status != RoomIntel.getRoomStatus(destination).status) {
+		if (
+			RoomIntel.getRoomStatus(origin).status !=
+			RoomIntel.getRoomStatus(destination).status
+		) {
 			return ERR_NO_PATH;
 		}
 
 		// This takes a portal room near the origin and spits out the best destination room of all portals in the room
-		const getBestPortalDestination: (portalRoom: string) => string | undefined = (portalRoom) => {
+		const getBestPortalDestination: (
+			portalRoom: string
+		) => string | undefined = (portalRoom) => {
 			const portalInfo = RoomIntel.getPortalInfo(portalRoom);
 			if (portalInfo.length == 0) {
 				return;
 			}
 			const bestPortalDest = _(portalInfo)
-				.map(portal => portal.destination.roomName)
+				.map((portal) => portal.destination.roomName)
 				.unique()
-				.min(portalDest => Game.map.getRoomLinearDistance(portalDest, destination));
+				.min((portalDest) =>
+					Game.map.getRoomLinearDistance(portalDest, destination)
+				);
 			return bestPortalDest;
 		};
 
 		// Route finder callback for portal searching
 		const callback = (roomName: string) => {
-			const rangeToRoom = Game.map.getRoomLinearDistance(origin, roomName);
-			if (rangeToRoom > maxRooms) { // room is too far out of the way
+			const rangeToRoom = Game.map.getRoomLinearDistance(
+				origin,
+				roomName
+			);
+			if (rangeToRoom > maxRooms) {
+				// room is too far out of the way
 				return Infinity;
 			}
-			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName) &&
-				roomName !== destination && roomName !== origin) { // room is marked as "avoid" in room memory
+			if (
+				!opts.allowHostile &&
+				RoomIntel.isConsideredHostile(roomName) &&
+				roomName !== destination &&
+				roomName !== origin
+			) {
+				// room is marked as "avoid" in room memory
 				return Infinity;
 			}
-			if (RoomIntel.getRoomStatus(origin).status != RoomIntel.getRoomStatus(roomName).status) {
+			if (
+				RoomIntel.getRoomStatus(origin).status !=
+				RoomIntel.getRoomStatus(roomName).status
+			) {
 				return Infinity; // can't path outside of your local newbie/respawn zone
 			}
 			return 1;
 			// TODO: include better pathing heuristics here such as average terrain value or avg pathing btw 2 points
 		};
 
-		let route: Route | ERR_NO_PATH = Game.map.findRoute(origin, destination, {routeCallback: callback});
+		let route: Route | ERR_NO_PATH = Game.map.findRoute(
+			origin,
+			destination,
+			{ routeCallback: callback }
+		);
 
-		if (opts.allowPortals && (route == ERR_NO_PATH || route.length >= (opts.usePortalThreshold || 1))) {
+		if (
+			opts.allowPortals &&
+			(route == ERR_NO_PATH ||
+				route.length >= (opts.usePortalThreshold || 1))
+		) {
 			// Narrow down a list of portal rooms that could possibly lead to the destination
-			const validPortalRooms = _.filter(RoomIntel.memory.portalRooms, roomName => {
-				// Is the first leg of the trip too far?
-				const originToPortal = Game.map.getRoomLinearDistance(origin, roomName);
-				if (originToPortal > opts.maxRooms!) return false;
-				if (opts.portalsMustBeInRange && originToPortal > opts.portalsMustBeInRange) return false;
+			const validPortalRooms = _.filter(
+				RoomIntel.memory.portalRooms,
+				(roomName) => {
+					// Is the first leg of the trip too far?
+					const originToPortal = Game.map.getRoomLinearDistance(
+						origin,
+						roomName
+					);
+					if (originToPortal > opts.maxRooms!) {
+						return false;
+					}
+					if (
+						opts.portalsMustBeInRange &&
+						originToPortal > opts.portalsMustBeInRange
+					) {
+						return false;
+					}
 
-				// Are there intra-shard portals here?
-				const bestPortalDestination = getBestPortalDestination(roomName);
-				if (!bestPortalDestination) return false;
+					// Are there intra-shard portals here?
+					const bestPortalDestination =
+						getBestPortalDestination(roomName);
+					if (!bestPortalDestination) {
+						return false;
+					}
 
-				// Is the first + second leg of the trip too far?
-				const portalToDestination = Game.map.getRoomLinearDistance(destination, bestPortalDestination);
-				return originToPortal + portalToDestination <= opts.maxRooms!;
-			});
+					// Is the first + second leg of the trip too far?
+					const portalToDestination = Game.map.getRoomLinearDistance(
+						destination,
+						bestPortalDestination
+					);
+					return (
+						originToPortal + portalToDestination <= opts.maxRooms!
+					);
+				}
+			);
 
 			// Figure out which portal room is the best one to use
 			const portalCallback = (roomName: string) => {
-				if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName) &&
-					roomName !== destination && roomName !== origin) { // room is marked as "avoid" in room memory
+				if (
+					!opts.allowHostile &&
+					RoomIntel.isConsideredHostile(roomName) &&
+					roomName !== destination &&
+					roomName !== origin
+				) {
+					// room is marked as "avoid" in room memory
 					return Infinity;
 				}
-				if (RoomIntel.getRoomStatus(origin).status != RoomIntel.getRoomStatus(roomName).status) {
+				if (
+					RoomIntel.getRoomStatus(origin).status !=
+					RoomIntel.getRoomStatus(roomName).status
+				) {
 					return Infinity; // can't path outside of your local newbie/respawn zone
 				}
 				return 1;
 			};
-			const bestPortalRoom = minBy(validPortalRooms, portalRoom => {
-				const bestPortalDestination = getBestPortalDestination(portalRoom) as string; // room def has portal
-				const originToPortalRoute = Game.map.findRoute(origin, portalRoom,
-															   {routeCallback: portalCallback});
-				const portalToDestinationRoute = Game.map.findRoute(bestPortalDestination, destination,
-																	{routeCallback: portalCallback});
-				if (originToPortalRoute != ERR_NO_PATH && portalToDestinationRoute != ERR_NO_PATH) {
-					const portalRouteLength = originToPortalRoute.length + portalToDestinationRoute.length;
-					const directRouteLength = route != ERR_NO_PATH ? route.length : Infinity;
+			const bestPortalRoom = minBy(validPortalRooms, (portalRoom) => {
+				const bestPortalDestination = getBestPortalDestination(
+					portalRoom
+				) as string; // room def has portal
+				const originToPortalRoute = Game.map.findRoute(
+					origin,
+					portalRoom,
+					{ routeCallback: portalCallback }
+				);
+				const portalToDestinationRoute = Game.map.findRoute(
+					bestPortalDestination,
+					destination,
+					{
+						routeCallback: portalCallback,
+					}
+				);
+				if (
+					originToPortalRoute != ERR_NO_PATH &&
+					portalToDestinationRoute != ERR_NO_PATH
+				) {
+					const portalRouteLength =
+						originToPortalRoute.length +
+						portalToDestinationRoute.length;
+					const directRouteLength =
+						route != ERR_NO_PATH ? route.length : Infinity;
 					if (portalRouteLength < directRouteLength) {
 						return portalRouteLength;
 					} else {
@@ -339,24 +495,44 @@ export class Pathing {
 			});
 
 			if (bestPortalRoom) {
-				const portalDest = getBestPortalDestination(bestPortalRoom) as string;
-				const originToPortalRoute = Game.map.findRoute(origin, bestPortalRoom,
-															   {routeCallback: portalCallback});
-				const portalToDestinationRoute = Game.map.findRoute(portalDest, destination,
-																	{routeCallback: portalCallback});
+				const portalDest = getBestPortalDestination(
+					bestPortalRoom
+				) as string;
+				const originToPortalRoute = Game.map.findRoute(
+					origin,
+					bestPortalRoom,
+					{
+						routeCallback: portalCallback,
+					}
+				);
+				const portalToDestinationRoute = Game.map.findRoute(
+					portalDest,
+					destination,
+					{
+						routeCallback: portalCallback,
+					}
+				);
 				// This will always be true but gotta check so TS doesn't complain...
-				if (originToPortalRoute != ERR_NO_PATH && portalToDestinationRoute != ERR_NO_PATH) {
-					route = [...originToPortalRoute,
-							 {exit: FIND_EXIT_PORTAL, room: portalDest},
-							 ...portalToDestinationRoute];
+				if (
+					originToPortalRoute != ERR_NO_PATH &&
+					portalToDestinationRoute != ERR_NO_PATH
+				) {
+					route = [
+						...originToPortalRoute,
+						{ exit: FIND_EXIT_PORTAL, room: portalDest },
+						...portalToDestinationRoute,
+					];
 				}
-
 			}
 		}
 
 		if (route == ERR_NO_PATH) {
-			log.trace(new Error(`Pathing: couldn't findRoute from ${origin} to ${destination} ` +
-						`with opts ${JSON.stringify(opts)}!`));
+			log.trace(
+				new Error(
+					`Pathing: couldn't findRoute from ${origin} to ${destination} ` +
+						`with opts ${JSON.stringify(opts)}!`
+				)
+			);
 			return ERR_NO_PATH;
 		} else {
 			return route;
@@ -366,25 +542,39 @@ export class Pathing {
 	/**
 	 * Find a path from origin to destination
 	 */
-	static findSwarmPath(origin: RoomPosition, destination: RoomPosition, width: number, height: number,
-						 options: PathOptions = {}): PathFinderPath {
+	static findSwarmPath(
+		origin: RoomPosition,
+		destination: RoomPosition,
+		width: number,
+		height: number,
+		options: PathOptions = {}
+	): PathFinderPath {
 		_.defaults(options, {
 			blockCreeps: false,
-			maxOps     : 2 * DEFAULT_MAXOPS,
-			range      : 1,
+			maxOps: 2 * DEFAULT_MAXOPS,
+			range: 1,
 		});
 		// Make copies of the destination offset for where anchor could be
 		const destinations = this.getPosWindow(destination, -width, -height);
-		const callback = (roomName: string) => this.swarmRoomCallback(roomName, width, height, options);
+		const callback = (roomName: string) =>
+			this.swarmRoomCallback(roomName, width, height, options);
 		const pfOptions = pathOptionsToPathFinderOptions(options);
 		pfOptions.roomCallback = callback;
-		return PathFinder.search(origin, _.map(destinations, pos => ({pos: pos, range: options.range!})), pfOptions);
+		return PathFinder.search(
+			origin,
+			_.map(destinations, (pos) => ({ pos: pos, range: options.range! })),
+			pfOptions
+		);
 	}
 
 	/**
 	 * Get a window of offset RoomPositions from an anchor position and a window width and height
 	 */
-	static getPosWindow(anchor: RoomPosition, width: number, height: number): RoomPosition[] {
+	static getPosWindow(
+		anchor: RoomPosition,
+		width: number,
+		height: number
+	): RoomPosition[] {
 		const positions: RoomPosition[] = [];
 		for (const dx of _.range(0, width, width < 0 ? -1 : 1)) {
 			for (const dy of _.range(0, height, height < 0 ? -1 : 1)) {
@@ -397,36 +587,63 @@ export class Pathing {
 	/**
 	 * Returns the shortest path from start to end position, regardless of (passable) terrain
 	 */
-	static findShortestPath(startPos: RoomPosition, endPos: RoomPosition,
-							opts: PathOptions = {}): PathFinderPath {
+	static findShortestPath(
+		startPos: RoomPosition,
+		endPos: RoomPosition,
+		opts: PathOptions = {}
+	): PathFinderPath {
 		const optDefaults: PathOptions = {
-			blockCreeps : false,
-			range       : 1,
-			terrainCosts: {plainCost: 1, swampCost: 1, roadCost: 1}
+			blockCreeps: false,
+			range: 1,
+			terrainCosts: { plainCost: 1, swampCost: 1, roadCost: 1 },
 		};
 		_.defaults(opts, optDefaults);
 		const ret = this.findPath(startPos, endPos, opts);
-		if (ret.incomplete) log.alert(`Pathing: incomplete path from ${startPos.print} to ${endPos.print}!`);
+		if (ret.incomplete) {
+			log.alert(
+				`Pathing: incomplete path from ${startPos.print} to ${endPos.print}!`
+			);
+		}
 		return ret;
 	}
 
 	/**
 	 * Returns the shortest path from start to end position, regardless of (passable) terrain
 	 */
-	static findPathToRoom(startPos: RoomPosition, roomName: string, options: PathOptions = {}): PathFinderPath {
+	static findPathToRoom(
+		startPos: RoomPosition,
+		roomName: string,
+		options: PathOptions = {}
+	): PathFinderPath {
 		options.range = 23;
-		const ret = this.findPath(startPos, new RoomPosition(25, 25, roomName), options);
-		if (ret.incomplete) log.alert(`Pathing: incomplete path from ${startPos.print} to ${roomName}!`);
+		const ret = this.findPath(
+			startPos,
+			new RoomPosition(25, 25, roomName),
+			options
+		);
+		if (ret.incomplete) {
+			log.alert(
+				`Pathing: incomplete path from ${startPos.print} to ${roomName}!`
+			);
+		}
 		return ret;
 	}
 
 	/**
 	 * Default room callback, which automatically determines the most appropriate callback method to use
 	 */
-	static roomCallback(roomName: string, origin: RoomPosition, destination: RoomPosition,
-						route: Route | undefined, opts: PathOptions): CostMatrix | boolean {
+	static roomCallback(
+		roomName: string,
+		origin: RoomPosition,
+		destination: RoomPosition,
+		route: Route | undefined,
+		opts: PathOptions
+	): CostMatrix | boolean {
 		if (roomName != origin.roomName && roomName != destination.roomName) {
-			if (route && !_.any(route, routePart => routePart.room == roomName)) {
+			if (
+				route &&
+				!_.any(route, (routePart) => routePart.room == roomName)
+			) {
 				return false; // only allowed to visit these rooms if route is specified
 			}
 			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName)) {
@@ -434,31 +651,48 @@ export class Pathing {
 			}
 		}
 
-		const [matrixOpts, volatileMatrixOpts] = pathOptsToMatrixAndVolatileOpts(opts);
-		const matrix = MatrixLib.getMatrix(roomName, matrixOpts, volatileMatrixOpts);
+		const [matrixOpts, volatileMatrixOpts] =
+			pathOptsToMatrixAndVolatileOpts(opts);
+		const matrix = MatrixLib.getMatrix(
+			roomName,
+			matrixOpts,
+			volatileMatrixOpts
+		);
 
 		if (opts.modifyRoomCallback && Game.rooms[roomName]) {
 			// Return a modified copy the matrix
-			return opts.modifyRoomCallback(Game.rooms[roomName], matrix.clone());
+			return opts.modifyRoomCallback(
+				Game.rooms[roomName],
+				matrix.clone()
+			);
 		} else {
 			// No modifications necessary; return the matrix
 			return matrix;
 		}
-
 	}
 
-	static swarmRoomCallback(roomName: string, width: number, height: number,
-							 opts: SwarmMoveOptions): CostMatrix {
+	static swarmRoomCallback(
+		roomName: string,
+		width: number,
+		height: number,
+		opts: SwarmMoveOptions
+	): CostMatrix {
 		const matrixOpts: Partial<MatrixOptions> = {
 			explicitTerrainCosts: true,
-			ignoreStructures    : opts.ignoreStructures,
-			swarmWidth          : width,
-			swarmHeight         : height,
+			ignoreStructures: opts.ignoreStructures,
+			swarmWidth: width,
+			swarmHeight: height,
 		};
 		const volatileMatrixOpts: VolatileMatrixOptions = {};
-		if (opts.blockCreeps) volatileMatrixOpts.blockCreeps = opts.blockCreeps;
+		if (opts.blockCreeps) {
+			volatileMatrixOpts.blockCreeps = opts.blockCreeps;
+		}
 
-		const matrix = MatrixLib.getMatrix(roomName, matrixOpts, volatileMatrixOpts);
+		const matrix = MatrixLib.getMatrix(
+			roomName,
+			matrixOpts,
+			volatileMatrixOpts
+		);
 
 		if (opts.displayCostMatrix) {
 			Visualizer.displayCostMatrix(matrix, roomName);
@@ -470,7 +704,8 @@ export class Pathing {
 		const room = Game.rooms[roomName];
 		if (room) {
 			return Pathing.getKitingMatrix(room);
-		} else { // have no vision
+		} else {
+			// have no vision
 			return true;
 		}
 	}
@@ -478,14 +713,17 @@ export class Pathing {
 	/**
 	 * Get a kiting path within a room
 	 */
-	static findKitingPath(creepPos: RoomPosition, fleeFrom: (RoomPosition | _HasRoomPosition)[],
-						  opts: PathOptions = {}): PathFinderPath {
+	static findKitingPath(
+		creepPos: RoomPosition,
+		fleeFrom: (RoomPosition | _HasRoomPosition)[],
+		opts: PathOptions = {}
+	): PathFinderPath {
 		_.defaults(opts, {
-			fleeRange   : DEFAULT_FLEE_RANGE,
+			fleeRange: DEFAULT_FLEE_RANGE,
 		});
-		const fleeFromPos = _.map(fleeFrom, flee => normalizePos(flee));
-		const avoidGoals = _.map(fleeFromPos, pos => {
-			return {pos: pos, range: opts.fleeRange!};
+		const fleeFromPos = _.map(fleeFrom, (flee) => normalizePos(flee));
+		const avoidGoals = _.map(fleeFromPos, (pos) => {
+			return { pos: pos, range: opts.fleeRange! };
 		});
 		const pfOptions = pathOptionsToPathFinderOptions(opts);
 		pfOptions.roomCallback = (room) => Pathing.kitingRoomCallback(room);
@@ -497,26 +735,43 @@ export class Pathing {
 	/**
 	 * Get a flee path possibly leaving the room; generally called further in advance of kitingPath
 	 */
-	static findFleePath(creepPos: RoomPosition, fleeFrom: (RoomPosition | _HasRoomPosition)[],
-						opts: PathOptions = {}): PathFinderPath {
+	static findFleePath(
+		creepPos: RoomPosition,
+		fleeFrom: (RoomPosition | _HasRoomPosition)[],
+		opts: PathOptions = {}
+	): PathFinderPath {
 		_.defaults(opts, {
 			terrainCosts: getDefaultTerrainCosts(),
 		});
-		if (opts.fleeRange == undefined) opts.fleeRange = opts.terrainCosts!.plainCost > 1 ? 20 : 10;
-		const fleeFromPos = _.map(fleeFrom, flee => normalizePos(flee));
-		const avoidGoals = _.map(fleeFromPos, pos => {
-			return {pos: pos, range: opts.fleeRange!};
+		if (opts.fleeRange == undefined) {
+			opts.fleeRange = opts.terrainCosts!.plainCost > 1 ? 20 : 10;
+		}
+		const fleeFromPos = _.map(fleeFrom, (flee) => normalizePos(flee));
+		const avoidGoals = _.map(fleeFromPos, (pos) => {
+			return { pos: pos, range: opts.fleeRange! };
 		});
 		const callback = (roomName: string) => {
-			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName) && roomName != creepPos.roomName) {
+			if (
+				!opts.allowHostile &&
+				RoomIntel.isConsideredHostile(roomName) &&
+				roomName != creepPos.roomName
+			) {
 				return false;
 			}
 
-			const [matrixOpts, volatileMatrixOpts] = pathOptsToMatrixAndVolatileOpts(opts);
-			const matrix = MatrixLib.getMatrix(roomName, matrixOpts, volatileMatrixOpts);
+			const [matrixOpts, volatileMatrixOpts] =
+				pathOptsToMatrixAndVolatileOpts(opts);
+			const matrix = MatrixLib.getMatrix(
+				roomName,
+				matrixOpts,
+				volatileMatrixOpts
+			);
 			// Modify cost matrix if needed
 			if (opts.modifyRoomCallback && Game.rooms[roomName]) {
-				return opts.modifyRoomCallback(Game.rooms[roomName], matrix.clone());
+				return opts.modifyRoomCallback(
+					Game.rooms[roomName],
+					matrix.clone()
+				);
 			} else {
 				return matrix;
 			}
@@ -671,7 +926,6 @@ export class Pathing {
 	// 	}, 10000);
 	// }
 
-
 	// /**
 	//  * Default matrix for a room, setting impassable structures and constructionSites to impassible
 	//  */
@@ -756,7 +1010,9 @@ export class Pathing {
 		const matrix = MatrixLib.getMatrix(room.name, {}).clone();
 		const avoidCreeps = room.dangerousHostiles;
 
-		_.forEach(avoidCreeps, avoidCreep => MatrixLib.addSquarePotential(matrix, avoidCreep.pos, 3, 30));
+		_.forEach(avoidCreeps, (avoidCreep) =>
+			MatrixLib.addSquarePotential(matrix, avoidCreep.pos, 3, 30)
+		);
 
 		// // || c.getActiveBodyparts(HEAL) > 0);
 		// const terrain = Game.map.getRoomTerrain(room.name);
@@ -976,13 +1232,19 @@ export class Pathing {
 	/**
 	 * Serialize a path as a string of move directions
 	 */
-	static serializePath(startPos: RoomPosition, path: RoomPosition[], color = 'orange'): string {
-		let serializedPath = '';
+	static serializePath(
+		startPos: RoomPosition,
+		path: RoomPosition[],
+		color = "orange"
+	): string {
+		let serializedPath = "";
 		let lastPosition = startPos;
 		for (const position of path) {
 			if (position.roomName == lastPosition.roomName) {
-				new RoomVisual(position.roomName)
-					.line(position, lastPosition, {color: color, lineStyle: 'dashed'});
+				new RoomVisual(position.roomName).line(position, lastPosition, {
+					color: color,
+					lineStyle: "dashed",
+				});
 				serializedPath += lastPosition.getDirectionTo(position);
 			}
 			lastPosition = position;
@@ -991,13 +1253,15 @@ export class Pathing {
 	}
 
 	static deserializePath(startPos: RoomPosition, path: string) {
-		if (typeof path !== "string") return [];
+		if (typeof path !== "string") {
+			return [];
+		}
 		const positions: RoomPosition[] = [];
 		let lastPosition = startPos;
 		const pathDirs = path.split("");
 		let dirStr;
 		while ((dirStr = pathDirs.shift())) {
-			const dir = <DirectionConstant>parseInt(dirStr, 10)
+			const dir = <DirectionConstant>parseInt(dirStr, 10);
 			const pos = this.positionAtDirection(lastPosition, dir);
 			if (!pos) {
 				log.warning(`path cutoff?`);
@@ -1053,7 +1317,10 @@ export class Pathing {
 	/**
 	 * Returns a position at a direction from origin
 	 */
-	static positionAtDirection(origin: RoomPosition, direction: number): RoomPosition | undefined {
+	static positionAtDirection(
+		origin: RoomPosition,
+		direction: number
+	): RoomPosition | undefined {
 		const offsetX = [0, 0, 1, 1, 1, 0, -1, -1, -1];
 		const offsetY = [0, -1, -1, 0, 1, 1, 1, 0, -1];
 
@@ -1080,17 +1347,25 @@ export class Pathing {
 	 * Calculate and/or cache the length of the shortest path between two points.
 	 * Cache is probabilistically cleared in Mem
 	 */
-	static distance(pos1: RoomPosition, pos2: RoomPosition): number | undefined {
+	static distance(
+		pos1: RoomPosition,
+		pos2: RoomPosition
+	): number | undefined {
 		const [name1, name2] = [packPos(pos1), packPos(pos2)].sort(); // path length is the same in either direction
 		if (!Memory.pathing.distances[name1]) {
 			Memory.pathing.distances[name1] = {};
 		}
 		if (!Memory.pathing.distances[name1][name2]) {
-			const ret = this.findPath(pos1, pos2, { avoidSK: false, allowHostile: true, });
+			const ret = this.findPath(pos1, pos2, {
+				avoidSK: false,
+				allowHostile: true,
+			});
 			if (!ret.incomplete) {
 				Memory.pathing.distances[name1][name2] = ret.path.length;
 			} else {
-				log.error(`PATHING: could not compute distance from ${pos1.print} to ${pos2.print}!`);
+				log.error(
+					`PATHING: could not compute distance from ${pos1.print} to ${pos2.print}!`
+				);
 			}
 		}
 		return Memory.pathing.distances[name1][name2];
@@ -1140,31 +1415,42 @@ export class Pathing {
 	 * Whether another object in the same room can be reached from the current position.
 	 * This method is very expensive and kind of stupid, so use it sparingly!
 	 */
-	static isReachable(startPos: RoomPosition, endPos: RoomPosition, obstacles: (RoomPosition | _HasRoomPosition)[],
-					   options: PathOptions = {}): boolean {
+	static isReachable(
+		startPos: RoomPosition,
+		endPos: RoomPosition,
+		obstacles: (RoomPosition | _HasRoomPosition)[],
+		options: PathOptions = {}
+	): boolean {
 		_.defaults(options, {
 			blockCreeps: false,
-			range      : 1,
-			maxOps     : 2000,
-			ensurePath : false,
+			range: 1,
+			maxOps: 2000,
+			ensurePath: false,
 		});
 		if (startPos.roomName != endPos.roomName) {
-			log.error(`isReachable() should only be used within a single room!`);
+			log.error(
+				`isReachable() should only be used within a single room!`
+			);
 			return false;
 		}
 		const matrix = new PathFinder.CostMatrix();
-		_.forEach(obstacles, obstacle => {
+		_.forEach(obstacles, (obstacle) => {
 			if (hasPos(obstacle)) {
 				matrix.set(obstacle.pos.x, obstacle.pos.y, 0xfe);
 			} else {
 				matrix.set(obstacle.x, obstacle.y, 0xfe);
 			}
 		});
-		const callback = (roomName: string) => roomName == endPos.roomName ? matrix : false;
+		const callback = (roomName: string) =>
+			roomName == endPos.roomName ? matrix : false;
 		const pfOptions = pathOptionsToPathFinderOptions(options);
 		pfOptions.maxRooms = 1;
 		pfOptions.roomCallback = callback;
-		const ret = PathFinder.search(startPos, {pos: endPos, range: options.range!}, pfOptions);
+		const ret = PathFinder.search(
+			startPos,
+			{ pos: endPos, range: options.range! },
+			pfOptions
+		);
 		if (ret.incomplete) {
 			return false;
 		} else {
@@ -1180,19 +1466,25 @@ export class Pathing {
 	/**
 	 * Like isReachable(), but returns the first position which should be cleared to find a path to destination
 	 */
-	static findBlockingPos(startPos: RoomPosition, endPos: RoomPosition, obstacles: (RoomPosition | _HasRoomPosition)[],
-						   options: PathOptions = {}): RoomPosition | undefined {
+	static findBlockingPos(
+		startPos: RoomPosition,
+		endPos: RoomPosition,
+		obstacles: (RoomPosition | _HasRoomPosition)[],
+		options: PathOptions = {}
+	): RoomPosition | undefined {
 		_.defaults(options, {
 			blockCreeps: false,
-			range      : 1,
-			maxOps     : 2000,
-			ensurePath : false,
+			range: 1,
+			maxOps: 2000,
+			ensurePath: false,
 		});
 		if (startPos.roomName !== endPos.roomName) {
 			// Start and end aren't in the same room.
 			const pathToEnd = this.findPath(startPos, endPos, options);
 
-			const newStartPos = pathToEnd.path.find(step => step.roomName === endPos.roomName);
+			const newStartPos = pathToEnd.path.find(
+				(step) => step.roomName === endPos.roomName
+			);
 			if (!newStartPos) {
 				return undefined;
 			}
@@ -1201,17 +1493,22 @@ export class Pathing {
 		}
 
 		const matrix = new PathFinder.CostMatrix();
-		_.forEach(obstacles, obstacle => {
+		_.forEach(obstacles, (obstacle) => {
 			if (hasPos(obstacle)) {
 				matrix.set(obstacle.pos.x, obstacle.pos.y, 0xfe);
 			} else {
 				matrix.set(obstacle.x, obstacle.y, 0xfe);
 			}
 		});
-		const callback = (roomName: string) => roomName == endPos.roomName ? matrix : false;
+		const callback = (roomName: string) =>
+			roomName == endPos.roomName ? matrix : false;
 		const pfOpts = pathOptionsToPathFinderOptions(options);
 		pfOpts.roomCallback = callback;
-		const ret = PathFinder.search(startPos, {pos: endPos, range: options.range!}, pfOpts);
+		const ret = PathFinder.search(
+			startPos,
+			{ pos: endPos, range: options.range! },
+			pfOpts
+		);
 
 		for (const pos of ret.path) {
 			if (matrix.get(pos.x, pos.y) > 100) {
@@ -1225,8 +1522,10 @@ export class Pathing {
 	/**
 	 * Find the first walkable position in the room, spiraling outward from the center
 	 */
-	static findPathablePosition(roomName: string,
-								clearance: { width: number, height: number } = {width: 1, height: 1}): RoomPosition {
+	static findPathablePosition(
+		roomName: string,
+		clearance: { width: number; height: number } = { width: 1, height: 1 }
+	): RoomPosition {
 		const terrain = Game.map.getRoomTerrain(roomName);
 
 		let x, y: number;
@@ -1242,7 +1541,9 @@ export class Pathing {
 					allClear = true;
 					for (let w = 0; w < clearance.width; w++) {
 						for (let h = 0; h < clearance.height; h++) {
-							if (terrain.get(x + w, y + h) === TERRAIN_MASK_WALL) {
+							if (
+								terrain.get(x + w, y + h) === TERRAIN_MASK_WALL
+							) {
 								allClear = false;
 							}
 						}
@@ -1254,9 +1555,8 @@ export class Pathing {
 			}
 		}
 		// Should never reach here!
-		return new RoomPosition(-10, -10, 'cannotFindPathablePosition');
+		return new RoomPosition(-10, -10, "cannotFindPathablePosition");
 	}
-
 }
 
 // Register global instance

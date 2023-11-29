@@ -1,8 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type healTargetType = Creep;
-export const healTaskName = 'heal';
+export const healTaskName = "heal";
 
 @profile
 export class TaskHeal extends Task<healTargetType> {
@@ -13,11 +13,15 @@ export class TaskHeal extends Task<healTargetType> {
 	}
 
 	isValidTask() {
-		return (this.creep.getActiveBodyparts(HEAL) > 0);
+		return this.creep.getActiveBodyparts(HEAL) > 0;
 	}
 
 	isValidTarget() {
-		return this.target && this.target.hits < this.target.hitsMax && this.target.my;
+		return (
+			this.target &&
+			this.target.hits < this.target.hitsMax &&
+			this.target.my
+		);
 	}
 
 	work() {

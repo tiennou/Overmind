@@ -1,11 +1,11 @@
-import {CombatIntel} from '../../intel/CombatIntel';
-import {BunkerDefenseOverlord} from '../../overlords/defense/bunkerDefense';
-import {DistractionOverlord} from '../../overlords/defense/distraction';
-import {RangedDefenseOverlord} from '../../overlords/defense/rangedDefense';
-import {profile} from '../../profiler/decorator';
-import {BarrierPlanner} from '../../roomPlanner/BarrierPlanner';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
+import { CombatIntel } from "../../intel/CombatIntel";
+import { BunkerDefenseOverlord } from "../../overlords/defense/bunkerDefense";
+import { DistractionOverlord } from "../../overlords/defense/distraction";
+import { RangedDefenseOverlord } from "../../overlords/defense/rangedDefense";
+import { profile } from "../../profiler/decorator";
+import { BarrierPlanner } from "../../roomPlanner/BarrierPlanner";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 interface DirectiveInvasionDefenseMemory extends FlagMemory {
 	persistent?: boolean;
@@ -17,8 +17,7 @@ interface DirectiveInvasionDefenseMemory extends FlagMemory {
  */
 @profile
 export class DirectiveInvasionDefense extends Directive {
-
-	static directiveName = 'invasionDefense';
+	static directiveName = "invasionDefense";
 	static color = COLOR_BLUE;
 	static secondaryColor = COLOR_PURPLE;
 
@@ -30,30 +29,50 @@ export class DirectiveInvasionDefense extends Directive {
 	safeEndTime: 500;
 
 	constructor(flag: Flag) {
-		super(flag, colony => colony.level >= 1 && colony.spawns.length > 0);
+		super(flag, (colony) => colony.level >= 1 && colony.spawns.length > 0);
 	}
 
 	spawnMoarOverlords() {
 		if (!this.room) {
 			return;
 		}
-		const expectedDamage = CombatIntel.maxDamageByCreeps(this.room.dangerousPlayerHostiles);
-		const expectedHealing = CombatIntel.maxHealingByCreeps(this.room.dangerousPlayerHostiles);
-		const _useBoosts = (expectedDamage > ATTACK_POWER * 50) || (expectedHealing > RANGED_ATTACK_POWER * 100)
-						  && !!this.colony.terminal
-						  && !!this.colony.evolutionChamber;
-		const _percentWalls = _.filter(this.room.barriers, s => s.structureType == STRUCTURE_WALL).length /
-							 this.room.barriers.length;
-		const meleeHostiles = _.filter(this.room.hostiles, hostile => hostile.getActiveBodyparts(ATTACK) > 0 ||
-																	  hostile.getActiveBodyparts(WORK) > 0);
-		const rangedHostiles = _.filter(this.room.hostiles, hostile => hostile.getActiveBodyparts(RANGED_ATTACK) > 0);
+		const expectedDamage = CombatIntel.maxDamageByCreeps(
+			this.room.dangerousPlayerHostiles
+		);
+		const expectedHealing = CombatIntel.maxHealingByCreeps(
+			this.room.dangerousPlayerHostiles
+		);
+		const _useBoosts =
+			expectedDamage > ATTACK_POWER * 50 ||
+			(expectedHealing > RANGED_ATTACK_POWER * 100 &&
+				!!this.colony.terminal &&
+				!!this.colony.evolutionChamber);
+		const _percentWalls =
+			_.filter(
+				this.room.barriers,
+				(s) => s.structureType == STRUCTURE_WALL
+			).length / this.room.barriers.length;
+		const meleeHostiles = _.filter(
+			this.room.hostiles,
+			(hostile) =>
+				hostile.getActiveBodyparts(ATTACK) > 0 ||
+				hostile.getActiveBodyparts(WORK) > 0
+		);
+		const rangedHostiles = _.filter(
+			this.room.hostiles,
+			(hostile) => hostile.getActiveBodyparts(RANGED_ATTACK) > 0
+		);
 
 		this.overlords.rangedDefense = new RangedDefenseOverlord(this);
 
 		// If serious bunker busting attempt, spawn lurkers
 		// TODO understand dismantlers damage output
-		if (meleeHostiles.length > 0 && expectedDamage > ATTACK_POWER * 70 &&
-			(this.colony.level >= BarrierPlanner.settings.bunkerizeRCL || rangedHostiles.length > 3)) {
+		if (
+			meleeHostiles.length > 0 &&
+			expectedDamage > ATTACK_POWER * 70 &&
+			(this.colony.level >= BarrierPlanner.settings.bunkerizeRCL ||
+				rangedHostiles.length > 3)
+		) {
 			this.overlords.bunkerDefense = new BunkerDefenseOverlord(this);
 		}
 		// If melee attackers, try distractions
@@ -64,8 +83,14 @@ export class DirectiveInvasionDefense extends Directive {
 	}
 
 	init(): void {
-		const numHostiles: string = this.room ? this.room.hostiles.length.toString() : '???';
-		this.alert(`Invasion (hostiles: ${numHostiles}) ${Game.time - this.memory.safeSince}`, NotifierPriority.Critical);
+		const numHostiles: string =
+			this.room ? this.room.hostiles.length.toString() : "???";
+		this.alert(
+			`Invasion (hostiles: ${numHostiles}) ${
+				Game.time - this.memory.safeSince
+			}`,
+			NotifierPriority.Critical
+		);
 	}
 
 	// TODO record baddies needs to be redone in a more systemic fashion. But here for the 🍿
@@ -75,28 +100,31 @@ export class DirectiveInvasionDefense extends Directive {
 		}
 		const mem = Memory.playerCreepTracker;
 		const hostiles = this.room.hostiles;
-		hostiles.forEach(creep => {
+		hostiles.forEach((creep) => {
 			if (!mem[creep.owner.username]) {
 				mem[creep.owner.username] = {
 					creeps: {},
-					types : {},
-					parts : {},
+					types: {},
+					parts: {},
 					boosts: {},
 				};
 			}
 			const playerMem = mem[creep.owner.username];
 			if (!playerMem.creeps[creep.name]) {
 				playerMem.creeps[creep.name] = Game.time;
-				const creepType = creep.name.substr(0, creep.name.indexOf(' '));
+				const creepType = creep.name.substr(0, creep.name.indexOf(" "));
 				if (creepType == creep.name) {
 					// memory protection if they don't split name
 					return;
 				}
-				playerMem.types[creepType] = (playerMem.types[creepType] + 1) || 1;
+				playerMem.types[creepType] =
+					playerMem.types[creepType] + 1 || 1;
 				for (const bodyPart of creep.body) {
-					playerMem.parts[bodyPart.type] = (playerMem.parts[bodyPart.type]) + 1 || 1;
+					playerMem.parts[bodyPart.type] =
+						playerMem.parts[bodyPart.type] + 1 || 1;
 					if (bodyPart.boost) {
-						playerMem.boosts[bodyPart.boost] = (playerMem.boosts[bodyPart.boost]) + 1 || 1;
+						playerMem.boosts[bodyPart.boost] =
+							playerMem.boosts[bodyPart.boost] + 1 || 1;
 					}
 				}
 			}
@@ -115,7 +143,7 @@ export class DirectiveInvasionDefense extends Directive {
 		}
 		for (const partType in mem.parts) {
 			const partCount = mem.parts[partType];
-			const cost = BODYPART_COST[(partType as BodyPartConstant)];
+			const cost = BODYPART_COST[partType as BodyPartConstant];
 			console.log(`${partType} : ${cost * partCount}`);
 			energyCount += cost * partCount;
 		}
@@ -151,14 +179,21 @@ export class DirectiveInvasionDefense extends Directive {
 			// CombatIntel.computeCreepDamagePotentialMatrix(this.room, this.room.dangerousPlayerHostiles);
 		}
 		// If there are no hostiles left in the room and everyone's healed, then remove the flag
-		if (this.room && this.room.hostiles.length == 0 &&
-			(Game.time - this.memory.safeSince) > this.safeEndTime) {
-			if (_.filter(this.room.creeps, creep => creep.hits < creep.hitsMax).length == 0) {
+		if (
+			this.room &&
+			this.room.hostiles.length == 0 &&
+			Game.time - this.memory.safeSince > this.safeEndTime
+		) {
+			if (
+				_.filter(
+					this.room.creeps,
+					(creep) => creep.hits < creep.hitsMax
+				).length == 0
+			) {
 				this.remove();
 			}
-		} else if ((Game.time - this.memory.safeSince) > 3000) {
+		} else if (Game.time - this.memory.safeSince > 3000) {
 			this.remove();
 		}
 	}
-
 }

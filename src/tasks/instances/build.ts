@@ -1,8 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type buildTargetType = ConstructionSite;
-export const buildTaskName = 'build';
+export const buildTaskName = "build";
 
 @profile
 export class TaskBuild extends Task<buildTargetType> {
@@ -18,7 +18,11 @@ export class TaskBuild extends Task<buildTargetType> {
 	}
 
 	isValidTarget() {
-		return this.target && this.target.my && this.target.progress < this.target.progressTotal;
+		return (
+			this.target &&
+			this.target.my &&
+			this.target.progress < this.target.progressTotal
+		);
 	}
 
 	work() {
@@ -28,7 +32,7 @@ export class TaskBuild extends Task<buildTargetType> {
 			if (creepOnTarget) {
 				const zerg = Overmind.zerg[creepOnTarget.name];
 				if (zerg) {
-					this.creep.say('move pls');
+					this.creep.say("move pls");
 					zerg.moveOffCurrentPos();
 				}
 			}

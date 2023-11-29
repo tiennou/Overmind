@@ -1,15 +1,14 @@
-import {AttackStructurePriorities} from '../../priorities/priorities_structures';
-import {profile} from '../../profiler/decorator';
-import {Visualizer} from '../../visuals/Visualizer';
-import {Directive} from '../Directive';
+import { AttackStructurePriorities } from "../../priorities/priorities_structures";
+import { profile } from "../../profiler/decorator";
+import { Visualizer } from "../../visuals/Visualizer";
+import { Directive } from "../Directive";
 
 /**
  * [LEGACY] Manually specify targets to be prioritized during a siege
  */
 @profile
 export class DirectiveTargetSiege extends Directive {
-
-	static directiveName = 'target:siege';
+	static directiveName = "target:siege";
 	static color = COLOR_GREY;
 	static secondaryColor = COLOR_ORANGE;
 
@@ -17,9 +16,7 @@ export class DirectiveTargetSiege extends Directive {
 		super(flag);
 	}
 
-	spawnMoarOverlords() {
-
-	}
+	spawnMoarOverlords() {}
 
 	getTarget(): Structure | undefined {
 		const targetedStructures = this.pos.lookFor(LOOK_STRUCTURES);
@@ -32,9 +29,7 @@ export class DirectiveTargetSiege extends Directive {
 		}
 	}
 
-	init(): void {
-
-	}
+	init(): void {}
 
 	run(): void {
 		// Remove the directive once structures have been destroyed
@@ -44,7 +39,6 @@ export class DirectiveTargetSiege extends Directive {
 	}
 
 	visuals(): void {
-		Visualizer.marker(this.pos, {color: 'orange'});
+		Visualizer.marker(this.pos, { color: "orange" });
 	}
 }
-

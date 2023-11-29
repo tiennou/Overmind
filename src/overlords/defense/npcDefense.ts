@@ -1,25 +1,25 @@
-import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectiveGuard} from '../../directives/defense/guard';
-import {DirectiveHaul} from '../../directives/resource/haul';
-import {DirectiveTargetSiege} from '../../directives/targeting/siegeTarget';
-import {RoomIntel} from '../../intel/RoomIntel';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {CombatZerg} from '../../zerg/CombatZerg';
-import {Overlord} from '../Overlord';
+import { CombatSetups, Roles } from "../../creepSetups/setups";
+import { DirectiveGuard } from "../../directives/defense/guard";
+import { RoomIntel } from "../../intel/RoomIntel";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { CombatZerg } from "../../zerg/CombatZerg";
+import { Overlord } from "../Overlord";
 
 /**
  * NPC defense overlord: spawns specially-optimized guards as needed to deal with standard NPC invasions
  */
 @profile
 export class DefenseNPCOverlord extends Overlord {
-
 	guards: CombatZerg[];
 
 	static requiredRCL = 3;
 
-	constructor(directive: DirectiveGuard, priority = OverlordPriority.outpostDefense.guard) {
-		super(directive, 'guard', priority);
+	constructor(
+		directive: DirectiveGuard,
+		priority = OverlordPriority.outpostDefense.guard
+	) {
+		super(directive, "guard", priority);
 		this.guards = this.combatZerg(Roles.guardMelee);
 	}
 
@@ -35,12 +35,24 @@ export class DefenseNPCOverlord extends Overlord {
 	// }
 
 	init() {
-		const amount = this.room && (this.room.invaders.length > 0 || this.room.invaderCore || RoomIntel.isInvasionLikely(this.room)) ? 1 : 0;
+		const amount =
+			(
+				this.room &&
+				(this.room.invaders.length > 0 ||
+					this.room.invaderCore ||
+					RoomIntel.isInvasionLikely(this.room))
+			) ?
+				1
+			:	0;
 		let setup = CombatSetups.broodlings.default;
-		if (CombatSetups.broodlings.default.generateBody(this.colony.room.energyCapacityAvailable).length === 0) {
+		if (
+			CombatSetups.broodlings.default.generateBody(
+				this.colony.room.energyCapacityAvailable
+			).length === 0
+		) {
 			setup = CombatSetups.broodlings.early;
 		}
-		this.wishlist(amount, setup, {reassignIdle: true});
+		this.wishlist(amount, setup, { reassignIdle: true });
 	}
 
 	run() {

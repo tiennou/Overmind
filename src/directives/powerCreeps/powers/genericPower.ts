@@ -1,6 +1,6 @@
-import { deref } from 'utilities/utils';
-import {profile} from '../../../profiler/decorator';
-import {powerId} from './generateOps';
+import { deref } from "utilities/utils";
+import { profile } from "../../../profiler/decorator";
+import { powerId } from "./generateOps";
 
 /**
  * An abstract class for encapsulating power creep power usage.
@@ -9,11 +9,11 @@ import {powerId} from './generateOps';
 export abstract class Power {
 	static powerId: PowerConstant;
 
-	_target: { 					// Data for the target the task is directed to:
-		ref: string; 				// Target id or name
-		_pos: ProtoPos; 			// Target position's coordinates in case vision is lost
+	_target: {
+		// Data for the target the task is directed to:
+		ref: string; // Target id or name
+		_pos: ProtoPos; // Target position's coordinates in case vision is lost
 	};
-
 
 	_powerCreep: {
 		name: string;
@@ -26,11 +26,10 @@ export abstract class Power {
 		};
 		if (target) {
 			this._target = {
-				ref : target.ref,
+				ref: target.ref,
 				_pos: target.pos,
 			};
 		}
-
 	}
 
 	/**
@@ -48,7 +47,8 @@ export abstract class Power {
 	/**
 	 * Return the wrapped creep which is executing this task
 	 */
-	get powerCreep(): PowerCreep { // Get task's own creep by its name
+	get powerCreep(): PowerCreep {
+		// Get task's own creep by its name
 		// Returns zerg wrapper instead of creep to use monkey-patched functions
 		return Game.powerCreeps[this._powerCreep.name];
 	}
@@ -66,7 +66,5 @@ export abstract class Power {
 		}
 	}
 
-	operatePower() {
-
-	}
+	operatePower() {}
 }

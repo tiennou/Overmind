@@ -1,16 +1,15 @@
-import {log} from '../../console/log';
-import {ControllerAttackerOverlord} from '../../overlords/offense/controllerAttacker';
-import {StationaryScoutOverlord} from '../../overlords/scouting/stationary';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
+import { log } from "../../console/log";
+import { ControllerAttackerOverlord } from "../../overlords/offense/controllerAttacker";
+import { StationaryScoutOverlord } from "../../overlords/scouting/stationary";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
 
 /**
  * Attack a controller, downgrading it to level 0
  */
 @profile
 export class DirectiveControllerAttack extends Directive {
-
-	static directiveName = 'controllerAttack';
+	static directiveName = "controllerAttack";
 	static color = COLOR_RED;
 	static secondaryColor = COLOR_PURPLE;
 
@@ -24,16 +23,25 @@ export class DirectiveControllerAttack extends Directive {
 	}
 
 	init(): void {
-		const level: string = this.room && this.room.controller ? this.room.controller.level.toString() : '???';
+		const level: string =
+			this.room && this.room.controller ?
+				this.room.controller.level.toString()
+			:	"???";
 		this.alert(`Downgrading controller (RCL${level})`);
 	}
 
 	run(): void {
-		if (this.room && this.room.controller && (this.room.controller.level == 0 && (!this.room.controller.reservation
-																					  || this.room.controller.reservation.ticksToEnd < 5))) {
-			log.notify(`Removing ${this.name} since controller has reached level 0.`);
+		if (
+			this.room &&
+			this.room.controller &&
+			this.room.controller.level == 0 &&
+			(!this.room.controller.reservation ||
+				this.room.controller.reservation.ticksToEnd < 5)
+		) {
+			log.notify(
+				`Removing ${this.name} since controller has reached level 0.`
+			);
 			this.remove();
 		}
 	}
 }
-

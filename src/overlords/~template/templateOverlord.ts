@@ -1,11 +1,11 @@
-import {$} from '../../caching/GlobalCache';
-import {Roles, Setups} from '../../creepSetups/setups';
-import {DirectiveTemplate} from '../../directives/~template/templateDirective';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Tasks} from '../../tasks/Tasks';
-import {Zerg} from '../../zerg/Zerg';
-import {Overlord, OverlordMemory} from '../Overlord';
+import { $ } from "../../caching/GlobalCache";
+import { Roles, Setups } from "../../creepSetups/setups";
+import { DirectiveTemplate } from "../../directives/~template/templateDirective";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Tasks } from "../../tasks/Tasks";
+import { Zerg } from "../../zerg/Zerg";
+import { Overlord, OverlordMemory } from "../Overlord";
 
 // Memory should have an interface extending flag memory and should not be exported
 interface TemplateOverlordMemory extends OverlordMemory {
@@ -20,11 +20,10 @@ const getDefaultTemplateOverlordMemory: () => TemplateOverlordMemory = () => ({
 
 // If you are using a state that can be one of only a few values, it should be an enum type
 const enum _TemplateOverlordState {
-	state1 = 'one',
-	state2 = 'two',
-	state3 = 'three',
+	state1 = "one",
+	state2 = "two",
+	state3 = "three",
 }
-
 
 /**
  * Template directive that you can copy/paste as an example of how to write a directive. Some description of what
@@ -32,7 +31,6 @@ const enum _TemplateOverlordState {
  */
 @profile
 export class TemplateOverlord extends Overlord {
-
 	memory: TemplateOverlordMemory;
 
 	room: Room;
@@ -48,8 +46,8 @@ export class TemplateOverlord extends Overlord {
 
 	// Put "magic numbers" in a static settings object so they are easier to see and adjust at a glance
 	static settings = {
-		setting1           : 0.99,
-		setting2           : 10000,
+		setting1: 0.99,
+		setting2: 10000,
 		nestedSettingObject: {
 			0: 0,
 			1: 1,
@@ -60,7 +58,7 @@ export class TemplateOverlord extends Overlord {
 			6: 8,
 			7: 13,
 			8: 21,
-		}
+		},
 	};
 
 	/**
@@ -69,20 +67,35 @@ export class TemplateOverlord extends Overlord {
 	 * - It is generally best to avoid having references to the parent directive on an overlord. 90% of the time,
 	 *   this means that whatever you have on the directive can and should actually go on the overlord.
 	 */
-	constructor(directive: DirectiveTemplate, priority = OverlordPriority.default) {
-		super(directive, 'template', priority, getDefaultTemplateOverlordMemory);
+	constructor(
+		directive: DirectiveTemplate,
+		priority = OverlordPriority.default
+	) {
+		super(
+			directive,
+			"template",
+			priority,
+			getDefaultTemplateOverlordMemory
+		);
 
 		// You can use $.structures and similar methods to cache properties which won't change very often
 		this.property0 = _.first(this.room.containers);
-		this.property1 = $.structures(this, 'property1',
-									  () => _.filter(this.colony.spawns, spawn => spawn.pos.x > 20));
-		this.property2 = $.structures(this, 'property2', () => {
-			return _.sortBy(_.filter(this.room.ramparts, rampart => rampart.hits > 99999), rampart => rampart.hits);
+		this.property1 = $.structures(this, "property1", () =>
+			_.filter(this.colony.spawns, (spawn) => spawn.pos.x > 20)
+		);
+		this.property2 = $.structures(this, "property2", () => {
+			return _.sortBy(
+				_.filter(this.room.ramparts, (rampart) => rampart.hits > 99999),
+				(rampart) => rampart.hits
+			);
 		});
 		// You shouldn't use $ methods for things that can frequently change
-		this.property3 = _.filter(this.room.towers, tower => tower.store.getFreeCapacity(RESOURCE_ENERGY) > 100);
+		this.property3 = _.filter(
+			this.room.towers,
+			(tower) => tower.store.getFreeCapacity(RESOURCE_ENERGY) > 100
+		);
 		// Cost matrices can be cached too
-		this.property4 = $.costMatrix(this.pos.roomName, 'property2', () => {
+		this.property4 = $.costMatrix(this.pos.roomName, "property2", () => {
 			return new PathFinder.CostMatrix();
 		});
 
@@ -99,16 +112,19 @@ export class TemplateOverlord extends Overlord {
 	 */
 	refresh(): void {
 		super.refresh();
-		$.refresh(this, 'property1', 'property2');
+		$.refresh(this, "property1", "property2");
 		// Things that can change frequently will need to be refreshed
-		this.property3 = _.filter(this.room.towers, tower => tower.store.getFreeCapacity(RESOURCE_ENERGY) > 100);
+		this.property3 = _.filter(
+			this.room.towers,
+			(tower) => tower.store.getFreeCapacity(RESOURCE_ENERGY) > 100
+		);
 	}
 
 	/**
 	 * Complex creep number calculations should be placed on a helper method
 	 */
 	private computeNeededWorkers(): number {
-		return $.number(this, 'numWorkers', () => 42);
+		return $.number(this, "numWorkers", () => 42);
 	}
 
 	/**
@@ -118,7 +134,9 @@ export class TemplateOverlord extends Overlord {
 	 */
 	private registerEnergyRequests(): void {
 		if (this.property0 && this.property0.store.getFreeCapacity() < 500) {
-			this.colony.logisticsNetwork.requestOutput(this.property0, {resourceType: 'all'});
+			this.colony.logisticsNetwork.requestOutput(this.property0, {
+				resourceType: "all",
+			});
 		}
 	}
 
@@ -148,13 +166,15 @@ export class TemplateOverlord extends Overlord {
 			return;
 		}
 		// If you're out of energy, recharge from link or battery
-		if (this.colony.upgradeSite.link && this.colony.upgradeSite.link.energy > 0) {
+		if (
+			this.colony.upgradeSite.link &&
+			this.colony.upgradeSite.link.energy > 0
+		) {
 			upgrader.task = Tasks.withdraw(this.colony.upgradeSite.link);
 			return;
 		}
 		// Logic continues like this...
 	}
-
 
 	// As an alternate paradigm, for more complex decision tress, you can have a bunch of helper methods
 	// that return a boolean, where true is returned if a task was assigned. These methods should all
@@ -170,7 +190,9 @@ export class TemplateOverlord extends Overlord {
 	}
 
 	private buildActions(worker: Zerg): boolean {
-		const target = worker.pos.findClosestByMultiRoomRange(this.colony.constructionSites);
+		const target = worker.pos.findClosestByMultiRoomRange(
+			this.colony.constructionSites
+		);
 		if (target) {
 			worker.task = Tasks.build(target);
 			return true;
@@ -188,7 +210,6 @@ export class TemplateOverlord extends Overlord {
 	}
 
 	private handleWorker(worker: Zerg): void {
-
 		// Get energy if needed
 		if (worker.store.energy == 0) {
 			worker.task = Tasks.recharge();
@@ -196,18 +217,23 @@ export class TemplateOverlord extends Overlord {
 		}
 
 		// Highest priority actions
-		if (this.repairActions(worker)) return;
+		if (this.repairActions(worker)) {
+			return;
+		}
 
 		// Second highest priority actions
-		if (this.buildActions(worker)) return;
+		if (this.buildActions(worker)) {
+			return;
+		}
 
 		// Conditional action
 		if (this.colony.spawns.length > 3) {
-			if (this.dismantleActions(worker)) return;
+			if (this.dismantleActions(worker)) {
+				return;
+			}
 		}
 
 		worker.say(`Nothing to do!`);
-
 	}
 
 	/**
@@ -215,10 +241,9 @@ export class TemplateOverlord extends Overlord {
 	 * - autoRun() is generally the best way to go for civilian roles
 	 */
 	run() {
-		this.autoRun(this.upgraders, upgrader => this.handleUpgrader(upgrader));
-		this.autoRun(this.workers, carrier => this.handleWorker(carrier));
+		this.autoRun(this.upgraders, (upgrader) =>
+			this.handleUpgrader(upgrader)
+		);
+		this.autoRun(this.workers, (carrier) => this.handleWorker(carrier));
 	}
-
 }
-
-

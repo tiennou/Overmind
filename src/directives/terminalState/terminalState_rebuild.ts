@@ -1,7 +1,7 @@
-import {log} from '../../console/log';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
+import { log } from "../../console/log";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 const REBUILD_STATE_TIMEOUT = 25000;
 
@@ -11,8 +11,7 @@ const REBUILD_STATE_TIMEOUT = 25000;
  */
 @profile
 export class DirectiveTerminalRebuildState extends Directive {
-
-	static directiveName = 'rebuildState';
+	static directiveName = "rebuildState";
 	static color = COLOR_BROWN;
 	static secondaryColor = COLOR_YELLOW;
 
@@ -30,22 +29,28 @@ export class DirectiveTerminalRebuildState extends Directive {
 		this.colony.state.isRebuilding = true;
 	}
 
-	spawnMoarOverlords() {
-
-	}
+	spawnMoarOverlords() {}
 
 	init() {
 		if (this.colony && this.colony.terminal) {
 			for (const resource of RESOURCES_ALL) {
 				if (this.colony.assets[resource] > 0) {
-					if (resource == RESOURCE_ENERGY) { // keep a little energy just to keep the room functioning
-						Overmind.terminalNetwork.exportResource(this.colony, resource, {
-							target   : 25000,
-							tolerance: 5000,
-							surplus  : 35000,
-						});
+					if (resource == RESOURCE_ENERGY) {
+						// keep a little energy just to keep the room functioning
+						Overmind.terminalNetwork.exportResource(
+							this.colony,
+							resource,
+							{
+								target: 25000,
+								tolerance: 5000,
+								surplus: 35000,
+							}
+						);
 					} else {
-						Overmind.terminalNetwork.exportResource(this.colony, <ResourceConstant>resource);
+						Overmind.terminalNetwork.exportResource(
+							this.colony,
+							<ResourceConstant>resource
+						);
 					}
 				}
 			}
@@ -53,12 +58,16 @@ export class DirectiveTerminalRebuildState extends Directive {
 		if (Game.time % 25 == 0) {
 			log.alert(`${this.pos.print}: rebuild terminal state active!`);
 		}
-		this.alert('Rebuild terminal state active!', NotifierPriority.High);
+		this.alert("Rebuild terminal state active!", NotifierPriority.High);
 	}
 
 	run() {
 		// Incubation directive gets removed once the colony has a command center (storage)
-		if (!this.colony || !this.terminal || Game.time > (this.memory[MEM.TICK] || 0) + REBUILD_STATE_TIMEOUT) {
+		if (
+			!this.colony ||
+			!this.terminal ||
+			Game.time > (this.memory[MEM.TICK] || 0) + REBUILD_STATE_TIMEOUT
+		) {
 			this.remove();
 		}
 	}

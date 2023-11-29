@@ -2,4 +2,3 @@
 export function assimilationLocked(code: any): void {
 	Assimilator.validate(code);
 }
-

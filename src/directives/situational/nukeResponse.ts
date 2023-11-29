@@ -1,15 +1,14 @@
-import {log} from '../../console/log';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
+import { log } from "../../console/log";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 /**
  * Nuke response: automatically over-fortify ramparts to withstand an incoming nuclear strike
  */
 @profile
 export class DirectiveNukeResponse extends Directive {
-
-	static directiveName = 'nukeResponse';
+	static directiveName = "nukeResponse";
 	static color = COLOR_ORANGE;
 	static secondaryColor = COLOR_BLUE;
 
@@ -19,8 +18,12 @@ export class DirectiveNukeResponse extends Directive {
 	room: Room;
 
 	constructor(flag: Flag) {
-		super(flag, colony => colony.name == Directive.getPos(flag).roomName
-							  && colony.level >= DirectiveNukeResponse.requiredRCL);
+		super(
+			flag,
+			(colony) =>
+				colony.name == Directive.getPos(flag).roomName &&
+				colony.level >= DirectiveNukeResponse.requiredRCL
+		);
 		this.refresh();
 	}
 
@@ -32,13 +35,14 @@ export class DirectiveNukeResponse extends Directive {
 		}
 	}
 
-	spawnMoarOverlords() {
-
-	}
+	spawnMoarOverlords() {}
 
 	init(): void {
 		for (const nuke of this.nukes) {
-			this.alert(`Nuclear impact in ${nuke.timeToLand}`, NotifierPriority.Critical);
+			this.alert(
+				`Nuclear impact in ${nuke.timeToLand}`,
+				NotifierPriority.Critical
+			);
 		}
 	}
 
@@ -46,12 +50,21 @@ export class DirectiveNukeResponse extends Directive {
 	 * Returns whether a position should be reinforced or not
 	 */
 	static shouldReinforceLocation(pos: RoomPosition): boolean {
-		const dontReinforce: StructureConstant[] = [STRUCTURE_ROAD, STRUCTURE_RAMPART, STRUCTURE_WALL];
+		const dontReinforce: StructureConstant[] = [
+			STRUCTURE_ROAD,
+			STRUCTURE_RAMPART,
+			STRUCTURE_WALL,
+		];
 		const colony = Overmind.colonies[pos.roomName];
 		if (colony && colony.assets.energy < 200000) {
 			dontReinforce.push(STRUCTURE_EXTENSION);
 		}
-		return _.filter(pos.lookFor(LOOK_STRUCTURES), s => !_.contains(dontReinforce, s.structureType)).length > 0;
+		return (
+			_.filter(
+				pos.lookFor(LOOK_STRUCTURES),
+				(s) => !_.contains(dontReinforce, s.structureType)
+			).length > 0
+		);
 	}
 
 	run(): void {
@@ -59,18 +72,24 @@ export class DirectiveNukeResponse extends Directive {
 		if (Game.time % 50 == 0) {
 			if (this.nukes.length > 0) {
 				for (const nuke of this.nukes) {
-					const rampartPositions = _.filter(nuke.pos.getPositionsInRange(2),
-													  pos => DirectiveNukeResponse.shouldReinforceLocation(pos));
+					const rampartPositions = _.filter(
+						nuke.pos.getPositionsInRange(2),
+						(pos) =>
+							DirectiveNukeResponse.shouldReinforceLocation(pos)
+					);
 					for (const pos of rampartPositions) {
 						// Build a rampart if there isn't one already
 						if (!pos.lookForStructure(STRUCTURE_RAMPART)) {
-							const result = pos.createConstructionSite(STRUCTURE_RAMPART);
+							const result =
+								pos.createConstructionSite(STRUCTURE_RAMPART);
 							if (result === ERR_FULL) {
 								break;
 							}
 						}
 					}
-					log.alert(`Incoming nuke at ${nuke.pos.print}! Time until impact: ${nuke.timeToLand}`);
+					log.alert(
+						`Incoming nuke at ${nuke.pos.print}! Time until impact: ${nuke.timeToLand}`
+					);
 				}
 			} else {
 				// Remove once nuke is gone

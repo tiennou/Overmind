@@ -1,6 +1,6 @@
-import { ZergMoveReturnCode } from 'movement/Movement';
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { ZergMoveReturnCode } from "movement/Movement";
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 // Attack task, includes attack and ranged attack if applicable.
 // Use meleeAttack and rangedAttack for the exclusive variants.
@@ -11,7 +11,7 @@ import {Task} from '../Task';
 // Known issue: creep is only approaching to range 3 (won't fix because I don't use for combat)
 
 export type attackTargetType = Creep | Structure;
-export const attackTaskName = 'attack';
+export const attackTaskName = "attack";
 
 @profile
 export class TaskAttack extends Task<attackTargetType> {
@@ -22,7 +22,10 @@ export class TaskAttack extends Task<attackTargetType> {
 	}
 
 	isValidTask() {
-		return (this.creep.getActiveBodyparts(ATTACK) > 0 || this.creep.getActiveBodyparts(RANGED_ATTACK) > 0);
+		return (
+			this.creep.getActiveBodyparts(ATTACK) > 0 ||
+			this.creep.getActiveBodyparts(RANGED_ATTACK) > 0
+		);
 	}
 
 	isValidTarget(): boolean {
@@ -41,7 +44,10 @@ export class TaskAttack extends Task<attackTargetType> {
 				attackReturn = this.moveToTarget(1); // approach target if you also have attack parts
 			}
 		}
-		if (creep.pos.inRangeTo(target, 3) && creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
+		if (
+			creep.pos.inRangeTo(target, 3) &&
+			creep.getActiveBodyparts(RANGED_ATTACK) > 0
+		) {
 			rangedAttackReturn = creep.rangedAttack(target);
 		}
 		if (attackReturn == OK && rangedAttackReturn == OK) {

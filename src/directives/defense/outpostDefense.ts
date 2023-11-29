@@ -1,7 +1,7 @@
-import {OutpostDefenseOverlord} from '../../overlords/defense/outpostDefense';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
+import { OutpostDefenseOverlord } from "../../overlords/defense/outpostDefense";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 interface DirectiveInvasionDefenseMemory extends FlagMemory {
 	persistent?: boolean;
@@ -14,8 +14,7 @@ interface DirectiveInvasionDefenseMemory extends FlagMemory {
  */
 @profile
 export class DirectiveOutpostDefense extends Directive {
-
-	static directiveName = 'outpostDefense';
+	static directiveName = "outpostDefense";
 	static color = COLOR_BLUE;
 	static secondaryColor = COLOR_RED;
 
@@ -31,8 +30,12 @@ export class DirectiveOutpostDefense extends Directive {
 	}
 
 	init(): void {
-		const numHostiles: string = this.room ? this.room.hostiles.length.toString() : '???';
-		this.alert(`Outpost defense (hostiles: ${numHostiles})`, NotifierPriority.High);
+		const numHostiles: string =
+			this.room ? this.room.hostiles.length.toString() : "???";
+		this.alert(
+			`Outpost defense (hostiles: ${numHostiles})`,
+			NotifierPriority.High
+		);
 	}
 
 	run(): void {
@@ -40,12 +43,19 @@ export class DirectiveOutpostDefense extends Directive {
 			this.memory.safeSince = Game.time;
 		}
 		// If there are no hostiles left in the room and everyone's healed, then remove the flag
-		if (this.room && this.room.hostiles.length == 0 &&
-			Game.time - this.memory.safeSince > 100) {
-			if (_.filter(this.room.creeps, creep => creep.hits < creep.hitsMax).length == 0) {
+		if (
+			this.room &&
+			this.room.hostiles.length == 0 &&
+			Game.time - this.memory.safeSince > 100
+		) {
+			if (
+				_.filter(
+					this.room.creeps,
+					(creep) => creep.hits < creep.hitsMax
+				).length == 0
+			) {
 				this.remove();
 			}
 		}
 	}
-
 }

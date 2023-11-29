@@ -14,15 +14,23 @@ import {
 
 export function roomObjectType(obj: RoomObject) {
 	let type;
-	if (isRuin(obj)) type = "ruin";
-	else if (isTombstone(obj)) type = "tombstone";
-	else if (isResource(obj)) type = "resource";
-	else if (isStructure(obj)) type = obj.structureType;
-	else if (isSource(obj)) type = "source";
-	else if (isMineral(obj)) type = `mineral of ${obj.mineralType}`;
-	else if (isDeposit(obj)) type = `deposit of ${obj.depositType}`;
-	else if (isConstructionSite(obj)) type = `${obj.structureType} (site)`;
-	else if (obj instanceof PowerCreep) {
+	if (isRuin(obj)) {
+		type = "ruin";
+	} else if (isTombstone(obj)) {
+		type = "tombstone";
+	} else if (isResource(obj)) {
+		type = "resource";
+	} else if (isStructure(obj)) {
+		type = obj.structureType;
+	} else if (isSource(obj)) {
+		type = "source";
+	} else if (isMineral(obj)) {
+		type = `mineral of ${obj.mineralType}`;
+	} else if (isDeposit(obj)) {
+		type = `deposit of ${obj.depositType}`;
+	} else if (isConstructionSite(obj)) {
+		type = `${obj.structureType} (site)`;
+	} else if (obj instanceof PowerCreep) {
 		type = `powercreep ${obj.name} (owned by ${obj.owner.username})`;
 	} else if (isCreep(obj)) {
 		type = `creep ${obj.name} (owned by ${obj.owner.username})`;

@@ -1,31 +1,33 @@
-import { RoomIntelMemory } from 'intel/RoomIntel';
-import {log} from '../console/log';
-import {profile} from '../profiler/decorator';
-import {Stats} from '../stats/stats';
-import {ema, isIVM} from '../utilities/utils';
-import { SegmenterMemory } from './Segmenter';
-import { DebuggerMemory } from 'debug/remoteDebugger';
-import { CombatPlannerMemory } from 'strategy/CombatPlanner';
-import { NukePlannerMemory } from 'strategy/NukePlanner';
-import { config } from 'config';
+import { RoomIntelMemory } from "intel/RoomIntel";
+import { log } from "../console/log";
+import { profile } from "../profiler/decorator";
+import { Stats } from "../stats/stats";
+import { ema, isIVM } from "../utilities/utils";
+import { SegmenterMemory } from "./Segmenter";
+import { DebuggerMemory } from "debug/remoteDebugger";
+import { CombatPlannerMemory } from "strategy/CombatPlanner";
+import { NukePlannerMemory } from "strategy/NukePlanner";
+import { config } from "config";
 
 export enum Autonomy {
-	Manual        = 0,
+	Manual = 0,
 	SemiAutomatic = 1,
-	Automatic     = 2,
+	Automatic = 2,
 }
 
 export function getAutonomyLevel(): Autonomy {
 	switch (Memory.settings.operationMode) {
-		case ('manual'):
+		case "manual":
 			return Autonomy.Manual;
-		case ('semiautomatic'):
+		case "semiautomatic":
 			return Autonomy.SemiAutomatic;
-		case ('automatic'):
+		case "automatic":
 			return Autonomy.Automatic;
 		default:
-			log.warning(`ERROR: ${Memory.settings.operationMode} is not a valid operation mode! ` +
-						`Defaulting to ${config.DEFAULT_OPERATION_MODE}; use setMode() to change.`);
+			log.warning(
+				`ERROR: ${Memory.settings.operationMode} is not a valid operation mode! ` +
+					`Defaulting to ${config.DEFAULT_OPERATION_MODE}; use setMode() to change.`
+			);
 			Memory.settings.operationMode = config.DEFAULT_OPERATION_MODE;
 			return getAutonomyLevel();
 	}
@@ -41,7 +43,8 @@ const BUCKET_CPU_HALT = 4000;
 const BUCKET_LOW_WATERMARK = 500;
 const PIXEL_GENERATION_GRACE_PERIOD = 500;
 
-export const OVERMIND_SMALL_CAPS = '\u1D0F\u1D20\u1D07\u0280\u1D0D\u026A\u0274\u1D05';
+export const OVERMIND_SMALL_CAPS =
+	"\u1D0F\u1D20\u1D07\u0280\u1D0D\u026A\u0274\u1D05";
 export const DEFAULT_OVERMIND_SIGNATURE = `«${OVERMIND_SMALL_CAPS}»`;
 
 /**
@@ -49,30 +52,47 @@ export const DEFAULT_OVERMIND_SIGNATURE = `«${OVERMIND_SMALL_CAPS}»`;
  */
 @profile
 export class Mem {
-
 	static shouldRun(): boolean {
 		let shouldRun: boolean = true;
 		if (!isIVM()) {
-			log.warning(`Overmind requires isolated-VM to run. Change settings at screeps.com/a/#!/account/runtime`);
+			log.warning(
+				`Overmind requires isolated-VM to run. Change settings at screeps.com/a/#!/account/runtime`
+			);
 			shouldRun = false;
 		}
 		if (config.USE_SCREEPS_PROFILER && Game.time % 10 == 0) {
-			log.warning(`Profiling is currently enabled; only ${config.PROFILER_COLONY_LIMIT} colonies will be run!`);
+			log.warning(
+				`Profiling is currently enabled; only ${config.PROFILER_COLONY_LIMIT} colonies will be run!`
+			);
 		}
-		if (Game.cpu.bucket < BUCKET_LOW_WATERMARK && (!Memory.pixelsTick || Game.time - Memory.pixelsTick >= PIXEL_GENERATION_GRACE_PERIOD)) {
-			if (_.keys(Game.spawns).length > 1 && !Memory.resetBucket && !Memory.haltTick) {
+		if (
+			Game.cpu.bucket < BUCKET_LOW_WATERMARK &&
+			(!Memory.pixelsTick ||
+				Game.time - Memory.pixelsTick >= PIXEL_GENERATION_GRACE_PERIOD)
+		) {
+			if (
+				_.keys(Game.spawns).length > 1 &&
+				!Memory.resetBucket &&
+				!Memory.haltTick
+			) {
 				// don't run CPU reset routine at very beginning or if it's already triggered
-				log.warning(`CPU bucket is critically low (${Game.cpu.bucket})! Starting CPU reset routine.`);
+				log.warning(
+					`CPU bucket is critically low (${Game.cpu.bucket})! Starting CPU reset routine.`
+				);
 				Memory.resetBucket = true;
 				Memory.haltTick = Game.time + 1; // reset global next tick
 			} else {
-				log.info(`CPU bucket is too low (${Game.cpu.bucket}). Postponing operation until bucket reaches 500.`);
+				log.info(
+					`CPU bucket is too low (${Game.cpu.bucket}). Postponing operation until bucket reaches 500.`
+				);
 			}
 			shouldRun = false;
 		}
 		if (Memory.resetBucket) {
 			if (Game.cpu.bucket < MAX_BUCKET - Game.cpu.limit) {
-				log.info(`Operation suspended until bucket recovery. Bucket: ${Game.cpu.bucket}/${MAX_BUCKET}`);
+				log.info(
+					`Operation suspended until bucket recovery. Bucket: ${Game.cpu.bucket}/${MAX_BUCKET}`
+				);
 				shouldRun = false;
 			} else {
 				delete Memory.resetBucket;
@@ -80,7 +100,8 @@ export class Mem {
 		}
 		if (Memory.haltTick) {
 			if (Memory.haltTick == Game.time) {
-				if (Game.cpu.halt) { // this is undefined on non-IVM
+				if (Game.cpu.halt) {
+					// this is undefined on non-IVM
 					Memory.build--; // don't count this reset as a build
 					Game.cpu.halt();
 				}
@@ -107,10 +128,20 @@ export class Mem {
 			const delta = bucket - lastBucket;
 			const deltaEstimate = Math.ceil(limit - used);
 
-			const lastAvgDelta = Memory.stats.persistent.avgBucketDelta ?? bucket;
-			const avgDelta = Math.min(ema((delta === 0 ? deltaEstimate : delta), lastAvgDelta, 10), limit);
+			const lastAvgDelta =
+				Memory.stats.persistent.avgBucketDelta ?? bucket;
+			const avgDelta = Math.min(
+				ema(delta === 0 ? deltaEstimate : delta, lastAvgDelta, 10),
+				limit
+			);
 
-			log.info(`CPU: used: ${used.toFixed(3)}, bucket: ${bucket} (delta: ${delta}, est: ${deltaEstimate}, avg: ${avgDelta.toFixed(0)}), tick limit: ${Game.cpu.tickLimit}`);
+			log.info(
+				`CPU: used: ${used.toFixed(
+					3
+				)}, bucket: ${bucket} (delta: ${delta}, est: ${deltaEstimate}, avg: ${avgDelta.toFixed(
+					0
+				)}), tick limit: ${Game.cpu.tickLimit}`
+			);
 			Memory.stats.persistent.avgBucketDelta = avgDelta;
 		}
 		Memory.stats.persistent.lastBucket = bucket;
@@ -142,25 +173,33 @@ export class Mem {
 	}
 
 	static garbageCollect(quick?: boolean) {
-		if (global.gc) { // sometimes garbage collection isn't available
+		if (global.gc) {
+			// sometimes garbage collection isn't available
 			const start = Game.cpu.getUsed();
 			global.gc(quick);
-			log.debug(`Running ${quick ? 'quick' : 'FULL'} garbage collection. ` +
-					  `Elapsed time: ${Game.cpu.getUsed() - start}.`);
+			log.debug(
+				`Running ${quick ? "quick" : "FULL"} garbage collection. ` +
+					`Elapsed time: ${Game.cpu.getUsed() - start}.`
+			);
 		} else {
-			log.debug(`Manual garbage collection is unavailable on this server.`);
+			log.debug(
+				`Manual garbage collection is unavailable on this server.`
+			);
 		}
 	}
 
 	/**
 	 * Wrap a parent memory object with a key name and set the default properties for the child memory object if needed
 	 */
-	static wrap<T extends object, D extends T[keyof T]>(memory: T,
-			memName: keyof T,
-			getDefaults: () => D = () => (<D>{})): D {
+	static wrap<T extends object, D extends T[keyof T]>(
+		memory: T,
+		memName: keyof T,
+		getDefaults: () => D = () => <D>{}
+	): D {
 		if (memory[memName] === undefined) {
 			memory[memName] = getDefaults();
-		} else if (Game.time == LATEST_GLOBAL_RESET_TICK) { // mem defaults would only change with a global reset
+		} else if (Game.time == LATEST_GLOBAL_RESET_TICK) {
+			// mem defaults would only change with a global reset
 			_.defaultsDeep(memory[memName], getDefaults());
 		}
 		// if (deep) {
@@ -174,7 +213,8 @@ export class Mem {
 	private static _setDeep(object: any, keys: string[], value: any): void {
 		const key = _.first(keys);
 		keys = _.drop(keys);
-		if (keys.length == 0) { // at the end of the recursion
+		if (keys.length == 0) {
+			// at the end of the recursion
 			// eslint-disable-next-line
 			object[key] = value;
 			return;
@@ -191,48 +231,48 @@ export class Mem {
 	 * Ex: Mem.setDeep(Memory.colonies, 'E1S1.miningSites.siteID.stats.uptime', 0.5)
 	 */
 	static setDeep(object: any, keyString: string, value: any): void {
-		const keys = keyString.split('.');
+		const keys = keyString.split(".");
 		return Mem._setDeep(object, keys, value);
 	}
 
 	private static getDefaultMemory(): Memory {
 		return {
-			tick              : Game.time,
-			build             : 0,
-			assimilator       : {},
-			Overmind          : {},
-			combatPlanner     : <CombatPlannerMemory>{},
-			profiler          : {},
-			overseer          : {},
-			segmenter         : <SegmenterMemory>{},
-			roomIntel         : <RoomIntelMemory>{},
-			colonies          : {},
-			rooms             : {},
-			creeps            : {},
-			powerCreeps       : {},
-			flags             : {},
-			spawns            : {},
-			pathing           : {distances: {}},
-			constructionSites : {},
-			stats             : {persistent:{}},
+			tick: Game.time,
+			build: 0,
+			assimilator: {},
+			Overmind: {},
+			combatPlanner: <CombatPlannerMemory>{},
+			profiler: {},
+			overseer: {},
+			segmenter: <SegmenterMemory>{},
+			roomIntel: <RoomIntelMemory>{},
+			colonies: {},
+			rooms: {},
+			creeps: {},
+			powerCreeps: {},
+			flags: {},
+			spawns: {},
+			pathing: { distances: {} },
+			constructionSites: {},
+			stats: { persistent: {} },
 			playerCreepTracker: {},
-			remoteDebugger    : <DebuggerMemory>{},
-			nukePlanner       : <NukePlannerMemory>{},
-			settings          : {
-				signature             : DEFAULT_OVERMIND_SIGNATURE,
-				operationMode         : 'automatic',
-				log                   : {},
-				enableVisuals         : true,
+			remoteDebugger: <DebuggerMemory>{},
+			nukePlanner: <NukePlannerMemory>{},
+			settings: {
+				signature: DEFAULT_OVERMIND_SIGNATURE,
+				operationMode: "automatic",
+				log: {},
+				enableVisuals: true,
 				resourceCollectionMode: 0,
-				allies                : [],
-				powerCollection       : {
-					enabled : false,
+				allies: [],
+				powerCollection: {
+					enabled: false,
 					maxRange: 5,
 					minPower: 5000,
 				},
-				autoPoison            : {
-					enabled      : false,
-					maxRange     : 4,
+				autoPoison: {
+					enabled: false,
+					maxRange: 4,
 					maxConcurrent: 1,
 				},
 				pixelGeneration: {
@@ -247,7 +287,7 @@ export class Mem {
 				intelVisuals: {},
 				attitude: {
 					brazenness: 0.5,
-				}
+				},
 			},
 		};
 	}
@@ -263,15 +303,15 @@ export class Mem {
 
 	private static initGlobalMemory() {
 		const defaultGlobalCache: IGlobalCache = {
-			accessed     : {},
-			expiration   : {},
-			structures   : {},
-			numbers      : {},
-			lists        : {},
-			costMatrices : {},
+			accessed: {},
+			expiration: {},
+			structures: {},
+			numbers: {},
+			lists: {},
+			costMatrices: {},
 			roomPositions: {},
-			things       : {},
-			objects      : {},
+			things: {},
+			objects: {},
 		};
 		global._cache = defaultGlobalCache;
 	}
@@ -292,7 +332,10 @@ export class Mem {
 	 */
 	private static cleanHeap(): void {
 		if (Game.time % HEAP_CLEAN_FREQUENCY == HEAP_CLEAN_FREQUENCY - 3) {
-			if (Game.cpu.bucket < BUCKET_CPU_HALT && Game.cpu.halt !== undefined) {
+			if (
+				Game.cpu.bucket < BUCKET_CPU_HALT &&
+				Game.cpu.halt !== undefined
+			) {
 				Memory.build--; // don't count this reset as a build
 				Game.cpu.halt();
 			} else if (Game.cpu.bucket < BUCKET_CLEAR_CACHE) {
@@ -343,21 +386,31 @@ export class Mem {
 	private static cleanConstructionSites() {
 		// Remove ancient construction sites
 		if (Game.time % 20 == 0) {
-			const CONSTRUCTION_SITE_TIMEOUT = 100000;			// sites time out after this long
-			const UNBUILT_CONSTRUCTION_SITE_TIMEOUT = 1000;		// sites that haven't made any progress time out
+			const CONSTRUCTION_SITE_TIMEOUT = 100000; // sites time out after this long
+			const UNBUILT_CONSTRUCTION_SITE_TIMEOUT = 1000; // sites that haven't made any progress time out
 			// Add constructionSites to memory and remove really old ones
 			for (const id in Game.constructionSites) {
 				const site = Game.constructionSites[id];
 				if (!Memory.constructionSites[id]) {
 					Memory.constructionSites[id] = Game.time;
-				} else if (Game.time - Memory.constructionSites[id] >= CONSTRUCTION_SITE_TIMEOUT) {
+				} else if (
+					Game.time - Memory.constructionSites[id] >=
+					CONSTRUCTION_SITE_TIMEOUT
+				) {
 					site.remove();
-				} else if (site.progress == 0 &&
-						   Game.time - Memory.constructionSites[id] >= UNBUILT_CONSTRUCTION_SITE_TIMEOUT) {
+				} else if (
+					site.progress == 0 &&
+					Game.time - Memory.constructionSites[id] >=
+						UNBUILT_CONSTRUCTION_SITE_TIMEOUT
+				) {
 					site.remove();
 				}
 				// Remove duplicate construction sites that get placed on top of existing structures due to caching
-				if (site && site.pos.isVisible && site.pos.lookForStructure(site.structureType)) {
+				if (
+					site &&
+					site.pos.isVisible &&
+					site.pos.lookForStructure(site.structureType)
+				) {
 					site.remove();
 				}
 			}
@@ -403,5 +456,4 @@ export class Mem {
 			// }
 		}
 	}
-
 }

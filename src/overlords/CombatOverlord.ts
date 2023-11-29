@@ -1,9 +1,8 @@
-import {Directive} from '../directives/Directive';
-import {SpawnGroup} from '../logistics/SpawnGroup';
-import {profile} from '../profiler/decorator';
-import {CombatZerg} from '../zerg/CombatZerg';
-import {Overlord, OverlordMemory} from './Overlord';
-
+import { Directive } from "../directives/Directive";
+import { SpawnGroup } from "../logistics/SpawnGroup";
+import { profile } from "../profiler/decorator";
+import { CombatZerg } from "../zerg/CombatZerg";
+import { Overlord, OverlordMemory } from "./Overlord";
 
 export interface CombatOverlordMemory extends OverlordMemory {
 	[MEM.TICK]: number;
@@ -23,17 +22,24 @@ const getDefaultCombatOverlordMemory: () => CombatOverlordMemory = () => ({
  */
 @profile
 export abstract class CombatOverlord extends Overlord {
-
 	memory: CombatOverlordMemory;
 	directive: Directive;
 	spawnGroup: SpawnGroup;
 	requiredRCL: number; // default required RCL
 
-	constructor(directive: Directive, name: string, priority: number, options: CombatOverlordOptions) {
+	constructor(
+		directive: Directive,
+		name: string,
+		priority: number,
+		options: CombatOverlordOptions
+	) {
 		super(directive, name, priority, getDefaultCombatOverlordMemory);
 		this.directive = directive;
 		this.requiredRCL = options.requiredRCL;
-		this.spawnGroup = new SpawnGroup(this, { requiredRCL: this.requiredRCL, maxPathDistance: options.maxSpawnDistance });
+		this.spawnGroup = new SpawnGroup(this, {
+			requiredRCL: this.requiredRCL,
+			maxPathDistance: options.maxSpawnDistance,
+		});
 	}
 
 	get age(): number {
@@ -41,7 +47,10 @@ export abstract class CombatOverlord extends Overlord {
 	}
 
 	// Standard sequence of actions for running combat creeps
-	autoRun(roleCreeps: CombatZerg[], creepHandler: (creep: CombatZerg) => void) {
+	autoRun(
+		roleCreeps: CombatZerg[],
+		creepHandler: (creep: CombatZerg) => void
+	) {
 		for (const creep of roleCreeps) {
 			if (creep.spawning) {
 				continue;
@@ -67,6 +76,4 @@ export abstract class CombatOverlord extends Overlord {
 		}
 		// TODO: CombatOverlord
 	}
-
 }
-

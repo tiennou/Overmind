@@ -1,8 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type meleeAttackTargetType = Creep | Structure;
-export const meleeAttackTaskName = 'meleeAttack';
+export const meleeAttackTaskName = "meleeAttack";
 
 @profile
 export class TaskMeleeAttack extends Task<meleeAttackTargetType> {
@@ -25,4 +25,3 @@ export class TaskMeleeAttack extends Task<meleeAttackTargetType> {
 		return this.creep.attack(this.target);
 	}
 }
-

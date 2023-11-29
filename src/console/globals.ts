@@ -1,6 +1,6 @@
 import { deref, derefRoomPosition } from "utilities/utils";
 
-global.__VERSION__ = '0.5.2';
+global.__VERSION__ = "0.5.2";
 
 // @ts-expect-error make available in global
 global.deref = deref;
@@ -53,4 +53,3 @@ global.derefRoomPosition = derefRoomPosition;
 //
 // global._MNRL_MINERALTYPE = 't';
 // global._MNRL_DENSITY = 'd';
-

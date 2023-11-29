@@ -1,5 +1,5 @@
-import {Colony} from '../Colony';
-import {profile} from '../profiler/decorator';
+import { Colony } from "../Colony";
+import { profile } from "../profiler/decorator";
 
 /**
  * The link network controls the flow of energy through various links in a room and uses a greedy matching algorithm
@@ -7,13 +7,12 @@ import {profile} from '../profiler/decorator';
  */
 @profile
 export class LinkNetwork {
-
 	colony: Colony;
 	receive: StructureLink[];
 	transmit: StructureLink[];
 
 	private settings: {
-		linksTransmitAt: number,
+		linksTransmitAt: number;
 	};
 
 	constructor(colony: Colony) {
@@ -32,7 +31,7 @@ export class LinkNetwork {
 
 	claimLink(link: StructureLink | undefined): void {
 		if (link) {
-			_.remove(this.colony.availableLinks, l => l.id == link.id);
+			_.remove(this.colony.availableLinks, (l) => l.id == link.id);
 		}
 	}
 
@@ -48,9 +47,13 @@ export class LinkNetwork {
 	 * Number of ticks until a dropoff link is available again to deposit energy to
 	 */
 	getDropoffAvailability(link: StructureLink): number {
-		const dest = this.colony.commandCenter ? this.colony.commandCenter.pos : this.colony.pos;
+		const dest =
+			this.colony.commandCenter ?
+				this.colony.commandCenter.pos
+			:	this.colony.pos;
 		const usualCooldown = link.pos.getRangeTo(dest);
-		if (link.energy > this.settings.linksTransmitAt) { // Energy will be sent next time cooldown == 0
+		if (link.energy > this.settings.linksTransmitAt) {
+			// Energy will be sent next time cooldown == 0
 			return link.cooldown + usualCooldown;
 		} else {
 			return link.cooldown;
@@ -72,22 +75,33 @@ export class LinkNetwork {
 	run(): void {
 		// For each receiving link, greedily get energy from the closest transmitting link - at most 9 operations
 		for (const receiveLink of this.receive) {
-			const closestTransmitLink = receiveLink.pos.findClosestByRange(this.transmit);
+			const closestTransmitLink = receiveLink.pos.findClosestByRange(
+				this.transmit
+			);
 			// If a send-receive match is found, transfer that first, then remove the pair from the link lists
 			if (closestTransmitLink) {
 				// Send min of (all the energy in sender link, amount of available space in receiver link)
-				const amountToSend = _.min([closestTransmitLink.energy, receiveLink.energyCapacity - receiveLink.energy]);
+				const amountToSend = _.min([
+					closestTransmitLink.energy,
+					receiveLink.energyCapacity - receiveLink.energy,
+				]);
 				closestTransmitLink.transferEnergy(receiveLink, amountToSend);
-				_.remove(this.transmit, link => link == closestTransmitLink);
+				_.remove(this.transmit, (link) => link == closestTransmitLink);
 				// _.remove(this.receive, link => link == receiveLink);
 			}
 		}
 		// Now send all remaining transmit link requests to the command center
 		if (this.colony.commandCenter && this.colony.commandCenter.link) {
-			let free = this.colony.commandCenter.link.store.getFreeCapacity(RESOURCE_ENERGY)
+			let free =
+				this.colony.commandCenter.link.store.getFreeCapacity(
+					RESOURCE_ENERGY
+				);
 			for (const transmitLink of this.transmit) {
-				if (free <= 0) break;
-				const available = transmitLink.store.getUsedCapacity(RESOURCE_ENERGY);
+				if (free <= 0) {
+					break;
+				}
+				const available =
+					transmitLink.store.getUsedCapacity(RESOURCE_ENERGY);
 				if (free >= available) {
 					transmitLink.transferEnergy(this.colony.commandCenter.link);
 					free -= available;
@@ -95,5 +109,4 @@ export class LinkNetwork {
 			}
 		}
 	}
-
 }

@@ -1,14 +1,14 @@
-import { SourceMapConsumer } from 'source-map';
-import {profile} from '../profiler/decorator';
-import {color} from '../utilities/utils';
+import { SourceMapConsumer } from "source-map";
+import { profile } from "../profiler/decorator";
+import { color } from "../utilities/utils";
 
 export enum LogLevel {
 	FATAL = -1, // Only used for thrown exceptions
-	ERROR,		// log.level = 0
-	WARNING,	// log.level = 1
-	ALERT,		// log.level = 2
-	INFO,		// log.level = 3
-	DEBUG		// log.level = 4
+	ERROR, // log.level = 0
+	WARNING, // log.level = 1
+	ALERT, // log.level = 2
+	INFO, // log.level = 3
+	DEBUG, // log.level = 4
 }
 
 /**
@@ -40,7 +40,11 @@ export const LOG_MAX_PAD: number = 100;
  * VSC location, used to create links back to source.
  * Repo and revision are filled in at build time for git repositories.
  */
-export const LOG_VSC = {repo: '@@_repo_@@', revision: '@@_revision_@@', valid: false};
+export const LOG_VSC = {
+	repo: "@@_repo_@@",
+	revision: "@@_revision_@@",
+	valid: false,
+};
 // export const LOG_VSC = { repo: "@@_repo_@@", revision: __REVISION__, valid: false };
 
 /**
@@ -52,7 +56,7 @@ export const LOG_VSC_URL_TEMPLATE = (path: string, line: string) => {
 
 // <caller> (<source>:<line>:<column>)
 const stackLineRe = /([^ ]*) \(([^:]*):([0-9]*):([0-9]*)\)/;
-const fatalColor = '#d65156';
+const fatalColor = "#d65156";
 
 interface SourcePos {
 	compiled: string;
@@ -66,27 +70,36 @@ interface SourcePos {
 export function resolve(fileLine: string): SourcePos {
 	const split = _.trim(fileLine).match(stackLineRe);
 	if (!split || !Log.sourceMap) {
-		return {compiled: fileLine, final: fileLine} as SourcePos;
+		return { compiled: fileLine, final: fileLine } as SourcePos;
 	}
 
-	const pos = {column: parseInt(split[4], 10), line: parseInt(split[3], 10)};
+	const pos = {
+		column: parseInt(split[4], 10),
+		line: parseInt(split[3], 10),
+	};
 
 	const original = Log.sourceMap.originalPositionFor(pos);
 	const line = `${split[1]} (${original.source}:${original.line})`;
 	const out = {
-		caller  : split[1],
+		caller: split[1],
 		compiled: fileLine,
-		final   : line,
-		line    : original.line ?? undefined,
+		final: line,
+		line: original.line ?? undefined,
 		original: line,
-		path    : original.source ?? undefined,
+		path: original.source ?? undefined,
 	};
 
 	return out;
 }
 
 function makeVSCLink(pos: SourcePos): string {
-	if (!LOG_VSC.valid || !pos.caller || !pos.path || !pos.line || !pos.original) {
+	if (
+		!LOG_VSC.valid ||
+		!pos.caller ||
+		!pos.path ||
+		!pos.line ||
+		!pos.original
+	) {
 		return pos.final;
 	}
 
@@ -106,29 +119,31 @@ function link(href: string, title: string): string {
 }
 
 function time(): string {
-	return color(Game.time.toString(), 'gray');
+	return color(Game.time.toString(), "gray");
 }
 
-export function debug(thing: { name: string, memory: any, pos: RoomPosition }, ...args: any[]) {
+export function debug(
+	thing: { name: string; memory: any; pos: RoomPosition },
+	...args: any[]
+) {
 	if (thing.memory && thing.memory.debug) {
 		log.debug(`${thing.name} @ ${thing.pos.print}: `, args);
 	}
 }
 
 export interface LogSettings {
-	level?: LogLevel,
-	showSource?: boolean,
+	level?: LogLevel;
+	showSource?: boolean;
 	showTick?: boolean;
 }
 
-export type LogMessage = (string | object | (() => string))
+export type LogMessage = string | object | (() => string);
 
 /**
  * Log provides methods for displaying pretty-printed text into the Screeps console
  */
 @profile
 export class Log {
-
 	constructor() {}
 
 	static sourceMap: SourceMapConsumer;
@@ -141,7 +156,7 @@ export class Log {
 		// 		Log.sourceMap = new SourceMapConsumer(map);
 		// 	}
 		// } catch (err) {
-		console.log('Source mapping deprecated.');
+		console.log("Source mapping deprecated.");
 		// }
 	}
 
@@ -149,27 +164,42 @@ export class Log {
 		return Memory.settings.log.level ?? LOG_LEVEL;
 	}
 
-	setLogLevel(value: number) {
+	setLogLevel(value: LogLevel) {
 		let changeValue = true;
 		switch (value) {
 			case LogLevel.ERROR:
-				console.log(`Logging level set to ${value}. Displaying: ERROR.`);
+				console.log(
+					`Logging level set to ${value}. Displaying: ERROR.`
+				);
 				break;
 			case LogLevel.WARNING:
-				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING.`);
+				console.log(
+					`Logging level set to ${value}. Displaying: ERROR, WARNING.`
+				);
 				break;
 			case LogLevel.ALERT:
-				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT.`);
+				console.log(
+					`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT.`
+				);
 				break;
 			case LogLevel.INFO:
-				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT, INFO.`);
+				console.log(
+					`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT, INFO.`
+				);
 				break;
 			case LogLevel.DEBUG:
-				console.log(`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT, INFO, DEBUG.`);
+				console.log(
+					`Logging level set to ${value}. Displaying: ERROR, WARNING, ALERT, INFO, DEBUG.`
+				);
 				break;
 			default:
-				console.log(`Invalid input: ${value}. Loging level can be set to integers between `
-							+ LogLevel.ERROR + ' and ' + LogLevel.DEBUG + ', inclusive.');
+				console.log(
+					`Invalid input: ${value}. Loging level can be set to integers between ` +
+						LogLevel.ERROR +
+						" and " +
+						LogLevel.DEBUG +
+						", inclusive."
+				);
 				changeValue = false;
 				break;
 		}
@@ -205,7 +235,12 @@ export class Log {
 	}
 
 	throw(e: Error) {
-		console.log.apply(this, this.buildArguments(LogLevel.FATAL).concat([color(e.toString(), fatalColor)]));
+		console.log.apply(
+			this,
+			this.buildArguments(LogLevel.FATAL).concat([
+				color(e.toString(), fatalColor),
+			])
+		);
 	}
 
 	private _log(level: LogLevel, args: LogMessage[]) {
@@ -216,11 +251,14 @@ export class Log {
 			const argFunc = args[i];
 			if (_.isFunction(argFunc)) {
 				// console.log(`_log: argFunc: ${argFunc}`);
-				const arg = <string|object>argFunc();
+				const arg = <string | object>argFunc();
 				args.splice(i, 1, arg);
 			}
 		}
-		console.log.apply(this, this.buildArguments(level).concat([].slice.call(args)));
+		console.log.apply(
+			this,
+			this.buildArguments(level).concat([].slice.call(args))
+		);
 	}
 
 	error(...args: LogMessage[]): undefined {
@@ -263,7 +301,10 @@ export class Log {
 		}
 	}
 
-	debugCreep(creep: { name: string, memory: any, pos: RoomPosition }, ...args: LogMessage[]) {
+	debugCreep(
+		creep: { name: string; memory: any; pos: RoomPosition },
+		...args: LogMessage[]
+	) {
 		if (creep.memory && creep.memory.debug) {
 			this.debug(`${creep.name} @ ${creep.pos.print}: `, ...args);
 		}
@@ -274,43 +315,43 @@ export class Log {
 	}
 
 	getFileLine(upStack = 4): string {
-		const stack = new Error('').stack;
+		const stack = new Error("").stack;
 
 		if (stack) {
-			const lines = stack.split('\n');
+			const lines = stack.split("\n");
 
 			if (lines.length > upStack) {
 				const originalLines = _.drop(lines, upStack).map(resolve);
-				const hoverText = _.map(originalLines, 'final').join('&#10;');
+				const hoverText = _.map(originalLines, "final").join("&#10;");
 				return this.adjustFileLine(
 					originalLines[0].final,
 					tooltip(makeVSCLink(originalLines[0]), hoverText)
 				);
 			}
 		}
-		return '';
+		return "";
 	}
 
 	private buildArguments(level: LogLevel): string[] {
 		const out: string[] = [];
 		switch (level) {
 			case LogLevel.ERROR:
-				out.push(color('ERROR  ', 'red'));
+				out.push(color("ERROR  ", "red"));
 				break;
 			case LogLevel.WARNING:
-				out.push(color('WARNING', 'orange'));
+				out.push(color("WARNING", "orange"));
 				break;
 			case LogLevel.ALERT:
-				out.push(color('ALERT  ', 'yellow'));
+				out.push(color("ALERT  ", "yellow"));
 				break;
 			case LogLevel.INFO:
-				out.push(color('INFO   ', 'green'));
+				out.push(color("INFO   ", "green"));
 				break;
 			case LogLevel.DEBUG:
-				out.push(color('DEBUG  ', 'gray'));
+				out.push(color("DEBUG  ", "gray"));
 				break;
 			case LogLevel.FATAL:
-				out.push(color('FATAL  ', fatalColor));
+				out.push(color("FATAL  ", fatalColor));
 				break;
 			default:
 				break;
@@ -329,14 +370,18 @@ export class Log {
 			return stack;
 		}
 
-		return _.map(stack.split('\n').map(resolve), 'final').join('\n');
+		return _.map(stack.split("\n").map(resolve), "final").join("\n");
 	}
 
 	private adjustFileLine(visibleText: string, line: string): string {
 		const newPad = Math.max(visibleText.length, this._maxFileString);
 		this._maxFileString = Math.min(newPad, LOG_MAX_PAD);
 
-		return `|${_.padRight(line, line.length + this._maxFileString - visibleText.length, ' ')}|`;
+		return `|${_.padRight(
+			line,
+			line.length + this._maxFileString - visibleText.length,
+			" "
+		)}|`;
 	}
 }
 
@@ -345,4 +390,3 @@ if (LOG_LOAD_SOURCE_MAP) {
 }
 
 export const log = new Log();
-

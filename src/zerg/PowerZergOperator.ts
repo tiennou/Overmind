@@ -1,14 +1,12 @@
-import {profile} from '../profiler/decorator';
-import {PowerZerg} from './PowerZerg';
-
+import { profile } from "../profiler/decorator";
+import { PowerZerg } from "./PowerZerg";
 
 /**
  * Wrapper for the operator class of power creeps. Contains wrapped methods for all powers this creep can do.
  */
 @profile
 export class PowerZergOperator extends PowerZerg {
-
-	className: POWER_CLASS['OPERATOR'];
+	className: POWER_CLASS["OPERATOR"];
 
 	/**
 	 * Increase max limit of energy that can be used for upgrading a Level 8 controller each tick by 10/20/30/40/50
@@ -24,7 +22,9 @@ export class PowerZergOperator extends PowerZerg {
 	 * 	(container, storage, or terminal). Cooldown 50 ticks.
 	 * 	Range 3 squares. Consumes 2 ops resource units. Required creep level: 0/2/7/14/22.
 	 */
-	operateExtension(energySource: StructureStorage | StructureTerminal | StructureContainer): ScreepsReturnCode {
+	operateExtension(
+		energySource: StructureStorage | StructureTerminal | StructureContainer
+	): ScreepsReturnCode {
 		return this.creep.usePower(PWR_OPERATE_EXTENSION, energySource);
 	}
 
@@ -158,5 +158,4 @@ export class PowerZergOperator extends PowerZerg {
 	shield(): ScreepsReturnCode {
 		return this.creep.usePower(PWR_SHIELD);
 	}
-
 }

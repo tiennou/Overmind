@@ -1,7 +1,7 @@
-import {AttackStructurePriorities} from '../../priorities/priorities_structures';
-import {profile} from '../../profiler/decorator';
-import {Visualizer} from '../../visuals/Visualizer';
-import {Directive} from '../Directive';
+import { AttackStructurePriorities } from "../../priorities/priorities_structures";
+import { profile } from "../../profiler/decorator";
+import { Visualizer } from "../../visuals/Visualizer";
+import { Directive } from "../Directive";
 
 /**
  * Register a target to be dismantled by workers. This is not a siege directive, and clearing rooms should
@@ -9,8 +9,7 @@ import {Directive} from '../Directive';
  */
 @profile
 export class DirectiveDismantle extends Directive {
-
-	static directiveName = 'dismantle';
+	static directiveName = "dismantle";
 	static color = COLOR_GREY;
 	static secondaryColor = COLOR_YELLOW;
 
@@ -18,9 +17,7 @@ export class DirectiveDismantle extends Directive {
 		super(flag);
 	}
 
-	spawnMoarOverlords() {
-
-	}
+	spawnMoarOverlords() {}
 
 	getTarget(): Structure | undefined {
 		if (!this.pos.isVisible) {
@@ -39,7 +36,10 @@ export class DirectiveDismantle extends Directive {
 	init(): void {
 		// Add this structure to worker overlord's dismantle list
 		const target = this.getTarget();
-		if (target && !this.colony.overlords.work.dismantleStructures.includes(target)) {
+		if (
+			target &&
+			!this.colony.overlords.work.dismantleStructures.includes(target)
+		) {
 			this.colony.overlords.work.dismantleStructures.push(target);
 		}
 	}
@@ -52,7 +52,6 @@ export class DirectiveDismantle extends Directive {
 	}
 
 	visuals(): void {
-		Visualizer.marker(this.pos, {color: 'yellow'});
+		Visualizer.marker(this.pos, { color: "yellow" });
 	}
 }
-

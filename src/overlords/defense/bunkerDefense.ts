@@ -1,33 +1,41 @@
-import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectiveInvasionDefense} from '../../directives/defense/invasionDefense';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {CombatZerg} from '../../zerg/CombatZerg';
-import {CombatOverlord} from '../CombatOverlord';
+import { CombatSetups, Roles } from "../../creepSetups/setups";
+import { DirectiveInvasionDefense } from "../../directives/defense/invasionDefense";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { CombatZerg } from "../../zerg/CombatZerg";
+import { CombatOverlord } from "../CombatOverlord";
 
 /**
  * Spawns bunker-only defenders to defend against incoming sieges // TODO: needs some revision
  */
 @profile
 export class BunkerDefenseOverlord extends CombatOverlord {
-
 	defenders: CombatZerg[];
 	room: Room;
 
 	static settings = {
-		retreatHitsPercent : 0.85,
+		retreatHitsPercent: 0.85,
 		reengageHitsPercent: 0.95,
 	};
 
-	constructor(directive: DirectiveInvasionDefense, priority = OverlordPriority.defense.meleeDefense) {
+	constructor(
+		directive: DirectiveInvasionDefense,
+		priority = OverlordPriority.defense.meleeDefense
+	) {
 		// Only spawn inside room
-		super(directive, 'bunkerDefense', priority, { requiredRCL: 1, maxSpawnDistance: 30 });
+		super(directive, "bunkerDefense", priority, {
+			requiredRCL: 1,
+			maxSpawnDistance: 30,
+		});
 		this.defenders = this.combatZerg(Roles.bunkerDefender);
 	}
 
 	private handleDefender(lurker: CombatZerg): void {
 		if (!lurker.inRampart) {
-			const nearbyRampart = _.find(lurker.room.walkableRamparts, rampart => rampart.pos.getRangeTo(lurker) < 5);
+			const nearbyRampart = _.find(
+				lurker.room.walkableRamparts,
+				(rampart) => rampart.pos.getRangeTo(lurker) < 5
+			);
 			if (nearbyRampart) {
 				lurker.goTo(nearbyRampart);
 			}
@@ -46,6 +54,8 @@ export class BunkerDefenseOverlord extends CombatOverlord {
 	}
 
 	run() {
-		this.autoRun(this.defenders, defender => this.handleDefender(defender));
+		this.autoRun(this.defenders, (defender) =>
+			this.handleDefender(defender)
+		);
 	}
 }

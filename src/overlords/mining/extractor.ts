@@ -1,13 +1,13 @@
-import { errorForCode } from 'utilities/errors';
-import {$} from '../../caching/GlobalCache';
-import {log} from '../../console/log';
-import {Roles, Setups} from '../../creepSetups/setups';
-import {DirectiveExtract} from '../../directives/resource/extract';
-import {Pathing} from '../../movement/Pathing';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Zerg} from '../../zerg/Zerg';
-import {Overlord} from '../Overlord';
+import { errorForCode } from "utilities/errors";
+import { $ } from "../../caching/GlobalCache";
+import { log } from "../../console/log";
+import { Roles, Setups } from "../../creepSetups/setups";
+import { DirectiveExtract } from "../../directives/resource/extract";
+import { Pathing } from "../../movement/Pathing";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Zerg } from "../../zerg/Zerg";
+import { Overlord } from "../Overlord";
 
 const BUILD_OUTPUT_FREQUENCY = 15;
 
@@ -16,7 +16,6 @@ const BUILD_OUTPUT_FREQUENCY = 15;
  */
 @profile
 export class ExtractorOverlord extends Overlord {
-
 	directive: DirectiveExtract;
 	room: Room | undefined;
 	extractor: StructureExtractor | undefined;
@@ -29,9 +28,10 @@ export class ExtractorOverlord extends Overlord {
 	};
 
 	constructor(directive: DirectiveExtract, priority: number) {
-		super(directive, 'mineral', priority);
+		super(directive, "mineral", priority);
 		this.directive = directive;
-		this.priority += this.outpostIndex * OverlordPriority.remoteSKRoom.roomIncrement;
+		this.priority +=
+			this.outpostIndex * OverlordPriority.remoteSKRoom.roomIncrement;
 		this.drones = this.zerg(Roles.drone);
 		// Populate structures
 		this.populateStructures();
@@ -39,33 +39,49 @@ export class ExtractorOverlord extends Overlord {
 
 	// If mineral is ready to be mined, make a container
 	private shouldHaveContainer() {
-		return this.mineral && (this.mineral.mineralAmount > 0 || (this.mineral.ticksToRegeneration || 0) < 2000);
+		return (
+			this.mineral &&
+			(this.mineral.mineralAmount > 0 ||
+				(this.mineral.ticksToRegeneration || 0) < 2000)
+		);
 	}
 
 	private populateStructures() {
 		if (Game.rooms[this.pos.roomName]) {
 			this.extractor = this.pos.lookForStructure(STRUCTURE_EXTRACTOR);
 			this.mineral = this.pos.lookFor(LOOK_MINERALS)[0];
-			this.container = this.pos.findClosestByLimitedRange(Game.rooms[this.pos.roomName].containers, 1);
+			this.container = this.pos.findClosestByLimitedRange(
+				Game.rooms[this.pos.roomName].containers,
+				1
+			);
 		}
 	}
 
 	refresh() {
-		if (!this.room && Game.rooms[this.pos.roomName]) { // if you just gained vision of this room
+		if (!this.room && Game.rooms[this.pos.roomName]) {
+			// if you just gained vision of this room
 			this.populateStructures();
 		}
 		super.refresh();
-		$.refresh(this, 'extractor', 'mineral', 'container');
+		$.refresh(this, "extractor", "mineral", "container");
 	}
 
 	private registerOutputRequests(): void {
 		if (this.container) {
-			const outputThreshold = this.drones.length == 0 ? this.container.store.getCapacity() : 0;
-			const exhausted = this.mineral?.mineralAmount === 0
-				&& (this.mineral?.ticksToRegeneration ?? 0) > 0;
-			if (this.container.store.getUsedCapacity() > outputThreshold
-				|| exhausted && this.container.store.getUsedCapacity() > 0) {
-				this.colony.logisticsNetwork.requestOutput(this.container, {resourceType: 'all'});
+			const outputThreshold =
+				this.drones.length == 0 ?
+					this.container.store.getCapacity()
+				:	0;
+			const exhausted =
+				this.mineral?.mineralAmount === 0 &&
+				(this.mineral?.ticksToRegeneration ?? 0) > 0;
+			if (
+				this.container.store.getUsedCapacity() > outputThreshold ||
+				(exhausted && this.container.store.getUsedCapacity() > 0)
+			) {
+				this.colony.logisticsNetwork.requestOutput(this.container, {
+					resourceType: "all",
+				});
 			}
 		}
 	}
@@ -81,25 +97,40 @@ export class ExtractorOverlord extends Overlord {
 		}
 		if (originPos) {
 			const path = Pathing.findShortestPath(this.pos, originPos).path;
-			const pos = _.find(path, pos => pos.getRangeTo(this) == 1);
-			if (pos) return pos;
+			const pos = _.find(path, (pos) => pos.getRangeTo(this) == 1);
+			if (pos) {
+				return pos;
+			}
 		}
 		// Shouldn't ever get here
-		log.warning(`Last resort container position calculation for ${this.print}!`);
+		log.warning(
+			`Last resort container position calculation for ${this.print}!`
+		);
 		return _.first(this.pos.availableNeighbors(true));
 	}
 
 	private buildOutputIfNeeded(): void {
 		// Create container if there is not already one being built
 		if (!this.container && this.shouldHaveContainer()) {
-			const containerSite = _.first(_.filter(this.pos.findInRange(FIND_MY_CONSTRUCTION_SITES, 2),
-												   site => site.structureType == STRUCTURE_CONTAINER));
+			const containerSite = _.first(
+				_.filter(
+					this.pos.findInRange(FIND_MY_CONSTRUCTION_SITES, 2),
+					(site) => site.structureType == STRUCTURE_CONTAINER
+				)
+			);
 			if (!containerSite) {
 				const containerPos = this.calculateContainerPos();
-				log.info(`${this.print}: building container at ${containerPos.print}`);
-				const result = containerPos.createConstructionSite(STRUCTURE_CONTAINER);
+				log.info(
+					`${this.print}: building container at ${containerPos.print}`
+				);
+				const result =
+					containerPos.createConstructionSite(STRUCTURE_CONTAINER);
 				if (result != OK) {
-					log.error(`${this.print}: cannot build container at ${containerPos.print}: ${errorForCode(result)}`);
+					log.error(
+						`${this.print}: cannot build container at ${
+							containerPos.print
+						}: ${errorForCode(result)}`
+					);
 				}
 				return;
 			}
@@ -109,16 +140,25 @@ export class ExtractorOverlord extends Overlord {
 	init() {
 		this.registerOutputRequests();
 
-		const amount = this.mineral && this.mineral.mineralAmount > 0 && this.extractor && this.container
-					   ? Math.min(this.mineral.pos.availableNeighbors().length, ExtractorOverlord.settings.maxDrones)
-					   : 0;
+		const amount =
+			(
+				this.mineral &&
+				this.mineral.mineralAmount > 0 &&
+				this.extractor &&
+				this.container
+			) ?
+				Math.min(
+					this.mineral.pos.availableNeighbors().length,
+					ExtractorOverlord.settings.maxDrones
+				)
+			:	0;
 		this.wishlist(amount, Setups.drones.extractor);
 	}
 
 	private handleDrone(drone: Zerg) {
 		this.debug(`handling ${drone.print}`);
 		// Stay safe out there!
-		if (drone.avoidDanger({timer: 10, dropEnergy: true})) {
+		if (drone.avoidDanger({ timer: 10, dropEnergy: true })) {
 			this.debug(`${this.print} avoiding danger`);
 			return;
 		}
@@ -131,30 +171,46 @@ export class ExtractorOverlord extends Overlord {
 			if (this.mineral) {
 				// Do harvest first - needs to check if in range anyway so this is more CPU efficient
 				if (this.extractor?.cooldown === 0) {
-					this.debug(`${drone.print} harvesting from ${this.mineral.print}`);
+					this.debug(
+						`${drone.print} harvesting from ${this.mineral.print}`
+					);
 					const ret = drone.harvest(this.mineral);
 					if (ret == ERR_NOT_IN_RANGE) {
-						this.debug(`${drone.print} too far from ${this.mineral.print}, moving closer`);
+						this.debug(
+							`${drone.print} too far from ${this.mineral.print}, moving closer`
+						);
 						return drone.goTo(this.mineral);
 					}
 				}
 				if (this.container) {
 					// Transfer to container if you need to (can do at same tick as harvest)
-					if (drone.store.getUsedCapacity() > 0.9 * drone.store.getCapacity()) {
-						this.debug(`${drone.print} full at ${drone.store.getUsedCapacity()}/${drone.store.getCapacity()}, transferring`);
+					if (
+						drone.store.getUsedCapacity() >
+						0.9 * drone.store.getCapacity()
+					) {
+						this.debug(
+							`${
+								drone.print
+							} full at ${drone.store.getUsedCapacity()}/${drone.store.getCapacity()}, transferring`
+						);
 						const transfer = drone.transferAll(this.container);
 						if (transfer == ERR_NOT_IN_RANGE) {
-							return drone.goTo(this.container, {range: 1});
+							return drone.goTo(this.container, { range: 1 });
 						}
 					}
 					// Move onto the container pos if you need to
-					if (this.drones.length == 1 && !drone.pos.isEqualTo(this.container.pos)) {
+					if (
+						this.drones.length == 1 &&
+						!drone.pos.isEqualTo(this.container.pos)
+					) {
 						this.debug(`${this.print} moving onto container`);
-						return drone.goTo(this.container, {range: 0});
+						return drone.goTo(this.container, { range: 0 });
 					}
 				}
 			} else {
-				log.error(`${drone.print}: room defined and no mineral! (Why?)`);
+				log.error(
+					`${drone.print}: room defined and no mineral! (Why?)`
+				);
 			}
 		} else {
 			this.debug(`${drone.print} not in room`);
@@ -163,7 +219,7 @@ export class ExtractorOverlord extends Overlord {
 	}
 
 	run() {
-		_.forEach(this.drones, drone => this.handleDrone(drone));
+		_.forEach(this.drones, (drone) => this.handleDrone(drone));
 		if (this.room && Game.time % BUILD_OUTPUT_FREQUENCY == 2) {
 			this.buildOutputIfNeeded();
 		}

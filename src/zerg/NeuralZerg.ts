@@ -1,6 +1,6 @@
-import {Movement} from '../movement/Movement';
-import {profile} from '../profiler/decorator';
-import {CombatZerg} from './CombatZerg';
+import { Movement } from "../movement/Movement";
+import { profile } from "../profiler/decorator";
+import { CombatZerg } from "./CombatZerg";
 
 const AVOID_RANGE = 4;
 const APPROACH_RANGE = 1;
@@ -11,39 +11,59 @@ const APPROACH_RANGE = 1;
  */
 @profile
 export class NeuralZerg extends CombatZerg {
-
 	isNeuralZerg: true;
 	isBot: boolean;
 
 	constructor(creep: Creep, notifyWhenAttacked = true) {
 		super(creep, notifyWhenAttacked);
 		this.isNeuralZerg = true;
-		this.isBot = creep.name.includes('_BOT');
+		this.isBot = creep.name.includes("_BOT");
 	}
 
 	approachHostiles() {
-		const approach = _.map(this.room.hostiles, hostile => ({pos: hostile.pos, range: APPROACH_RANGE}));
+		const approach = _.map(this.room.hostiles, (hostile) => ({
+			pos: hostile.pos,
+			range: APPROACH_RANGE,
+		}));
 		return Movement.combatMove(this, approach, []);
 	}
 
 	avoidHostiles() {
-		const avoid = _.map(this.room.hostiles, hostile => ({pos: hostile.pos, range: AVOID_RANGE}));
+		const avoid = _.map(this.room.hostiles, (hostile) => ({
+			pos: hostile.pos,
+			range: AVOID_RANGE,
+		}));
 		return Movement.combatMove(this, [], avoid);
 	}
 
 	approachAllies() {
-		const approach = _.map(this.room.creeps, friendly => ({pos: friendly.pos, range: APPROACH_RANGE}));
+		const approach = _.map(this.room.creeps, (friendly) => ({
+			pos: friendly.pos,
+			range: APPROACH_RANGE,
+		}));
 		return Movement.combatMove(this, approach, []);
 	}
 
 	avoidAllies() {
-		const avoid = _.map(this.room.creeps, friendly => ({pos: friendly.pos, range: AVOID_RANGE}));
+		const avoid = _.map(this.room.creeps, (friendly) => ({
+			pos: friendly.pos,
+			range: AVOID_RANGE,
+		}));
 		return Movement.combatMove(this, [], avoid);
 	}
 
-	maneuver(approachTargs: _HasRoomPosition[], avoidTargs: _HasRoomPosition[]) {
-		const approach = _.map(approachTargs, targ => ({pos: targ.pos, range: APPROACH_RANGE}));
-		const avoid = _.map(avoidTargs, targ => ({pos: targ.pos, range: AVOID_RANGE}));
+	maneuver(
+		approachTargs: _HasRoomPosition[],
+		avoidTargs: _HasRoomPosition[]
+	) {
+		const approach = _.map(approachTargs, (targ) => ({
+			pos: targ.pos,
+			range: APPROACH_RANGE,
+		}));
+		const avoid = _.map(avoidTargs, (targ) => ({
+			pos: targ.pos,
+			range: AVOID_RANGE,
+		}));
 		return Movement.combatMove(this, approach, avoid);
 	}
 
@@ -56,9 +76,8 @@ export class NeuralZerg extends CombatZerg {
 		if (this.getActiveBodyparts(RANGED_ATTACK) > 0) {
 			this.autoRanged(target);
 		}
-		if (this.canExecute('heal')) {
-			this.autoHeal(this.canExecute('rangedHeal'));
+		if (this.canExecute("heal")) {
+			this.autoHeal(this.canExecute("rangedHeal"));
 		}
 	}
-
 }

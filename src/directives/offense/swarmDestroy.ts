@@ -1,8 +1,8 @@
-import {log} from '../../console/log';
-import {SwarmDestroyerOverlord} from '../../overlords/offense/swarmDestroyer';
-import {profile} from '../../profiler/decorator';
-import {Visualizer} from '../../visuals/Visualizer';
-import {Directive} from '../Directive';
+import { log } from "../../console/log";
+import { SwarmDestroyerOverlord } from "../../overlords/offense/swarmDestroyer";
+import { profile } from "../../profiler/decorator";
+import { Visualizer } from "../../visuals/Visualizer";
+import { Directive } from "../Directive";
 
 export interface DirectiveSwarmDestroyMemory extends FlagMemory {
 	amount: number;
@@ -14,8 +14,7 @@ export interface DirectiveSwarmDestroyMemory extends FlagMemory {
  */
 @profile
 export class DirectiveSwarmDestroy extends Directive {
-
-	static directiveName = 'destroy';
+	static directiveName = "destroy";
 	static color = COLOR_RED;
 	static secondaryColor = COLOR_RED;
 	static requiredRCL = 6;
@@ -26,7 +25,10 @@ export class DirectiveSwarmDestroy extends Directive {
 	};
 
 	constructor(flag: Flag) {
-		super(flag, colony => colony.level >= DirectiveSwarmDestroy.requiredRCL);
+		super(
+			flag,
+			(colony) => colony.level >= DirectiveSwarmDestroy.requiredRCL
+		);
 	}
 
 	spawnMoarOverlords() {
@@ -39,13 +41,19 @@ export class DirectiveSwarmDestroy extends Directive {
 
 	run(): void {
 		// If there are no hostiles left in the room then remove the flag and associated healpoint
-		if (this.room && this.room.hostiles.length == 0 && this.room.hostileStructures.length == 0) {
-			log.notify(`Swarm destroyer mission at ${this.pos.roomName} completed successfully.`);
+		if (
+			this.room &&
+			this.room.hostiles.length == 0 &&
+			this.room.hostileStructures.length == 0
+		) {
+			log.notify(
+				`Swarm destroyer mission at ${this.pos.roomName} completed successfully.`
+			);
 			this.remove();
 		}
 	}
 
 	visuals(): void {
-		Visualizer.marker(this.pos, {color: 'red'});
+		Visualizer.marker(this.pos, { color: "red" });
 	}
 }

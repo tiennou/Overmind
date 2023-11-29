@@ -1,63 +1,64 @@
-import { Visualizer } from 'visuals/Visualizer';
-import {$} from '../caching/GlobalCache';
-import {Colony} from '../Colony';
-import {log} from '../console/log';
-import {Mem} from '../memory/Memory';
-import {UpgradingOverlord} from '../overlords/core/upgrader';
-import {profile} from '../profiler/decorator';
-import {Stats} from '../stats/stats';
-import {hasMinerals} from '../utilities/utils';
-import {HiveCluster} from './_HiveCluster';
-import { errorForCode } from 'utilities/errors';
+import { Visualizer } from "visuals/Visualizer";
+import { $ } from "../caching/GlobalCache";
+import { Colony } from "../Colony";
+import { log } from "../console/log";
+import { Mem } from "../memory/Memory";
+import { UpgradingOverlord } from "../overlords/core/upgrader";
+import { profile } from "../profiler/decorator";
+import { Stats } from "../stats/stats";
+import { hasMinerals } from "../utilities/utils";
+import { HiveCluster } from "./_HiveCluster";
+import { errorForCode } from "utilities/errors";
 
 interface UpgradeSiteMemory {
 	stats: { downtime: number };
-	speedFactor?: number;		// Multiplier on upgrade parts for fast growth
+	speedFactor?: number; // Multiplier on upgrade parts for fast growth
 }
-
 
 /**
  * Upgrade sites group upgrade-related structures around a controller, such as an input link and energy container
  */
 @profile
 export class UpgradeSite extends HiveCluster {
-
 	memory: UpgradeSiteMemory;
-	controller: StructureController;						// The controller for the site
+	controller: StructureController; // The controller for the site
 	upgradePowerNeeded: number;
-	link: StructureLink | undefined;						// The primary object receiving energy for the site
-	battery: StructureContainer | undefined; 				// The container to provide an energy buffer
+	link: StructureLink | undefined; // The primary object receiving energy for the site
+	battery: StructureContainer | undefined; // The container to provide an energy buffer
 	batteryPos: RoomPosition | undefined;
 	overlord: UpgradingOverlord;
 	// energyPerTick: number;
 
 	static settings = {
 		/** Number of upgrader parts scales with energy minus this value */
-		energyBuffer     : 100000,
+		energyBuffer: 100000,
 		/**
 		 * Scaling factor: this much excess energy adds one extra body repetition
 		 * TODO: scaling needs to increase with new storage/terminal system
 		 */
 		energyPerBodyUnit: 20000,
 		/** Required distance to build link */
-		minLinkDistance  : 10,
+		minLinkDistance: 10,
 		/** Links request energy when less than this amount */
 		linksRequestBelow: 200,
 	};
 
 	constructor(colony: Colony, controller: StructureController) {
-		super(colony, controller, 'upgradeSite');
+		super(colony, controller, "upgradeSite");
 		this.controller = controller;
-		this.memory = Mem.wrap(this.colony.memory, 'upgradeSite');
+		this.memory = Mem.wrap(this.colony.memory, "upgradeSite");
 		this.upgradePowerNeeded = this.getUpgradePowerNeeded();
 		// Register bettery
-		$.set(this, 'battery', () => {
+		$.set(this, "battery", () => {
 			// only count containers that aren't near sources
-			const allowableContainers = _.filter(this.room.containers, container =>
-				container.pos.findInRange(FIND_SOURCES, 1).length == 0);
+			const allowableContainers = _.filter(
+				this.room.containers,
+				(container) =>
+					container.pos.findInRange(FIND_SOURCES, 1).length == 0
+			);
 			return this.pos.findClosestByLimitedRange(allowableContainers, 3);
 		});
-		this.batteryPos = $.pos(this, 'batteryPos', () => {
+		this.batteryPos = $.pos(this, "batteryPos", () => {
 			if (this.battery) {
 				return this.battery.pos;
 			}
@@ -65,11 +66,18 @@ export class UpgradeSite extends HiveCluster {
 			if (inputSite) {
 				return inputSite.pos;
 			}
-			return this.calculateBatteryPos() || log.alert(`Upgrade site at ${this.pos.print}: no batteryPos!`);
+			return (
+				this.calculateBatteryPos() ||
+				log.alert(`Upgrade site at ${this.pos.print}: no batteryPos!`)
+			);
 		});
-		if (this.batteryPos) this.colony.destinations.push({pos: this.batteryPos, order: 0});
+		if (this.batteryPos) {
+			this.colony.destinations.push({ pos: this.batteryPos, order: 0 });
+		}
 		// Register link
-		$.set(this, 'link', () => this.pos.findClosestByLimitedRange(colony.availableLinks, 3));
+		$.set(this, "link", () =>
+			this.pos.findClosestByLimitedRange(colony.availableLinks, 3)
+		);
 		this.colony.linkNetwork.claimLink(this.link);
 		// // Energy per tick is sum of upgrader body parts and nearby worker body parts
 		// this.energyPerTick = $.number(this, 'energyPerTick', () =>
@@ -82,9 +90,9 @@ export class UpgradeSite extends HiveCluster {
 	}
 
 	refresh() {
-		this.memory = Mem.wrap(this.colony.memory, 'upgradeSite');
+		this.memory = Mem.wrap(this.colony.memory, "upgradeSite");
 		$.refreshRoom(this);
-		$.refresh(this, 'controller', 'battery', 'link');
+		$.refresh(this, "controller", "battery", "link");
 	}
 
 	spawnMoarOverlords() {
@@ -93,20 +101,32 @@ export class UpgradeSite extends HiveCluster {
 	}
 
 	findInputConstructionSite(): ConstructionSite | undefined {
-		const nearbyInputSites = this.pos.findInRange(this.room.constructionSites, 4, {
-			filter: (s: ConstructionSite) => s.structureType == STRUCTURE_CONTAINER ||
-											 s.structureType == STRUCTURE_LINK,
-		});
+		const nearbyInputSites = this.pos.findInRange(
+			this.room.constructionSites,
+			4,
+			{
+				filter: (s: ConstructionSite) =>
+					s.structureType == STRUCTURE_CONTAINER ||
+					s.structureType == STRUCTURE_LINK,
+			}
+		);
 		return _.first(nearbyInputSites);
 	}
 
 	private getUpgradePowerNeeded(): number {
-		return $.number(this, 'upgradePowerNeeded', () => {
+		return $.number(this, "upgradePowerNeeded", () => {
 			// Workers perform upgrading until storage is set up
-			if (!this.room.storage) return 0;
+			if (!this.room.storage) {
+				return 0;
+			}
 
-			const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
-			let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
+			const amountOver = Math.max(
+				this.colony.assets.energy - UpgradeSite.settings.energyBuffer,
+				0
+			);
+			let upgradePower =
+				1 +
+				Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
 			if (this.memory.speedFactor !== undefined) {
 				upgradePower *= this.memory.speedFactor;
 			} else if (amountOver > 800000) {
@@ -120,17 +140,30 @@ export class UpgradeSite extends HiveCluster {
 
 	init(): void {
 		// Register energy requests
-		if (this.link && this.link.store[RESOURCE_ENERGY] < UpgradeSite.settings.linksRequestBelow) {
+		if (
+			this.link &&
+			this.link.store[RESOURCE_ENERGY] <
+				UpgradeSite.settings.linksRequestBelow
+		) {
 			this.colony.linkNetwork.requestReceive(this.link);
 		}
 		const inThreshold = this.colony.storage ? 0.5 : 0.75;
 		if (this.battery) {
-			if (this.battery.energy < inThreshold * this.battery.store.getCapacity()) {
-				const energyPerTick = UPGRADE_CONTROLLER_POWER * this.upgradePowerNeeded;
-				this.colony.logisticsNetwork.requestInput(this.battery, {dAmountdt: energyPerTick});
+			if (
+				this.battery.energy <
+				inThreshold * this.battery.store.getCapacity()
+			) {
+				const energyPerTick =
+					UPGRADE_CONTROLLER_POWER * this.upgradePowerNeeded;
+				this.colony.logisticsNetwork.requestInput(this.battery, {
+					dAmountdt: energyPerTick,
+				});
 			}
-			if (hasMinerals(this.battery.store)) { // get rid of any minerals in the container if present
-				this.colony.logisticsNetwork.requestOutputMinerals(this.battery);
+			if (hasMinerals(this.battery.store)) {
+				// get rid of any minerals in the container if present
+				this.colony.logisticsNetwork.requestOutputMinerals(
+					this.battery
+				);
 			}
 		}
 	}
@@ -155,9 +188,13 @@ export class UpgradeSite extends HiveCluster {
 			}
 		}
 		// Try to find locations where there is maximal standing room
-		const maxNeighbors = _.max(_.map(inputLocations, pos => pos.availableNeighbors(true).length));
-		inputLocations = _.filter(inputLocations,
-								  pos => pos.availableNeighbors(true).length >= maxNeighbors);
+		const maxNeighbors = _.max(
+			_.map(inputLocations, (pos) => pos.availableNeighbors(true).length)
+		);
+		inputLocations = _.filter(
+			inputLocations,
+			(pos) => pos.availableNeighbors(true).length >= maxNeighbors
+		);
 		// Return location closest to storage by path
 		const inputPos = originPos.findClosestByPath(inputLocations);
 		if (inputPos) {
@@ -172,9 +209,14 @@ export class UpgradeSite extends HiveCluster {
 		if (!this.battery && !this.findInputConstructionSite()) {
 			const buildHere = this.batteryPos;
 			if (buildHere) {
-				const result = buildHere.createConstructionSite(STRUCTURE_CONTAINER);
+				const result =
+					buildHere.createConstructionSite(STRUCTURE_CONTAINER);
 				if (result !== OK) {
-					log.warning(`${this.print}: cannot build battery at ${buildHere.print}: ${errorForCode(result)}`);
+					log.warning(
+						`${this.print}: cannot build battery at ${
+							buildHere.print
+						}: ${errorForCode(result)}`
+					);
 				}
 			}
 		}
@@ -184,12 +226,16 @@ export class UpgradeSite extends HiveCluster {
 		const defaults = {
 			downtime: 0,
 		};
-		if (!this.memory.stats) this.memory.stats = defaults;
 		_.defaults(this.memory.stats, defaults);
 		// Compute downtime
-		this.memory.stats.downtime = (this.memory.stats.downtime * (CREEP_LIFE_TIME - 1) +
-									  (this.battery ? +this.battery.isEmpty : 0)) / CREEP_LIFE_TIME;
-		Stats.log(`colonies.${this.colony.name}.upgradeSite.downtime`, this.memory.stats.downtime);
+		this.memory.stats.downtime =
+			(this.memory.stats.downtime * (CREEP_LIFE_TIME - 1) +
+				(this.battery ? +this.battery.isEmpty : 0)) /
+			CREEP_LIFE_TIME;
+		Stats.log(
+			`colonies.${this.colony.name}.upgradeSite.downtime`,
+			this.memory.stats.downtime
+		);
 	}
 
 	run(): void {
@@ -201,35 +247,63 @@ export class UpgradeSite extends HiveCluster {
 	private drawUpgradeReport(coord: Coord) {
 		let { x, y } = coord;
 		let height = 1;
-		if (this.controller.level !== 8) height += 1;
-		if (this.memory.speedFactor !== undefined) height += 1;
-		const titleCoords = Visualizer.section(`${this.colony.name} Upgrade Site (${this.controller.level})`,
-			{ x, y, roomName: this.room.name }, 9.5, height + 0.1
+		if (this.controller.level !== 8) {
+			height += 1;
+		}
+		if (this.memory.speedFactor !== undefined) {
+			height += 1;
+		}
+		const titleCoords = Visualizer.section(
+			`${this.colony.name} Upgrade Site (${this.controller.level})`,
+			{ x, y, roomName: this.room.name },
+			9.5,
+			height + 0.1
 		);
 
 		const boxX = titleCoords.x;
 		y = titleCoords.y + 0.25;
 
 		if (this.controller.level != 8) {
-			Visualizer.text(`Progress`, { x: boxX, y: y, roomName: this.room.name });
+			Visualizer.text(`Progress`, {
+				x: boxX,
+				y: y,
+				roomName: this.room.name,
+			});
 			const fmt = (num: number) => `${Math.floor(num / 1000)}K`;
-			Visualizer.barGraph([this.controller.progress, this.controller.progressTotal],
-				{ x: boxX + 4, y: y, roomName: this.room.name }, 5, 1, fmt);
+			Visualizer.barGraph(
+				[this.controller.progress, this.controller.progressTotal],
+				{ x: boxX + 4, y: y, roomName: this.room.name },
+				5,
+				1,
+				fmt
+			);
 			y += 1;
 		}
 
 		if (this.memory.speedFactor !== undefined) {
-			Visualizer.text(`Rate`,
-				{ x: boxX, y: y, roomName: this.room.name});
-			Visualizer.text(this.memory.speedFactor.toString(),
-				{ x: boxX + 4, y: y, roomName: this.room.name});
+			Visualizer.text(`Rate`, {
+				x: boxX,
+				y: y,
+				roomName: this.room.name,
+			});
+			Visualizer.text(this.memory.speedFactor.toString(), {
+				x: boxX + 4,
+				y: y,
+				roomName: this.room.name,
+			});
 			y += 1;
 		}
 
-		Visualizer.text(`Downtime`,
-				{ x: boxX, y: y, roomName: this.room.name});
-		Visualizer.barGraph(this.memory.stats.downtime,
-				{ x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		Visualizer.text(`Downtime`, {
+			x: boxX,
+			y: y,
+			roomName: this.room.name,
+		});
+		Visualizer.barGraph(
+			this.memory.stats.downtime,
+			{ x: boxX + 4, y: y, roomName: this.room.name },
+			5
+		);
 
 		y += 1;
 

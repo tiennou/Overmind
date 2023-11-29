@@ -12,16 +12,16 @@
  * If you use Travler, change all occurrences of creep.moveTo() to creep.goTo()
  */
 
-import {MoveOptions, ZergMoveReturnCode} from 'movement/Movement';
-import {log} from '../console/log';
-import {profile} from '../profiler/decorator';
-import {Zerg} from '../zerg/Zerg';
-import {initializeTask} from './initializer';
-import { deref, derefRoomPosition } from 'utilities/utils';
+import { MoveOptions, ZergMoveReturnCode } from "movement/Movement";
+import { log } from "../console/log";
+import { profile } from "../profiler/decorator";
+import { Zerg } from "../zerg/Zerg";
+import { initializeTask } from "./initializer";
+import { deref, derefRoomPosition } from "utilities/utils";
 
 interface AbstractTaskTarget {
-	ref: string; 	// Target id or name
-	_pos: ProtoPos;	// Target position's coordinates in case vision is lost
+	ref: string; // Target id or name
+	_pos: ProtoPos; // Target position's coordinates in case vision is lost
 }
 
 type ConcreteTaskTarget = HasRef | _HasRoomPosition | RoomPosition;
@@ -46,67 +46,71 @@ function isRoomObjectTarget(target: any): target is RoomObject {
  */
 @profile
 export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
-
 	static taskName: string;
 
-	name: string;				// Name of the task type, e.g. 'upgrade'
-	_creep: { 					// Data for the creep the task is assigned to
-		name: string;				// Name of the creep
+	name: string; // Name of the task type, e.g. 'upgrade'
+	_creep: {
+		// Data for the creep the task is assigned to
+		name: string; // Name of the creep
 	};
-	_target: AbstractTaskTarget;// Data for the target the task is directed to:
-	_parent: ProtoTask | null; 	// The parent of this task, if any. Task is changed to parent upon completion.
-	tick: number;				// When the task was set
-	settings: TaskSettings;		// Settings for a given type of task; shouldn't be modified on an instance-basis
-	options: TaskOptions;		// Options for a specific instance of a task
-	data: TaskData; 			// Data pertaining to a given instance of a task
+	_target: AbstractTaskTarget; // Data for the target the task is directed to:
+	_parent: ProtoTask | null; // The parent of this task, if any. Task is changed to parent upon completion.
+	tick: number; // When the task was set
+	settings: TaskSettings; // Settings for a given type of task; shouldn't be modified on an instance-basis
+	options: TaskOptions; // Options for a specific instance of a task
+	data: TaskData; // Data pertaining to a given instance of a task
 
 	private _targetPos: RoomPosition;
 
-	constructor(taskName: string, target: TargetType | AbstractTaskTarget, options = {} as TaskOptions) {
+	constructor(
+		taskName: string,
+		target: TargetType | AbstractTaskTarget,
+		options = {} as TaskOptions
+	) {
 		// Parameters for the task
 		this.name = taskName;
 		this._creep = {
-			name: '',
+			name: "",
 		};
 		// Handles edge cases like when you're done building something and target disappears
 		if (target instanceof RoomPosition) {
 			this._target = {
-				ref: '',
+				ref: "",
 				_pos: { x: target.x, y: target.y, roomName: target.room!.name },
-			}
+			};
 		} else if (isAbstractTarget(target)) {
 			this._target = {
-				ref : target.ref,
+				ref: target.ref,
 				_pos: target._pos,
 			};
 		} else if (isRoomRefTarget(target)) {
 			this._target = {
-				ref : target.ref,
+				ref: target.ref,
 				_pos: target.pos,
 			};
 		} else if (isRoomObjectTarget(target)) {
 			this._target = {
-				ref: '',
+				ref: "",
 				_pos: target.pos,
-			}
+			};
 		} else {
 			this._target = {
-				ref : '',
+				ref: "",
 				_pos: {
-					x       : -1,
-					y       : -1,
-					roomName: '',
-				}
+					x: -1,
+					y: -1,
+					roomName: "",
+				},
 			};
 		}
 		// log.debug(`creating task ${this.constructor.name}, ${taskName}, target: ${target}, ${print(this._target)}`);
 		this._parent = null;
 		this.settings = {
-			targetRange: 1,			// range at which you can perform action
-			workOffRoad: false,		// whether work() should be performed off road
-			oneShot    : false, 	// remove this task once work() returns OK, regardless of validity
-			timeout    : Infinity, 	// task becomes invalid after this long
-			blind      : true,  	// don't require vision of target unless in room
+			targetRange: 1, // range at which you can perform action
+			workOffRoad: false, // whether work() should be performed off road
+			oneShot: false, // remove this task once work() returns OK, regardless of validity
+			timeout: Infinity, // task becomes invalid after this long
+			blind: true, // don't require vision of target unless in room
 		};
 		this.tick = Game.time;
 		this.options = options;
@@ -118,13 +122,13 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	 */
 	get proto(): ProtoTask {
 		return {
-			name   : this.name,
-			_creep : this._creep,
+			name: this.name,
+			_creep: this._creep,
 			_target: this._target,
 			_parent: this._parent,
-			tick   : this.tick,
+			tick: this.tick,
 			options: this.options,
-			data   : this.data,
+			data: this.data,
 		};
 	}
 
@@ -144,7 +148,8 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	/**
 	 * Return the wrapped creep which is executing this task
 	 */
-	get creep(): Zerg { // Get task's own creep by its name
+	get creep(): Zerg {
+		// Get task's own creep by its name
 		// Returns zerg wrapper instead of creep to use monkey-patched functions
 		return Overmind.zerg[this._creep.name];
 	}
@@ -184,7 +189,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	 * Get the Task's parent
 	 */
 	get parent(): Task<any> | null {
-		return (this._parent ? initializeTask(this._parent) : null);
+		return this._parent ? initializeTask(this._parent) : null;
 	}
 
 	/**
@@ -221,7 +226,7 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 			targetRefs.push(parent._target.ref);
 			parent = parent._parent;
 		}
-		return _.map(targetRefs, ref => deref(ref));
+		return _.map(targetRefs, (ref) => deref(ref));
 	}
 
 	/**
@@ -234,7 +239,9 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 			targetPositions.push(parent._target._pos);
 			parent = parent._parent;
 		}
-		return _.map(targetPositions, protoPos => derefRoomPosition(protoPos));
+		return _.map(targetPositions, (protoPos) =>
+			derefRoomPosition(protoPos)
+		);
 	}
 
 	/**
@@ -258,19 +265,23 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	 */
 	abstract isValidTarget(): boolean;
 
-
 	/**
 	 * Test if the task is valid; if it is not, automatically remove task and transition to parent
 	 */
 	isValid(): boolean {
 		let validTask = false;
 		if (this.creep) {
-			validTask = this.isValidTask() && Game.time - this.tick < this.settings.timeout;
+			validTask =
+				this.isValidTask() &&
+				Game.time - this.tick < this.settings.timeout;
 		}
 		let validTarget = false;
 		if (this.target) {
 			validTarget = this.isValidTarget();
-		} else if ((this.settings.blind || this.options.blind) && !Game.rooms[this.targetPos.roomName]) {
+		} else if (
+			(this.settings.blind || this.options.blind) &&
+			!Game.rooms[this.targetPos.roomName]
+		) {
 			// If you can't see the target's room but you have blind enabled, then that's okay
 			validTarget = true;
 		}
@@ -289,7 +300,9 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	 * Move to within range of the target
 	 */
 	moveToTarget(range = this.settings.targetRange) {
-		const moveOpts: MoveOptions = _.defaultsDeep(this.options.moveOptions, { range: range });
+		const moveOpts: MoveOptions = _.defaultsDeep(this.options.moveOptions, {
+			range: range,
+		});
 		return this.creep.goTo(this.targetPos, moveOpts);
 	}
 
@@ -331,7 +344,10 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 		} else {
 			const result = this.moveToTarget();
 			if (result !== OK) {
-				log.debugCreep(this.creep, `failed to move to target ${result}`);
+				log.debugCreep(
+					this.creep,
+					`failed to move to target ${result}`
+				);
 			}
 			return result;
 		}
@@ -341,7 +357,12 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 	 * Return whether the creep is currently performing its task action near the target
 	 */
 	get isWorking(): boolean {
-		return this.creep.pos.inRangeToPos(this.targetPos, this.settings.targetRange) && !this.creep.pos.isEdge;
+		return (
+			this.creep.pos.inRangeToPos(
+				this.targetPos,
+				this.settings.targetRange
+			) && !this.creep.pos.isEdge
+		);
 	}
 
 	/**
@@ -357,8 +378,11 @@ export abstract class Task<TargetType extends ConcreteTaskTarget | null> {
 		if (this.creep) {
 			this.creep.task = this.parent;
 		} else {
-			log.debug(`No creep executing ${this.name}! Proto: ${JSON.stringify(this.proto)}`);
+			log.debug(
+				`No creep executing ${this.name}! Proto: ${JSON.stringify(
+					this.proto
+				)}`
+			);
 		}
 	}
 }
-

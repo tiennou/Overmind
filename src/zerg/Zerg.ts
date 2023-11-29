@@ -1,16 +1,19 @@
-import {log} from '../console/log';
-import {isCreep, isPowerCreep, isStandardZerg} from '../declarations/typeGuards';
-import {CombatIntel} from '../intel/CombatIntel';
-import {Overlord} from '../overlords/Overlord';
-import {profile} from '../profiler/decorator';
-import {BOOST_PARTS} from '../resources/map_resources';
-import {initializeTask} from '../tasks/initializer';
-import {MIN_LIFETIME_FOR_BOOST} from '../tasks/instances/getBoosted';
-import {Task} from '../tasks/Task';
-import {AnyZerg} from './AnyZerg';
-import {Visualizer} from 'visuals/Visualizer';
-import {Pathing} from 'movement/Pathing';
-
+import { log } from "../console/log";
+import {
+	isCreep,
+	isPowerCreep,
+	isStandardZerg,
+} from "../declarations/typeGuards";
+import { CombatIntel } from "../intel/CombatIntel";
+import { Overlord } from "../overlords/Overlord";
+import { profile } from "../profiler/decorator";
+import { BOOST_PARTS } from "../resources/map_resources";
+import { initializeTask } from "../tasks/initializer";
+import { MIN_LIFETIME_FOR_BOOST } from "../tasks/instances/getBoosted";
+import { Task } from "../tasks/Task";
+import { AnyZerg } from "./AnyZerg";
+import { Visualizer } from "visuals/Visualizer";
+import { Pathing } from "movement/Pathing";
 
 export function normalizeStandardZerg(creep: Zerg | Creep): Zerg | Creep {
 	return Overmind.zerg[creep.name] || creep;
@@ -22,18 +25,27 @@ export function toCreep(creep: Zerg | Creep): Creep {
 
 // Last pipeline is more complex because it depends on the energy a creep has; sidelining this for now
 const ACTION_PIPELINES: string[][] = [
-	['harvest', 'attack', 'build', 'repair', 'dismantle', 'attackController', 'rangedHeal', 'heal'],
-	['rangedAttack', 'rangedMassAttack', 'build', 'repair', 'rangedHeal'],
+	[
+		"harvest",
+		"attack",
+		"build",
+		"repair",
+		"dismantle",
+		"attackController",
+		"rangedHeal",
+		"heal",
+	],
+	["rangedAttack", "rangedMassAttack", "build", "repair", "rangedHeal"],
 	// ['upgradeController', 'build', 'repair', 'withdraw', 'transfer', 'drop'],
 ];
 
 const _RANGES = {
-	BUILD   : 3,
-	REPAIR  : 3,
+	BUILD: 3,
+	REPAIR: 3,
 	TRANSFER: 1,
 	WITHDRAW: 1,
-	HARVEST : 1,
-	DROP    : 0,
+	HARVEST: 1,
+	DROP: 0,
 };
 
 /**
@@ -43,28 +55,32 @@ const _RANGES = {
  */
 @profile
 export class Zerg extends AnyZerg {
-
 	isStandardZerg: true;
-	creep: Creep; 						// The creep that this wrapper class will control
-	body: BodyPartDefinition[];    	 	// These properties are all wrapped from this.creep.* to this.*
-	store: StoreDefinition;				// |
-	fatigue: number;					// |
-	hits: number;						// |
-	hitsMax: number;					// |
-	id: string;							// |
-	memory: CreepMemory;				// | See the ICreepMemory interface for structure
-	name: string;						// |
-	pos: RoomPosition;					// |
-	nextPos: RoomPosition;				// | The next position the creep will be in after registering a move intent
-	ref: string;						// |
-	roleName: string;					// |
-	room: Room;							// |
-	saying: string;						// |
-	spawning: boolean;					// |
-	ticksToLive: number | undefined;	// |
+	/** The creep that this wrapper class will control */
+	// These properties are all wrapped from this.creep.* to this.*
+	creep: Creep;
+	body: BodyPartDefinition[];
+	store: StoreDefinition;
+	fatigue: number;
+	hits: number;
+	hitsMax: number;
+	id: string;
+	memory: CreepMemory;
+	name: string;
+	pos: RoomPosition;
+	/** The next position the creep will be in after registering a move intent */
+	nextPos: RoomPosition;
+	ref: string;
+	roleName: string;
+	room: Room;
+	saying: string;
+	spawning: boolean;
+	ticksToLive: number | undefined;
 	lifetime: number;
-	actionLog: { [actionName: string]: boolean }; // Tracks the actions that a creep has completed this tick
-	blockMovement: boolean; 			// Whether the zerg is allowed to move or not
+	/** Tracks the actions that a creep has completed this tick */
+	actionLog: { [actionName: string]: boolean };
+	/** Whether the zerg is allowed to move or not */
+	blockMovement: boolean;
 
 	// Cached properties
 	private _task: Task<any> | null;
@@ -75,37 +91,12 @@ export class Zerg extends AnyZerg {
 		super(creep, notifyWhenAttacked);
 		this.isStandardZerg = true;
 		// Copy over creep references
-		// this.creep = creep;
 		this.body = creep.body;
-		// this.carry = creep.carry;
-		// this.store = creep.store;
-		// this.carryCapacity = creep.carryCapacity;
 		this.fatigue = creep.fatigue;
-		// this.hits = creep.hits;
-		// this.hitsMax = creep.hitsMax;
-		// this.id = creep.id;
-		// this.memory = creep.memory;
-		// this.name = creep.name;
-		// this.pos = creep.pos;
-		// this.nextPos = creep.pos;
-		// this.ref = creep.ref;
 		this.roleName = creep.memory.role;
-		// this.room = creep.room;
-		// this.saying = creep.saying;
 		this.spawning = creep.spawning;
-		// this.ticksToLive = creep.ticksToLive;
-		// Extra properties
-		// this.lifetime = this.getBodyparts(CLAIM) > 0 ? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
-		// this.actionLog = {};
-		// this.blockMovement = false;
 		// Register global references
 		Overmind.zerg[this.name] = this;
-		// global[this.name] = this;
-		// Handle attack notification when at lifetime - 1
-		// if (!notifyWhenAttacked && (this.ticksToLive || 0) >= this.lifetime - (NEW_OVERMIND_INTERVAL + 1)) {
-		// 	// creep.notifyWhenAttacked only uses the 0.2CPU intent cost if it changes the intent value
-		// 	this.notifyWhenAttacked(notifyWhenAttacked);
-		// }
 	}
 
 	/**
@@ -115,39 +106,28 @@ export class Zerg extends AnyZerg {
 		super.refresh();
 		const creep = Game.creeps[this.name];
 		if (creep) {
-			// this.creep = creep;
-			// this.pos = creep.pos;
-			// this.nextPos = creep.pos;
 			this.body = creep.body;
-			// this.carry = creep.carry;
-			// this.store = creep.store;
-			// this.carryCapacity = creep.carryCapacity;
 			this.fatigue = creep.fatigue;
-			// this.hits = creep.hits;
-			// this.memory = creep.memory;
 			this.roleName = creep.memory.role;
-			// this.room = creep.room;
-			// this.saying = creep.saying;
 			this.spawning = creep.spawning;
-			// this.ticksToLive = creep.ticksToLive;
-			// this.actionLog = {};
-			// this.blockMovement = false;
 			this._task = null; // todo
 			this._neededBoosts = undefined;
 		} else {
-			// log.debug(`Deleting from global`);
 			delete Overmind.zerg[this.name];
-			// delete global[this.name];
 		}
 	}
 
 	private get spawnInfo(): Spawning | undefined {
-		if (!this.spawning) return undefined;
+		if (!this.spawning) {
+			return undefined;
+		}
 		if (!this._spawnInfo) {
 			const spawner = this.pos.lookForStructure(STRUCTURE_SPAWN);
 			if (!spawner) {
 				// Shouldn't ever get here
-				log.error(`Error determining ticks to spawn for ${this.name} @ ${this.pos.print}!`);
+				log.error(
+					`Error determining ticks to spawn for ${this.name} @ ${this.pos.print}!`
+				);
 				return undefined;
 			}
 			this._spawnInfo = spawner.spawning ?? undefined;
@@ -165,7 +145,9 @@ export class Zerg extends AnyZerg {
 
 	get spawnPos(): RoomPosition | undefined {
 		const info = this.spawnInfo;
-		if (!info) return undefined;
+		if (!info) {
+			return undefined;
+		}
 		let directions = info.directions;
 		if (!directions) {
 			directions = [TOP];
@@ -186,28 +168,40 @@ export class Zerg extends AnyZerg {
 		if (result == OK) {
 			this.actionLog.attack = true;
 			if (isCreep(target) || isPowerCreep(target)) {
-				if (target.hitsPredicted == undefined) target.hitsPredicted = target.hits;
-				target.hitsPredicted -= CombatIntel.predictedDamageAmount(this.creep, target, 'attack');
+				target.hitsPredicted ??= target.hits;
+				target.hitsPredicted -= CombatIntel.predictedDamageAmount(
+					this.creep,
+					target,
+					"attack"
+				);
 			}
 			if (isCreep(target)) {
 				// account for hitback effects
-				if (this.creep.hitsPredicted == undefined) this.creep.hitsPredicted = this.creep.hits;
-				this.creep.hitsPredicted -= CombatIntel.predictedDamageAmount(target, this.creep, 'attack');
+				this.creep.hitsPredicted ??= this.creep.hits;
+				this.creep.hitsPredicted -= CombatIntel.predictedDamageAmount(
+					target,
+					this.creep,
+					"attack"
+				);
 			}
-			if (this.memory.talkative) this.say(`💥`);
+			if (this.memory.talkative) {
+				this.say(`💥`);
+			}
 		}
 		return result;
 	}
 
 	attackController(controller: StructureController) {
 		const result = this.creep.attackController(controller);
-		if (!this.actionLog.attackController) this.actionLog.attackController = (result == OK);
+		if (!this.actionLog.attackController) {
+			this.actionLog.attackController = result == OK;
+		}
 		return result;
 	}
 
 	build(target: ConstructionSite) {
 		const result = this.creep.build(target);
-		if (!this.actionLog.build) this.actionLog.build = (result == OK);
+		this.actionLog.build ??= result == OK;
 		return result;
 	}
 
@@ -225,7 +219,9 @@ export class Zerg extends AnyZerg {
 
 	claimController(controller: StructureController) {
 		const result = this.creep.claimController(controller);
-		if (!this.actionLog.claimController) this.actionLog.claimController = (result == OK);
+		if (!this.actionLog.claimController) {
+			this.actionLog.claimController = result == OK;
+		}
 		if (result == OK) {
 			Overmind.shouldBuild = true; // rebuild the overmind object on the next tick to account for new room
 		}
@@ -234,7 +230,7 @@ export class Zerg extends AnyZerg {
 
 	dismantle(target: Structure): CreepActionReturnCode {
 		const result = this.creep.dismantle(target);
-		if (!this.actionLog.dismantle) this.actionLog.dismantle = (result == OK);
+		this.actionLog.dismantle ??= result == OK;
 		return result;
 	}
 
@@ -266,7 +262,7 @@ export class Zerg extends AnyZerg {
 
 	harvest(source: Source | Deposit | Mineral) {
 		const result = this.creep.harvest(source);
-		if (!this.actionLog.harvest) this.actionLog.harvest = (result == OK);
+		this.actionLog.harvest ??= result == OK;
 		return result;
 	}
 
@@ -304,10 +300,16 @@ export class Zerg extends AnyZerg {
 		if (result == OK) {
 			this.actionLog.rangedAttack = true;
 			if (isCreep(target)) {
-				if (target.hitsPredicted == undefined) target.hitsPredicted = target.hits;
-				target.hitsPredicted -= CombatIntel.predictedDamageAmount(this, target, 'rangedAttack');
+				target.hitsPredicted ??= target.hits;
+				target.hitsPredicted -= CombatIntel.predictedDamageAmount(
+					this,
+					target,
+					"rangedAttack"
+				);
 			}
-			if (this.memory.talkative) this.say(`🔫`);
+			if (this.memory.talkative) {
+				this.say(`🔫`);
+			}
 		}
 		return result;
 	}
@@ -317,17 +319,22 @@ export class Zerg extends AnyZerg {
 		if (result == OK) {
 			this.actionLog.rangedMassAttack = true;
 			for (const target of this.pos.findInRange(this.room.hostiles, 3)) {
-				if (target.hitsPredicted == undefined) target.hitsPredicted = target.hits;
-				target.hitsPredicted -= CombatIntel.getMassAttackDamageTo(this, target);
+				target.hitsPredicted ??= target.hits;
+				target.hitsPredicted -= CombatIntel.getMassAttackDamageTo(
+					this,
+					target
+				);
 			}
-			if (this.memory.talkative) this.say(`💣`);
+			if (this.memory.talkative) {
+				this.say(`💣`);
+			}
 		}
 		return result;
 	}
 
 	repair(target: Structure) {
 		const result = this.creep.repair(target);
-		if (!this.actionLog.repair) this.actionLog.repair = (result == OK);
+		this.actionLog.repair ??= result == OK;
 		return result;
 	}
 
@@ -339,7 +346,7 @@ export class Zerg extends AnyZerg {
 
 	reserveController(controller: StructureController) {
 		const result = this.creep.reserveController(controller);
-		if (!this.actionLog.reserveController) this.actionLog.reserveController = (result == OK);
+		this.actionLog.reserveController ??= result == OK;
 		return result;
 	}
 
@@ -350,13 +357,13 @@ export class Zerg extends AnyZerg {
 
 	signController(target: StructureController, text: string) {
 		const result = this.creep.signController(target, text);
-		if (!this.actionLog.signController) this.actionLog.signController = (result == OK);
+		this.actionLog.signController ??= result == OK;
 		return result;
 	}
 
 	upgradeController(controller: StructureController) {
 		const result = this.creep.upgradeController(controller);
-		if (!this.actionLog.upgradeController) this.actionLog.upgradeController = (result == OK);
+		this.actionLog.upgradeController ??= result == OK;
 		// Determine amount of upgrade power
 		// let weightedUpgraderParts = _.map(this.boostCounts, )
 		// let upgradeAmount = this.getActiveBodyparts(WORK) * UPGRADE_CONTROLLER_POWER;
@@ -374,9 +381,11 @@ export class Zerg extends AnyZerg {
 		const result = this.creep.heal(creep);
 		if (result == OK) {
 			this.actionLog.heal = true;
-			if (creep.hitsPredicted == undefined) creep.hitsPredicted = creep.hits;
+			creep.hitsPredicted ??= creep.hits;
 			creep.hitsPredicted += CombatIntel.getHealAmount(this);
-			if (this.memory.talkative) this.say('🚑');
+			if (this.memory.talkative) {
+				this.say("🚑");
+			}
 		}
 		return result;
 	}
@@ -386,9 +395,11 @@ export class Zerg extends AnyZerg {
 		const result = this.creep.rangedHeal(creep);
 		if (result == OK) {
 			this.actionLog.rangedHeal = true;
-			if (creep.hitsPredicted == undefined) creep.hitsPredicted = creep.hits;
+			creep.hitsPredicted ??= creep.hits;
 			creep.hitsPredicted += CombatIntel.getRangedHealAmount(this);
-			if (this.memory.talkative) this.say(`💉`);
+			if (this.memory.talkative) {
+				this.say(`💉`);
+			}
 		}
 		return result;
 	}
@@ -436,7 +447,9 @@ export class Zerg extends AnyZerg {
 		// Only one action can be executed from within a single pipeline
 		let conflictingActions: string[] = [actionName];
 		for (const pipeline of ACTION_PIPELINES) {
-			if (pipeline.includes(actionName)) conflictingActions = conflictingActions.concat(pipeline);
+			if (pipeline.includes(actionName)) {
+				conflictingActions = conflictingActions.concat(pipeline);
+			}
 		}
 		for (const action of conflictingActions) {
 			if (this.actionLog[action]) {
@@ -456,7 +469,10 @@ export class Zerg extends AnyZerg {
 	 * The same as creep.getActiveBodyparts, but just counts bodyparts regardless of condition.
 	 */
 	getBodyparts(partType: BodyPartConstant): number {
-		return _.filter(this.body, (part: BodyPartDefinition) => part.type == partType).length;
+		return _.filter(
+			this.body,
+			(part: BodyPartDefinition) => part.type == partType
+		).length;
 	}
 
 	// Custom creep methods ============================================================================================
@@ -475,7 +491,7 @@ export class Zerg extends AnyZerg {
 	// Boosting logic --------------------------------------------------------------------------------------------------
 
 	get boostCounts(): { [boostType: string]: number } {
-		return _.countBy(this.body, bodyPart => bodyPart.boost);
+		return _.countBy(this.body, (bodyPart) => bodyPart.boost);
 	}
 
 	get bodypartCounts(): { [bodypart in BodyPartConstant]: number } {
@@ -486,7 +502,10 @@ export class Zerg extends AnyZerg {
 		if (!this.overlord) {
 			return false;
 		}
-		if ((this.ticksToLive || this.lifetime) < MIN_LIFETIME_FOR_BOOST * this.lifetime) {
+		if (
+			(this.ticksToLive || this.lifetime) <
+			MIN_LIFETIME_FOR_BOOST * this.lifetime
+		) {
 			return false;
 		}
 		return !_.isEmpty(this.getNeededBoosts());
@@ -497,9 +516,9 @@ export class Zerg extends AnyZerg {
 	 * fully boosted for a given resource type, the entry is removed from memory.needBoosts.
 	 */
 	getNeededBoosts(): { [boostResource: string]: number } {
-		if (!this._neededBoosts) { // this is cleared each tick
+		if (!this._neededBoosts) {
+			// this is cleared each tick
 			if (this.memory.needBoosts && this.memory.needBoosts.length > 0) {
-
 				const neededBoosts: { [boostResource: string]: number } = {};
 
 				const boostCounts = this.boostCounts;
@@ -513,7 +532,8 @@ export class Zerg extends AnyZerg {
 					const numParts = bodyCounts[bodypartType] || 0;
 					const numBoostedParts = boostCounts[boost] || 0;
 					if (numBoostedParts < numParts) {
-						neededBoosts[boost] = LAB_BOOST_MINERAL * (numParts - numBoostedParts);
+						neededBoosts[boost] =
+							LAB_BOOST_MINERAL * (numParts - numBoostedParts);
 					} else {
 						_.pull(this.memory.needBoosts, boost);
 					}
@@ -533,7 +553,11 @@ export class Zerg extends AnyZerg {
 	/**
 	 * Reassigns the creep to work under a new overlord and as a new role.
 	 */
-	reassign(newOverlord: Overlord | null, newRole?: string, invalidateTask = true) {
+	reassign(
+		newOverlord: Overlord | null,
+		newRole?: string,
+		invalidateTask = true
+	) {
 		super.reassign(newOverlord);
 		if (newRole) {
 			this.roleName = newRole;
@@ -551,7 +575,8 @@ export class Zerg extends AnyZerg {
 	 */
 	get task(): Task<any> | null {
 		if (!this._task) {
-			this._task = this.memory.task ? initializeTask(this.memory.task) : null;
+			this._task =
+				this.memory.task ? initializeTask(this.memory.task) : null;
 		}
 		return this._task;
 	}
@@ -565,7 +590,10 @@ export class Zerg extends AnyZerg {
 		if (oldProtoTask) {
 			const oldRef = oldProtoTask._target.ref;
 			if (Overmind.cache.targets[oldRef]) {
-				_.remove(Overmind.cache.targets[oldRef], name => name == this.name);
+				_.remove(
+					Overmind.cache.targets[oldRef],
+					(name) => name == this.name
+				);
 			}
 		}
 		// Set the new task
@@ -609,9 +637,7 @@ export class Zerg extends AnyZerg {
 		}
 
 		if (this.memory.debug) {
-			const data = [
-				this.name,
-			];
+			const data = [this.name];
 
 			if (this.task) {
 				data.push(`task: ${this.task.name}`);
@@ -620,9 +646,14 @@ export class Zerg extends AnyZerg {
 				data.push(`idle`);
 			}
 
-			new RoomVisual(this.room.name).infoBox(data, this.pos.x, this.pos.y, {
-				opacity: 0.9,
-			});
+			new RoomVisual(this.room.name).infoBox(
+				data,
+				this.pos.x,
+				this.pos.y,
+				{
+					opacity: 0.9,
+				}
+			);
 
 			// Current path
 			if (this.memory._go && this.memory._go?.path) {
@@ -630,7 +661,7 @@ export class Zerg extends AnyZerg {
 				const serialPath = this.memory._go?.path.substring(1);
 				const path = Pathing.deserializePath(this.nextPos, serialPath);
 				// log.debug(`${this.print} has path: ${path.length}, ${path.map(p => p.print).join(" > ")}`);
-				Visualizer.drawPath(path, { fill: 'red', lineStyle: 'dashed'});
+				Visualizer.drawPath(path, { fill: "red", lineStyle: "dashed" });
 
 				const lastStep = _.last(path);
 				if (lastStep) {
@@ -639,10 +670,15 @@ export class Zerg extends AnyZerg {
 							this.name,
 							`eta: ${this.task?.eta ?? NaN}`,
 						];
-						new RoomVisual(lastStep.roomName).infoBox(lastData, lastStep.x, lastStep.y, {
-							color: 'red',
-							opacity: 0.6
-						});
+						new RoomVisual(lastStep.roomName).infoBox(
+							lastData,
+							lastStep.x,
+							lastStep.y,
+							{
+								color: "red",
+								opacity: 0.6,
+							}
+						);
 					}
 				}
 			}
@@ -786,7 +822,6 @@ export class Zerg extends AnyZerg {
 	// 	return Movement.moveOffExitToward(this, pos, detour);
 	// }
 
-
 	// Miscellaneous fun stuff -----------------------------------------------------------------------------------------
 
 	// sayLoop(messageList: string[], pub?: boolean) {
@@ -796,6 +831,4 @@ export class Zerg extends AnyZerg {
 	// sayRandom(phrases: string[], pub?: boolean) {
 	// 	return this.say(phrases[Math.floor(Math.random() * phrases.length)], pub);
 	// }
-
 }
-

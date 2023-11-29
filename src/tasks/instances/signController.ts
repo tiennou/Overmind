@@ -1,8 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type signControllerTargetType = StructureController;
-export const signControllerTaskName = 'signController';
+export const signControllerTaskName = "signController";
 
 @profile
 export class TaskSignController extends Task<signControllerTargetType> {
@@ -16,11 +16,17 @@ export class TaskSignController extends Task<signControllerTargetType> {
 
 	isValidTarget() {
 		const controller = this.target;
-		return (!controller.sign || controller.sign.text != Memory.settings.signature) && !controller.signedByScreeps;
+		return (
+			(!controller.sign ||
+				controller.sign.text != Memory.settings.signature) &&
+			!controller.signedByScreeps
+		);
 	}
 
 	work() {
-		return this.creep.signController(this.target, Memory.settings.signature);
+		return this.creep.signController(
+			this.target,
+			Memory.settings.signature
+		);
 	}
 }
-

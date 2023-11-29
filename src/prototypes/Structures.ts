@@ -6,17 +6,18 @@ import { config } from "config";
 // General structure prototypes ========================================================================================
 
 PERMACACHE.structureWalkability = PERMACACHE.structureWalkability || {};
-Object.defineProperty(Structure.prototype, 'isWalkable', {
+Object.defineProperty(Structure.prototype, "isWalkable", {
 	get() {
 		if (PERMACACHE.structureWalkability[this.id] !== undefined) {
 			return PERMACACHE.structureWalkability[this.id];
 		}
 		if (this.structureType === STRUCTURE_RAMPART) {
-			return (<StructureRampart>this.my || <StructureRampart>this.isPublic);
+			return <StructureRampart>this.my || <StructureRampart>this.isPublic;
 		} else {
-			PERMACACHE.structureWalkability[this.id] = this.structureType == STRUCTURE_ROAD ||
-													   this.structureType == STRUCTURE_CONTAINER ||
-													   this.structureType == STRUCTURE_PORTAL;
+			PERMACACHE.structureWalkability[this.id] =
+				this.structureType == STRUCTURE_ROAD ||
+				this.structureType == STRUCTURE_CONTAINER ||
+				this.structureType == STRUCTURE_PORTAL;
 			return PERMACACHE.structureWalkability[this.id];
 		}
 	},
@@ -60,8 +61,8 @@ const StorageLikeStructures = [
 ];
 
 for (const structure of StorageLikeStructures) {
-	if (!structure.prototype.hasOwnProperty('energy')) {
-		Object.defineProperty(structure.prototype, 'energy', {
+	if (!structure.prototype.hasOwnProperty("energy")) {
+		Object.defineProperty(structure.prototype, "energy", {
 			get(this: typeof structure.prototype) {
 				return this.store.getUsedCapacity(RESOURCE_ENERGY);
 			},
@@ -69,14 +70,16 @@ for (const structure of StorageLikeStructures) {
 		});
 	}
 
-	Object.defineProperty(structure.prototype, 'isFull', { // if this container-like object is full
+	Object.defineProperty(structure.prototype, "isFull", {
+		// if this container-like object is full
 		get(this: typeof structure.prototype) {
 			return this.store.getFreeCapacity() === 0;
 		},
 		configurable: true,
 	});
 
-	Object.defineProperty(structure.prototype, 'isEmpty', { // if this container-like object is empty
+	Object.defineProperty(structure.prototype, "isEmpty", {
+		// if this container-like object is empty
 		get(this: StructureContainer) {
 			return this.store.getUsedCapacity() === 0;
 		},
@@ -88,23 +91,29 @@ for (const structure of StorageLikeStructures) {
 
 // Controller prototypes ===============================================================================================
 
-Object.defineProperty(StructureController.prototype, 'reservedByMe', {
+Object.defineProperty(StructureController.prototype, "reservedByMe", {
 	get(this: StructureController) {
-		return this.reservation && this.reservation.username == config.MY_USERNAME;
+		return (
+			this.reservation && this.reservation.username == config.MY_USERNAME
+		);
 	},
 	configurable: true,
 });
 
-Object.defineProperty(StructureController.prototype, 'signedByMe', {
+Object.defineProperty(StructureController.prototype, "signedByMe", {
 	get(this: StructureController) {
-		return this.sign && this.sign.username == config.MY_USERNAME && Game.time - this.sign.time < 250000;
+		return (
+			this.sign &&
+			this.sign.username == config.MY_USERNAME &&
+			Game.time - this.sign.time < 250000
+		);
 	},
 	configurable: true,
 });
 
-Object.defineProperty(StructureController.prototype, 'signedByScreeps', {
+Object.defineProperty(StructureController.prototype, "signedByScreeps", {
 	get(this: StructureController) {
-		return this.sign && this.sign.username == 'Screeps';
+		return this.sign && this.sign.username == "Screeps";
 	},
 	configurable: true,
 });
@@ -122,7 +131,7 @@ Object.defineProperty(StructureController.prototype, 'signedByScreeps', {
 // Storage prototypes ==================================================================================================
 
 declare const Store: any; // Store prototype isn't included in typed-screeps yet
-Object.defineProperty(Store.prototype, 'contents', {
+Object.defineProperty(Store.prototype, "contents", {
 	get(this: StoreDefinition) {
 		return <StoreContentsArray>Object.entries(this);
 	},
@@ -133,14 +142,16 @@ Object.defineProperty(Store.prototype, 'contents', {
 
 // Terminal prototypes =================================================================================================
 
-Object.defineProperty(StructureTerminal.prototype, 'isReady', { // the terminal is ready to send or deal
+Object.defineProperty(StructureTerminal.prototype, "isReady", {
+	// the terminal is ready to send or deal
 	get(this: StructureTerminal) {
 		return this.cooldown == 0 && !this._notReady;
 	},
 	configurable: true,
 });
 
-Object.defineProperty(StructureTerminal.prototype, 'hasReceived', { // terminal received this tick via send/deal
+Object.defineProperty(StructureTerminal.prototype, "hasReceived", {
+	// terminal received this tick via send/deal
 	get(this: StructureTerminal) {
 		return this._hasReceived;
 	},
@@ -149,12 +160,23 @@ Object.defineProperty(StructureTerminal.prototype, 'hasReceived', { // terminal 
 
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const _terminalSend = StructureTerminal.prototype.send;
-StructureTerminal.prototype.send = function(resourceType: ResourceConstant, amount: number, destination: string,
-											description?: string): ScreepsReturnCode {
-	const response = _terminalSend.call(this, resourceType, amount, destination, description);
+StructureTerminal.prototype.send = function (
+	resourceType: ResourceConstant,
+	amount: number,
+	destination: string,
+	description?: string
+): ScreepsReturnCode {
+	const response = _terminalSend.call(
+		this,
+		resourceType,
+		amount,
+		destination,
+		description
+	);
 	if (response == OK) {
 		this._notReady = true;
-		const receiver = Game.rooms[destination] && Game.rooms[destination].terminal;
+		const receiver =
+			Game.rooms[destination] && Game.rooms[destination].terminal;
 		if (receiver) {
 			receiver._hasReceived = true;
 		}

@@ -1,9 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
-
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type fortifyTargetType = StructureWall | StructureRampart;
-export const fortifyTaskName = 'fortify';
+export const fortifyTaskName = "fortify";
 
 @profile
 export class TaskFortify extends Task<fortifyTargetType> {
@@ -11,7 +10,11 @@ export class TaskFortify extends Task<fortifyTargetType> {
 		hitsMax: number | undefined;
 	};
 
-	constructor(target: fortifyTargetType, hitsMax?: number, options = {} as TaskOptions) {
+	constructor(
+		target: fortifyTargetType,
+		hitsMax?: number,
+		options = {} as TaskOptions
+	) {
 		super(fortifyTaskName, target, options);
 		// Settings
 		this.settings.timeout = 100; // Don't want workers to fortify indefinitely
@@ -21,11 +24,14 @@ export class TaskFortify extends Task<fortifyTargetType> {
 	}
 
 	isValidTask() {
-		return (this.creep.store.energy > 0); // Times out once creep is out of energy
+		return this.creep.store.energy > 0; // Times out once creep is out of energy
 	}
 
 	isValidTarget() {
-		return this.target && this.target.hits < (this.data.hitsMax || this.target.hitsMax);
+		return (
+			this.target &&
+			this.target.hits < (this.data.hitsMax || this.target.hitsMax)
+		);
 	}
 
 	work() {

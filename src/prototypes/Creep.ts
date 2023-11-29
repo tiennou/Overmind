@@ -4,27 +4,37 @@ import { PERMACACHE } from "caching/PermaCache";
 
 // Boosting logic ------------------------------------------------------------------------------------------------------
 
-Object.defineProperty(Creep.prototype, 'boosts', {
+Object.defineProperty(Creep.prototype, "boosts", {
 	get(this: Creep) {
 		if (!this._boosts) {
-			this._boosts = _.compact(_.unique(_.map(this.body, bodyPart => <ResourceConstant>bodyPart.boost)));
+			this._boosts = _.compact(
+				_.unique(
+					_.map(
+						this.body,
+						(bodyPart) => <ResourceConstant>bodyPart.boost
+					)
+				)
+			);
 		}
 		return this._boosts;
 	},
 	configurable: true,
 });
 
-Object.defineProperty(Creep.prototype, 'boostCounts', {
+Object.defineProperty(Creep.prototype, "boostCounts", {
 	get(this: Creep) {
 		if (!this._boostCounts) {
-			this._boostCounts = _.countBy(this.body, bodyPart => bodyPart.boost);
+			this._boostCounts = _.countBy(
+				this.body,
+				(bodyPart) => bodyPart.boost
+			);
 		}
 		return this._boostCounts;
 	},
 	configurable: true,
 });
 
-Object.defineProperty(Creep.prototype, 'approxMoveSpeed', {
+Object.defineProperty(Creep.prototype, "approxMoveSpeed", {
 	get(this: Creep) {
 		if (this._moveSpeed == undefined) {
 			const movePower = _.sum(this.body, (part) => {
@@ -34,7 +44,9 @@ Object.defineProperty(Creep.prototype, 'approxMoveSpeed', {
 					return 0;
 				}
 			});
-			const nonMoveParts = _.sum(this.body, (part) => part.type != MOVE ? 1 : 0);
+			const nonMoveParts = _.sum(this.body, (part) =>
+				part.type != MOVE ? 1 : 0
+			);
 			this._moveSpeed = Math.max(movePower / nonMoveParts, 1); // if nonMoveParts == 0, this will be Infinity -> 1
 		}
 		return this._moveSpeed;
@@ -42,7 +54,7 @@ Object.defineProperty(Creep.prototype, 'approxMoveSpeed', {
 	configurable: true,
 });
 
-Object.defineProperty(Creep.prototype, 'inRampart', {
+Object.defineProperty(Creep.prototype, "inRampart", {
 	get(this: Creep) {
 		return !!this.pos.lookForStructure(STRUCTURE_RAMPART); // this assumes hostile creeps can't stand in my ramparts
 	},
@@ -50,20 +62,23 @@ Object.defineProperty(Creep.prototype, 'inRampart', {
 });
 
 // Permanently cached properties
-PERMACACHE.bodypartCounts = PERMACACHE.bodypartCounts || <typeof PERMACACHE.bodypartCounts>{};
-Object.defineProperty(Creep.prototype, 'bodypartCounts', {
+PERMACACHE.bodypartCounts =
+	PERMACACHE.bodypartCounts || <typeof PERMACACHE.bodypartCounts>{};
+Object.defineProperty(Creep.prototype, "bodypartCounts", {
 	get(this: Creep) {
 		if (PERMACACHE.bodypartCounts[this.id] === undefined) {
-			PERMACACHE.bodypartCounts[this.id] = <Record<string, number>>_.countBy(this.body, (part: BodyPartDefinition) => part.type);
+			PERMACACHE.bodypartCounts[this.id] = <Record<string, number>>(
+				_.countBy(this.body, (part: BodyPartDefinition) => part.type)
+			);
 			_.defaults(PERMACACHE.bodypartCounts[this.id], {
-				[MOVE]         : 0,
-				[WORK]         : 0,
-				[CARRY]        : 0,
-				[ATTACK]       : 0,
+				[MOVE]: 0,
+				[WORK]: 0,
+				[CARRY]: 0,
+				[ATTACK]: 0,
 				[RANGED_ATTACK]: 0,
-				[TOUGH]        : 0,
-				[HEAL]         : 0,
-				[CLAIM]        : 0,
+				[TOUGH]: 0,
+				[HEAL]: 0,
+				[CLAIM]: 0,
 			});
 		}
 		return PERMACACHE.bodypartCounts[this.id];
@@ -72,18 +87,15 @@ Object.defineProperty(Creep.prototype, 'bodypartCounts', {
 });
 
 PERMACACHE.isPlayer = PERMACACHE.isPlayer || {};
-Object.defineProperty(Creep.prototype, 'isPlayer', {
+Object.defineProperty(Creep.prototype, "isPlayer", {
 	get(this: Creep) {
 		if (PERMACACHE.isPlayer[this.id] === undefined) {
-			PERMACACHE.isPlayer[this.id] = this.owner.username != 'Invader' &&
-										  this.owner.username != 'Source Keeper' &&
-										  this.owner.username != 'Screeps';
+			PERMACACHE.isPlayer[this.id] =
+				this.owner.username != "Invader" &&
+				this.owner.username != "Source Keeper" &&
+				this.owner.username != "Screeps";
 		}
 		return PERMACACHE.isPlayer[this.id];
 	},
 	configurable: true,
 });
-
-
-
-

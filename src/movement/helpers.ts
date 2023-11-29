@@ -5,7 +5,9 @@ import { getDefaultTerrainCosts } from "./Pathing";
 /**
  * Returns destination.pos if destination has a position, or destination if destination is a RoomPosition
  */
-export function normalizePos(destination: _HasRoomPosition | RoomPosition): RoomPosition {
+export function normalizePos(
+	destination: _HasRoomPosition | RoomPosition
+): RoomPosition {
 	return (<_HasRoomPosition>destination).pos || destination;
 }
 
@@ -26,28 +28,43 @@ export function sameCoord(pos1: Coord, pos2: Coord): boolean {
 /**
  * Returns the number of move parts and number of weight-generating parts in a creep
  */
-export function getCreepWeightInfo(creep: Creep, analyzeCarry = true): { move: number, weighted: number } {
+export function getCreepWeightInfo(
+	creep: Creep,
+	analyzeCarry = true
+): { move: number; weighted: number } {
 	// Compute number of weighted and unweighted bodyparts
 	const unweightedParts = analyzeCarry ? [MOVE, CARRY] : [MOVE];
-	const bodyParts = _.countBy(creep.body, p => _.contains(unweightedParts, p.type) ? p.type : 'weighted');
+	const bodyParts = _.countBy(creep.body, (p) =>
+		_.contains(unweightedParts, p.type) ? p.type : "weighted"
+	);
 	bodyParts.move = bodyParts.move || 0;
 	bodyParts.weighted = bodyParts.weighted || 0;
 	if (analyzeCarry && bodyParts[CARRY]) {
-		bodyParts.weighted += Math.ceil(bodyParts[CARRY] * creep.store.getUsedCapacity() / creep.store.getCapacity());
+		bodyParts.weighted += Math.ceil(
+			(bodyParts[CARRY] * creep.store.getUsedCapacity()) /
+				creep.store.getCapacity()
+		);
 	}
 	// Account for boosts
 	for (const part of creep.body) {
 		if (part.type == MOVE && part.boost) {
-			bodyParts.move += (BOOSTS.move[part.boost].fatigue - 1);
+			bodyParts.move += BOOSTS.move[part.boost].fatigue - 1;
 		}
 	}
-	return bodyParts as { move: number, weighted: number, [other: string]: number };
+	return bodyParts as {
+		move: number;
+		weighted: number;
+		[other: string]: number;
+	};
 }
 
 /**
  * Get terrain costs which take into account a creep's individual fatigue stats
  */
-export function getTerrainCosts(creep: AnyCreep | AnyZerg): { plainCost: number, swampCost: number } {
+export function getTerrainCosts(creep: AnyCreep | AnyZerg): {
+	plainCost: number;
+	swampCost: number;
+} {
 	if (isStandardZerg(creep)) {
 		const data = getCreepWeightInfo(creep.creep);
 		const fatigueRatio = data.weighted / data.move;
@@ -60,4 +77,3 @@ export function getTerrainCosts(creep: AnyCreep | AnyZerg): { plainCost: number,
 	}
 	return getDefaultTerrainCosts();
 }
-

@@ -1,9 +1,8 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type upgradeTargetType = StructureController;
-export const upgradeTaskName = 'upgrade';
-
+export const upgradeTaskName = "upgrade";
 
 @profile
 export class TaskUpgrade extends Task<upgradeTargetType> {
@@ -15,7 +14,7 @@ export class TaskUpgrade extends Task<upgradeTargetType> {
 	}
 
 	isValidTask() {
-		return (this.creep.store.energy > 0);
+		return this.creep.store.energy > 0;
 	}
 
 	isValidTarget() {
@@ -26,4 +25,3 @@ export class TaskUpgrade extends Task<upgradeTargetType> {
 		return this.creep.upgradeController(this.target);
 	}
 }
-

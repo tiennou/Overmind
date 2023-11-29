@@ -1,22 +1,23 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
+export type transferTargetType = TransferrableStoreStructure | Creep;
 
-export type transferTargetType =
-	TransferrableStoreStructure
-	| Creep;
-
-export const transferTaskName = 'transfer';
+export const transferTaskName = "transfer";
 
 @profile
 export class TaskTransfer extends Task<transferTargetType> {
 	data: {
-		resourceType: ResourceConstant
-		amount: number | undefined
+		resourceType: ResourceConstant;
+		amount: number | undefined;
 	};
 
-	constructor(target: transferTargetType,
-				resourceType: ResourceConstant = RESOURCE_ENERGY, amount?: number, options = {} as TaskOptions) {
+	constructor(
+		target: transferTargetType,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number,
+		options = {} as TaskOptions
+	) {
 		super(transferTaskName, target, options);
 		// Settings
 		this.settings.oneShot = true;
@@ -32,10 +33,17 @@ export class TaskTransfer extends Task<transferTargetType> {
 
 	isValidTarget() {
 		const amount = this.data.amount || 1;
-		return (this.target.store.getFreeCapacity(this.data.resourceType) ?? 0) >= amount;
+		return (
+			(this.target.store.getFreeCapacity(this.data.resourceType) ?? 0) >=
+			amount
+		);
 	}
 
 	work() {
-		return this.creep.transfer(this.target, this.data.resourceType, this.data.amount);
+		return this.creep.transfer(
+			this.target,
+			this.data.resourceType,
+			this.data.amount
+		);
 	}
 }

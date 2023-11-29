@@ -1,48 +1,46 @@
 // Jump table to instantiate flags based on type
 
-import { DirectivePrioritize } from './colony/prioritize';
-import {DirectiveClearRoom} from './colony/clearRoom';
-import {DirectiveColonize} from './colony/colonize';
-import {DirectiveIncubate} from './colony/incubate';
-import {DirectiveOutpost} from './colony/outpost';
-import {DirectiveSKOutpost} from './colony/outpostSK';
-import {DirectivePoisonRoom} from './colony/poisonRoom';
-import {DirectiveGuard} from './defense/guard';
-import {DirectiveInvasionDefense} from './defense/invasionDefense';
-import {DirectiveOutpostDefense} from './defense/outpostDefense';
-import {Directive} from './Directive';
-import {DirectiveControllerAttack} from './offense/controllerAttack';
-import {DirectiveHarass} from './offense/harass';
-import {DirectivePairDestroy} from './offense/pairDestroy';
-import {DirectiveSwarmDestroy} from './offense/swarmDestroy';
-import {DirectiveBaseOperator} from './powerCreeps/baseOperator';
-import {DirectiveExtract} from './resource/extract';
-import {DirectiveHarvest} from './resource/harvest';
-import {DirectiveHaul} from './resource/haul';
-import {DirectivePowerMine} from './resource/powerMine';
-import {DirectiveRPBunker} from './roomPlanner/roomPlanner_bunker';
-import {DirectiveRPCommandCenter} from './roomPlanner/roomPlanner_commandCenter';
-import {DirectiveRPHatchery} from './roomPlanner/roomPlanner_hatchery';
-import {DirectiveBootstrap} from './situational/bootstrap';
-import {DirectiveNukeResponse} from './situational/nukeResponse';
-import {DirectiveNukeTarget} from './situational/nukeTarget';
-import {DirectivePortalScout} from './situational/portalScout';
-import {DirectiveRemoteUpgrade} from './situational/remoteUpgrade';
-import {DirectiveStronghold} from './situational/stronghold';
-import {DirectiveDismantle} from './targeting/dismantle';
-import {DirectiveModularDismantle} from './targeting/modularDismantle';
-import {DirectiveTargetSiege} from './targeting/siegeTarget';
-import {DirectiveTerminalEvacuateState} from './terminalState/terminalState_evacuate';
-import {DirectiveTerminalRebuildState} from './terminalState/terminalState_rebuild';
-import { DirectiveAvoid } from './targeting/avoid';
+import { DirectivePrioritize } from "./colony/prioritize";
+import { DirectiveClearRoom } from "./colony/clearRoom";
+import { DirectiveColonize } from "./colony/colonize";
+import { DirectiveIncubate } from "./colony/incubate";
+import { DirectiveOutpost } from "./colony/outpost";
+import { DirectiveSKOutpost } from "./colony/outpostSK";
+import { DirectivePoisonRoom } from "./colony/poisonRoom";
+import { DirectiveGuard } from "./defense/guard";
+import { DirectiveInvasionDefense } from "./defense/invasionDefense";
+import { DirectiveOutpostDefense } from "./defense/outpostDefense";
+import { Directive } from "./Directive";
+import { DirectiveControllerAttack } from "./offense/controllerAttack";
+import { DirectiveHarass } from "./offense/harass";
+import { DirectivePairDestroy } from "./offense/pairDestroy";
+import { DirectiveSwarmDestroy } from "./offense/swarmDestroy";
+import { DirectiveBaseOperator } from "./powerCreeps/baseOperator";
+import { DirectiveExtract } from "./resource/extract";
+import { DirectiveHarvest } from "./resource/harvest";
+import { DirectiveHaul } from "./resource/haul";
+import { DirectivePowerMine } from "./resource/powerMine";
+import { DirectiveRPBunker } from "./roomPlanner/roomPlanner_bunker";
+import { DirectiveRPCommandCenter } from "./roomPlanner/roomPlanner_commandCenter";
+import { DirectiveRPHatchery } from "./roomPlanner/roomPlanner_hatchery";
+import { DirectiveBootstrap } from "./situational/bootstrap";
+import { DirectiveNukeResponse } from "./situational/nukeResponse";
+import { DirectiveNukeTarget } from "./situational/nukeTarget";
+import { DirectivePortalScout } from "./situational/portalScout";
+import { DirectiveRemoteUpgrade } from "./situational/remoteUpgrade";
+import { DirectiveStronghold } from "./situational/stronghold";
+import { DirectiveDismantle } from "./targeting/dismantle";
+import { DirectiveModularDismantle } from "./targeting/modularDismantle";
+import { DirectiveTargetSiege } from "./targeting/siegeTarget";
+import { DirectiveTerminalEvacuateState } from "./terminalState/terminalState_evacuate";
+import { DirectiveTerminalRebuildState } from "./terminalState/terminalState_rebuild";
+import { DirectiveAvoid } from "./targeting/avoid";
 
 /**
  * This is the initializer for directives, which maps flags by their color code to the corresponding directive
  */
 export function DirectiveWrapper(flag: Flag): Directive | undefined {
-
 	switch (flag.color) {
-
 		// Colony directives ===========================================================================================
 		case COLOR_PURPLE:
 			switch (flag.secondaryColor) {
@@ -167,5 +165,4 @@ export function DirectiveWrapper(flag: Flag): Directive | undefined {
 			}
 			break;
 	}
-
 }

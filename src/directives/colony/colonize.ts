@@ -1,22 +1,23 @@
-import {Colony} from '../../Colony';
-import {log} from '../../console/log';
-import {Roles} from '../../creepSetups/setups';
-import {ClaimingOverlord} from '../../overlords/colonization/claimer';
-import {PioneerOverlord} from '../../overlords/colonization/pioneer';
-import {profile} from '../../profiler/decorator';
-import {Cartographer, ROOMTYPE_CONTROLLER} from '../../utilities/Cartographer';
-import {printRoomName} from '../../utilities/utils';
-import {Directive} from '../Directive';
-import { DirectiveIncubate } from './incubate';
-
+import { Colony } from "../../Colony";
+import { log } from "../../console/log";
+import { Roles } from "../../creepSetups/setups";
+import { ClaimingOverlord } from "../../overlords/colonization/claimer";
+import { PioneerOverlord } from "../../overlords/colonization/pioneer";
+import { profile } from "../../profiler/decorator";
+import {
+	Cartographer,
+	ROOMTYPE_CONTROLLER,
+} from "../../utilities/Cartographer";
+import { printRoomName } from "../../utilities/utils";
+import { Directive } from "../Directive";
+import { DirectiveIncubate } from "./incubate";
 
 /**
  * Claims a new room and builds a spawn but does not incubate. Removes when spawn is constructed.
  */
 @profile
 export class DirectiveColonize extends Directive {
-
-	static directiveName = 'colonize';
+	static directiveName = "colonize";
 	static color = COLOR_PURPLE;
 	static secondaryColor = COLOR_GREY;
 
@@ -30,14 +31,25 @@ export class DirectiveColonize extends Directive {
 
 	constructor(flag: Flag) {
 		flag.memory.allowPortals = true;
-		super(flag, colony => colony.level >= DirectiveColonize.requiredRCL
-							  && colony.name != Directive.getPos(flag).roomName && colony.spawns.length > 0);
+		super(
+			flag,
+			(colony) =>
+				colony.level >= DirectiveColonize.requiredRCL &&
+				colony.name != Directive.getPos(flag).roomName &&
+				colony.spawns.length > 0
+		);
 		// Register incubation status
-		this.toColonize = this.room ? Overmind.colonies[Overmind.colonyMap[this.room.name]] : undefined;
+		this.toColonize =
+			this.room ?
+				Overmind.colonies[Overmind.colonyMap[this.room.name]]
+			:	undefined;
 		// Remove if misplaced
 		if (Cartographer.roomType(this.pos.roomName) != ROOMTYPE_CONTROLLER) {
-			log.warning(`${this.print}: ${printRoomName(this.pos.roomName)} is not a controller room; ` +
-						`removing directive!`);
+			log.warning(
+				`${this.print}: ${printRoomName(
+					this.pos.roomName
+				)} is not a controller room; ` + `removing directive!`
+			);
 			this.remove(true);
 			return;
 		}
@@ -49,9 +61,13 @@ export class DirectiveColonize extends Directive {
 	}
 
 	init() {
-		const incubator = DirectiveIncubate.findInRoom(this.flag.pos.roomName).shift();
+		const incubator = DirectiveIncubate.findInRoom(
+			this.flag.pos.roomName
+		).shift();
 		if (incubator && incubator.colony.spawnGroup) {
-			this.alert(`Colonization in progress, incubating from ${incubator.colony.spawnGroup.colonyNames}`);
+			this.alert(
+				`Colonization in progress, incubating from ${incubator.colony.spawnGroup.colonyNames}`
+			);
 		} else {
 			this.alert(`Colonization in progress`);
 		}
@@ -61,26 +77,43 @@ export class DirectiveColonize extends Directive {
 		// TODO bug where can't claim a reservation room -> this.flag.pos.roomName == this.toColonize.name
 		if (this.toColonize && this.toColonize.spawns.length > 0) {
 			// Reassign all pioneers to be miners and workers
-			const miningOverlords = _.map(this.toColonize.miningSites, site => site.overlords.mine);
+			const miningOverlords = _.map(
+				this.toColonize.miningSites,
+				(site) => site.overlords.mine
+			);
 			for (const pioneer of this.overlords.pioneer.pioneers) {
 				const miningOverlord = miningOverlords.shift();
 				if (miningOverlord) {
 					if (verbose) {
-						log.debug(`Reassigning: ${pioneer.print} to mine: ${miningOverlord.print}`);
+						log.debug(
+							`Reassigning: ${pioneer.print} to mine: ${miningOverlord.print}`
+						);
 					}
 					pioneer.reassign(miningOverlord, Roles.drone);
 				} else {
 					if (verbose) {
-						log.debug(`Reassigning: ${pioneer.print} to work: ${this.toColonize.overlords.work.print}`);
+						log.debug(
+							`Reassigning: ${pioneer.print} to work: ${this.toColonize.overlords.work.print}`
+						);
 					}
-					pioneer.reassign(this.toColonize.overlords.work, Roles.worker);
+					pioneer.reassign(
+						this.toColonize.overlords.work,
+						Roles.worker
+					);
 				}
 			}
 			// Remove the directive
 			this.remove();
 		}
-		if (Game.time % 10 == 2 && this.room && this.room.owner && !this.room.my) {
-			log.notify(`Removing Colonize directive in ${this.pos.roomName}: room already owned by another player.`);
+		if (
+			Game.time % 10 == 2 &&
+			this.room &&
+			this.room.owner &&
+			!this.room.my
+		) {
+			log.notify(
+				`Removing Colonize directive in ${this.pos.roomName}: room already owned by another player.`
+			);
 			this.remove();
 		}
 	}

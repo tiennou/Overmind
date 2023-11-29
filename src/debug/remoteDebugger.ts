@@ -1,12 +1,12 @@
 /* tslint:disable:no-eval */
 
-import { config } from 'config';
-import {log} from '../console/log';
-import {Segmenter, SEGMENTS} from '../memory/Segmenter';
-import {alignedNewline} from '../utilities/stringConstants';
+import { config } from "config";
+import { log } from "../console/log";
+import { Segmenter, SEGMENTS } from "../memory/Segmenter";
+import { alignedNewline } from "../utilities/stringConstants";
 
 const DEBUG_TIMEOUT = 1000;
-const NO_COMMAND = 'No command';
+const NO_COMMAND = "No command";
 
 export interface DebuggerMemory {
 	username: string | undefined;
@@ -17,11 +17,11 @@ export interface DebuggerMemory {
 }
 
 const defaultDebuggerMemory: DebuggerMemory = {
-	username  : undefined,
-	enabled   : false,
+	username: undefined,
+	enabled: false,
 	expiration: 0,
-	command   : undefined,
-	response  : undefined,
+	command: undefined,
+	response: undefined,
 };
 
 interface DebuggerSegment {
@@ -34,9 +34,12 @@ interface DebuggerSegment {
  * segments. Can be toggled on and off with console commands startRemoteDebugSession() and endRemoteDebugSession().
  */
 export class RemoteDebugger {
-
 	constructor() {
-		Memory.remoteDebugger = _.defaultsDeep({}, Memory.remoteDebugger, defaultDebuggerMemory);
+		Memory.remoteDebugger = _.defaultsDeep(
+			{},
+			Memory.remoteDebugger,
+			defaultDebuggerMemory
+		);
 	}
 
 	private get memory(): DebuggerMemory {
@@ -47,7 +50,11 @@ export class RemoteDebugger {
 	 * Push all commands from secret memory to public memory and clear secret memory commands
 	 */
 	private pushCommands_master(): void {
-		Segmenter.setSegmentProperty(SEGMENTS.remoteDebugger, 'command', this.memory.command);
+		Segmenter.setSegmentProperty(
+			SEGMENTS.remoteDebugger,
+			"command",
+			this.memory.command
+		);
 		if (this.memory.command) {
 			log.info(`[DEBUGGER] Sending command: ${this.memory.command}`);
 		}
@@ -58,7 +65,8 @@ export class RemoteDebugger {
 	 * Fetch the response from the debugee
 	 */
 	private fetchResponse_master(): string | undefined {
-		const response = Segmenter.getForeignSegmentProperty<DebuggerSegment>('response');
+		const response =
+			Segmenter.getForeignSegmentProperty<DebuggerSegment>("response");
 		return response;
 	}
 
@@ -66,7 +74,8 @@ export class RemoteDebugger {
 	 * Execute the commands you are given
 	 */
 	private fetchCommands_slave(): void {
-		const cmd = Segmenter.getForeignSegmentProperty<DebuggerSegment>('command');
+		const cmd =
+			Segmenter.getForeignSegmentProperty<DebuggerSegment>("command");
 		if (cmd) {
 			log.info(`[DEBUGGER] Executing command: ${cmd}`);
 			// eslint-disable-next-line
@@ -82,7 +91,11 @@ export class RemoteDebugger {
 	 * Push the response from the last run command
 	 */
 	private pushResponse_slave(): void {
-		Segmenter.setSegmentProperty(SEGMENTS.remoteDebugger, 'response', this.memory.response);
+		Segmenter.setSegmentProperty(
+			SEGMENTS.remoteDebugger,
+			"response",
+			this.memory.response
+		);
 		this.memory.response = undefined;
 	}
 
@@ -93,8 +106,11 @@ export class RemoteDebugger {
 	enable() {
 		this.memory.enabled = true;
 		this.memory.expiration = Game.time + DEBUG_TIMEOUT;
-		log.info(`[DEBUGGER] Starting remote debug session. Timeout: ${this.memory.expiration} ` + alignedNewline +
-				 `Warning: this enables remote arbitrary code execution!`);
+		log.info(
+			`[DEBUGGER] Starting remote debug session. Timeout: ${this.memory.expiration} ` +
+				alignedNewline +
+				`Warning: this enables remote arbitrary code execution!`
+		);
 	}
 
 	disable() {
@@ -103,12 +119,13 @@ export class RemoteDebugger {
 		log.info(`[DEBUGGER] Remote debugging session ended`);
 	}
 
-
 	connect(username: string) {
 		this.memory.username = username;
 		this.memory.enabled = true;
 		this.memory.expiration = Game.time + DEBUG_TIMEOUT;
-		log.info(`[DEBUGGER] Starting remote debug session with ${username}. Timeout: ${this.memory.expiration}`);
+		log.info(
+			`[DEBUGGER] Starting remote debug session with ${username}. Timeout: ${this.memory.expiration}`
+		);
 	}
 
 	cancelCommand(): void {
@@ -140,24 +157,31 @@ export class RemoteDebugger {
 
 	run() {
 		if (this.memory.enabled) {
-
 			// Run the debugger
 			if (config.MY_USERNAME == config.MUON) {
 				if (this.memory.username) {
 					Segmenter.requestSegments(SEGMENTS.remoteDebugger);
-					Segmenter.requestForeignSegment(this.memory.username, SEGMENTS.remoteDebugger);
+					Segmenter.requestForeignSegment(
+						this.memory.username,
+						SEGMENTS.remoteDebugger
+					);
 					Segmenter.markSegmentAsPublic(SEGMENTS.remoteDebugger);
 					this.run_master();
 				}
 			} else {
 				Segmenter.requestSegments(SEGMENTS.remoteDebugger);
-				Segmenter.requestForeignSegment(config.MUON, SEGMENTS.remoteDebugger);
+				Segmenter.requestForeignSegment(
+					config.MUON,
+					SEGMENTS.remoteDebugger
+				);
 				Segmenter.markSegmentAsPublic(SEGMENTS.remoteDebugger);
 				this.run_slave();
 			}
 
 			if (Game.time % 20 == 0) {
-				log.alert(`[DEBUGGER] Remote session is still enabled! Expiration: ${this.memory.expiration}`);
+				log.alert(
+					`[DEBUGGER] Remote session is still enabled! Expiration: ${this.memory.expiration}`
+				);
 			}
 
 			// Disable after timeout
@@ -166,5 +190,4 @@ export class RemoteDebugger {
 			}
 		}
 	}
-
 }

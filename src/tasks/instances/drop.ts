@@ -1,26 +1,31 @@
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
-export type dropTargetType = HasRef & _HasRoomPosition | RoomPosition;
-export const dropTaskName = 'drop';
+export type dropTargetType = (HasRef & _HasRoomPosition) | RoomPosition;
+export const dropTaskName = "drop";
 
 @profile
 export class TaskDrop extends Task<dropTargetType> {
-
-	static taskName = 'drop';
+	static taskName = "drop";
 	data: {
-		resourceType: ResourceConstant
-		amount: number | undefined
+		resourceType: ResourceConstant;
+		amount: number | undefined;
 	};
 
-	constructor(target: dropTargetType,
-				resourceType: ResourceConstant = RESOURCE_ENERGY,
-				amount?: number,
-				options                        = {} as TaskOptions) {
+	constructor(
+		target: dropTargetType,
+		resourceType: ResourceConstant = RESOURCE_ENERGY,
+		amount?: number,
+		options = {} as TaskOptions
+	) {
 		if (target instanceof RoomPosition) {
-			super(TaskDrop.taskName, {ref: '', _pos: target}, options);
+			super(TaskDrop.taskName, { ref: "", _pos: target }, options);
 		} else {
-			super(TaskDrop.taskName, {ref: target.ref, _pos: target.pos}, options);
+			super(
+				TaskDrop.taskName,
+				{ ref: target.ref, _pos: target.pos },
+				options
+			);
 		}
 		// Settings
 		this.settings.targetRange = 0;

@@ -1,57 +1,77 @@
-import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectivePairDestroy} from '../../directives/offense/pairDestroy';
-import {DirectiveTargetSiege} from '../../directives/targeting/siegeTarget';
-import {CombatIntel} from '../../intel/CombatIntel';
-import {RoomIntel} from '../../intel/RoomIntel';
-import {Movement} from '../../movement/Movement';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {CombatTargeting} from '../../targeting/CombatTargeting';
-import {CombatZerg} from '../../zerg/CombatZerg';
-import {Overlord} from '../Overlord';
+import { CombatSetups, Roles } from "../../creepSetups/setups";
+import { DirectivePairDestroy } from "../../directives/offense/pairDestroy";
+import { DirectiveTargetSiege } from "../../directives/targeting/siegeTarget";
+import { CombatIntel } from "../../intel/CombatIntel";
+import { RoomIntel } from "../../intel/RoomIntel";
+import { Movement } from "../../movement/Movement";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { CombatTargeting } from "../../targeting/CombatTargeting";
+import { CombatZerg } from "../../zerg/CombatZerg";
+import { Overlord } from "../Overlord";
 
 /**
  *  Destroyer overlord - spawns attacker/healer pairs for combat within a hostile room
  */
 @profile
 export class PairDestroyerOverlord extends Overlord {
-
 	directive: DirectivePairDestroy;
 	attackers: CombatZerg[];
 	healers: CombatZerg[];
 
 	static settings = {
-		retreatHitsPercent : 0.85,
+		retreatHitsPercent: 0.85,
 		reengageHitsPercent: 0.95,
 	};
 
-	constructor(directive: DirectivePairDestroy, priority = OverlordPriority.offense.destroy) {
-		super(directive, 'destroy', priority);
+	constructor(
+		directive: DirectivePairDestroy,
+		priority = OverlordPriority.offense.destroy
+	) {
+		super(directive, "destroy", priority);
 		this.directive = directive;
-		this.attackers = this.combatZerg(Roles.melee, {notifyWhenAttacked: false});
-		this.healers = this.combatZerg(Roles.healer, {notifyWhenAttacked: false});
+		this.attackers = this.combatZerg(Roles.melee, {
+			notifyWhenAttacked: false,
+		});
+		this.healers = this.combatZerg(Roles.healer, {
+			notifyWhenAttacked: false,
+		});
 	}
 
 	private findTarget(attacker: CombatZerg): Creep | Structure | undefined {
 		if (this.room) {
 			// Prioritize specifically targeted structures first
-			const targetingDirectives = DirectiveTargetSiege.find(this.room.flags) as DirectiveTargetSiege[];
-			const targetedStructures = _.compact(_.map(targetingDirectives,
-													   directive => directive.getTarget())) as Structure[];
+			const targetingDirectives = DirectiveTargetSiege.find(
+				this.room.flags
+			) as DirectiveTargetSiege[];
+			const targetedStructures = _.compact(
+				_.map(targetingDirectives, (directive) => directive.getTarget())
+			) as Structure[];
 			if (targetedStructures.length > 0) {
-				return CombatTargeting.findClosestReachable(attacker.pos, targetedStructures);
+				return CombatTargeting.findClosestReachable(
+					attacker.pos,
+					targetedStructures
+				);
 			} else {
 				// Target nearby hostile creeps
-				const creepTarget = CombatTargeting.findClosestHostile(attacker, {
-					checkReachable    : true,
-					ignoreCreepsAtEdge: true,
-					playerOnly        : true,
-					onlyUnramparted   : true
-				});
-				if (creepTarget) return creepTarget;
+				const creepTarget = CombatTargeting.findClosestHostile(
+					attacker,
+					{
+						checkReachable: true,
+						ignoreCreepsAtEdge: true,
+						playerOnly: true,
+						onlyUnramparted: true,
+					}
+				);
+				if (creepTarget) {
+					return creepTarget;
+				}
 				// Target nearby hostile structures
-				const structureTarget = CombatTargeting.findClosestPrioritizedStructure(attacker);
-				if (structureTarget) return structureTarget;
+				const structureTarget =
+					CombatTargeting.findClosestPrioritizedStructure(attacker);
+				if (structureTarget) {
+					return structureTarget;
+				}
 			}
 		} // TODO consider targets along path
 	}
@@ -73,8 +93,10 @@ export class PairDestroyerOverlord extends Overlord {
 		// Case 1: you don't have an active healer
 		if (!healer || healer.spawning || healer.needsBoosts) {
 			// Wait near the colony controller if you don't have a healer
-			if (attacker.pos.getMultiRoomRangeTo(this.colony.controller.pos) > 5) {
-				attacker.goTo(this.colony.controller, {range: 5});
+			if (
+				attacker.pos.getMultiRoomRangeTo(this.colony.controller.pos) > 5
+			) {
+				attacker.goTo(this.colony.controller, { range: 5 });
 			} else {
 				attacker.park();
 			}
@@ -82,10 +104,20 @@ export class PairDestroyerOverlord extends Overlord {
 			// Case 2: you have an active healer
 			// Activate retreat condition if necessary
 			// Handle recovery if low on HP
-			if (attacker.needsToRecover(PairDestroyerOverlord.settings.retreatHitsPercent) ||
-				healer.needsToRecover(PairDestroyerOverlord.settings.retreatHitsPercent)) {
+			if (
+				attacker.needsToRecover(
+					PairDestroyerOverlord.settings.retreatHitsPercent
+				) ||
+				healer.needsToRecover(
+					PairDestroyerOverlord.settings.retreatHitsPercent
+				)
+			) {
 				// Healer leads retreat to fallback position
-				Movement.pairwiseMove(healer, attacker, CombatIntel.getFallbackFrom(this.directive.pos));
+				Movement.pairwiseMove(
+					healer,
+					attacker,
+					CombatIntel.getFallbackFrom(this.directive.pos)
+				);
 			} else {
 				// Move to room and then perform attacking actions
 				if (!attacker.inSameRoomAs(this)) {
@@ -99,7 +131,11 @@ export class PairDestroyerOverlord extends Overlord {
 
 	private handleHealer(healer: CombatZerg): void {
 		// If there are no hostiles in the designated room, run medic actions
-		if (this.room && this.room.hostiles.length == 0 && this.room.hostileStructures.length == 0) {
+		if (
+			this.room &&
+			this.room.hostiles.length == 0 &&
+			this.room.hostileStructures.length == 0
+		) {
 			healer.doMedicActions(this.room.name);
 			return;
 		}
@@ -110,14 +146,19 @@ export class PairDestroyerOverlord extends Overlord {
 				healer.heal(healer);
 			}
 			// Wait near the colony controller if you don't have an attacker
-			if (healer.pos.getMultiRoomRangeTo(this.colony.controller.pos) > 5) {
-				healer.goTo(this.colony.controller, {range: 5});
+			if (
+				healer.pos.getMultiRoomRangeTo(this.colony.controller.pos) > 5
+			) {
+				healer.goTo(this.colony.controller, { range: 5 });
 			} else {
 				healer.park();
 			}
 		} else {
 			// Case 2: you have an attacker partner
-			if (attacker.hitsMax - attacker.hits > healer.hitsMax - healer.hits) {
+			if (
+				attacker.hitsMax - attacker.hits >
+				healer.hitsMax - healer.hits
+			) {
 				healer.heal(attacker);
 			} else {
 				healer.heal(healer);
@@ -137,13 +178,19 @@ export class PairDestroyerOverlord extends Overlord {
 			amount = 0;
 		}
 
-		const attackerPriority = this.attackers.length < this.healers.length ? this.priority - 0.1 : this.priority + 0.1;
+		const attackerPriority =
+			this.attackers.length < this.healers.length ?
+				this.priority - 0.1
+			:	this.priority + 0.1;
 		const attackerSetup = CombatSetups.zerglings.boosted.armored;
-		this.wishlist(amount, attackerSetup, {priority: attackerPriority});
+		this.wishlist(amount, attackerSetup, { priority: attackerPriority });
 
-		const healerPriority = this.healers.length < this.attackers.length ? this.priority - 0.1 : this.priority + 0.1;
-		const healerSetup =  CombatSetups.transfusers.boosted.default;
-		this.wishlist(amount, healerSetup, {priority: healerPriority});
+		const healerPriority =
+			this.healers.length < this.attackers.length ?
+				this.priority - 0.1
+			:	this.priority + 0.1;
+		const healerSetup = CombatSetups.transfusers.boosted.default;
+		this.wishlist(amount, healerSetup, { priority: healerPriority });
 	}
 
 	run() {

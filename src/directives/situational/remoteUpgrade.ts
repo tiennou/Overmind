@@ -1,7 +1,7 @@
-import {Colony} from '../../Colony';
-import {RemoteUpgradingOverlord} from '../../overlords/situational/remoteUpgrader';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
+import { Colony } from "../../Colony";
+import { RemoteUpgradingOverlord } from "../../overlords/situational/remoteUpgrader";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
 
 /**
  * Spawns remote upgraders and energy carriers to travel to a distant room to upgrade the controller. The directive
@@ -9,20 +9,23 @@ import {Directive} from '../Directive';
  */
 @profile
 export class DirectiveRemoteUpgrade extends Directive {
-
-	static directiveName = 'remoteUpgrade';
+	static directiveName = "remoteUpgrade";
 	static color = COLOR_ORANGE;
 	static secondaryColor = COLOR_YELLOW;
 
 	static requiredRCL = 8;
 
 	overlords: {
-		remoteUpgrade: RemoteUpgradingOverlord
+		remoteUpgrade: RemoteUpgradingOverlord;
 	};
 
 	constructor(flag: Flag) {
 		flag.memory.allowPortals = true;
-		super(flag, (colony: Colony) => colony.level >= DirectiveRemoteUpgrade.requiredRCL);
+		super(
+			flag,
+			(colony: Colony) =>
+				colony.level >= DirectiveRemoteUpgrade.requiredRCL
+		);
 	}
 
 	spawnMoarOverlords() {
@@ -34,7 +37,11 @@ export class DirectiveRemoteUpgrade extends Directive {
 	}
 
 	run(): void {
-		if (this.room && this.room.controller && this.room.controller.level == 8) {
+		if (
+			this.room &&
+			this.room.controller &&
+			this.room.controller.level == 8
+		) {
 			this.remove();
 		}
 	}

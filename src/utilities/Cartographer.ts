@@ -1,13 +1,13 @@
-import { PERMACACHE } from 'caching/PermaCache';
-import {profile} from '../profiler/decorator';
+import { PERMACACHE } from "caching/PermaCache";
+import { profile } from "../profiler/decorator";
 
-export const ROOMTYPE_SOURCEKEEPER = 'SK';
-export const ROOMTYPE_CORE = 'CORE';
-export const ROOMTYPE_CONTROLLER = 'CTRL';
-export const ROOMTYPE_ALLEY = 'ALLEY';
-export const ROOMTYPE_CROSSROAD = 'CROSSROAD';
+export const ROOMTYPE_SOURCEKEEPER = "SK";
+export const ROOMTYPE_CORE = "CORE";
+export const ROOMTYPE_CONTROLLER = "CTRL";
+export const ROOMTYPE_ALLEY = "ALLEY";
+export const ROOMTYPE_CROSSROAD = "CROSSROAD";
 
-export type RoomType = 'SK' | 'CORE' | 'CTRL' | 'ALLEY' | 'CROSSROAD';
+export type RoomType = "SK" | "CORE" | "CTRL" | "ALLEY" | "CROSSROAD";
 
 PERMACACHE.cartographerRoomTypes = PERMACACHE.cartographerRoomTypes || {};
 
@@ -17,7 +17,6 @@ PERMACACHE.cartographerRoomTypes = PERMACACHE.cartographerRoomTypes || {};
  */
 @profile
 export class Cartographer {
-
 	/**
 	 * Lists all rooms up to and including a given distance away, including roomName
 	 */
@@ -35,8 +34,16 @@ export class Cartographer {
 	/**
 	 * Recursively enumerate all rooms from a root node using depth first search to a maximum depth
 	 */
-	static recursiveRoomSearch(roomName: string, maxDepth: number): { [depth: number]: string[] } {
-		const visitedRooms = this._recursiveRoomSearch(roomName, 0, maxDepth, {});
+	static recursiveRoomSearch(
+		roomName: string,
+		maxDepth: number
+	): { [depth: number]: string[] } {
+		const visitedRooms = this._recursiveRoomSearch(
+			roomName,
+			0,
+			maxDepth,
+			{}
+		);
 		const roomDepths: { [depth: number]: string[] } = {};
 		for (const room in visitedRooms) {
 			const depth = visitedRooms[room];
@@ -51,8 +58,12 @@ export class Cartographer {
 	/**
 	 * The recursive part of recursiveRoomSearch. Yields inverted results mapping roomName to depth.
 	 */
-	private static _recursiveRoomSearch(roomName: string, depth: number, maxDepth: number,
-										visited: { [roomName: string]: number }): { [roomName: string]: number } {
+	private static _recursiveRoomSearch(
+		roomName: string,
+		depth: number,
+		maxDepth: number,
+		visited: { [roomName: string]: number }
+	): { [roomName: string]: number } {
 		if (visited[roomName] == undefined) {
 			visited[roomName] = depth;
 		} else {
@@ -62,8 +73,16 @@ export class Cartographer {
 		if (depth < maxDepth) {
 			for (const neighbor of neighbors) {
 				// Visit the neighbor if not already done or if this would be a more direct route
-				if (visited[neighbor] == undefined || depth + 1 < visited[neighbor]) {
-					this._recursiveRoomSearch(neighbor, depth + 1, maxDepth, visited);
+				if (
+					visited[neighbor] == undefined ||
+					depth + 1 < visited[neighbor]
+				) {
+					this._recursiveRoomSearch(
+						neighbor,
+						depth + 1,
+						maxDepth,
+						visited
+					);
 				}
 			}
 		}
@@ -81,9 +100,19 @@ export class Cartographer {
 				roomType = ROOMTYPE_CROSSROAD;
 			} else if (coords.x % 10 === 0 || coords.y % 10 === 0) {
 				roomType = ROOMTYPE_ALLEY;
-			} else if (coords.x % 10 != 0 && coords.x % 5 === 0 && coords.y % 10 != 0 && coords.y % 5 === 0) {
+			} else if (
+				coords.x % 10 != 0 &&
+				coords.x % 5 === 0 &&
+				coords.y % 10 != 0 &&
+				coords.y % 5 === 0
+			) {
 				roomType = ROOMTYPE_CORE;
-			} else if (coords.x % 10 <= 6 && coords.x % 10 >= 4 && coords.y % 10 <= 6 && coords.y % 10 >= 4) {
+			} else if (
+				coords.x % 10 <= 6 &&
+				coords.x % 10 >= 4 &&
+				coords.y % 10 <= 6 &&
+				coords.y % 10 >= 4
+			) {
 				roomType = ROOMTYPE_SOURCEKEEPER;
 			} else {
 				roomType = ROOMTYPE_CONTROLLER;
@@ -96,14 +125,18 @@ export class Cartographer {
 	/**
 	 * Get the name of a room offset from the anchor room
 	 */
-	static findRelativeRoomName(roomName: string, xDelta: number, yDelta: number): string {
+	static findRelativeRoomName(
+		roomName: string,
+		xDelta: number,
+		yDelta: number
+	): string {
 		const coords = this.getRoomCoordinates(roomName);
 		let xDir = coords.xDir;
-		if (xDir === 'W') {
+		if (xDir === "W") {
 			xDelta = -xDelta;
 		}
 		let yDir = coords.yDir;
-		if (yDir === 'N') {
+		if (yDir === "N") {
 			yDelta = -yDelta;
 		}
 		let x = coords.x + xDelta;
@@ -124,7 +157,10 @@ export class Cartographer {
 	/**
 	 * Find the relative x and y offsets of two rooms
 	 */
-	static findRoomCoordDeltas(origin: string, otherRoom: string): { x: number, y: number } {
+	static findRoomCoordDeltas(
+		origin: string,
+		otherRoom: string
+	): { x: number; y: number } {
 		const originCoords = this.getRoomCoordinates(origin);
 		const otherCoords = this.getRoomCoordinates(otherRoom);
 
@@ -139,14 +175,14 @@ export class Cartographer {
 		}
 
 		// normalize direction
-		if (originCoords.xDir === 'W') {
+		if (originCoords.xDir === "W") {
 			xDelta = -xDelta;
 		}
-		if (originCoords.yDir === 'N') {
+		if (originCoords.yDir === "N") {
 			yDelta = -yDelta;
 		}
 
-		return {x: xDelta, y: yDelta};
+		return { x: xDelta, y: yDelta };
 	}
 
 	/**
@@ -194,16 +230,16 @@ export class Cartographer {
 	 */
 	static oppositeDir(dir: string): string {
 		switch (dir) {
-			case 'W':
-				return 'E';
-			case 'E':
-				return 'W';
-			case 'N':
-				return 'S';
-			case 'S':
-				return 'N';
+			case "W":
+				return "E";
+			case "E":
+				return "W";
+			case "N":
+				return "S";
+			case "S":
+				return "N";
 			default:
-				return 'error';
+				return "error";
 		}
 	}
 
@@ -220,8 +256,8 @@ export class Cartographer {
 		const y = match[4];
 
 		return {
-			x   : Number(x),
-			y   : Number(y),
+			x: Number(x),
+			y: Number(y),
 			xDir: xDir,
 			yDir: yDir,
 		};
@@ -258,7 +294,9 @@ export class Cartographer {
 	 */
 	static describeExits(roomName: string) {
 		const exits = Game.map.describeExits(roomName);
-		if (!exits) return exits;
+		if (!exits) {
+			return exits;
+		}
 		const radius = Math.ceil(Game.map.getWorldSize() / 2) - 1;
 		const coord = this.getRoomCoordinates(roomName);
 		if (coord.x >= radius) {

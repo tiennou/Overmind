@@ -1,10 +1,8 @@
-import {log} from '../console/log';
-import {profile} from '../profiler/decorator';
-import {AnyZerg} from './AnyZerg';
+import { log } from "../console/log";
+import { profile } from "../profiler/decorator";
+import { AnyZerg } from "./AnyZerg";
 
-interface PowerZergMemory extends CreepMemory {
-
-}
+interface PowerZergMemory extends CreepMemory {}
 
 /**
  * Base class for all PowerCreeps. Note that PowerZerg will only wrap a power creep which is actively spawned in the
@@ -12,7 +10,6 @@ interface PowerZergMemory extends CreepMemory {
  */
 @profile
 export abstract class PowerZerg extends AnyZerg {
-
 	memory: PowerZergMemory;
 
 	isPowerZerg: true;
@@ -42,15 +39,19 @@ export abstract class PowerZerg extends AnyZerg {
 			this.room = this.overlord.colony.room;
 		}
 		if (this.pos == undefined && this.overlord) {
-			this.pos = this.overlord.colony.powerSpawn ? this.overlord.colony.powerSpawn.pos
-													   : this.overlord.colony.pos;
+			this.pos =
+				this.overlord.colony.powerSpawn ?
+					this.overlord.colony.powerSpawn.pos
+				:	this.overlord.colony.pos;
 		}
 		Overmind.powerZerg[this.name] = this;
 	}
 
 	refresh(): void {
 		// super.refresh(); // doesn't call super.refresh()
-		const powerCreep = Game.powerCreeps[this.name] as PowerCreep | undefined;
+		const powerCreep = Game.powerCreeps[this.name] as
+			| PowerCreep
+			| undefined;
 		if (powerCreep) {
 			this.creep = powerCreep;
 			this.pos = powerCreep.pos;
@@ -73,8 +74,10 @@ export abstract class PowerZerg extends AnyZerg {
 				this.room = this.overlord.colony.room;
 			}
 			if (this.pos == undefined && this.overlord) {
-				this.pos = this.overlord.colony.powerSpawn ? this.overlord.colony.powerSpawn.pos
-														   : this.overlord.colony.pos;
+				this.pos =
+					this.overlord.colony.powerSpawn ?
+						this.overlord.colony.powerSpawn.pos
+					:	this.overlord.colony.pos;
 			}
 		} else {
 			log.debug(`Deleting ${this.print} from global`);
@@ -106,7 +109,6 @@ export abstract class PowerZerg extends AnyZerg {
 	// rename(name: string): OK | ERR_NOT_OWNER | ERR_NAME_EXISTS | ERR_BUSY {
 	// 	return this.creep.rename(name);
 	// }
-
 
 	/**
 	 * Instantly restore time to live to the maximum using a Power Spawn or a Power Bank nearby.
@@ -141,5 +143,4 @@ export abstract class PowerZerg extends AnyZerg {
 	generateOps(): ScreepsReturnCode {
 		return this.creep.usePower(PWR_GENERATE_OPS);
 	}
-
 }

@@ -1,36 +1,108 @@
 // Reinstantiation of a task object from ProtoTask data
-import { deref, derefRoomPosition } from 'utilities/utils';
-import {log} from '../console/log';
-import profiler from '../profiler/screeps-profiler';
-import {attackTargetType, attackTaskName, TaskAttack} from './instances/attack';
-import {buildTargetType, buildTaskName, TaskBuild} from './instances/build';
-import {claimTargetType, claimTaskName, TaskClaim} from './instances/claim';
-import {dismantleTargetType, dismantleTaskName, TaskDismantle} from './instances/dismantle';
-import {dropTargetType, dropTaskName, TaskDrop} from './instances/drop';
-import {fortifyTargetType, fortifyTaskName, TaskFortify} from './instances/fortify';
-import {generateSafeModeTargetType, generateSafeModeTaskName, TaskGenerateSafeMode} from './instances/generateSafeMode';
-import {getBoostedTargetType, getBoostedTaskName, TaskGetBoosted} from './instances/getBoosted';
-import {getRenewedTargetType, getRenewedTaskName, TaskGetRenewed} from './instances/getRenewed';
-import {goToTaskName} from './instances/goTo';
-import {goToRoomTaskName, TaskGoToRoom} from './instances/goToRoom';
-import {harvestTargetType, harvestTaskName, TaskHarvest} from './instances/harvest';
-import {healTargetType, healTaskName, TaskHeal} from './instances/heal';
-import {TaskInvalid} from './instances/invalid';
-import {meleeAttackTargetType, meleeAttackTaskName, TaskMeleeAttack} from './instances/meleeAttack';
-import {pickupTargetType, pickupTaskName, TaskPickup} from './instances/pickup';
-import {rangedAttackTargetType, rangedAttackTaskName, TaskRangedAttack} from './instances/rangedAttack';
-import {rechargeTaskName, TaskRecharge} from './instances/recharge';
-import {repairTargetType, repairTaskName, TaskRepair} from './instances/repair';
-import {reserveTargetType, reserveTaskName, TaskReserve} from './instances/reserve';
-import {retireTaskName, TaskRetire} from './instances/retire';
-import {signControllerTargetType, signControllerTaskName, TaskSignController} from './instances/signController';
-import {TaskTransfer, transferTargetType, transferTaskName} from './instances/transfer';
+import { deref, derefRoomPosition } from "utilities/utils";
+import { log } from "../console/log";
+import profiler from "../profiler/screeps-profiler";
+import {
+	attackTargetType,
+	attackTaskName,
+	TaskAttack,
+} from "./instances/attack";
+import { buildTargetType, buildTaskName, TaskBuild } from "./instances/build";
+import { claimTargetType, claimTaskName, TaskClaim } from "./instances/claim";
+import {
+	dismantleTargetType,
+	dismantleTaskName,
+	TaskDismantle,
+} from "./instances/dismantle";
+import { dropTargetType, dropTaskName, TaskDrop } from "./instances/drop";
+import {
+	fortifyTargetType,
+	fortifyTaskName,
+	TaskFortify,
+} from "./instances/fortify";
+import {
+	generateSafeModeTargetType,
+	generateSafeModeTaskName,
+	TaskGenerateSafeMode,
+} from "./instances/generateSafeMode";
+import {
+	getBoostedTargetType,
+	getBoostedTaskName,
+	TaskGetBoosted,
+} from "./instances/getBoosted";
+import {
+	getRenewedTargetType,
+	getRenewedTaskName,
+	TaskGetRenewed,
+} from "./instances/getRenewed";
+import { goToTaskName } from "./instances/goTo";
+import { goToRoomTaskName, TaskGoToRoom } from "./instances/goToRoom";
+import {
+	harvestTargetType,
+	harvestTaskName,
+	TaskHarvest,
+} from "./instances/harvest";
+import { healTargetType, healTaskName, TaskHeal } from "./instances/heal";
+import { TaskInvalid } from "./instances/invalid";
+import {
+	meleeAttackTargetType,
+	meleeAttackTaskName,
+	TaskMeleeAttack,
+} from "./instances/meleeAttack";
+import {
+	pickupTargetType,
+	pickupTaskName,
+	TaskPickup,
+} from "./instances/pickup";
+import {
+	rangedAttackTargetType,
+	rangedAttackTaskName,
+	TaskRangedAttack,
+} from "./instances/rangedAttack";
+import { rechargeTaskName, TaskRecharge } from "./instances/recharge";
+import {
+	repairTargetType,
+	repairTaskName,
+	TaskRepair,
+} from "./instances/repair";
+import {
+	reserveTargetType,
+	reserveTaskName,
+	TaskReserve,
+} from "./instances/reserve";
+import { retireTaskName, TaskRetire } from "./instances/retire";
+import {
+	signControllerTargetType,
+	signControllerTaskName,
+	TaskSignController,
+} from "./instances/signController";
+import {
+	TaskTransfer,
+	transferTargetType,
+	transferTaskName,
+} from "./instances/transfer";
 // import {fleeTargetType, fleeTaskName, TaskFlee} from './instances/flee';
-import {TaskTransferAll, transferAllTargetType, transferAllTaskName} from './instances/transferAll';
-import {TaskUpgrade, upgradeTargetType, upgradeTaskName} from './instances/upgrade';
-import {TaskWithdraw, withdrawTargetType, withdrawTaskName} from './instances/withdraw';
-import {TaskWithdrawAll, withdrawAllTargetType, withdrawAllTaskName} from './instances/withdrawAll';
-import {Task} from './Task';
+import {
+	TaskTransferAll,
+	transferAllTargetType,
+	transferAllTaskName,
+} from "./instances/transferAll";
+import {
+	TaskUpgrade,
+	upgradeTargetType,
+	upgradeTaskName,
+} from "./instances/upgrade";
+import {
+	TaskWithdraw,
+	withdrawTargetType,
+	withdrawTaskName,
+} from "./instances/withdraw";
+import {
+	TaskWithdrawAll,
+	withdrawAllTargetType,
+	withdrawAllTaskName,
+} from "./instances/withdrawAll";
+import { Task } from "./Task";
 
 /**
  * The task initializer maps serialized prototasks to Task instances
@@ -55,7 +127,9 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 			task = new TaskDismantle(target as dismantleTargetType);
 			break;
 		case dropTaskName:
-			task = new TaskDrop(derefRoomPosition(protoTask._target._pos) as dropTargetType);
+			task = new TaskDrop(
+				derefRoomPosition(protoTask._target._pos) as dropTargetType
+			);
 			break;
 		// case fleeTaskName:
 		// 	task = new TaskFlee(derefRoomPosition(ProtoTask._target._pos) as fleeTargetType);
@@ -64,8 +138,10 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 			task = new TaskFortify(target as fortifyTargetType);
 			break;
 		case getBoostedTaskName:
-			task = new TaskGetBoosted(target as getBoostedTargetType,
-									  protoTask.data.resourceType as _ResourceConstantSansEnergy);
+			task = new TaskGetBoosted(
+				target as getBoostedTargetType,
+				protoTask.data.resourceType as _ResourceConstantSansEnergy
+			);
 			break;
 		case getRenewedTaskName:
 			task = new TaskGetRenewed(target as getRenewedTargetType);
@@ -120,13 +196,17 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 			task = new TaskWithdrawAll(target as withdrawAllTargetType);
 			break;
 		case generateSafeModeTaskName:
-			task = new TaskGenerateSafeMode(target as generateSafeModeTargetType);
+			task = new TaskGenerateSafeMode(
+				target as generateSafeModeTargetType
+			);
 			break;
 		case retireTaskName:
 			task = new TaskRetire(target as StructureSpawn);
 			break;
 		default:
-			log.error(`Invalid task name: ${taskName}! task.creep: ${protoTask._creep.name}. Deleting from memory!`);
+			log.error(
+				`Invalid task name: ${taskName}! task.creep: ${protoTask._creep.name}. Deleting from memory!`
+			);
 			task = new TaskInvalid();
 			break;
 	}
@@ -136,5 +216,4 @@ export function initializeTask(protoTask: ProtoTask): Task<any> {
 	return task;
 }
 
-profiler.registerFN(initializeTask, 'initializeTask');
-
+profiler.registerFN(initializeTask, "initializeTask");

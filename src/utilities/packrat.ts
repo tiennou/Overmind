@@ -42,10 +42,10 @@ import { PERMACACHE } from "caching/PermaCache";
 /* eslint no-bitwise: "off" */
 /* eslint @typescript-eslint/prefer-for-of: "off" */
 
-
 /**
  * Convert a hex string to a Uint16Array.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function hexToUint16Array(hex: string): Uint16Array {
 	const len = Math.ceil(hex.length / 4); // four hex chars for each 16-bit value
 	const array = new Uint16Array(len);
@@ -60,15 +60,16 @@ function hexToUint16Array(hex: string): Uint16Array {
  * return '123abcde' since this does not account for zero padding. Fortunately this is not an issue for screeps, since
  * ids do not seem to be allowed to start with a 0.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function uint16ArrayToHex(array: Uint16Array): string {
 	const hex: string[] = [];
 	let current: number;
 	for (let i = 0; i < array.length; ++i) {
 		current = array[i];
 		hex.push((current >>> 8).toString(16));
-		hex.push((current & 0xFF).toString(16));
+		hex.push((current & 0xff).toString(16));
 	}
-	return hex.join('');
+	return hex.join("");
 }
 
 /**
@@ -77,12 +78,14 @@ function uint16ArrayToHex(array: Uint16Array): string {
  * Benchmarking: average of 500ns to execute on shard2 public server, reduce stringified size by 75%
  */
 export function packId(id: string): string {
-	return String.fromCharCode(parseInt(id.substr(0, 4), 16)) +
-		   String.fromCharCode(parseInt(id.substr(4, 4), 16)) +
-		   String.fromCharCode(parseInt(id.substr(8, 4), 16)) +
-		   String.fromCharCode(parseInt(id.substr(12, 4), 16)) +
-		   String.fromCharCode(parseInt(id.substr(16, 4), 16)) +
-		   String.fromCharCode(parseInt(id.substr(20, 4), 16));
+	return (
+		String.fromCharCode(parseInt(id.substr(0, 4), 16)) +
+		String.fromCharCode(parseInt(id.substr(4, 4), 16)) +
+		String.fromCharCode(parseInt(id.substr(8, 4), 16)) +
+		String.fromCharCode(parseInt(id.substr(12, 4), 16)) +
+		String.fromCharCode(parseInt(id.substr(16, 4), 16)) +
+		String.fromCharCode(parseInt(id.substr(20, 4), 16))
+	);
 }
 
 /**
@@ -91,12 +94,12 @@ export function packId(id: string): string {
  * Benchmarking: average of 1.3us to execute on shard2 public server
  */
 export function unpackId(packedId: string): string {
-	let id = '';
+	let id = "";
 	let current: number;
 	for (let i = 0; i < 6; ++i) {
 		current = packedId.charCodeAt(i);
-		id += (current >>> 8).toString(16).padStart(2, '0');
-		id += (current & 0xFF).toString(16).padStart(2, '0');
+		id += (current >>> 8).toString(16).padStart(2, "0");
+		id += (current & 0xff).toString(16).padStart(2, "0");
 	}
 	return id;
 }
@@ -108,7 +111,7 @@ export function unpackId(packedId: string): string {
  * Benchmarking: average of 500ns per id to execute on shard2 public server, reduce stringified size by 81%
  */
 export function packIdList(ids: string[]): string {
-	let str = '';
+	let str = "";
 	for (let i = 0; i < ids.length; ++i) {
 		str += packId(ids[i]);
 	}
@@ -127,7 +130,6 @@ export function unpackIdList(packedIds: string): string[] {
 	}
 	return ids;
 }
-
 
 /**
  * Packs a coord as a single utf-16 character. The seemingly strange choice of encoding value ((x << 6) | y) + 65 was
@@ -149,7 +151,7 @@ export function unpackCoord(char: string): Coord {
 	const xShiftedSixOrY = char.charCodeAt(0) - 65;
 	return {
 		x: (xShiftedSixOrY & 0b111111000000) >>> 6,
-		y: (xShiftedSixOrY & 0b000000111111),
+		y: xShiftedSixOrY & 0b000000111111,
 	};
 }
 
@@ -158,7 +160,10 @@ export function unpackCoord(char: string): Coord {
  *
  * Benchmarking: average of 500ns to execute on shard2 public server
  */
-export function unpackCoordAsPos(packedCoord: string, roomName: string): RoomPosition {
+export function unpackCoordAsPos(
+	packedCoord: string,
+	roomName: string
+): RoomPosition {
 	const coord = unpackCoord(packedCoord);
 	return new RoomPosition(coord.x, coord.y, roomName);
 }
@@ -170,7 +175,7 @@ export function unpackCoordAsPos(packedCoord: string, roomName: string): RoomPos
  * Benchmarking: average of 120ns per coord to execute on shard2 public server, reduce stringified size by 94%
  */
 export function packCoordList(coords: Coord[]): string {
-	let str = '';
+	let str = "";
 	for (let i = 0; i < coords.length; ++i) {
 		str += String.fromCharCode(((coords[i].x << 6) | coords[i].y) + 65);
 	}
@@ -188,9 +193,9 @@ export function unpackCoordList(chars: string): Coord[] {
 	for (let i = 0; i < chars.length; ++i) {
 		xShiftedSixOrY = chars.charCodeAt(i) - 65;
 		coords.push({
-						x: (xShiftedSixOrY & 0b111111000000) >>> 6,
-						y: (xShiftedSixOrY & 0b000000111111),
-					});
+			x: (xShiftedSixOrY & 0b111111000000) >>> 6,
+			y: xShiftedSixOrY & 0b000000111111,
+		});
 	}
 	return coords;
 }
@@ -200,7 +205,10 @@ export function unpackCoordList(chars: string): Coord[] {
  *
  * Benchmarking: average of 500ns per coord to execute on shard2 public server
  */
-export function unpackCoordListAsPosList(packedCoords: string, roomName: string): RoomPosition[] {
+export function unpackCoordListAsPosList(
+	packedCoords: string,
+	roomName: string
+): RoomPosition[] {
 	const positions: RoomPosition[] = [];
 	let coord: Coord;
 	for (let i = 0; i < packedCoords.length; ++i) {
@@ -228,14 +236,14 @@ function packRoomName(roomName: string): string {
 		const y = Number(match[4]);
 
 		let quadrant;
-		if (xDir == 'W') {
-			if (yDir == 'N') {
+		if (xDir == "W") {
+			if (yDir == "N") {
 				quadrant = 0;
 			} else {
 				quadrant = 1;
 			}
 		} else {
-			if (yDir == 'N') {
+			if (yDir == "N") {
 				quadrant = 2;
 			} else {
 				quadrant = 3;
@@ -243,7 +251,7 @@ function packRoomName(roomName: string): string {
 		}
 
 		// y is 6 bits, x is 6 bits, quadrant is 2 bits
-		const num = (quadrant << 12 | (x << 6) | y) + 65;
+		const num = ((quadrant << 12) | (x << 6) | y) + 65;
 		const char = String.fromCharCode(num);
 
 		PERMACACHE._packedRoomNames[roomName] = char;
@@ -258,28 +266,28 @@ function packRoomName(roomName: string): string {
 function unpackRoomName(char: string): string {
 	if (PERMACACHE._unpackedRoomNames[char] === undefined) {
 		const num = char.charCodeAt(0) - 65;
-		const {q, x, y} = {
+		const { q, x, y } = {
 			q: (num & 0b11000000111111) >>> 12,
 			x: (num & 0b00111111000000) >>> 6,
-			y: (num & 0b00000000111111),
+			y: num & 0b00000000111111,
 		};
 
 		let roomName: string;
 		switch (q) {
 			case 0:
-				roomName = 'W' + x + 'N' + y;
+				roomName = "W" + x + "N" + y;
 				break;
 			case 1:
-				roomName = 'W' + x + 'S' + y;
+				roomName = "W" + x + "S" + y;
 				break;
 			case 2:
-				roomName = 'E' + x + 'N' + y;
+				roomName = "E" + x + "N" + y;
 				break;
 			case 3:
-				roomName = 'E' + x + 'S' + y;
+				roomName = "E" + x + "S" + y;
 				break;
 			default:
-				roomName = 'ERROR';
+				roomName = "ERROR";
 		}
 
 		PERMACACHE._packedRoomNames[roomName] = char;
@@ -287,7 +295,6 @@ function unpackRoomName(char: string): string {
 	}
 	return PERMACACHE._unpackedRoomNames[char];
 }
-
 
 /**
  * Packs a RoomPosition as a pair utf-16 characters. The seemingly strange choice of encoding value ((x << 6) | y) + 65
@@ -306,7 +313,7 @@ export function packPos(pos: RoomPosition): string {
  * Benchmarking: average of 600ns to execute on shard2 public server.
  */
 export function unpackPos(chars: string): RoomPosition {
-	const {x, y} = unpackCoord(chars[0]);
+	const { x, y } = unpackCoord(chars[0]);
 	return new RoomPosition(x, y, unpackRoomName(chars[1]));
 }
 
@@ -317,7 +324,7 @@ export function unpackPos(chars: string): RoomPosition {
  * Benchmarking: average of 150ns per position to execute on shard2 public server, reduce stringified size by 95%
  */
 export function packPosList(posList: RoomPosition[]): string {
-	let str = '';
+	let str = "";
 	for (let i = 0; i < posList.length; ++i) {
 		str += packPos(posList[i]);
 	}
@@ -359,9 +366,7 @@ for (const func of globalFuncs) {
 	global[func.name] = func;
 }
 export class PackratTests {
-
 	static testIdPacker() {
-
 		const ogStart = Game.cpu.getUsed();
 
 		let start, elapsed: number;
@@ -387,7 +392,6 @@ export class PackratTests {
 		}
 		console.log(`Time elapsed: ${Game.cpu.getUsed() - start}`);
 
-
 		console.log(`Testing id encoding...`);
 		start = Game.cpu.getUsed();
 		const idsPacked = [];
@@ -395,14 +399,24 @@ export class PackratTests {
 			idsPacked.push(packId(allIds[i]));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / idsPacked.length}`);
-		console.log(`Unpacked len: ${JSON.stringify(allIds).length} | Packed len: ${JSON.stringify(idsPacked).length}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / idsPacked.length}`
+		);
+		console.log(
+			`Unpacked len: ${JSON.stringify(allIds).length} | Packed len: ${
+				JSON.stringify(idsPacked).length
+			}`
+		);
 
 		console.log(`Testing listId encoding...`);
 		start = Game.cpu.getUsed();
 		const idsListPacked = packIdList(allIds);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / (idsListPacked.length / 6)}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${
+				elapsed / (idsListPacked.length / 6)
+			}`
+		);
 		console.log(`List-packed len: ${JSON.stringify(idsListPacked).length}`);
 
 		console.log(`Testing id decoding...`);
@@ -412,24 +426,32 @@ export class PackratTests {
 			idsUnpacked.push(unpackId(idsPacked[i]));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / idsUnpacked.length}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / idsUnpacked.length}`
+		);
 
 		console.log(`Testing id list-decoding...`);
 		start = Game.cpu.getUsed();
 		const idsListUnpacked = unpackIdList(idsListPacked);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / idsListUnpacked.length}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / idsListUnpacked.length}`
+		);
 
 		console.log(`Verifying equality...`);
 		let idsEqual = true;
 		for (let i = 0; i < allIds.length; i++) {
 			if (idsUnpacked[i] != allIds[i]) {
-				console.log(`Unpacked id not equal! orig: ${allIds[i]}; unpacked: ${idsUnpacked[i]}`);
+				console.log(
+					`Unpacked id not equal! orig: ${allIds[i]}; unpacked: ${idsUnpacked[i]}`
+				);
 				idsEqual = false;
 				break;
 			}
 			if (idsListUnpacked[i] != allIds[i]) {
-				console.log(`Unpacked id not equal! orig: ${allIds[i]}; listUnpacked: ${idsListUnpacked[i]}`);
+				console.log(
+					`Unpacked id not equal! orig: ${allIds[i]}; listUnpacked: ${idsListUnpacked[i]}`
+				);
 				idsEqual = false;
 				break;
 			}
@@ -437,12 +459,9 @@ export class PackratTests {
 		console.log(`Retrieved ids are equal: ${idsEqual}`);
 
 		console.log(`Total time elapsed: ${Game.cpu.getUsed() - ogStart}`);
-
 	}
 
-
 	static testCoordPacker() {
-
 		const ogStart = Game.cpu.getUsed();
 
 		let start, elapsed: number;
@@ -453,14 +472,13 @@ export class PackratTests {
 		const allCoord: Coord[] = [];
 		for (const name in Game.creeps) {
 			const pos = Game.creeps[name].pos;
-			allCoord.push({x: pos.x, y: pos.y});
+			allCoord.push({ x: pos.x, y: pos.y });
 		}
 		for (const id in Game.structures) {
 			const pos = Game.structures[id].pos;
-			allCoord.push({x: pos.x, y: pos.y});
+			allCoord.push({ x: pos.x, y: pos.y });
 		}
 		console.log(`Time elapsed: ${Game.cpu.getUsed() - start}`);
-
 
 		console.log(`Testing coord encoding...`);
 
@@ -470,7 +488,9 @@ export class PackratTests {
 			coordPacked.push(packCoord(allCoord[i]));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / coordPacked.length}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / coordPacked.length}`
+		);
 		console.log(`Unpacked len: ${JSON.stringify(allCoord).length}`);
 		console.log(`Packed len: ${JSON.stringify(coordPacked).length}`);
 
@@ -478,9 +498,12 @@ export class PackratTests {
 		start = Game.cpu.getUsed();
 		const coordListPacked = packCoordList(allCoord);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / coordListPacked.length}`);
-		console.log(`List-packed len: ${JSON.stringify(coordListPacked).length}`);
-
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / coordListPacked.length}`
+		);
+		console.log(
+			`List-packed len: ${JSON.stringify(coordListPacked).length}`
+		);
 
 		console.log(`Testing coord decoding...`);
 		start = Game.cpu.getUsed();
@@ -489,43 +512,76 @@ export class PackratTests {
 			coordUnpacked.push(unpackCoord(coordPacked[i]));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / coordUnpacked.length}`);
-
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / coordUnpacked.length}`
+		);
 
 		console.log(`Testing listCoord decoding...`);
 		start = Game.cpu.getUsed();
 		const coordListUnpacked = unpackCoordList(coordListPacked);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / coordListUnpacked.length}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${
+				elapsed / coordListUnpacked.length
+			}`
+		);
 
 		console.log(`Testing coord to pos decoding...`);
 		start = Game.cpu.getUsed();
 		const coordAsPosUnpacked = [];
 		for (let i = 0, len = coordPacked.length; i < len; ++i) {
-			coordAsPosUnpacked.push(unpackCoordAsPos(coordPacked[i], 'W10N10'));
+			coordAsPosUnpacked.push(unpackCoordAsPos(coordPacked[i], "W10N10"));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / coordAsPosUnpacked.length}`);
-
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${
+				elapsed / coordAsPosUnpacked.length
+			}`
+		);
 
 		console.log(`Testing listCoord to posList decoding...`);
 		start = Game.cpu.getUsed();
-		const coordListAsPosListUnpacked = unpackCoordListAsPosList(coordListPacked, 'W10N10');
+		const coordListAsPosListUnpacked = unpackCoordListAsPosList(
+			coordListPacked,
+			"W10N10"
+		);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / coordListAsPosListUnpacked.length}`);
-
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${
+				elapsed / coordListAsPosListUnpacked.length
+			}`
+		);
 
 		let posEqual = true;
 		for (let i = 0; i < allCoord.length; i++) {
-			if (!(allCoord[i].x == coordAsPosUnpacked[i].x && allCoord[i].y == coordAsPosUnpacked[i].y)) {
-				console.log(`Unpacked pos not equal! orig: ${JSON.stringify(allCoord[i])}; `+
-							`unpacked: ${JSON.stringify(coordAsPosUnpacked[i])}`);
+			if (
+				!(
+					allCoord[i].x == coordAsPosUnpacked[i].x &&
+					allCoord[i].y == coordAsPosUnpacked[i].y
+				)
+			) {
+				console.log(
+					`Unpacked pos not equal! orig: ${JSON.stringify(
+						allCoord[i]
+					)}; ` + `unpacked: ${JSON.stringify(coordAsPosUnpacked[i])}`
+				);
 				posEqual = false;
 				break;
 			}
-			if (!(allCoord[i].x == coordListAsPosListUnpacked[i].x && allCoord[i].y == coordListAsPosListUnpacked[i].y)) {
-				console.log(`Unpacked pos not equal! orig: ${JSON.stringify(allCoord[i])}; `+
-							`unpacked: ${JSON.stringify(coordListAsPosListUnpacked[i])}`);
+			if (
+				!(
+					allCoord[i].x == coordListAsPosListUnpacked[i].x &&
+					allCoord[i].y == coordListAsPosListUnpacked[i].y
+				)
+			) {
+				console.log(
+					`Unpacked pos not equal! orig: ${JSON.stringify(
+						allCoord[i]
+					)}; ` +
+						`unpacked: ${JSON.stringify(
+							coordListAsPosListUnpacked[i]
+						)}`
+				);
 				posEqual = false;
 				break;
 			}
@@ -533,12 +589,9 @@ export class PackratTests {
 		console.log(`Retrieved coords are equal: ${posEqual}`);
 
 		console.log(`Total time elapsed: ${Game.cpu.getUsed() - ogStart}`);
-
 	}
 
-
 	static testPosPacker() {
-
 		const ogStart = Game.cpu.getUsed();
 
 		let start, elapsed: number;
@@ -555,7 +608,6 @@ export class PackratTests {
 		}
 		console.log(`Time elapsed: ${Game.cpu.getUsed() - start}`);
 
-
 		console.log(`Testing pos encoding...`);
 
 		start = Game.cpu.getUsed();
@@ -564,7 +616,9 @@ export class PackratTests {
 			posPacked.push(packPos(allPos[i]));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / posPacked.length}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / posPacked.length}`
+		);
 		console.log(`Unpacked len: ${JSON.stringify(allPos).length}`);
 		console.log(`Packed len: ${JSON.stringify(posPacked).length}`);
 
@@ -572,9 +626,12 @@ export class PackratTests {
 		start = Game.cpu.getUsed();
 		const posListPacked = packPosList(allPos);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / (posListPacked.length / 2)}`);
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${
+				elapsed / (posListPacked.length / 2)
+			}`
+		);
 		console.log(`List-packed len: ${JSON.stringify(posListPacked).length}`);
-
 
 		console.log(`Testing pos decoding...`);
 		start = Game.cpu.getUsed();
@@ -583,25 +640,31 @@ export class PackratTests {
 			posUnpacked.push(unpackPos(posPacked[i]));
 		}
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / posUnpacked.length}`);
-
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / posUnpacked.length}`
+		);
 
 		console.log(`Testing listPos decoding...`);
 		start = Game.cpu.getUsed();
 		const posListUnpacked = unpackPosList(posListPacked);
 		elapsed = Game.cpu.getUsed() - start;
-		console.log(`Time elapsed: ${elapsed}; avg: ${elapsed / posListUnpacked.length}`);
-
+		console.log(
+			`Time elapsed: ${elapsed}; avg: ${elapsed / posListUnpacked.length}`
+		);
 
 		let posEqual = true;
 		for (let i = 0; i < allPos.length; i++) {
 			if (!allPos[i].isEqualTo(posUnpacked[i])) {
-				console.log(`Unpacked pos not equal! orig: ${allPos[i]}; unpacked: ${posUnpacked[i]}`);
+				console.log(
+					`Unpacked pos not equal! orig: ${allPos[i]}; unpacked: ${posUnpacked[i]}`
+				);
 				posEqual = false;
 				break;
 			}
 			if (!allPos[i].isEqualTo(posListUnpacked[i])) {
-				console.log(`Unpacked pos not equal! orig: ${allPos[i]}; unpacked: ${posListUnpacked[i]}`);
+				console.log(
+					`Unpacked pos not equal! orig: ${allPos[i]}; unpacked: ${posListUnpacked[i]}`
+				);
 				posEqual = false;
 				break;
 			}
@@ -609,7 +672,6 @@ export class PackratTests {
 		console.log(`Retrieved pos are equal: ${posEqual}`);
 
 		console.log(`Total time elapsed: ${Game.cpu.getUsed() - ogStart}`);
-
 	}
 
 	static run() {
@@ -617,7 +679,6 @@ export class PackratTests {
 		PackratTests.testCoordPacker();
 		PackratTests.testPosPacker();
 	}
-
 }
 
 global.PackratTests = PackratTests;

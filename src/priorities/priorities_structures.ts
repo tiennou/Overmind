@@ -53,34 +53,38 @@ export const AttackStructurePriorities: StructureConstant[] = [
 	STRUCTURE_WALL,
 ];
 
-export const AttackStructureScores =
-	_.zipObject<Record<StructureConstant, number>>(_.map(AttackStructurePriorities,
-		type => [type, AttackStructurePriorities.length - _.indexOf(AttackStructurePriorities, type)]));
+export const AttackStructureScores = _.zipObject<
+	Record<StructureConstant, number>
+>(
+	_.map(AttackStructurePriorities, (type) => [
+		type,
+		AttackStructurePriorities.length -
+			_.indexOf(AttackStructurePriorities, type),
+	])
+);
 
 /**
  * Prioritized list of what order owned structures should be demolished (and then moved) in
  */
 export const DemolishStructurePriorities: {
-	structureType: BuildableStructureConstant,
-	maxRemoved?: number,
+	structureType: BuildableStructureConstant;
+	maxRemoved?: number;
 	// dismantle?: boolean
 }[] = [
-	{structureType: STRUCTURE_EXTENSION, maxRemoved: 15},
-	{structureType: STRUCTURE_SPAWN, maxRemoved: 1},
-	{structureType: STRUCTURE_CONTAINER},
-	{structureType: STRUCTURE_TOWER, maxRemoved: 1},
-	{structureType: STRUCTURE_LINK},
-	{structureType: STRUCTURE_LAB},
-	{structureType: STRUCTURE_NUKER},
-	{structureType: STRUCTURE_OBSERVER},
+	{ structureType: STRUCTURE_EXTENSION, maxRemoved: 15 },
+	{ structureType: STRUCTURE_SPAWN, maxRemoved: 1 },
+	{ structureType: STRUCTURE_CONTAINER },
+	{ structureType: STRUCTURE_TOWER, maxRemoved: 1 },
+	{ structureType: STRUCTURE_LINK },
+	{ structureType: STRUCTURE_LAB },
+	{ structureType: STRUCTURE_NUKER },
+	{ structureType: STRUCTURE_OBSERVER },
 	// {structureType: STRUCTURE_EXTRACTOR, maxRemoved: 1}, // skip extractor; doesn't need to be relocated
-	{structureType: STRUCTURE_POWER_SPAWN},
+	{ structureType: STRUCTURE_POWER_SPAWN },
 	// {structureType: STRUCTURE_ROAD}, // just let roads decay
-	{structureType: STRUCTURE_CONTAINER},
-	{structureType: STRUCTURE_STORAGE, maxRemoved: 1},
-	{structureType: STRUCTURE_TERMINAL, maxRemoved: 1},
-	{structureType: STRUCTURE_WALL},
-	{structureType: STRUCTURE_RAMPART},
+	{ structureType: STRUCTURE_CONTAINER },
+	{ structureType: STRUCTURE_STORAGE, maxRemoved: 1 },
+	{ structureType: STRUCTURE_TERMINAL, maxRemoved: 1 },
+	{ structureType: STRUCTURE_WALL },
+	{ structureType: STRUCTURE_RAMPART },
 ];
-
-

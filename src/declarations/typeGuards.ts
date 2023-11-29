@@ -1,11 +1,11 @@
 // Type guards library: this allows for instanceof - like behavior for much lower CPU cost. Each type guard
 // differentiates an ambiguous input by recognizing one or more unique properties.
 
-import {AnyZerg} from '../zerg/AnyZerg';
-import {CombatZerg} from '../zerg/CombatZerg';
-import {NeuralZerg} from '../zerg/NeuralZerg';
-import {PowerZerg} from '../zerg/PowerZerg';
-import {Zerg} from '../zerg/Zerg';
+import { AnyZerg } from "../zerg/AnyZerg";
+import { CombatZerg } from "../zerg/CombatZerg";
+import { NeuralZerg } from "../zerg/NeuralZerg";
+import { PowerZerg } from "../zerg/PowerZerg";
+import { Zerg } from "../zerg/Zerg";
 
 export function isStructure(obj: RoomObject): obj is Structure {
 	return obj instanceof Structure;
@@ -43,7 +43,9 @@ export function isDeposit(obj: RoomObject): obj is Deposit {
 	return obj instanceof Deposit;
 }
 
-export function hasPos(obj: _HasRoomPosition | RoomPosition): obj is _HasRoomPosition {
+export function hasPos(
+	obj: _HasRoomPosition | RoomPosition
+): obj is _HasRoomPosition {
 	return (<_HasRoomPosition>obj).pos != undefined;
 }
 

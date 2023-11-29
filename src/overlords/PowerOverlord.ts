@@ -1,41 +1,45 @@
-import {Colony} from '../Colony';
-import {log} from '../console/log';
-import {PowerCreepSetup} from '../creepSetups/powerSetups';
-import {profile} from '../profiler/decorator';
-import {CombatZerg} from '../zerg/CombatZerg';
-import {PowerZerg} from '../zerg/PowerZerg';
-import {PowerZergOperator} from '../zerg/PowerZergOperator';
-import {Zerg} from '../zerg/Zerg';
-import {Overlord, OverlordInitializer, OverlordMemory, ZergOptions} from './Overlord';
-
+import { Colony } from "../Colony";
+import { log } from "../console/log";
+import { PowerCreepSetup } from "../creepSetups/powerSetups";
+import { profile } from "../profiler/decorator";
+import { CombatZerg } from "../zerg/CombatZerg";
+import { PowerZerg } from "../zerg/PowerZerg";
+import { PowerZergOperator } from "../zerg/PowerZergOperator";
+import { Zerg } from "../zerg/Zerg";
+import {
+	Overlord,
+	OverlordInitializer,
+	OverlordMemory,
+	ZergOptions,
+} from "./Overlord";
 
 export interface PowerOverlordMemory extends OverlordMemory {
 	[MEM.TICK]: number;
 }
 
-export interface PowerOverlordOptions {
-
-}
+export interface PowerOverlordOptions {}
 
 const getDefaultPowerOverlordMemory: () => PowerOverlordMemory = () => ({
 	[MEM.TICK]: Game.time,
 });
-
 
 /**
  * CombatOverlords extend the base Overlord class to provide additional combat-specific behavior
  */
 @profile
 export abstract class PowerOverlord extends Overlord {
-
 	memory: PowerOverlordMemory;
 	requiredRCL: number; // default required RCL
 
 	private _powerCreeps: { [roleName: string]: PowerCreep[] };
 	private _powerZerg: { [roleName: string]: PowerZerg[] };
 
-	constructor(initializer: OverlordInitializer | Colony, name: string, priority: number,
-				memDefauts: () => PowerOverlordMemory = getDefaultPowerOverlordMemory) {
+	constructor(
+		initializer: OverlordInitializer | Colony,
+		name: string,
+		priority: number,
+		memDefauts: () => PowerOverlordMemory = getDefaultPowerOverlordMemory
+	) {
 		super(initializer, name, priority, memDefauts);
 		this._powerCreeps = {};
 		this._powerZerg = {};
@@ -55,7 +59,9 @@ export abstract class PowerOverlord extends Overlord {
 				if (Overmind.powerZerg[powerCreep.name]) {
 					Overmind.powerZerg[powerCreep.name].refresh();
 				} else {
-					log.warning(`${this.print}: could not find and refresh power zerg with name ${powerCreep.name}!`);
+					log.warning(
+						`${this.print}: could not find and refresh power zerg with name ${powerCreep.name}!`
+					);
 				}
 			}
 		}
@@ -85,20 +91,28 @@ export abstract class PowerOverlord extends Overlord {
 
 	protected recalculatePowerCreeps(): void {
 		// Recalculate the sets of creeps for each role in this overlord
-		this._powerCreeps = _.mapValues(Overmind.cache.overlords[this.ref],
-										creepsOfRole => _.map(creepsOfRole, creepName => Game.powerCreeps[creepName]));
+		this._powerCreeps = _.mapValues(
+			Overmind.cache.overlords[this.ref],
+			(creepsOfRole) =>
+				_.map(creepsOfRole, (creepName) => Game.powerCreeps[creepName])
+		);
 		// Update zerg and combatZerg records
 		for (const role in this._powerZerg) {
 			this.synchronizePowerZerg(role);
 		}
 	}
 
-	private synchronizePowerZerg(role: string, notifyWhenAttacked?: boolean): void {
+	private synchronizePowerZerg(
+		role: string,
+		notifyWhenAttacked?: boolean
+	): void {
 		// Synchronize the corresponding sets of Zerg
-		const zergNames = _.zipObject<Record<string, boolean>>(_.map(this._powerZerg[role] || [],
-											zerg => [zerg.name, true]));
-		const creepNames = _.zipObject<Record<string, boolean>>(_.map(this._powerCreeps[role] || [],
-											 creep => [creep.name, true]));
+		const zergNames = _.zipObject<Record<string, boolean>>(
+			_.map(this._powerZerg[role] || [], (zerg) => [zerg.name, true])
+		);
+		const creepNames = _.zipObject<Record<string, boolean>>(
+			_.map(this._powerCreeps[role] || [], (creep) => [creep.name, true])
+		);
 		// Add new creeps which aren't in the _zerg record
 		for (const creep of this._powerCreeps[role] || []) {
 			if (!zergNames[creep.name]) {
@@ -107,7 +121,9 @@ export abstract class PowerOverlord extends Overlord {
 				} else {
 					switch (creep.className) {
 						case POWER_CLASS.OPERATOR:
-							this._powerZerg[role].push(new PowerZergOperator(creep, notifyWhenAttacked));
+							this._powerZerg[role].push(
+								new PowerZergOperator(creep, notifyWhenAttacked)
+							);
 							break;
 						default:
 							log.error(`NOT IMPLEMENTED`);
@@ -123,9 +139,10 @@ export abstract class PowerOverlord extends Overlord {
 				removeZergNames.push(powerZerg.name);
 			}
 		}
-		_.remove(this._powerZerg[role], deadZerg => removeZergNames.includes(deadZerg.name));
+		_.remove(this._powerZerg[role], (deadZerg) =>
+			removeZergNames.includes(deadZerg.name)
+		);
 	}
-
 
 	/**
 	 * Requests a power creep
@@ -140,6 +157,4 @@ export abstract class PowerOverlord extends Overlord {
 	protected wishlistPC(_setup: PowerCreepSetup, _quantity = 1): void {
 		// TODO
 	}
-
 }
-

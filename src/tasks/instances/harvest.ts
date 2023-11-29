@@ -1,9 +1,9 @@
-import {isSource} from '../../declarations/typeGuards';
-import {profile} from '../../profiler/decorator';
-import {Task} from '../Task';
+import { isSource } from "../../declarations/typeGuards";
+import { profile } from "../../profiler/decorator";
+import { Task } from "../Task";
 
 export type harvestTargetType = Source | Mineral;
-export const harvestTaskName = 'harvest';
+export const harvestTaskName = "harvest";
 
 @profile
 export class TaskHarvest extends Task<harvestTargetType> {
@@ -12,7 +12,9 @@ export class TaskHarvest extends Task<harvestTargetType> {
 	}
 
 	isValidTask() {
-		return this.creep.store.getUsedCapacity() < this.creep.store.getCapacity();
+		return (
+			this.creep.store.getUsedCapacity() < this.creep.store.getCapacity()
+		);
 	}
 
 	isValidTarget() {
@@ -27,4 +29,3 @@ export class TaskHarvest extends Task<harvestTargetType> {
 		return this.creep.harvest(this.target);
 	}
 }
-

@@ -1,24 +1,26 @@
-import { log } from 'console/log';
-import {CombatSetups, Roles} from '../../creepSetups/setups';
-import {DirectiveOutpostDefense} from '../../directives/defense/outpostDefense';
-import {CombatIntel, CombatPotentials} from '../../intel/CombatIntel';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {CombatZerg} from '../../zerg/CombatZerg';
-import {CombatOverlord} from '../CombatOverlord';
+import { log } from "console/log";
+import { CombatSetups, Roles } from "../../creepSetups/setups";
+import { DirectiveOutpostDefense } from "../../directives/defense/outpostDefense";
+import { CombatIntel, CombatPotentials } from "../../intel/CombatIntel";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { CombatZerg } from "../../zerg/CombatZerg";
+import { CombatOverlord } from "../CombatOverlord";
 
 /**
  * General purpose skirmishing overlord for dealing with player combat in an outpost
  */
 @profile
 export class OutpostDefenseOverlord extends CombatOverlord {
-
 	zerglings: CombatZerg[];
 	hydralisks: CombatZerg[];
 	healers: CombatZerg[];
 
-	constructor(directive: DirectiveOutpostDefense, priority = OverlordPriority.outpostDefense.outpostDefense) {
-		super(directive, 'outpostDefense', priority, { requiredRCL: 1 });
+	constructor(
+		directive: DirectiveOutpostDefense,
+		priority = OverlordPriority.outpostDefense.outpostDefense
+	) {
+		super(directive, "outpostDefense", priority, { requiredRCL: 1 });
 		// this.spawnGroup.settings.flexibleEnergy = true;
 		this.zerglings = this.combatZerg(Roles.melee);
 		this.hydralisks = this.combatZerg(Roles.ranged);
@@ -34,14 +36,23 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 	}
 
 	private handleHealer(healer: CombatZerg) {
-		if (CombatIntel.isHealer(healer) && healer.getActiveBodyparts(HEAL) == 0) {
+		if (
+			CombatIntel.isHealer(healer) &&
+			healer.getActiveBodyparts(HEAL) == 0
+		) {
 			if (this.colony.towers.length > 0) {
 				return healer.goToRoom(this.colony.room.name); // go get healed
 			} else {
 				return healer.retire(); // you're useless at this point // TODO: this isn't smart
 			}
 		} else {
-			if (this.room && _.any([...this.zerglings, ...this.hydralisks], creep => creep.room == this.room)) {
+			if (
+				this.room &&
+				_.any(
+					[...this.zerglings, ...this.hydralisks],
+					(creep) => creep.room == this.room
+				)
+			) {
 				this.handleCombat(healer); // go to room if there are any fighters in there
 			} else {
 				healer.autoSkirmish(healer.room.name);
@@ -74,7 +85,7 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 		if (this.room) {
 			return CombatIntel.getCombatPotentials(this.room.hostiles);
 		} else {
-			return {attack: 0, ranged: 1, heal: 0,};
+			return { attack: 0, ranged: 1, heal: 0 };
 		}
 	}
 
@@ -85,28 +96,51 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 		const needHeal = enemyPotentials.heal * 1.2;
 
 		if (needAttack > 100 || needRanged > 100 || needHeal > 100) {
-			log.warning(`${this.print}: too much firepower needed to fight: ${JSON.stringify(enemyPotentials)}`);
+			log.warning(
+				`${
+					this.print
+				}: too much firepower needed to fight: ${JSON.stringify(
+					enemyPotentials
+				)}`
+			);
 			return; // fuck it let's not fight this
 		}
 
 		// Only try to obtain one additional creep at a time
-		if (this.reassignIdleCreeps(Roles.melee, 1)) return;
-		if (this.reassignIdleCreeps(Roles.ranged, 1)) return;
-		if (this.reassignIdleCreeps(Roles.healer, 1)) return;
+		if (this.reassignIdleCreeps(Roles.melee, 1)) {
+			return;
+		}
+		if (this.reassignIdleCreeps(Roles.ranged, 1)) {
+			return;
+		}
+		if (this.reassignIdleCreeps(Roles.healer, 1)) {
+			return;
+		}
 
-		const noBigColoniesNearby = _.all(this.spawnGroup.colonies, col => col.room.energyCapacityAvailable < 800);
+		const noBigColoniesNearby = _.all(
+			this.spawnGroup.colonies,
+			(col) => col.room.energyCapacityAvailable < 800
+		);
 
-		const myPotentials = CombatIntel.getMyCombatPotentials([...this.zerglings,
-																...this.hydralisks,
-																...this.healers]);
+		const myPotentials = CombatIntel.getMyCombatPotentials([
+			...this.zerglings,
+			...this.hydralisks,
+			...this.healers,
+		]);
 
 		// if (attack > 30 || rangedAttack > 30) {
 		// 	// Handle boost worthy attackers
 		// 	this.wishlist(1, CombatSetups.hydralisks.boosted_T3);
 		// }
 
-		const hydraliskSetup = noBigColoniesNearby ? CombatSetups.hydralisks.noHeal : CombatSetups.hydralisks.default;
-		const zerglingSetup = noBigColoniesNearby ? CombatSetups.zerglings.default : CombatSetups.zerglings.healing;
+		const hydraliskSetup =
+			noBigColoniesNearby ?
+				CombatSetups.hydralisks.noHeal
+			:	CombatSetups.hydralisks.default;
+		const zerglingSetup =
+			noBigColoniesNearby ?
+				CombatSetups.zerglings.default
+			:	CombatSetups.zerglings.healing;
 		const healerSetup = CombatSetups.transfusers.default;
 
 		if (myPotentials.ranged < needRanged) {
@@ -116,12 +150,13 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 		} else if (myPotentials.attack < needAttack) {
 			this.requestCreep(zerglingSetup);
 		}
-
 	}
 
 	run() {
-		this.autoRun(this.zerglings, zergling => this.handleCombat(zergling));
-		this.autoRun(this.hydralisks, hydralisk => this.handleCombat(hydralisk));
-		this.autoRun(this.healers, healer => this.handleHealer(healer));
+		this.autoRun(this.zerglings, (zergling) => this.handleCombat(zergling));
+		this.autoRun(this.hydralisks, (hydralisk) =>
+			this.handleCombat(hydralisk)
+		);
+		this.autoRun(this.healers, (healer) => this.handleHealer(healer));
 	}
 }

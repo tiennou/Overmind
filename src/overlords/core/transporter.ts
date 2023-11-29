@@ -1,22 +1,28 @@
-import columnify from 'columnify';
-import {Colony} from '../../Colony';
-import {log} from '../../console/log';
-import {Roles, Setups} from '../../creepSetups/setups';
-import {isResource, isRuin, isTombstone} from '../../declarations/typeGuards';
-import {ALL_RESOURCE_TYPE_ERROR, BufferTarget, LogisticsNetwork, LogisticsRequest, RESOURCE_ALL} from '../../logistics/LogisticsNetwork';
-import {Pathing} from '../../movement/Pathing';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Tasks} from '../../tasks/Tasks';
-import {Zerg} from '../../zerg/Zerg';
-import {Overlord, OverlordMemory} from '../Overlord';
-import { deref, ema, minBy } from 'utilities/utils';
-import { Stats } from 'stats/stats';
+import columnify from "columnify";
+import { Colony } from "../../Colony";
+import { log } from "../../console/log";
+import { Roles, Setups } from "../../creepSetups/setups";
+import { isResource, isRuin, isTombstone } from "../../declarations/typeGuards";
+import {
+	ALL_RESOURCE_TYPE_ERROR,
+	BufferTarget,
+	LogisticsNetwork,
+	LogisticsRequest,
+	RESOURCE_ALL,
+} from "../../logistics/LogisticsNetwork";
+import { Pathing } from "../../movement/Pathing";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Tasks } from "../../tasks/Tasks";
+import { Zerg } from "../../zerg/Zerg";
+import { Overlord, OverlordMemory } from "../Overlord";
+import { deref, ema, minBy } from "utilities/utils";
+import { Stats } from "stats/stats";
 
 const MAX_TRANSPORTERS = 10;
 
 export const enum TRANSPORT_MEM {
-	DOWNTIME = 'd',
+	DOWNTIME = "d",
 }
 
 interface TransporterMemory extends OverlordMemory {
@@ -28,20 +34,23 @@ interface TransporterMemory extends OverlordMemory {
  */
 @profile
 export class TransportOverlord extends Overlord {
-
 	memory: TransporterMemory;
 	transporters: Zerg[];
 
-	constructor(colony: Colony, priority = OverlordPriority.ownedRoom.transport) {
-		super(colony, 'logistics', priority);
+	constructor(
+		colony: Colony,
+		priority = OverlordPriority.ownedRoom.transport
+	) {
+		super(colony, "logistics", priority);
 		this.transporters = this.zerg(Roles.transport);
 	}
 
 	private neededTransportPower(): number {
-
-		if (!this.colony.storage
-			&& !(this.colony.hatchery && this.colony.hatchery.batteries)
-			&& !this.colony.upgradeSite.battery) {
+		if (
+			!this.colony.storage &&
+			!(this.colony.hatchery && this.colony.hatchery.batteries) &&
+			!this.colony.upgradeSite.battery
+		) {
 			return 0;
 		}
 
@@ -62,10 +71,15 @@ export class TransportOverlord extends Overlord {
 
 		// Add transport power needed to move to upgradeSite
 		if (this.colony.upgradeSite.battery) {
-			transportPower += UPGRADE_CONTROLLER_POWER * this.colony.upgradeSite.upgradePowerNeeded * scaling *
-							  (Pathing.distance(this.colony.pos, this.colony.upgradeSite.battery.pos) ?? 0);
+			transportPower +=
+				UPGRADE_CONTROLLER_POWER *
+				this.colony.upgradeSite.upgradePowerNeeded *
+				scaling *
+				(Pathing.distance(
+					this.colony.pos,
+					this.colony.upgradeSite.battery.pos
+				) ?? 0);
 		}
-
 
 		if (this.colony.state.lowPowerMode) {
 			// Reduce needed transporters when colony is in low power mode
@@ -77,55 +91,111 @@ export class TransportOverlord extends Overlord {
 
 	init() {
 		const ROAD_COVERAGE_THRESHOLD = 0.75; // switch from 1:1 to 2:1 transporters above this coverage threshold
-		const setup = this.colony.roomPlanner.roadPlanner.roadCoverage < ROAD_COVERAGE_THRESHOLD
-					  ? Setups.transporters.early : Setups.transporters.default;
+		const setup =
+			(
+				this.colony.roomPlanner.roadPlanner.roadCoverage <
+				ROAD_COVERAGE_THRESHOLD
+			) ?
+				Setups.transporters.early
+			:	Setups.transporters.default;
 
 		const transportPowerEach = setup.getBodyPotential(CARRY, this.colony);
 		const neededTransportPower = this.neededTransportPower();
 		let numTransporters = 0;
 		if (transportPowerEach !== 0) {
-			numTransporters = Math.ceil(neededTransportPower / transportPowerEach);
+			numTransporters = Math.ceil(
+				neededTransportPower / transportPowerEach
+			);
 		}
 
 		numTransporters = Math.min(numTransporters, MAX_TRANSPORTERS);
 
-		this.debug(`requesting ${numTransporters} (${this.transporters.length}) because of ${neededTransportPower} needed by ${transportPowerEach}`);
+		this.debug(
+			`requesting ${numTransporters} (${this.transporters.length}) because of ${neededTransportPower} needed by ${transportPowerEach}`
+		);
 		if (this.transporters.length == 0) {
-			this.wishlist(numTransporters, setup, {priority: OverlordPriority.ownedRoom.firstTransport});
+			this.wishlist(numTransporters, setup, {
+				priority: OverlordPriority.ownedRoom.firstTransport,
+			});
 		} else {
 			this.wishlist(numTransporters, setup);
 		}
 	}
 
-	private handleTransporter(transporter: Zerg, request: LogisticsRequest | undefined) {
+	private handleTransporter(
+		transporter: Zerg,
+		request: LogisticsRequest | undefined
+	) {
 		let prefix = `${transporter.print}`;
 		if (request) {
-			const choices = this.colony.logisticsNetwork.bufferChoices(transporter, request);
-			const bestChoice = _.last(_.sortBy(choices, choice => request.multiplier * choice.dQ
-																  / Math.max(choice.dt, 0.1)));
+			const choices = this.colony.logisticsNetwork.bufferChoices(
+				transporter,
+				request
+			);
+			const bestChoice = _.last(
+				_.sortBy(
+					choices,
+					(choice) =>
+						(request.multiplier * choice.dQ) /
+						Math.max(choice.dt, 0.1)
+				)
+			);
 			let task = null;
-			const amount = this.colony.logisticsNetwork.predictedRequestAmount(transporter, request);
-			prefix = `${transporter.print}: request ${LogisticsNetwork.logRequest(request)}, predicted: ${amount}`;
-			this.debug(() => `${prefix} buffer choices:\n` + + columnify(choices));
+			const amount = this.colony.logisticsNetwork.predictedRequestAmount(
+				transporter,
+				request
+			);
+			prefix = `${
+				transporter.print
+			}: request ${LogisticsNetwork.logRequest(
+				request
+			)}, predicted: ${amount}`;
+			this.debug(
+				() => `${prefix} buffer choices:\n` + +columnify(choices)
+			);
 			// Target is requesting input
 			if (amount > 0) {
-				if (isResource(request.target) || isTombstone(request.target) || isRuin(request.target)) {
-					log.warning(`Improper logistics request: should not request input for resource, tombstone or ruin!`);
+				if (
+					isResource(request.target) ||
+					isTombstone(request.target) ||
+					isRuin(request.target)
+				) {
+					log.warning(
+						`Improper logistics request: should not request input for resource, tombstone or ruin!`
+					);
 					return;
 				} else if (request.resourceType === RESOURCE_ALL) {
 					log.error(`${this.print}: cannot request 'all' as input!`);
 					return;
 				} else {
-					task = Tasks.transfer(<TransferrableStoreStructure>request.target, request.resourceType);
+					task = Tasks.transfer(
+						<TransferrableStoreStructure>request.target,
+						request.resourceType
+					);
 				}
 				if (bestChoice.targetRef != request.target.ref) {
 					// If we need to go to a buffer first to get more stuff
 					const buffer = deref(bestChoice.targetRef) as BufferTarget;
-					const withdrawAmount = Math.min(buffer.store[request.resourceType] || 0,
-													transporter.store.getFreeCapacity(request.resourceType), amount);
-					this.debug(() => `${prefix}: going to ${buffer.print} to collect before dropping off`);
-					task = task.fork(Tasks.withdraw(buffer, request.resourceType, withdrawAmount));
-					if (transporter.hasMineralsInCarry && request.resourceType == RESOURCE_ENERGY) {
+					const withdrawAmount = Math.min(
+						buffer.store[request.resourceType] || 0,
+						transporter.store.getFreeCapacity(request.resourceType),
+						amount
+					);
+					this.debug(
+						() =>
+							`${prefix}: going to ${buffer.print} to collect before dropping off`
+					);
+					task = task.fork(
+						Tasks.withdraw(
+							buffer,
+							request.resourceType,
+							withdrawAmount
+						)
+					);
+					if (
+						transporter.hasMineralsInCarry &&
+						request.resourceType == RESOURCE_ENERGY
+					) {
 						task = task.fork(Tasks.transferAll(buffer));
 					}
 				}
@@ -148,7 +218,10 @@ export class TransportOverlord extends Overlord {
 				if (bestChoice.targetRef != request.target.ref) {
 					// If we need to go to a buffer first to deposit stuff
 					const buffer = deref(bestChoice.targetRef) as BufferTarget;
-					this.debug(() => `${prefix}: needs a buffer first, using ${buffer.print}`);
+					this.debug(
+						() =>
+							`${prefix}: needs a buffer first, using ${buffer.print}`
+					);
 					task = task.fork(Tasks.transferAll(buffer));
 				}
 			} else {
@@ -164,17 +237,29 @@ export class TransportOverlord extends Overlord {
 				if (transporter.hasMineralsInCarry) {
 					const target = this.colony.terminal || this.colony.storage;
 					if (target) {
-						this.debug(() => `${prefix}: nothing to do, dropping off `
-							+ `everything to ${target}@${target.pos.print}`);
+						this.debug(
+							() =>
+								`${prefix}: nothing to do, dropping off ` +
+								`everything to ${target}@${target.pos.print}`
+						);
 						transporter.task = Tasks.transferAll(target);
 					}
 				} else {
-					const dropoffPoints = _.compact<StructureLink | StructureStorage>([this.colony.storage!, ...this.colony.links]);
+					const dropoffPoints = _.compact<
+						StructureLink | StructureStorage
+					>([this.colony.storage!, ...this.colony.links]);
 
 					const bestDropoffPoint = minBy(dropoffPoints, (dropoff) => {
-						const range = transporter.pos.getMultiRoomRangeTo(dropoff.pos);
+						const range = transporter.pos.getMultiRoomRangeTo(
+							dropoff.pos
+						);
 						if (dropoff instanceof StructureLink) {
-							return Math.max(range, this.colony.linkNetwork.getDropoffAvailability(dropoff));
+							return Math.max(
+								range,
+								this.colony.linkNetwork.getDropoffAvailability(
+									dropoff
+								)
+							);
 						} else {
 							return range;
 						}
@@ -184,8 +269,11 @@ export class TransportOverlord extends Overlord {
 					// 	= transporter.pos.findClosestByMultiRoomRange(dropoffPoints);
 
 					if (bestDropoffPoint) {
-						this.debug(() => `${prefix}: nothing to do, dropping off to `
-							+ `${bestDropoffPoint}@${bestDropoffPoint.pos.print}`);
+						this.debug(
+							() =>
+								`${prefix}: nothing to do, dropping off to ` +
+								`${bestDropoffPoint}@${bestDropoffPoint.pos.print}`
+						);
 						transporter.task = Tasks.transfer(bestDropoffPoint);
 					}
 				}
@@ -196,37 +284,51 @@ export class TransportOverlord extends Overlord {
 				} else if (this.colony.roomPlanner.storagePos) {
 					parkingSpot = this.colony.roomPlanner.storagePos;
 				}
-				this.debug(() => `${prefix}: nothing to do and empty, parking to ${parkingSpot}`);
+				this.debug(
+					() =>
+						`${prefix}: nothing to do and empty, parking to ${parkingSpot}`
+				);
 				transporter.park(parkingSpot);
 			}
 		}
 	}
 
 	retarget() {
-		this.transporters.forEach(t => t.task = null);
+		this.transporters.forEach((t) => (t.task = null));
 		this.run();
 	}
 
 	run() {
-		this.autoRun(this.transporters,
-			transporter => {
-				const request = this.colony.logisticsNetwork.bestRequestForTransporter(transporter);
+		this.autoRun(
+			this.transporters,
+			(transporter) => {
+				const request =
+					this.colony.logisticsNetwork.bestRequestForTransporter(
+						transporter
+					);
 				this.handleTransporter(transporter, request);
 			},
-			transporter => transporter.avoidDanger({ timer: 5, dropEnergy: true })
+			(transporter) =>
+				transporter.avoidDanger({ timer: 5, dropEnergy: true })
 		);
 
 		this.stats();
 	}
 
 	stats() {
-		const idleTransporters = this.transporters.filter(t => !t.isIdle).length;
-		const downtime = ema(idleTransporters / this.transporters.length,
+		const idleTransporters = this.transporters.filter(
+			(t) => !t.isIdle
+		).length;
+		const downtime = ema(
+			idleTransporters / this.transporters.length,
 			this.memory[TRANSPORT_MEM.DOWNTIME] ?? 0,
 			CREEP_LIFE_TIME
 		);
 
 		this.memory[TRANSPORT_MEM.DOWNTIME] = downtime;
-		Stats.log(`colonies.${this.colony.name}.transportNetwork.downtime`, downtime);
+		Stats.log(
+			`colonies.${this.colony.name}.transportNetwork.downtime`,
+			downtime
+		);
 	}
 }

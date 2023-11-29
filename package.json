@@ -15,6 +15,9 @@
   "scripts": {
     "build": "tsc -p .",
     "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint --fix \"src/**/*.ts\"",
+    "prettier": "prettier --list-different --write src",
+    "format": "npm run prettier && npm run lint:fix",
     "clean": "rm -rf tsc-out && rm -rf dist",
     "obfuscate": "npm run clean && npm run build && javascript-obfuscator --config obfuscator.config.json tsc-out/src/Overmind.js --output src/Overmind_obfuscated.js && javascript-obfuscator --config obfuscator.config.json tsc-out/src/assimilation/Assimilator.js --output src/assimilation/Assimilator_obfuscated.js",
     "make-public": "node tools/make-public.js",

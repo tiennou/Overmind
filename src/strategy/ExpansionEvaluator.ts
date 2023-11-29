@@ -1,19 +1,19 @@
-import {log} from '../console/log';
-import {bodyCost} from '../creepSetups/CreepSetup';
-import {CombatSetups, Setups} from '../creepSetups/setups';
-import {RoomIntel} from '../intel/RoomIntel';
-import {Pathing} from '../movement/Pathing';
-import {profile} from '../profiler/decorator';
-import {BasePlanner} from '../roomPlanner/BasePlanner';
+import { log } from "../console/log";
+import { bodyCost } from "../creepSetups/CreepSetup";
+import { CombatSetups, Setups } from "../creepSetups/setups";
+import { RoomIntel } from "../intel/RoomIntel";
+import { Pathing } from "../movement/Pathing";
+import { profile } from "../profiler/decorator";
+import { BasePlanner } from "../roomPlanner/BasePlanner";
 import {
 	Cartographer,
 	ROOMTYPE_ALLEY,
 	ROOMTYPE_CONTROLLER,
 	ROOMTYPE_CORE,
 	ROOMTYPE_CROSSROAD,
-	ROOMTYPE_SOURCEKEEPER
-} from '../utilities/Cartographer';
-import { MiningOverlord } from 'overlords/mining/miner';
+	ROOMTYPE_SOURCEKEEPER,
+} from "../utilities/Cartographer";
+import { MiningOverlord } from "overlords/mining/miner";
 
 export const EXPANSION_EVALUATION_FREQ = 500;
 export const MIN_EXPANSION_DISTANCE = 2;
@@ -36,23 +36,34 @@ export interface ExpansionEvaluatorRoomEfficiency {
 	cpuCost: number;
 	netIncome: number;
 	avgEnergyPerCPU: number;
-};
+}
 
 @profile
 export class ExpansionEvaluator {
-
-
-	static refreshExpansionData(expansionData: ColonyExpansionData, colonyRoomName: string): void {
+	static refreshExpansionData(
+		expansionData: ColonyExpansionData,
+		colonyRoomName: string
+	): void {
 		// This method is typed a little strangely to avoid some circular dependency problems
 
 		// This only gets run once per colony
-		if (_.keys(expansionData.possibleExpansions).length == 0 || Game.time > expansionData.expiration) {
+		if (
+			_.keys(expansionData.possibleExpansions).length == 0 ||
+			Game.time > expansionData.expiration
+		) {
 			// Generate a list of rooms which can possibly be settled in
-			const nearbyRooms = Cartographer.recursiveRoomSearch(colonyRoomName, 5);
+			const nearbyRooms = Cartographer.recursiveRoomSearch(
+				colonyRoomName,
+				5
+			);
 			let possibleExpansions: string[] = [];
 			for (const depth in nearbyRooms) {
-				if (parseInt(depth, 10) <= MIN_EXPANSION_DISTANCE) continue;
-				possibleExpansions = possibleExpansions.concat(nearbyRooms[depth]);
+				if (parseInt(depth, 10) <= MIN_EXPANSION_DISTANCE) {
+					continue;
+				}
+				possibleExpansions = possibleExpansions.concat(
+					nearbyRooms[depth]
+				);
 			}
 			for (const roomName of possibleExpansions) {
 				if (Cartographer.roomType(roomName) == ROOMTYPE_CONTROLLER) {
@@ -64,17 +75,18 @@ export class ExpansionEvaluator {
 		for (const roomName in expansionData.possibleExpansions) {
 			if (expansionData.possibleExpansions[roomName] == true) {
 				if (Memory.rooms[roomName]) {
-					const roomExpansionData = RoomIntel.getExpansionData(roomName);
+					const roomExpansionData =
+						RoomIntel.getExpansionData(roomName);
 					if (roomExpansionData == false) {
 						expansionData.possibleExpansions[roomName] = false;
 					} else if (roomExpansionData && roomExpansionData.score) {
-						expansionData.possibleExpansions[roomName] = roomExpansionData.score;
+						expansionData.possibleExpansions[roomName] =
+							roomExpansionData.score;
 					}
 				}
 			}
 		}
 	}
-
 
 	/**
 	 * Returns the net energy income per cpu spent
@@ -82,11 +94,14 @@ export class ExpansionEvaluator {
 	 * @param room
 	 * @param verbose
 	 */
-	static computeTheoreticalMiningEfficiency(dropoffLocation: RoomPosition, room: string) {
+	static computeTheoreticalMiningEfficiency(
+		dropoffLocation: RoomPosition,
+		room: string
+	) {
 		const type = Cartographer.roomType(room);
 		const _upkeepEnergyCost = 0; // todo later can factor in road damage from all creeps moving
 
-		const data : ExpansionEvaluatorRoomEfficiency = {
+		const data: ExpansionEvaluatorRoomEfficiency = {
 			room: room,
 			type: type,
 			dropoffLocation: dropoffLocation,
@@ -103,22 +118,37 @@ export class ExpansionEvaluator {
 
 		const sourcePositions = RoomIntel.getSourceInfo(room);
 		if (sourcePositions == undefined) {
-			log.info(`No memory of outpost room: ${room}. Aborting score calculation!`);
+			log.info(
+				`No memory of outpost room: ${room}. Aborting score calculation!`
+			);
 			return data;
 		}
 
 		// Compute Path length
 		// TODO have it track how many swamp/plain/tunnel
-		const sourcePathLengths: {[sourcePos: string]: number} = {};
+		const sourcePathLengths: { [sourcePos: string]: number } = {};
 		for (const source of sourcePositions) {
-			const containerPos = MiningOverlord.calculateContainerPos(source.pos, dropoffLocation);
+			const containerPos = MiningOverlord.calculateContainerPos(
+				source.pos,
+				dropoffLocation
+			);
 
 			// TODO Need to factor in where roads would go
-			const path = Pathing.findShortestPath(dropoffLocation, containerPos,
-				{ignoreStructures: true, allowHostile: true, blockCreeps: false, avoidSK: false});
+			const path = Pathing.findShortestPath(
+				dropoffLocation,
+				containerPos,
+				{
+					ignoreStructures: true,
+					allowHostile: true,
+					blockCreeps: false,
+					avoidSK: false,
+				}
+			);
 
 			if (path.incomplete) {
-				log.error(`Couldn't find path to source ${source.pos.print} for mining efficiency calc`);
+				log.error(
+					`Couldn't find path to source ${source.pos.print} for mining efficiency calc`
+				);
 				data.unreachableSources++;
 				continue;
 			}
@@ -127,56 +157,94 @@ export class ExpansionEvaluator {
 		}
 
 		// Compute Energy Supply
-		data.energyPerSource = type == ROOMTYPE_CONTROLLER ? SOURCE_ENERGY_CAPACITY : SOURCE_ENERGY_KEEPER_CAPACITY;
+		data.energyPerSource =
+			type == ROOMTYPE_CONTROLLER ?
+				SOURCE_ENERGY_CAPACITY
+			:	SOURCE_ENERGY_KEEPER_CAPACITY;
 
 		// Compute miner upkeep
 		for (const source of sourcePositions) {
-			const setup = type == ROOMTYPE_CONTROLLER ? Setups.drones.miners.standard.generateMaxedBody()
-				: Setups.drones.miners.sourceKeeper.generateMaxedBody();
-			const effectiveCreepUptime = (CREEP_LIFE_TIME - sourcePathLengths[source.pos.print]);
-			data.creepEnergyCost += bodyCost(setup)/effectiveCreepUptime;
-			data.spawnTimeCost += setup.length*CREEP_SPAWN_TIME/effectiveCreepUptime;
+			const setup =
+				type == ROOMTYPE_CONTROLLER ?
+					Setups.drones.miners.standard.generateMaxedBody()
+				:	Setups.drones.miners.sourceKeeper.generateMaxedBody();
+			const effectiveCreepUptime =
+				CREEP_LIFE_TIME - sourcePathLengths[source.pos.print];
+			data.creepEnergyCost += bodyCost(setup) / effectiveCreepUptime;
+			data.spawnTimeCost +=
+				(setup.length * CREEP_SPAWN_TIME) / effectiveCreepUptime;
 			// Always harvesting, sometimes replacement is moving
-			data.cpuCost += 0.2 + 0.2*(1-effectiveCreepUptime/CREEP_LIFE_TIME);
+			data.cpuCost +=
+				0.2 + 0.2 * (1 - effectiveCreepUptime / CREEP_LIFE_TIME);
 		}
 
 		// Compute reserver/skReaper upkeep
 		if (type == ROOMTYPE_CONTROLLER) {
 			const controller = RoomIntel.getControllerInfo(room);
 			if (!controller) {
-				log.error(`Expansion Efficiency Calc: Can't find controller for room ${room}`);
+				log.error(
+					`Expansion Efficiency Calc: Can't find controller for room ${room}`
+				);
 				data.unreachableController = true;
 			} else {
 				const setup = Setups.infestors.reserve.generateMaxedBody();
-				const controllerPath = Pathing.findShortestPath(dropoffLocation, controller.pos,
-					{ignoreStructures: true, allowHostile: true});
+				const controllerPath = Pathing.findShortestPath(
+					dropoffLocation,
+					controller.pos,
+					{
+						ignoreStructures: true,
+						allowHostile: true,
+					}
+				);
 				if (controllerPath.incomplete) {
-					log.error(`Couldn't find path to controller ${controller} for mining efficiency calc`);
+					log.error(
+						`Couldn't find path to controller ${controller} for mining efficiency calc`
+					);
 					data.unreachableController = true;
 				} else {
-					const claimPower = _.filter(setup, (part: BodyPartConstant) => part == CLAIM).length;
+					const claimPower = _.filter(
+						setup,
+						(part: BodyPartConstant) => part == CLAIM
+					).length;
 					const effectiveLifetimeReservationGeneration =
-						(CREEP_CLAIM_LIFE_TIME - controllerPath.path.length) * claimPower;
-					data.creepEnergyCost += bodyCost(setup)/effectiveLifetimeReservationGeneration;
-					data.spawnTimeCost += setup.length*CREEP_SPAWN_TIME/effectiveLifetimeReservationGeneration;
-					data.cpuCost += 0.2 * CREEP_CLAIM_LIFE_TIME / effectiveLifetimeReservationGeneration;
+						(CREEP_CLAIM_LIFE_TIME - controllerPath.path.length) *
+						claimPower;
+					data.creepEnergyCost +=
+						bodyCost(setup) /
+						effectiveLifetimeReservationGeneration;
+					data.spawnTimeCost +=
+						(setup.length * CREEP_SPAWN_TIME) /
+						effectiveLifetimeReservationGeneration;
+					data.cpuCost +=
+						(0.2 * CREEP_CLAIM_LIFE_TIME) /
+						effectiveLifetimeReservationGeneration;
 				}
 			}
 		} else if (type == ROOMTYPE_SOURCEKEEPER) {
 			// Handle SK
-			const setup = CombatSetups.zerglings.sourceKeeper.generateMaxedBody();
-			const skPath = Pathing.findPathToRoom(dropoffLocation, room,
-				{ignoreStructures: true, allowHostile: true});
+			const setup =
+				CombatSetups.zerglings.sourceKeeper.generateMaxedBody();
+			const skPath = Pathing.findPathToRoom(dropoffLocation, room, {
+				ignoreStructures: true,
+				allowHostile: true,
+			});
 			if (skPath.incomplete) {
-				log.error(`Couldn't find path to sk room ${room} for mining efficiency calc`);
+				log.error(
+					`Couldn't find path to sk room ${room} for mining efficiency calc`
+				);
 				data.unreachableController = true;
 			} else {
-				const effectiveCreepUptime = (CREEP_LIFE_TIME - skPath.path.length);
-				data.creepEnergyCost += bodyCost(setup)/effectiveCreepUptime;
-				data.spawnTimeCost += setup.length*CREEP_SPAWN_TIME/effectiveCreepUptime;
+				const effectiveCreepUptime =
+					CREEP_LIFE_TIME - skPath.path.length;
+				data.creepEnergyCost += bodyCost(setup) / effectiveCreepUptime;
+				data.spawnTimeCost +=
+					(setup.length * CREEP_SPAWN_TIME) / effectiveCreepUptime;
 				// Increased cost, always moving, frequent attack/move+heal intents,
 				// and during overlap 2nd creep moving to room
-				data.cpuCost += 0.2 + 0.15 + 0.2*(1-effectiveCreepUptime/CREEP_LIFE_TIME);
+				data.cpuCost +=
+					0.2 +
+					0.15 +
+					0.2 * (1 - effectiveCreepUptime / CREEP_LIFE_TIME);
 				// TODO examine for accuracy Increased cost, frequent attack/move+heal intents
 			}
 		}
@@ -185,29 +253,48 @@ export class ExpansionEvaluator {
 		for (const source of sourcePositions) {
 			const setup = Setups.transporters.default.generateMaxedBody();
 			// Calculate amount of hauling each transporter provides in a lifetime
-			const transporterCarryParts = _.filter(setup, (part: BodyPartConstant) => part == CARRY).length;
-			const effectiveEnergyTransportedPerTick = transporterCarryParts * CARRY_CAPACITY
-				/ (2 * sourcePathLengths[source.pos.print]); // round trip
-			const transportersPerSource = data.energyPerSource/ENERGY_REGEN_TIME/effectiveEnergyTransportedPerTick;
+			const transporterCarryParts = _.filter(
+				setup,
+				(part: BodyPartConstant) => part == CARRY
+			).length;
+			const effectiveEnergyTransportedPerTick =
+				(transporterCarryParts * CARRY_CAPACITY) /
+				(2 * sourcePathLengths[source.pos.print]); // round trip
+			const transportersPerSource =
+				data.energyPerSource /
+				ENERGY_REGEN_TIME /
+				effectiveEnergyTransportedPerTick;
 
-			data.creepEnergyCost += bodyCost(setup)*transportersPerSource/CREEP_LIFE_TIME;
-			data.spawnTimeCost += setup.length*CREEP_SPAWN_TIME*transportersPerSource/CREEP_LIFE_TIME;
+			data.creepEnergyCost +=
+				(bodyCost(setup) * transportersPerSource) / CREEP_LIFE_TIME;
+			data.spawnTimeCost +=
+				(setup.length * CREEP_SPAWN_TIME * transportersPerSource) /
+				CREEP_LIFE_TIME;
 			data.cpuCost += 0.2 * transportersPerSource;
 		}
 
 		data.sources = sourcePositions.length;
-		data.netIncome = (data.energyPerSource * sourcePositions.length / ENERGY_REGEN_TIME) - data.creepEnergyCost;
-		data.avgEnergyPerCPU = (data.netIncome / data.cpuCost || 0);
+		data.netIncome =
+			(data.energyPerSource * sourcePositions.length) /
+				ENERGY_REGEN_TIME -
+			data.creepEnergyCost;
+		data.avgEnergyPerCPU = data.netIncome / data.cpuCost || 0;
 
 		return data;
 	}
 
 	// Compute the total score for a room
 	static computeExpansionData(roomName: string, verbose = false): boolean {
-		if (verbose) log.info(`Computing score for ${roomName}...`);
+		if (verbose) {
+			log.info(`Computing score for ${roomName}...`);
+		}
 		const controller = RoomIntel.getControllerInfo(roomName);
 		if (controller === undefined) {
-			if (verbose) log.info(`No intel on ${roomName}, aborting score calculation!`);
+			if (verbose) {
+				log.info(
+					`No intel on ${roomName}, aborting score calculation!`
+				);
+			}
 			return false;
 		}
 		if (controller === null) {
@@ -216,22 +303,37 @@ export class ExpansionEvaluator {
 		}
 
 		// compute possible outposts (includes host room)
-		const possibleOutpostsInRange = Cartographer.recursiveRoomSearch(roomName, 2);
-		const possibleOutposts = _.flatten(_.values<string[]>(possibleOutpostsInRange));
+		const possibleOutpostsInRange = Cartographer.recursiveRoomSearch(
+			roomName,
+			2
+		);
+		const possibleOutposts = _.flatten(
+			_.values<string[]>(possibleOutpostsInRange)
+		);
 
 		// find source positions
-		const outpostSourcePositions: { [roomName: string]: RoomPosition[] } = {};
+		const outpostSourcePositions: { [roomName: string]: RoomPosition[] } =
+			{};
 		for (const roomName of possibleOutposts) {
-			if (Cartographer.roomType(roomName) == ROOMTYPE_ALLEY
-				|| Cartographer.roomType(roomName) == ROOMTYPE_CROSSROAD) {
+			if (
+				Cartographer.roomType(roomName) == ROOMTYPE_ALLEY ||
+				Cartographer.roomType(roomName) == ROOMTYPE_CROSSROAD
+			) {
 				continue;
 			}
 			const sourcePositions = RoomIntel.getSourceInfo(roomName);
 			if (sourcePositions == undefined) {
-				if (verbose) log.info(`No memory of neighbor: ${roomName}. Aborting score calculation!`);
+				if (verbose) {
+					log.info(
+						`No memory of neighbor: ${roomName}. Aborting score calculation!`
+					);
+				}
 				return false;
 			} else {
-				outpostSourcePositions[roomName] = _.map(sourcePositions, src => src.pos);
+				outpostSourcePositions[roomName] = _.map(
+					sourcePositions,
+					(src) => src.pos
+				);
 			}
 		}
 
@@ -239,17 +341,23 @@ export class ExpansionEvaluator {
 		const bunkerLocation = BasePlanner.getBunkerLocation(roomName, false);
 		if (!bunkerLocation) {
 			RoomIntel.setExpansionData(roomName, false);
-			log.info(`Room ${roomName} is uninhabitable because a bunker can't be built here!`);
+			log.info(
+				`Room ${roomName} is uninhabitable because a bunker can't be built here!`
+			);
 			return false;
 		}
 
 		// evaluate energy contribution and compute outpost scores
-		if (verbose) log.info(`Origin: ${bunkerLocation.print}`);
+		if (verbose) {
+			log.info(`Origin: ${bunkerLocation.print}`);
+		}
 
 		const outpostScores: { [roomName: string]: number } = {};
 
 		for (const roomName in outpostSourcePositions) {
-			if (verbose) log.info(`Analyzing neighbor ${roomName}`);
+			if (verbose) {
+				log.info(`Analyzing neighbor ${roomName}`);
+			}
 			const sourcePositions = outpostSourcePositions[roomName];
 			let valid = true;
 			const roomType = Cartographer.roomType(roomName);
@@ -262,15 +370,28 @@ export class ExpansionEvaluator {
 
 			let roomScore = 0;
 			for (const position of sourcePositions) {
-				const msg = verbose ? `Computing distance from ${bunkerLocation.print} to ${position.print}... ` : '';
-				const ret = Pathing.findShortestPath(bunkerLocation, position,
-													 {ignoreStructures: true, allowHostile: true});
-				if (ret.incomplete || ret.path.length > 100 /* Colony.settings.maxSourceDistance */) {
-					if (verbose) log.info(msg + 'incomplete path!');
+				const msg =
+					verbose ?
+						`Computing distance from ${bunkerLocation.print} to ${position.print}... `
+					:	"";
+				const ret = Pathing.findShortestPath(bunkerLocation, position, {
+					ignoreStructures: true,
+					allowHostile: true,
+				});
+				if (
+					ret.incomplete ||
+					ret.path.length >
+						100 /* Colony.settings.maxSourceDistance */
+				) {
+					if (verbose) {
+						log.info(msg + "incomplete path!");
+					}
 					valid = false;
 					break;
 				}
-				if (verbose) log.info(msg + ret.path.length);
+				if (verbose) {
+					log.info(msg + ret.path.length);
+				}
 				const offset = 25; // prevents over-sensitivity to very close sources
 				roomScore += energyPerSource / (ret.path.length + offset);
 			}
@@ -282,16 +403,23 @@ export class ExpansionEvaluator {
 		// Compute the total score of the room as the maximum energy score of max number of sources harvestable
 		let totalScore = 0;
 		let sourceCount = 0;
-		const roomsByScore = _.sortBy(_.keys(outpostScores), roomName => -1 * outpostScores[roomName]);
+		const roomsByScore = _.sortBy(
+			_.keys(outpostScores),
+			(roomName) => -1 * outpostScores[roomName]
+		);
 		for (const scoredRoomName of roomsByScore) {
-			if (sourceCount > 9 /* Colony.settings.remoteSourcesByLevel[8]*/) break;
+			if (sourceCount > 9 /* Colony.settings.remoteSourcesByLevel[8]*/) {
+				break;
+			}
 			const _factor = scoredRoomName == roomName ? 2 : 1; // weight owned room scores more heavily
 			totalScore += outpostScores[scoredRoomName];
 			sourceCount += outpostSourcePositions[scoredRoomName].length;
 		}
 		totalScore = Math.floor(totalScore);
 
-		if (verbose) log.info(`Score: ${totalScore}`);
+		if (verbose) {
+			log.info(`Score: ${totalScore}`);
+		}
 
 		const existingExpansionData = RoomIntel.getExpansionData(roomName);
 		if (existingExpansionData === false) {
@@ -299,17 +427,17 @@ export class ExpansionEvaluator {
 			return false;
 		}
 
-		if (existingExpansionData == undefined || totalScore > existingExpansionData.score) {
+		if (
+			existingExpansionData == undefined ||
+			totalScore > existingExpansionData.score
+		) {
 			RoomIntel.setExpansionData(roomName, {
-				score       : totalScore,
+				score: totalScore,
 				bunkerAnchor: bunkerLocation,
-				outposts    : outpostScores,
+				outposts: outpostScores,
 			});
 		}
 
 		return true;
 	}
-
 }
-
-

@@ -1,8 +1,8 @@
 // A stripped-down version of the logistics network intended for local deliveries
 
-import { log } from 'console/log';
-import {blankPriorityQueue, Priority} from '../priorities/priorities';
-import {profile} from '../profiler/decorator';
+import { log } from "console/log";
+import { blankPriorityQueue, Priority } from "../priorities/priorities";
+import { profile } from "../profiler/decorator";
 
 // export type TransportRequestTarget =
 // 	StructureContainer
@@ -32,14 +32,12 @@ interface TransportRequestOptions {
 	resourceType?: ResourceConstant;
 }
 
-
 /**
  * Transport request groups handle close-range prioritized resource requests, in contrast to the logistics network,
  * which handles longer-ranged requests
  */
 @profile
 export class TransportRequestGroup {
-
 	supply: { [priority: number]: TransportRequest[] };
 	withdraw: { [priority: number]: TransportRequest[] };
 	supplyByID: { [id: string]: TransportRequest[] };
@@ -58,7 +56,10 @@ export class TransportRequestGroup {
 
 	needsSupplying(priorityThreshold?: Priority): boolean {
 		for (const priority in this.supply) {
-			if (priorityThreshold != undefined && <Priority>parseInt(priority, 10) > priorityThreshold) {
+			if (
+				priorityThreshold != undefined &&
+				<Priority>parseInt(priority, 10) > priorityThreshold
+			) {
 				continue; // lower numerical priority values are more important; if priority > threshold then ignore it
 			}
 			if (this.supply[priority].length > 0) {
@@ -70,7 +71,10 @@ export class TransportRequestGroup {
 
 	needsWithdrawing(priorityThreshold?: Priority): boolean {
 		for (const priority in this.withdraw) {
-			if (priorityThreshold != undefined && <Priority>parseInt(priority, 10) > priorityThreshold) {
+			if (
+				priorityThreshold != undefined &&
+				<Priority>parseInt(priority, 10) > priorityThreshold
+			) {
 				continue; // lower numerical priority values are more important; if priority > threshold then ignore it
 			}
 			if (this.withdraw[priority].length > 0) {
@@ -80,54 +84,65 @@ export class TransportRequestGroup {
 		return false;
 	}
 
-	getPrioritizedClosestRequest(pos: RoomPosition, type: 'supply' | 'withdraw',
-								 filter?: ((requst: TransportRequest) => boolean)): TransportRequest | undefined {
-		const requests = type == 'withdraw' ? this.withdraw : this.supply;
+	getPrioritizedClosestRequest(
+		pos: RoomPosition,
+		type: "supply" | "withdraw",
+		filter?: (requst: TransportRequest) => boolean
+	): TransportRequest | undefined {
+		const requests = type == "withdraw" ? this.withdraw : this.supply;
 		for (const priority in requests) {
-			const targets = _.map(requests[priority], request => request.target);
+			const targets = _.map(
+				requests[priority],
+				(request) => request.target
+			);
 			const target = pos.findClosestByRangeThenPath(targets);
 			if (target) {
-				let searchRequests;
-				if (filter) {
-					searchRequests = _.filter(requests[priority], req => filter(req));
-				} else {
-					searchRequests = requests[priority];
-				}
-				return _.find(searchRequests, request => request.target.ref == target.ref);
+				const searchRequests =
+					filter ?
+						_.filter(requests[priority], (req) => filter(req))
+					:	requests[priority];
+				return _.find(
+					searchRequests,
+					(request) => request.target.ref == target.ref
+				);
 			}
 		}
 	}
 
-
 	private isTargetValid(target: TransportRequestTarget) {
-		if (target.pos.availableNeighbors(true).length === 0) return false;
+		if (target.pos.availableNeighbors(true).length === 0) {
+			return false;
+		}
 		return true;
 	}
 
 	/**
 	 * Request for resources to be deposited into this target
 	 */
-	requestInput(target: TransportRequestTarget,
-		priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
+	requestInput(
+		target: TransportRequestTarget,
+		priority = Priority.Normal,
+		opts = {} as TransportRequestOptions
+	): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 		});
 		if (!this.isTargetValid(target)) {
-			log.warning(`Transport request error: target input ${target.print} is invalid`);
+			log.warning(
+				`Transport request error: target input ${target.print} is invalid`
+			);
 			return;
 		}
-		if (opts.amount == undefined) {
-			opts.amount = this.getInputAmount(target, opts.resourceType!);
-		}
+		opts.amount ??= this.getInputAmount(target, opts.resourceType!);
 		// Register the request
 		const req: TransportRequest = {
-			target      : target,
+			target: target,
 			resourceType: opts.resourceType!,
-			amount      : opts.amount,
+			amount: opts.amount,
 		};
 		if (opts.amount > 0) {
 			this.supply[priority].push(req);
-			if (!this.supplyByID[target.id]) this.supplyByID[target.id] = [];
+			this.supplyByID[target.id] ??= [];
 			this.supplyByID[target.id].push(req);
 		}
 	}
@@ -135,27 +150,30 @@ export class TransportRequestGroup {
 	/**
 	 * Request for resources to be withdrawn from this target
 	 */
-	requestOutput(target: TransportRequestTarget,
-		priority = Priority.Normal, opts = {} as TransportRequestOptions): void {
+	requestOutput(
+		target: TransportRequestTarget,
+		priority = Priority.Normal,
+		opts = {} as TransportRequestOptions
+	): void {
 		_.defaults(opts, {
 			resourceType: RESOURCE_ENERGY,
 		});
 		if (!this.isTargetValid(target)) {
-			log.warning(`Transport request error: target output ${target.print} is invalid`);
+			log.warning(
+				`Transport request error: target output ${target.print} is invalid`
+			);
 			return;
 		}
-		if (opts.amount == undefined) {
-			opts.amount = this.getOutputAmount(target, opts.resourceType!);
-		}
+		opts.amount ??= this.getOutputAmount(target, opts.resourceType!);
 		// Register the request
 		const req: TransportRequest = {
-			target      : target,
+			target: target,
 			resourceType: opts.resourceType!,
-			amount      : opts.amount,
+			amount: opts.amount,
 		};
 		if (opts.amount > 0) {
 			this.withdraw[priority].push(req);
-			if (!this.withdrawByID[target.id]) this.withdrawByID[target.id] = [];
+			this.withdrawByID[target.id] ??= [];
 			this.withdrawByID[target.id].push(req);
 		}
 	}
@@ -172,11 +190,17 @@ export class TransportRequestGroup {
 	// 	}
 	// }
 
-	private getInputAmount(target: TransportRequestTarget, resourceType: ResourceConstant): number {
+	private getInputAmount(
+		target: TransportRequestTarget,
+		resourceType: ResourceConstant
+	): number {
 		return target.store.getFreeCapacity(resourceType) || 0;
 	}
 
-	private getOutputAmount(target: TransportRequestTarget, resourceType: ResourceConstant): number {
+	private getOutputAmount(
+		target: TransportRequestTarget,
+		resourceType: ResourceConstant
+	): number {
 		return target.store.getUsedCapacity(resourceType) || 0;
 	}
 
@@ -190,11 +214,15 @@ export class TransportRequestGroup {
 				console.log(`Priority: ${priority}`);
 			}
 			for (const request of this.supply[priority]) {
-				if (ignoreEnergy && request.resourceType == RESOURCE_ENERGY) continue;
-				console.log(`    target: ${request.target.structureType}@${request.target.pos.print} ` +
-							`(${request.target.ref})  `+
-							`amount: ${request.amount}  ` +
-							`resourceType: ${request.resourceType}`);
+				if (ignoreEnergy && request.resourceType == RESOURCE_ENERGY) {
+					continue;
+				}
+				console.log(
+					`    target: ${request.target.structureType}@${request.target.pos.print} ` +
+						`(${request.target.ref})  ` +
+						`amount: ${request.amount}  ` +
+						`resourceType: ${request.resourceType}`
+				);
 			}
 		}
 		console.log(`Withdraw requests ========================`);
@@ -203,11 +231,15 @@ export class TransportRequestGroup {
 				console.log(`Priority: ${priority}`);
 			}
 			for (const request of this.withdraw[priority]) {
-				if (ignoreEnergy && request.resourceType == RESOURCE_ENERGY) continue;
-				console.log(`    target: ${request.target.structureType}@${request.target.pos.print} ` +
-							`(${request.target.ref})  `+
-							`amount: ${request.amount}  ` +
-							`resourceType: ${request.resourceType}`);
+				if (ignoreEnergy && request.resourceType == RESOURCE_ENERGY) {
+					continue;
+				}
+				console.log(
+					`    target: ${request.target.structureType}@${request.target.pos.print} ` +
+						`(${request.target.ref})  ` +
+						`amount: ${request.amount}  ` +
+						`resourceType: ${request.resourceType}`
+				);
 			}
 		}
 	}

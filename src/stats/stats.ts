@@ -1,6 +1,6 @@
-import {Mem} from '../memory/Memory';
-import {profile} from '../profiler/decorator';
-import {ema} from '../utilities/utils';
+import { Mem } from "../memory/Memory";
+import { profile } from "../profiler/decorator";
+import { ema } from "../utilities/utils";
 
 /**
  * Operational statistics, stored in Memory.stats, will be updated every (this many) ticks
@@ -9,12 +9,9 @@ export const LOG_STATS_INTERVAL = 8;
 
 @profile
 export class Stats {
-
 	static clean() {
 		if (Game.time % LOG_STATS_INTERVAL == 0) {
-			const protectedKeys = [
-				'persistent',
-			];
+			const protectedKeys = ["persistent"];
 			for (const key in Memory.stats) {
 				if (!protectedKeys.includes(key)) {
 					// @ts-expect-error global shenaningans
@@ -24,11 +21,15 @@ export class Stats {
 		}
 	}
 
-	static log(key: string, value: number | { [key: string]: number } | undefined, truncateNumbers = true): void {
+	static log(
+		key: string,
+		value: number | { [key: string]: number } | undefined,
+		truncateNumbers = true
+	): void {
 		if (Game.time % LOG_STATS_INTERVAL == 0) {
 			if (truncateNumbers && value != undefined) {
 				const decimals = 5;
-				if (typeof value == 'number') {
+				if (typeof value == "number") {
 					value = value.truncate(decimals);
 				} else {
 					for (const i in value) {
@@ -51,21 +52,26 @@ export class Stats {
 		if (Game.time % LOG_STATS_INTERVAL == 0) {
 			// Record IVM heap statistics
 			if (Game.cpu.getHeapStatistics) {
-				Memory.stats['cpu.heapStatistics'] = Game.cpu.getHeapStatistics();
+				Memory.stats["cpu.heapStatistics"] =
+					Game.cpu.getHeapStatistics();
 			}
 			// Log GCL
-			this.log('gcl.progress', Game.gcl.progress);
-			this.log('gcl.progressTotal', Game.gcl.progressTotal);
-			this.log('gcl.level', Game.gcl.level);
+			this.log("gcl.progress", Game.gcl.progress);
+			this.log("gcl.progressTotal", Game.gcl.progressTotal);
+			this.log("gcl.level", Game.gcl.level);
 			// Log memory usage
-			this.log('memory.used', RawMemory.get().length);
+			this.log("memory.used", RawMemory.get().length);
 			// Log CPU
-			this.log('cpu.limit', Game.cpu.limit);
-			this.log('cpu.bucket', Game.cpu.bucket);
+			this.log("cpu.limit", Game.cpu.limit);
+			this.log("cpu.bucket", Game.cpu.bucket);
 		}
 		const used = Game.cpu.getUsed();
-		this.log('cpu.getUsed', used);
-		Memory.stats.persistent.avgCPU = ema(used, Memory.stats.persistent.avgCPU, 100);
+		this.log("cpu.getUsed", used);
+		Memory.stats.persistent.avgCPU = ema(
+			used,
+			Memory.stats.persistent.avgCPU,
+			100
+		);
 		Memory.stats.persistent.empireAge = Memory.tick;
 		Memory.stats.persistent.build = Memory.build;
 	}

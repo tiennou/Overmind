@@ -1,8 +1,8 @@
-import {GuardSwarmOverlord} from '../../overlords/defense/guardSwarm';
-import {DefenseNPCOverlord} from '../../overlords/defense/npcDefense';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
-import {NotifierPriority} from '../Notifier';
+import { GuardSwarmOverlord } from "../../overlords/defense/guardSwarm";
+import { DefenseNPCOverlord } from "../../overlords/defense/npcDefense";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
+import { NotifierPriority } from "../Notifier";
 
 interface DirectiveGuardMemory extends FlagMemory {
 	enhanced?: boolean;
@@ -14,8 +14,7 @@ interface DirectiveGuardMemory extends FlagMemory {
  */
 @profile
 export class DirectiveGuard extends Directive {
-
-	static directiveName = 'guard';
+	static directiveName = "guard";
 	static color = COLOR_BLUE;
 	static secondaryColor = COLOR_BLUE;
 
@@ -48,9 +47,16 @@ export class DirectiveGuard extends Directive {
 
 	run(): void {
 		// If there are no hostiles or hostiles structures left in the room, possibly remove
-		if (this.room && this.room.hostiles.length == 0 && this.room.hostileStructures.length == 0) {
+		if (
+			this.room &&
+			this.room.hostiles.length == 0 &&
+			this.room.hostileStructures.length == 0
+		) {
 			// If everyone's healed up and the room is safe, remove
-			const creepsNeedingHealing = _.filter(this.room.creeps, creep => creep.hits < creep.hitsMax);
+			const creepsNeedingHealing = _.filter(
+				this.room.creeps,
+				(creep) => creep.hits < creep.hitsMax
+			);
 			if (creepsNeedingHealing.length == 0 && this.room.isSafe) {
 				this.remove();
 			}

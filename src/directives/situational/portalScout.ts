@@ -1,15 +1,14 @@
-import {Colony} from '../../Colony';
-import {PortalScoutOverlord} from '../../overlords/scouting/portalWalker';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
+import { Colony } from "../../Colony";
+import { PortalScoutOverlord } from "../../overlords/scouting/portalWalker";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
 
 /**
  * It's like the movie Interstellar, but the special effects budget is whatever cash I left in my jeans
  */
 @profile
 export class DirectivePortalScout extends Directive {
-
-	static directiveName = 'portalScout';
+	static directiveName = "portalScout";
 	static color = COLOR_ORANGE;
 	static secondaryColor = COLOR_WHITE;
 
@@ -28,7 +27,5 @@ export class DirectivePortalScout extends Directive {
 		this.alert(`Portal scout active`);
 	}
 
-	run(): void {
-
-	}
+	run(): void {}
 }

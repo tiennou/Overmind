@@ -1,16 +1,15 @@
-import {log} from '../../console/log';
-import {ExtractorOverlord} from '../../overlords/mining/extractor';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Directive} from '../Directive';
+import { log } from "../../console/log";
+import { ExtractorOverlord } from "../../overlords/mining/extractor";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Directive } from "../Directive";
 
 /**
  * Mineral extraction directive. Spawns extraction creeps to operate extractors in owned or source keeper rooms
  */
 @profile
 export class DirectiveExtract extends Directive {
-
-	static directiveName = 'extract';
+	static directiveName = "extract";
 	static color = COLOR_YELLOW;
 	static secondaryColor = COLOR_CYAN;
 
@@ -21,7 +20,10 @@ export class DirectiveExtract extends Directive {
 	constructor(flag: Flag) {
 		super(flag);
 		if (this.colony) {
-			this.colony.destinations.push({pos: this.pos, order: this.memory[MEM.TICK] || Game.time});
+			this.colony.destinations.push({
+				pos: this.pos,
+				order: this.memory[MEM.TICK] || Game.time,
+			});
 		}
 	}
 
@@ -39,41 +41,46 @@ export class DirectiveExtract extends Directive {
 		this.overlords.extract = new ExtractorOverlord(this, priority);
 	}
 
-	init() {
-
-	}
+	init() {}
 
 	run() {
 		if (this.colony.level < 6) {
-			log.notify(`Removing extraction directive in ${this.pos.roomName}: room RCL insufficient.`);
+			log.notify(
+				`Removing extraction directive in ${this.pos.roomName}: room RCL insufficient.`
+			);
 			this.remove();
 		} else if (!this.colony.terminal) {
-			log.notify(`Removing extraction directive in ${this.pos.roomName}: room is missing terminal.`);
+			log.notify(
+				`Removing extraction directive in ${this.pos.roomName}: room is missing terminal.`
+			);
 			this.remove();
 		}
 	}
 
 	visuals(): void {
-		if (!(this.memory.debug && Memory.settings.enableVisuals)) return;
+		if (!(this.memory.debug && Memory.settings.enableVisuals)) {
+			return;
+		}
 
 		const extract = this.overlords.extract;
 		const data = [this.name];
 		if (extract.container) {
-			const store = extract.container.store
+			const store = extract.container.store;
 			data.push(` S: ${store.getUsedCapacity()}/${store.getCapacity()}`);
 		}
 		if (extract.extractor) {
-			data.push(` C: ${this.overlords.extract.extractor?.cooldown} ticks`);
+			data.push(
+				` C: ${this.overlords.extract.extractor?.cooldown} ticks`
+			);
 		}
 		if (extract.mineral?.mineralAmount) {
-			data.push(` R: ${extract.mineral.mineralAmount} ${extract.mineral.mineralType}`);
+			data.push(
+				` R: ${extract.mineral.mineralAmount} ${extract.mineral.mineralType}`
+			);
 		} else {
 			data.push(` R: ${extract.mineral?.ticksToRegeneration} ticks`);
 		}
 		const { x, y, roomName } = this.pos;
-		new RoomVisual(roomName).infoBox(data, x, y, { color: '#7acf9c' });
+		new RoomVisual(roomName).infoBox(data, x, y, { color: "#7acf9c" });
 	}
-
 }
-
-

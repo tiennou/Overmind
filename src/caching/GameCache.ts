@@ -1,21 +1,23 @@
-import {DirectiveOutpost} from '../directives/colony/outpost';
-import {DirectiveSKOutpost} from '../directives/colony/outpostSK';
-import {profile} from '../profiler/decorator';
+import { DirectiveOutpost } from "../directives/colony/outpost";
+import { DirectiveSKOutpost } from "../directives/colony/outpostSK";
+import { profile } from "../profiler/decorator";
 
 /**
  * GameCache does initial low-level preprocessing before each tick is run
  */
 @profile
 export class GameCache implements ICache {
-
 	overlords: { [overlord: string]: { [roleName: string]: string[] } };
 	creepsByColony: { [colonyName: string]: Creep[] };
 	targets: { [ref: string]: string[] };
 	outpostFlags: Flag[];
 
 	constructor() {
-		this.outpostFlags = _.filter(Game.flags, flag => DirectiveOutpost.filter(flag)
-														 || DirectiveSKOutpost.filter(flag));
+		this.outpostFlags = _.filter(
+			Game.flags,
+			(flag) =>
+				DirectiveOutpost.filter(flag) || DirectiveSKOutpost.filter(flag)
+		);
 	}
 
 	cacheCreepByColony(creep: Creep) {
@@ -45,7 +47,7 @@ export class GameCache implements ICache {
 	cacheTaskTargets(creep: AnyCreep) {
 		let task = creep.memory.task;
 		while (task) {
-			if (!this.targets[task._target.ref]) this.targets[task._target.ref] = [];
+			this.targets[task._target.ref] ??= [];
 			this.targets[task._target.ref].push(creep.name);
 			task = task._parent;
 		}
@@ -77,7 +79,3 @@ export class GameCache implements ICache {
 		this.rebuildCache();
 	}
 }
-
-
-
-

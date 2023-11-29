@@ -1,28 +1,29 @@
-import {CreepSetup} from '../../creepSetups/CreepSetup';
-import {Roles, Setups} from '../../creepSetups/setups';
-import {Hatchery} from '../../hiveClusters/hatchery';
-import {OverlordPriority} from '../../priorities/priorities_overlords';
-import {profile} from '../../profiler/decorator';
-import {Tasks} from '../../tasks/Tasks';
-import {Zerg} from '../../zerg/Zerg';
-import {DEFAULT_PRESPAWN, Overlord} from '../Overlord';
+import { CreepSetup } from "../../creepSetups/CreepSetup";
+import { Roles, Setups } from "../../creepSetups/setups";
+import { Hatchery } from "../../hiveClusters/hatchery";
+import { OverlordPriority } from "../../priorities/priorities_overlords";
+import { profile } from "../../profiler/decorator";
+import { Tasks } from "../../tasks/Tasks";
+import { Zerg } from "../../zerg/Zerg";
+import { DEFAULT_PRESPAWN, Overlord } from "../Overlord";
 
 /**
  * Spawns a dedicated hatchery attendant to refill spawns and extensions
  */
 @profile
 export class QueenOverlord extends Overlord {
-
 	hatchery: Hatchery;
 	queenSetup: CreepSetup;
 	queens: Zerg[];
 	settings: any;
 
 	constructor(hatchery: Hatchery, priority = OverlordPriority.core.queen) {
-		super(hatchery, 'queen', priority);
+		super(hatchery, "queen", priority);
 		this.hatchery = hatchery;
-		this.queenSetup = this.colony.storage && !this.colony.state.isRebuilding ? Setups.queens.default
-																				 : Setups.queens.early;
+		this.queenSetup =
+			this.colony.storage && !this.colony.state.isRebuilding ?
+				Setups.queens.default
+			:	Setups.queens.early;
 		this.queens = this.zerg(Roles.queen);
 		this.settings = {
 			refillTowersBelow: 500,
@@ -31,15 +32,22 @@ export class QueenOverlord extends Overlord {
 
 	init() {
 		const amount = 1;
-		const prespawn = this.hatchery.spawns.length <= 1 ? 100 : DEFAULT_PRESPAWN;
-		this.wishlist(amount, this.queenSetup, {prespawn: prespawn});
+		const prespawn =
+			this.hatchery.spawns.length <= 1 ? 100 : DEFAULT_PRESPAWN;
+		this.wishlist(amount, this.queenSetup, { prespawn: prespawn });
 	}
 
 	private supplyActions(queen: Zerg) {
 		// Select the closest supply target out of the highest priority and refill it
-		const request = this.hatchery.transportRequests.getPrioritizedClosestRequest(queen.pos, 'supply');
+		const request =
+			this.hatchery.transportRequests.getPrioritizedClosestRequest(
+				queen.pos,
+				"supply"
+			);
 		if (request) {
-			this.debug(`${queen.print} transferring from ${request.target.structureType}@${request.target.pos}`)
+			this.debug(
+				`${queen.print} transferring from ${request.target.structureType}@${request.target.pos}`
+			);
 			queen.task = Tasks.transfer(request.target);
 		} else {
 			this.rechargeActions(queen); // if there are no targets, refill yourself
@@ -50,7 +58,10 @@ export class QueenOverlord extends Overlord {
 		if (this.hatchery.link && !this.hatchery.link.isEmpty) {
 			this.debug(`${queen.print} recharging from link`);
 			queen.task = Tasks.withdraw(this.hatchery.link);
-		} else if (this.hatchery.batteries.length && this.hatchery.batteries[0].energy > 0) {
+		} else if (
+			this.hatchery.batteries.length &&
+			this.hatchery.batteries[0].energy > 0
+		) {
 			this.debug(`${queen.print} recharging from battery`);
 			queen.task = Tasks.withdraw(this.hatchery.batteries[0]);
 		} else {
@@ -62,7 +73,11 @@ export class QueenOverlord extends Overlord {
 	private idleActions(queen: Zerg): void {
 		if (this.hatchery.link) {
 			// Can energy be moved from the link to the battery?
-			if (this.hatchery.batteries.length && !this.hatchery.batteries[0].isFull && !this.hatchery.link.isEmpty) {
+			if (
+				this.hatchery.batteries.length &&
+				!this.hatchery.batteries[0].isFull &&
+				!this.hatchery.link.isEmpty
+			) {
 				// Move energy to battery as needed
 				if (queen.store.energy < queen.store.getCapacity()) {
 					queen.task = Tasks.withdraw(this.hatchery.link);
@@ -70,16 +85,23 @@ export class QueenOverlord extends Overlord {
 					queen.task = Tasks.transfer(this.hatchery.batteries[0]);
 				}
 			} else {
-				if (queen.store.energy < queen.store.getCapacity()) { // make sure you're recharged
+				if (queen.store.energy < queen.store.getCapacity()) {
+					// make sure you're recharged
 					if (!this.hatchery.link.isEmpty) {
 						queen.task = Tasks.withdraw(this.hatchery.link);
-					} else if (this.hatchery.batteries.length && !this.hatchery.batteries[0].isEmpty) {
+					} else if (
+						this.hatchery.batteries.length &&
+						!this.hatchery.batteries[0].isEmpty
+					) {
 						queen.task = Tasks.withdraw(this.hatchery.batteries[0]);
 					}
 				}
 			}
 		} else {
-			if (this.hatchery.batteries.length && queen.store.energy < queen.store.getCapacity()) {
+			if (
+				this.hatchery.batteries.length &&
+				queen.store.energy < queen.store.getCapacity()
+			) {
 				queen.task = Tasks.withdraw(this.hatchery.batteries[0]);
 			}
 		}
@@ -91,7 +113,11 @@ export class QueenOverlord extends Overlord {
 		} else {
 			this.rechargeActions(queen);
 		}
-		this.debug(`${queen.print}: isIdle? ${queen.isIdle}, ${queen.task ? queen.task.name : null}`);
+		this.debug(
+			`${queen.print}: isIdle? ${queen.isIdle}, ${
+				queen.task ? queen.task.name : null
+			}`
+		);
 		// If there aren't any tasks that need to be done, recharge the battery from link
 		if (queen.isIdle) {
 			this.idleActions(queen);
@@ -120,7 +146,7 @@ export class QueenOverlord extends Overlord {
 			} else {
 				this.debug(`${queen.print} going back to idling`);
 				if (this.queens.length > 1) {
-					queen.goTo(this.hatchery.idlePos, {range: 1});
+					queen.goTo(this.hatchery.idlePos, { range: 1 });
 				} else {
 					queen.goTo(this.hatchery.idlePos);
 				}

@@ -21,7 +21,11 @@ interface PowerCreep {
 	intel?: { [property: string]: number };
 	memory: CreepMemory;
 	inRampart: boolean;
-	withdraw(target: Structure | Tombstone | Ruin, resourceType: ResourceConstant, amount?: number): ScreepsReturnCode;
+	withdraw(
+		target: Structure | Tombstone | Ruin,
+		resourceType: ResourceConstant,
+		amount?: number
+	): ScreepsReturnCode;
 }
 
 interface CostMatrix {
@@ -32,20 +36,20 @@ interface ConstructionSite {
 	isWalkable: boolean;
 }
 
-interface Flag {
+interface Flag {}
 
-}
-
-type Sink = StructureSpawn |
-	StructureExtension |
-	StructureLab |
-	StructurePowerSpawn |
-	StructureNuker |
-	StructureTower;
+type Sink =
+	| StructureSpawn
+	| StructureExtension
+	| StructureLab
+	| StructurePowerSpawn
+	| StructureNuker
+	| StructureTower;
 
 type StorageUnit = StructureContainer | StructureTerminal | StructureStorage;
 
-type rechargeObjectType = StructureStorage
+type rechargeObjectType =
+	| StructureStorage
 	| StructureTerminal
 	| StructureContainer
 	| StructureLink
@@ -54,7 +58,6 @@ type rechargeObjectType = StructureStorage
 	| Resource;
 
 interface Room {
-
 	print: string;
 
 	my: boolean;
@@ -203,9 +206,14 @@ interface RoomPosition {
 
 	toCoord(): Coord;
 
-	createConstructionSite(structureType: BuildableStructureConstant): ScreepsReturnCode;
+	createConstructionSite(
+		structureType: BuildableStructureConstant
+	): ScreepsReturnCode;
 	// createConstructionSite(structureType: StructureSpawn, name?: string): ScreepsReturnCode;
-	_createConstructionSite(structureType: BuildableStructureConstant, name?: string): ScreepsReturnCode;
+	_createConstructionSite(
+		structureType: BuildableStructureConstant,
+		name?: string
+	): ScreepsReturnCode;
 
 	inRangeToPos(pos: RoomPosition, range: number): boolean;
 
@@ -213,13 +221,23 @@ interface RoomPosition {
 
 	getRangeToXY(x: number, y: number): number;
 
-	getPositionsAtRange(range: number, includeWalls?: boolean, includeEdges?: boolean): RoomPosition[];
+	getPositionsAtRange(
+		range: number,
+		includeWalls?: boolean,
+		includeEdges?: boolean
+	): RoomPosition[];
 
-	getPositionsInRange(range: number, includeWalls?: boolean, includeEdges?: boolean): RoomPosition[];
+	getPositionsInRange(
+		range: number,
+		includeWalls?: boolean,
+		includeEdges?: boolean
+	): RoomPosition[];
 
 	getOffsetPos(dx: number, dy: number): RoomPosition;
 
-	lookForStructure<T extends StructureConstant>(structureType: T): ConcreteStructure<T> | undefined;
+	lookForStructure<T extends StructureConstant>(
+		structureType: T
+	): ConcreteStructure<T> | undefined;
 
 	/**
 	 * Can this position be walked on?
@@ -230,18 +248,28 @@ interface RoomPosition {
 
 	availableNeighbors(ignoreCreeps?: boolean): RoomPosition[];
 
-	getPositionAtDirection(direction: DirectionConstant, range?: number): RoomPosition;
+	getPositionAtDirection(
+		direction: DirectionConstant,
+		range?: number
+	): RoomPosition;
 
 	/** Get an estimate for the distance to another room position in a possibly different room */
 	getMultiRoomRangeTo(pos: RoomPosition): number;
 
-	findClosestByLimitedRange<T extends _HasRoomPosition | RoomPosition>(this: RoomPosition,
-		objects: T[], rangeLimit: number,
-		opts?: FindOptions<T>): T | undefined;
+	findClosestByLimitedRange<T extends _HasRoomPosition | RoomPosition>(
+		this: RoomPosition,
+		objects: T[],
+		rangeLimit: number,
+		opts?: FindOptions<T>
+	): T | undefined;
 
-	findClosestByMultiRoomRange<T extends _HasRoomPosition>(objects: T[]): T | undefined;
+	findClosestByMultiRoomRange<T extends _HasRoomPosition>(
+		objects: T[]
+	): T | undefined;
 
-	findClosestByRangeThenPath<T extends _HasRoomPosition>(objects: T[]): T | undefined;
+	findClosestByRangeThenPath<T extends _HasRoomPosition>(
+		objects: T[]
+	): T | undefined;
 }
 
 interface RoomVisualOptions {
@@ -256,27 +284,81 @@ interface RoomVisualOptions {
 interface RoomVisual {
 	roads: Point[];
 
-	box(x: number, y: number, w: number, h: number, style?: LineStyle): RoomVisual;
+	box(
+		x: number,
+		y: number,
+		w: number,
+		h: number,
+		style?: LineStyle
+	): RoomVisual;
 
-	infoBox(info: string[], x: number, y: number, opts?: RoomVisualOptions): RoomVisual;
+	infoBox(
+		info: string[],
+		x: number,
+		y: number,
+		opts?: RoomVisualOptions
+	): RoomVisual;
 
-	multitext(textLines: string[], x: number, y: number, opts?: RoomVisualOptions): RoomVisual;
+	multitext(
+		textLines: string[],
+		x: number,
+		y: number,
+		opts?: RoomVisualOptions
+	): RoomVisual;
 
-	structure(x: number, y: number, type: string, opts?: RoomVisualOptions): RoomVisual;
+	structure(
+		x: number,
+		y: number,
+		type: string,
+		opts?: RoomVisualOptions
+	): RoomVisual;
 
 	connectRoads(opts?: RoomVisualOptions): RoomVisual | void;
 
-	speech(text: string, x: number, y: number, opts?: RoomVisualOptions & { background?: string }): RoomVisual;
+	speech(
+		text: string,
+		x: number,
+		y: number,
+		opts?: RoomVisualOptions & { background?: string }
+	): RoomVisual;
 
-	animatedPosition(x: number, y: number, opts?: RoomVisualOptions & { radius?: number, frames?: number }): RoomVisual;
+	animatedPosition(
+		x: number,
+		y: number,
+		opts?: RoomVisualOptions & { radius?: number; frames?: number }
+	): RoomVisual;
 
-	resource(type: ResourceConstant, x: number, y: number, size?: number, opacity?: number): number;
+	resource(
+		type: ResourceConstant,
+		x: number,
+		y: number,
+		size?: number,
+		opacity?: number
+	): number;
 
-	_fluid(type: string, x: number, y: number, size?: number, opacity?: number): void;
+	_fluid(
+		type: string,
+		x: number,
+		y: number,
+		size?: number,
+		opacity?: number
+	): void;
 
-	_mineral(type: string, x: number, y: number, size?: number, opacity?: number): void;
+	_mineral(
+		type: string,
+		x: number,
+		y: number,
+		size?: number,
+		opacity?: number
+	): void;
 
-	_compound(type: string, x: number, y: number, size?: number, opacity?: number): void;
+	_compound(
+		type: string,
+		x: number,
+		y: number,
+		size?: number,
+		opacity?: number
+	): void;
 
 	test(): RoomVisual;
 }
@@ -339,7 +421,6 @@ interface StructureTower extends _StoreLike {
 	//
 	// preventRampartDecay(): number;
 }
-
 
 // eslint-disable-next-line
 interface String {
