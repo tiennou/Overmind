@@ -6,7 +6,7 @@ import { CombatTargeting } from "../targeting/CombatTargeting";
 import { GoalFinder } from "../targeting/GoalFinder";
 import { randomHex } from "../utilities/utils";
 import { Zerg } from "./Zerg";
-import { RANGES } from "./AnyZerg";
+import { RANGES } from "zerg/ranges";
 
 interface CombatZergMemory extends CreepMemory {
 	recovering: boolean;

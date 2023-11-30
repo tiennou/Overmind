@@ -1,4 +1,4 @@
-import { RANGES } from "zerg/AnyZerg";
+import { RANGES } from "zerg/ranges";
 import { $ } from "../caching/GlobalCache";
 import { Colony } from "../Colony";
 import { log } from "../console/log";

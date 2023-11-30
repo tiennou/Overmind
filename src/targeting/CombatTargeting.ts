@@ -12,7 +12,7 @@ import { maxBy } from "../utilities/utils";
 import { Visualizer } from "../visuals/Visualizer";
 import { Swarm } from "../zerg/Swarm";
 import { Zerg } from "../zerg/Zerg";
-import { RANGES } from "zerg/AnyZerg";
+import { RANGES } from "zerg/ranges";
 import { config } from "config";
 
 @profile

@@ -9,6 +9,7 @@ import { profile } from "../profiler/decorator";
 import { Cartographer, ROOMTYPE_SOURCEKEEPER } from "../utilities/Cartographer";
 import { minBy } from "../utilities/utils";
 import { config } from "config";
+import { RANGES } from "./ranges";
 
 export function normalizeAnyZerg(
 	creep: AnyZerg | AnyCreep
@@ -34,19 +35,6 @@ interface FleeOptions {
 	 */
 	fallbackColonyRange?: number;
 }
-
-export const RANGES = {
-	BUILD: 3,
-	REPAIR: 3,
-	TRANSFER: 1,
-	WITHDRAW: 1,
-	HARVEST: 1,
-	ATTACK: 1,
-	HEAL: 1,
-	RANGED_ATTACK: 3,
-	RANGED_HEAL: 3,
-	DROP: 0,
-};
 
 /**
  * The AnyZerg abstract class contains all of the base methods that are present on both the Zerg and PowerZerg classes.

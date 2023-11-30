@@ -1,5 +1,6 @@
 // Combat Intel - provides information related to making combat-related decisions
 
+import { RANGES } from "zerg/ranges";
 import { Colony } from "../Colony";
 import { log } from "../console/log";
 import {
@@ -821,7 +822,10 @@ export class CombatIntel {
 		targets = attacker.room.hostiles,
 		checkRampart = true
 	): number {
-		const hostiles = attacker.pos.findInRange(targets, 3);
+		const hostiles = attacker.pos.findInRange(
+			targets,
+			RANGES.RANGED_ATTACK
+		);
 		return _.sum(hostiles, function (hostile) {
 			if (
 				checkRampart &&
