@@ -1,3 +1,4 @@
+import { NO_ACTION } from "utilities/errors";
 import { log } from "../../console/log";
 import { StrongholdOverlord } from "../../overlords/situational/stronghold";
 import { profile } from "../../profiler/decorator";
@@ -221,7 +222,9 @@ export class DirectiveStronghold extends Directive {
 			const res2 = DirectiveNukeTarget.create(bestTarget, {
 				memory: { maxLinearRange: 10, pathNotRequired: true },
 			});
-			return res1 == OK && res2 == OK;
+			return typeof res1 === "string" && typeof res2 === "string" ?
+					OK
+				:	NO_ACTION;
 		} else {
 			const strongholdDefenders = this.core.pos.findInRange(
 				FIND_HOSTILE_CREEPS,

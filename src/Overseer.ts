@@ -359,7 +359,7 @@ export class Overseer implements IOverseer {
 						colony.hatchery.pos,
 						"pos"
 					);
-					if (typeof result == "string" || result == OK) {
+					if (typeof result === "string") {
 						// successfully made flag
 						colony.hatchery.settings.suppressSpawning = true;
 					}

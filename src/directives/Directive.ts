@@ -422,7 +422,7 @@ export abstract class Directive {
 	static create(
 		pos: RoomPosition,
 		opts: DirectiveCreationOptions = {}
-	): number | string {
+	): ERR_NAME_EXISTS | ERR_INVALID_ARGS | string {
 		let flagName = opts.name || undefined;
 		if (!flagName) {
 			flagName = this.directiveName + ":" + randomHex(6);
@@ -446,6 +446,7 @@ export abstract class Directive {
 		log.debug(
 			`Result: ${result}, memory: ${JSON.stringify(Memory.flags[result])}`
 		);
+		// @ts-expect-error result becomes number
 		return result;
 	}
 
@@ -493,7 +494,7 @@ export abstract class Directive {
 		pos: RoomPosition,
 		scope: "room" | "pos",
 		opts: DirectiveCreationOptions = {}
-	): number | string | undefined {
+	): ERR_NAME_EXISTS | ERR_INVALID_ARGS | string | undefined {
 		if (PHASE != "run") {
 			log.error(
 				`Directive.createIfNotPresent() can only be called during the run phase!`
