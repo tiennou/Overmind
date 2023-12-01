@@ -1115,6 +1115,8 @@ export class Colony {
 			_.sum(this.room.barriers, (barrier) => barrier.hits) /
 			this.room.barriers.length;
 		Stats.log(`colonies.${this.name}.avgBarrierHits`, avgBarrierHits);
+		const maxBarrierHits = WorkerOverlord.settings.barrierHits[this.level];
+		Stats.log(`colonies.${this.name}.maxBarrierHits`, maxBarrierHits);
 		const report = Overmind.overseer.getCreepReport(this);
 		for (const [role, [current, needed]] of Object.entries(report)) {
 			Stats.log(`colonies.${this.name}.creeps.${role}.current`, current);
