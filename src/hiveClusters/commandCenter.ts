@@ -14,6 +14,7 @@ import { HiveCluster } from "./_HiveCluster";
 import { TRANSPORT_MEM } from "overlords/core/transporter";
 import { derefRoomPosition, entries } from "utilities/utils";
 import { ResourceManager } from "logistics/ResourceManager";
+import { errorForCode } from "utilities/errors";
 
 export const MAX_OBSERVE_DISTANCE = 4;
 
@@ -75,7 +76,6 @@ export class CommandCenter extends HiveCluster {
 			this.towers = this.pos.findInRange(colony.towers, 3);
 		}
 		this.transportRequests = new TransportRequestGroup("commandCenter"); // commandCenter always gets its own request group
-		this.observeRoom = undefined;
 	}
 
 	refresh() {
@@ -92,7 +92,6 @@ export class CommandCenter extends HiveCluster {
 			"towers"
 		);
 		this.transportRequests.refresh();
-		this.observeRoom = undefined;
 	}
 
 	spawnMoarOverlords() {
@@ -371,13 +370,20 @@ export class CommandCenter extends HiveCluster {
 	}
 
 	requestRoomObservation(roomName: string) {
+		log.info(`${this.print} request to observe ${roomName}`);
 		this.observeRoom = roomName;
 	}
 
 	private runObserver(): void {
 		if (this.observer) {
 			if (this.observeRoom) {
-				this.observer.observeRoom(this.observeRoom);
+				const result = this.observer.observeRoom(this.observeRoom);
+				log.info(
+					`${this.print} observing ${
+						this.observeRoom
+					}: ${errorForCode(result)}`
+				);
+				this.observeRoom = undefined;
 			} else if (
 				CommandCenter.settings.enableIdleObservation &&
 				Game.time % 1000 < 100
@@ -395,12 +401,18 @@ export class CommandCenter extends HiveCluster {
 					dx,
 					dy
 				);
-				this.observer.observeRoom(roomToObserve);
 				// // TODO OBSERVER FIX ONLY LOOK AT southwest corner
 				// const dx = Game.time % MAX_OBSERVE_DISTANCE;
 				// const dy = Game.time % (MAX_OBSERVE_DISTANCE ** 2);
 				// const roomToObserve = Cartographer.findRelativeRoomName(this.pos.roomName, dx, dy);
-				this.observer.observeRoom(roomToObserve);
+				const result = this.observer.observeRoom(roomToObserve);
+				log.info(
+					`${
+						this.print
+					} observing ${roomToObserve} (idle): ${errorForCode(
+						result
+					)}`
+				);
 			}
 		}
 	}
