@@ -108,18 +108,24 @@ export class UpgradingOverlord extends Overlord {
 				return;
 			}
 			// Sign controller if needed
-			if (
-				!this.upgradeSite.controller.signedByMe &&
-				!this.upgradeSite.controller.signedByScreeps
-			) {
+			const controller = this.upgradeSite.controller;
+			if (!controller.signedByMe && !controller.signedByScreeps) {
 				this.debug(`${upgrader.print}: signing controller`);
-				upgrader.task = Tasks.signController(
-					this.upgradeSite.controller
-				);
+				upgrader.task = Tasks.signController(controller);
 				return;
 			}
-			this.debug(`${upgrader.print}: upgrading`);
-			upgrader.task = Tasks.upgrade(this.upgradeSite.controller);
+			// TODO: this should have a colony-level setting for what we
+			// should focus on, since that limits GCL growth
+			if (
+				controller.level !== 8 ||
+				controller.ticksToDowngrade /
+					CONTROLLER_DOWNGRADE[controller.level] <=
+					0.995
+			) {
+				this.debug(`${upgrader.print}: upgrading`);
+				upgrader.task = Tasks.upgrade(controller);
+				return;
+			}
 		} else {
 			// Try recharging from link first; if the link has no energy,
 			// either some will pop up soon, or there is no energy anywhere
