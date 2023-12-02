@@ -236,6 +236,15 @@ export class Pathing {
 				);
 			}
 		}
+		if (ret.incomplete) {
+			const seenRooms = new Set<string>();
+			ret.path.forEach((p) => seenRooms.add(p.roomName));
+			const e = new Error(
+				`Pathing: incomplete path from ${origin.print} → ${destination.print}! ops: ${ret.ops}/${opts.maxOps}, rooms: ${seenRooms.size}/${opts.maxRooms}`
+			);
+			log.trace(e);
+		}
+
 		return {
 			path: ret.path,
 			incomplete: ret.incomplete,
@@ -1287,9 +1296,10 @@ export class Pathing {
 			if (!ret.incomplete) {
 				Memory.pathing.distances[name1][name2] = ret.path.length;
 			} else {
-				log.error(
+				const e = new Error(
 					`PATHING: could not compute distance from ${pos1.print} to ${pos2.print}!`
 				);
+				log.trace(e);
 			}
 		}
 		return Memory.pathing.distances[name1][name2];
