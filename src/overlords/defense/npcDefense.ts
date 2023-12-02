@@ -58,7 +58,7 @@ export class DefenseNPCOverlord extends CombatOverlord {
 	}
 
 	private handleGuard(guard: CombatZerg) {
-		guard.autoCombat(this.pos.roomName, true, undefined, {});
+		guard.autoCombat(this.pos.roomName);
 	}
 
 	run() {

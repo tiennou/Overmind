@@ -8,6 +8,12 @@ import { randomHex } from "../utilities/utils";
 import { Zerg } from "./Zerg";
 import { RANGES } from "zerg/ranges";
 
+export interface AutoCombatOptions {
+	preferredRange?: number;
+	targets?: (Creep | Structure)[];
+	moveOptions?: CombatMoveOptions;
+}
+
 interface CombatZergMemory extends CreepMemory {
 	recovering: boolean;
 	lastInDanger: number;
@@ -315,12 +321,7 @@ export class CombatZerg extends Zerg {
 	/**
 	 * Navigate to a room, then engage hostile creeps there, perform medic actions, etc.
 	 */
-	autoCombat(
-		roomName: string,
-		_verbose = false,
-		preferredRange?: number,
-		options?: CombatMoveOptions
-	) {
+	autoCombat(roomName: string, options?: AutoCombatOptions) {
 		// Do standard melee, ranged, and heal actions
 		if (this.getActiveBodyparts(ATTACK) > 0) {
 			this.autoMelee(); // Melee should be performed first
@@ -345,11 +346,13 @@ export class CombatZerg extends Zerg {
 		}
 
 		// Fight within the room
-		const target = CombatTargeting.findTarget(this);
+		const target = CombatTargeting.findTarget(this, options?.targets);
 		const preferRanged =
 			this.getActiveBodyparts(RANGED_ATTACK) >
 			this.getActiveBodyparts(ATTACK);
-		const targetRange = preferredRange || preferRanged ? 3 : 1;
+		const targetRange =
+			options?.preferredRange ??
+			(preferRanged ? RANGES.RANGED_ATTACK : RANGES.ATTACK);
 		this.debug(`fighting: ${target}, ${targetRange}`);
 		if (target) {
 			const avoid = [];
@@ -373,49 +376,28 @@ export class CombatZerg extends Zerg {
 				this,
 				[{ pos: target.pos, range: targetRange }],
 				avoid,
-				options
+				options?.moveOptions
 			);
 		}
 	}
 
-	autoBunkerCombat(roomName: string, _verbose = false) {
-		if (this.getActiveBodyparts(ATTACK) > 0) {
-			this.autoMelee(); // Melee should be performed first
-		}
-		if (this.getActiveBodyparts(RANGED_ATTACK) > 0) {
-			this.autoRanged();
-		}
-
-		// Travel to the target room
-		if (!this.safelyInRoom(roomName)) {
-			this.debug(`Going to room!`);
-			return this.goToRoom(roomName, { pathOpts: { ensurePath: true } });
-		}
-
-		// TODO check if right colony, also yes colony check is in there to stop red squigglies
-		// const siegingCreeps = this.room.hostiles.filter(creep =>
-		// 	_.any(creep.pos.neighbors, pos => this.colony && insideBunkerBounds(pos, this.colony)));
-
-		const target = CombatTargeting.findTarget(
-			this,
+	autoBunkerCombat(roomName: string) {
+		const targets =
 			this.colony ?
 				this.room.playerHostiles.filter(
 					(creep) => creep.pos.getRangeTo(this.colony!.pos) <= 9
 				)
-			:	this.room.dangerousHostiles
-		);
+			:	this.room.dangerousHostiles;
+		const opts: AutoCombatOptions = {
+			targets: targets,
+			preferredRange: 1,
+			moveOptions: {
+				preferRamparts: true,
+				requireRamparts: true,
+			},
+		};
 
-		if (target) {
-			return Movement.combatMove(
-				this,
-				[{ pos: target.pos, range: 1 }],
-				[],
-				{
-					preferRamparts: true,
-					requireRamparts: true,
-				}
-			);
-		}
+		return this.autoCombat(roomName, opts);
 	}
 
 	needsToRecover(

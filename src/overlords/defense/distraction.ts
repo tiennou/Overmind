@@ -31,8 +31,11 @@ export class DistractionOverlord extends CombatOverlord {
 
 	private handleDistraction(distraction: CombatZerg): void {
 		if (this.room && this.room.hostiles.length > 0) {
-			distraction.autoCombat(this.room.name, false, 5, {
-				preferRamparts: false,
+			distraction.autoCombat(this.room.name, {
+				preferredRange: 5,
+				moveOptions: {
+					preferRamparts: false,
+				},
 			});
 			DistractionOverlord.taunt(
 				distraction,
