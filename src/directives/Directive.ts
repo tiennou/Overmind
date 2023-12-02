@@ -447,9 +447,10 @@ export abstract class Directive {
 	 */
 	static isPresent(posOrRoomName: string | RoomPosition): boolean {
 		if (PHASE != "run" && PHASE != "init") {
-			log.error(
-				`Directive.isPresent() will only give correct results in init() and run() phases!`
+			const e = new Error(
+				`isPresent() will only give correct results in init() and run() phases!`
 			);
+			log.trace(e);
 			return true; // usually we want to do something if directive isn't present; so this minimizes bad results
 		}
 		if (typeof posOrRoomName === "string") {
