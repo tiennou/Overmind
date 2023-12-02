@@ -394,6 +394,10 @@ interface StructureContainer extends _StoreLike {}
 interface StructureExtension extends _StoreLike {}
 interface StructureLink extends _StoreLike {}
 interface StructureStorage extends _StoreLike {}
+interface StructureTerminal extends _StoreLike {}
+interface StructureSpawn extends _StoreLike {}
+interface Tombstone extends _StoreLike {}
+interface Ruin extends _StoreLike {}
 
 interface StructureController {
 	reservedByMe: boolean;
