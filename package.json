@@ -23,6 +23,7 @@
     "make-public": "node tools/make-public.js",
     "compile": "rollup -c",
     "push-main": "rollup -c --environment DEST:main",
+    "push-sim": "rollup -c --environment DEST:sim",
     "push-pserver": "rollup -c --environment DEST:pserver",
     "push-screepsplus": "rollup -c --environment DEST:screepsplus",
     "test": "npm run clean && npm run build"
