@@ -26,7 +26,7 @@ export class TaskRetire extends Task<retireTargetType> {
 		const result = this.target.recycleCreep(this.creep.creep);
 		if (result === OK) {
 			log.info(
-				`${this.creep.print} successfully <s>recycled</s> retired`
+				`${this.creep.print} successfully <s>recycled</s> retired with ${this.creep.ticksToLive} ticks remaining`
 			);
 			this.finish();
 		}
