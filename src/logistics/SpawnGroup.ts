@@ -1,3 +1,4 @@
+import { bodyCost } from "creepSetups/CreepSetup";
 import { Colony, getAllColonies } from "../Colony";
 import { log } from "../console/log";
 import { DEFAULT_MAX_PATH_LENGTH } from "../directives/Directive";
@@ -249,6 +250,10 @@ export class SpawnGroup {
 		) as Hatchery[];
 		const distanceTo = (hatchery: Hatchery) =>
 			this.memory.distances[hatchery.pos.roomName] + 25;
+		const smallestColony = minBy(
+			colonies,
+			(c) => c.room.energyCapacityAvailable
+		)!;
 
 		this.debug(
 			`enqueuing ${
@@ -257,11 +262,15 @@ export class SpawnGroup {
 		);
 		// Enqueue each requests to the hatchery with least expected wait time, which is updated after each enqueue
 		for (const request of this.requests) {
-			// const maxCost = bodyCost(request.setup.generateBody(this.energyCapacityAvailable));
-			// const okHatcheries = _.filter(hatcheries,
-			// 							  hatchery => hatchery.room.energyCapacityAvailable >= maxCost);
-			const bestHatchery = minBy(
+			const minCost = bodyCost(
+				request.setup.create(smallestColony, true).body
+			);
+			const okHatcheries = _.filter(
 				hatcheries,
+				(hatchery) => hatchery.room.energyCapacityAvailable >= minCost
+			);
+			const bestHatchery = minBy(
+				okHatcheries,
 				(hatchery) =>
 					hatchery.getWaitTimeForPriority(request.priority) +
 					distanceTo(hatchery)
@@ -275,7 +284,7 @@ export class SpawnGroup {
 			} else {
 				log.error(
 					`Could not enqueue creep with role ${request.setup.role} in ${this.roomName} ` +
-						`for Overlord ${request.overlord.print}!`
+						`for Overlord ${request.overlord.print}, cost: ${minCost}!`
 				);
 			}
 		}
