@@ -447,9 +447,13 @@ export class Hatchery extends HiveCluster {
 
 			if (result == OK) {
 				// Creep has been successfully spawned; add cost into profiling
-				const overlordRef = <string>protoCreep.memory[MEM.OVERLORD];
-				const overlord = Overmind.overlords[overlordRef];
+				const overlordRef = protoCreep.memory[MEM.OVERLORD];
+				const overlord =
+					overlordRef ? Overmind.overlords[overlordRef] : null;
 				if (overlord) {
+					overlord.debug(
+						`${this.print} successfully spawned creep ${protoCreep.name} for ${overlord?.print}`
+					);
 					if (overlord.memory[MEM.STATS]) {
 						overlord.memory[MEM.STATS]!.spawnCost += bodyCost(
 							protoCreep.body
