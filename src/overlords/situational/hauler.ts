@@ -198,12 +198,7 @@ export class HaulingOverlord extends Overlord {
 	}
 
 	run() {
-		for (const hauler of this.haulers) {
-			if (hauler.isIdle) {
-				this.handleHauler(hauler);
-			}
-			hauler.run();
-		}
+		this.autoRun(this.haulers, (hauler) => this.handleHauler(hauler));
 		// TODO: fix the way this is done
 		if (
 			this.directive.memory.totalResources == 0 &&

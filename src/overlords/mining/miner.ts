@@ -848,17 +848,6 @@ export class MiningOverlord extends Overlord {
 	}
 
 	private handleMiner(miner: Zerg) {
-		// Not ready for duty yet
-		if (miner.spawning) {
-			this.debug(`${miner.print} spawning`);
-			return;
-		}
-
-		// Stay safe out there!
-		if (miner.avoidDanger({ timer: 10, dropEnergy: true })) {
-			return;
-		}
-
 		// Mining site upgrade & repairs, or better positioning if out of room
 		if (this.prepareActions(miner)) {
 			return;
@@ -874,9 +863,12 @@ export class MiningOverlord extends Overlord {
 	}
 
 	run() {
-		for (const miner of this.miners) {
-			this.handleMiner(miner);
-		}
+		this.autoRun(
+			this.miners,
+			(miner) => this.handleMiner(miner),
+			(miner) => miner.avoidDanger({ timer: 10, dropEnergy: true })
+		);
+
 		if (this.room && Game.time % BUILD_OUTPUT_FREQUENCY == 1) {
 			this.addRemoveContainer();
 		}

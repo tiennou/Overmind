@@ -239,7 +239,11 @@ export class ExtractorOverlord extends Overlord {
 	}
 
 	run() {
-		_.forEach(this.drones, (drone) => this.handleDrone(drone));
+		this.autoRun(
+			this.drones,
+			(drone) => this.handleDrone(drone),
+			(drone) => drone.avoidDanger({ timer: 10, dropEnergy: true })
+		);
 		if (this.room && Game.time % BUILD_OUTPUT_FREQUENCY == 2) {
 			this.buildOutputIfNeeded();
 		}

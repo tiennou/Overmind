@@ -182,42 +182,24 @@ export class PairDestroyerOverlord extends CombatOverlord {
 				this.priority - 0.1
 			:	this.priority + 0.1;
 		const attackerSetup = CombatSetups.zerglings.boosted.armored;
-		this.wishlist(amount, attackerSetup, { priority: attackerPriority });
+		this.wishlist(amount, attackerSetup, {
+			priority: attackerPriority,
+			reassignIdle: true,
+		});
 
 		const healerPriority =
 			this.healers.length < this.attackers.length ?
 				this.priority - 0.1
 			:	this.priority + 0.1;
 		const healerSetup = CombatSetups.transfusers.boosted.default;
-		this.wishlist(amount, healerSetup, { priority: healerPriority });
+		this.wishlist(amount, healerSetup, {
+			priority: healerPriority,
+			reassignIdle: true,
+		});
 	}
 
 	run() {
-		this.reassignIdleCreeps(Roles.healer);
-		this.reassignIdleCreeps(Roles.melee);
-		for (const attacker of this.attackers) {
-			// Run the creep if it has a task given to it by something else; otherwise, proceed with non-task actions
-			if (attacker.hasValidTask) {
-				attacker.run();
-			} else {
-				if (attacker.needsBoosts) {
-					this.handleBoosting(attacker);
-				} else {
-					this.handleSquad(attacker);
-				}
-			}
-		}
-
-		for (const healer of this.healers) {
-			if (healer.hasValidTask) {
-				healer.run();
-			} else {
-				if (healer.needsBoosts) {
-					this.handleBoosting(healer);
-				} else {
-					this.handleHealer(healer);
-				}
-			}
-		}
+		this.autoRun(this.attackers, (attacker) => this.handleSquad(attacker));
+		this.autoRun(this.healers, (healer) => this.handleHealer(healer));
 	}
 }

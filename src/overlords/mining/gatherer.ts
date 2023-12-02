@@ -313,18 +313,6 @@ export class GatheringOverlord extends Overlord {
 	}
 
 	private handleGatherer(gatherer: Zerg) {
-		// Not ready for duty yet
-		if (gatherer.spawning) {
-			this.debug(`${gatherer.print} spawning`);
-			return;
-		}
-
-		// Stay safe out there!
-		if (gatherer.avoidDanger({ timer: 10, dropEnergy: true })) {
-			this.debug(`${gatherer.print} in danger!`);
-			return;
-		}
-
 		// Mining site upgrade & repairs, or better positioning if out of room
 		if (this.prepareActions(gatherer)) {
 			return;
@@ -340,8 +328,10 @@ export class GatheringOverlord extends Overlord {
 	}
 
 	run() {
-		this.autoRun(this.gatherers, (gatherer) =>
-			this.handleGatherer(gatherer)
+		this.autoRun(
+			this.gatherers,
+			(gatherer) => this.handleGatherer(gatherer),
+			(gatherer) => gatherer.avoidDanger({ timer: 10, dropEnergy: true })
 		);
 	}
 }

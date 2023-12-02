@@ -113,21 +113,8 @@ export class DismantleOverlord extends Overlord {
 	}
 
 	run() {
-		this.reassignIdleCreeps(Roles.dismantler);
-		for (const dismantler of this.dismantlers) {
-			// Run the creep if it has a task given to it by something else; otherwise, proceed with non-task actions
-			if (dismantler.hasValidTask) {
-				dismantler.run();
-			} else {
-				if (dismantler.needsBoosts) {
-					this.handleBoosting(dismantler);
-				} else {
-					this.runDismantler(dismantler);
-				}
-			}
-		}
-		for (const dismantler of this.dismantlers) {
-			this.runDismantler(dismantler);
-		}
+		this.autoRun(this.dismantlers, (dismantler) =>
+			this.runDismantler(dismantler)
+		);
 	}
 }
