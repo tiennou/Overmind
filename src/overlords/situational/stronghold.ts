@@ -374,9 +374,7 @@ export class StrongholdOverlord extends CombatOverlord {
 			}
 		}
 		if (this.memory.target && Game.getObjectById(this.memory.target.id)) {
-			const target = Game.getObjectById(
-				this.memory.target.id
-			) as RoomObject;
+			const target = Game.getObjectById(this.memory.target.id);
 			if (target) {
 				Visualizer.marker(target.pos, "black");
 			}
