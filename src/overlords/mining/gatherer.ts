@@ -111,6 +111,7 @@ export class GatheringOverlord extends Overlord {
 		if (this.colony.storage && this.memory.loadedDistance === null) {
 			const path = Pathing.findPath(this.pos, this.colony.storage.pos, {
 				terrainCosts: getTerrainCosts(gatherer, true),
+				ensurePath: true,
 			});
 			if (path.incomplete) {
 				return Infinity;
