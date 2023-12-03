@@ -257,7 +257,7 @@ export class CombatPlanner {
 				return rampart != undefined || wall != undefined;
 			}
 		});
-		if (walledOffExitTiles.length == walledOffExitTiles.length) {
+		if (walledOffExitTiles.length == exitPositions.length) {
 			isEdgeWall = true;
 		}
 
