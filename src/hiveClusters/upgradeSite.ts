@@ -16,6 +16,11 @@ interface UpgradeSiteMemory {
 	speedFactor?: number; // Multiplier on upgrade parts for fast growth
 }
 
+const getDefaultUpgradeSiteMemory: () => UpgradeSiteMemory = () => ({
+	stats: { downtime: 0 },
+	speedFactor: undefined,
+});
+
 /**
  * Upgrade sites group upgrade-related structures around a controller, such as an input link and energy container
  */
@@ -47,7 +52,11 @@ export class UpgradeSite extends HiveCluster {
 	constructor(colony: Colony, controller: StructureController) {
 		super(colony, controller, "upgradeSite");
 		this.controller = controller;
-		this.memory = Mem.wrap(this.colony.memory, "upgradeSite");
+		this.memory = Mem.wrap(
+			this.colony.memory,
+			"upgradeSite",
+			getDefaultUpgradeSiteMemory
+		);
 		this.upgradePowerNeeded = this.getUpgradePowerNeeded();
 		// Register bettery
 		$.set(this, "battery", () => {
@@ -224,10 +233,6 @@ export class UpgradeSite extends HiveCluster {
 	}
 
 	private stats() {
-		const defaults = {
-			downtime: 0,
-		};
-		_.defaults(this.memory.stats, defaults);
 		// Compute downtime
 		this.memory.stats.downtime =
 			(this.memory.stats.downtime * (CREEP_LIFE_TIME - 1) +
