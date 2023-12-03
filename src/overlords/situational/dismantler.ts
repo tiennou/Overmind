@@ -1,3 +1,4 @@
+import { errorForCode } from "utilities/errors";
 import { log } from "../../console/log";
 import { CombatSetups, Roles } from "../../creepSetups/setups";
 import { DirectiveModularDismantle } from "../../directives/targeting/modularDismantle";
@@ -15,8 +16,6 @@ export class DismantleOverlord extends Overlord {
 	dismantlers: Zerg[];
 	directive: DirectiveModularDismantle;
 	target?: Structure;
-
-	requiredRCL: 4;
 
 	constructor(
 		directive: DirectiveModularDismantle,
@@ -79,12 +78,13 @@ export class DismantleOverlord extends Overlord {
 			dismantleNeeded
 		);
 		// Request the dismantlers
-		this.wishlist(numDismantlers, setup);
+		this.wishlist(numDismantlers, setup, { reassignIdle: true });
 	}
 
 	private runDismantler(dismantler: Zerg) {
-		if (!dismantler.inSameRoomAs(this.directive)) {
+		if (!dismantler.inSameRoomAs(this.directive) || this.pos.isEdge) {
 			const goal = this.target || this.directive;
+			this.debug(`${dismantler.print}: moving to ${goal.print}`);
 			dismantler.goTo(goal, { pathOpts: { avoidSK: true } });
 		} else {
 			if (!this.target) {
@@ -94,6 +94,9 @@ export class DismantleOverlord extends Overlord {
 						undefined;
 				}
 				this.target = this.target || this.directive.getTarget();
+				this.debug(
+					`${dismantler.print}: had no target, but now is ${this.target?.print}`
+				);
 				if (!this.target) {
 					log.error(`No target found for ${this.directive.print}`);
 				}
@@ -102,11 +105,23 @@ export class DismantleOverlord extends Overlord {
 					!!this.directive.memory.attackInsteadOfDismantle ?
 						dismantler.attack(this.target)
 					:	dismantler.dismantle(this.target);
-				if (res == ERR_NOT_IN_RANGE) {
-					const _ret = dismantler.goTo(this.target, {});
-					// TODO this is shit ⬇
+				this.debug(
+					`${dismantler.print}: has target ${this.target
+						?.print}, tried to dismantle: ${errorForCode(res)}`
+				);
+				if (res === ERR_NOT_IN_RANGE || res === ERR_INVALID_TARGET) {
+					const ret = dismantler.goTo(this.target, {
+						pathOpts: { avoidSK: true },
+					});
+					this.debug(
+						`${dismantler.print}: move to target ${this.target
+							?.print}: ${errorForCode(ret)}`
+					);
 				} else if (res == ERR_NO_BODYPART) {
-					// dismantler.suicide();
+					if (dismantler.bodypartCounts[WORK] !== 0) {
+						// FIXME: Damaged, should fallback to colony to get healed
+					}
+					dismantler.retire();
 				}
 			}
 		}

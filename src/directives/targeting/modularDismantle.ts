@@ -24,6 +24,8 @@ export class DirectiveModularDismantle extends Directive {
 	static secondaryColor = COLOR_CYAN;
 	memory: DirectiveModularDismantleMemory;
 
+	static requiredRCL: 4;
+
 	constructor(
 		flag: Flag,
 		onlyKillRampart = false,
@@ -108,7 +110,7 @@ export class DirectiveModularDismantle extends Directive {
 		let hits = "???";
 		const target = this.getTarget();
 		hits = target ? (target.hits / 1000).toString() + "K" : hits;
-		this.alert(`Dismantling: ${hits}`);
+		this.alert(`Dismantling ${target?.pos.printPlain} ${hits}`);
 	}
 
 	run(): void {
