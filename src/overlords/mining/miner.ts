@@ -21,6 +21,7 @@ import {
 } from "utilities/suspension";
 import { Colony } from "Colony";
 import { insideBunkerBounds } from "roomPlanner/layouts/bunker";
+import { packPos, unpackPos } from "utilities/packrat";
 
 export const StandardMinerSetupCost = bodyCost(
 	Setups.drones.miners.standard.generateBody(Infinity)
@@ -40,6 +41,7 @@ const DISMANTLE_CHECK = "dc";
 interface MiningOverlordMemory extends OverlordMemory {
 	[DISMANTLE_CHECK]?: number;
 	dismantleNeeded?: boolean;
+	containerPos?: string;
 }
 
 /**
@@ -151,7 +153,7 @@ export class MiningOverlord extends Overlord {
 					(pos) => pos.getRangeTo(this) == 1
 				)!;
 			} else {
-				this.harvestPos = this.calculateContainerPos();
+				this.harvestPos = this.containerPos;
 			}
 		}
 
@@ -448,6 +450,22 @@ export class MiningOverlord extends Overlord {
 		return MiningOverlord.calculateContainerPos(this.pos, dropoff);
 	}
 
+	get containerPos() {
+		let containerPos;
+		const pos = this.memory.containerPos;
+		if (pos) {
+			containerPos = unpackPos(pos);
+		} else {
+			containerPos = this.calculateContainerPos();
+			if (this.room) {
+				// Only persist to memory if we have visibility
+				this.memory.containerPos = packPos(containerPos);
+			}
+		}
+
+		return containerPos;
+	}
+
 	/**
 	 * Add or remove containers as needed to keep exactly one of container | link
 	 */
@@ -457,7 +475,7 @@ export class MiningOverlord extends Overlord {
 		}
 		// Create container if there is not already one being built and no link
 		if (!this.container && !this.constructionSite && !this.link) {
-			const containerPos = this.calculateContainerPos();
+			const containerPos = this.containerPos;
 			if (!containerPos) {
 				log.error(
 					`${this.print}: can't build container at ${this.room}`
