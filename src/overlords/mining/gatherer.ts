@@ -223,16 +223,6 @@ export class GatheringOverlord extends Overlord {
 
 		// At this point the miner is in the room so we have vision of the deposit
 
-		// Sleep until the deposit regens
-		if (this.isSleeping(gatherer)) {
-			this.debug(
-				`${gatherer.print} sleeping for ${
-					gatherer.memory.sleepUntil! - Game.time
-				}`
-			);
-			return true;
-		}
-
 		// Handle harvesting and moving closer if that fails
 		const result = gatherer.harvest(this.deposit);
 		this.debug(
@@ -260,7 +250,8 @@ export class GatheringOverlord extends Overlord {
 				gatherer.retire();
 			} else {
 				this.debug(`${gatherer.print} sleeping for ${ticksToRegen}`);
-				gatherer.memory.sleepUntil = Game.time + ticksToRegen;
+				// Sleep until the deposit regens
+				gatherer.sleep(Game.time + ticksToRegen);
 			}
 			return true;
 		} else if (result === ERR_NOT_IN_RANGE) {
@@ -320,17 +311,6 @@ export class GatheringOverlord extends Overlord {
 			gatherer.task = Tasks.goTo(pos, {
 				moveOptions: { range: 1, pathOpts: { avoidSK: avoidSK } },
 			});
-			return true;
-		}
-		return false;
-	}
-
-	private isSleeping(gatherer: Zerg): boolean {
-		if (gatherer.memory.sleepUntil) {
-			if (Game.time >= gatherer.memory.sleepUntil) {
-				delete gatherer.memory.sleepUntil;
-				return false;
-			}
 			return true;
 		}
 		return false;

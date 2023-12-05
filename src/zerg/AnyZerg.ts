@@ -272,6 +272,22 @@ export abstract class AnyZerg {
 		}
 	}
 
+	sleep(until: number) {
+		this.memory.sleepUntil = until;
+	}
+
+	isSleeping(): boolean {
+		if (this.memory.sleepUntil) {
+			this.debug(`sleeping for ${this.memory.sleepUntil - Game.time}`);
+			if (Game.time >= this.memory.sleepUntil) {
+				delete this.memory.sleepUntil;
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	// Custom creep methods ============================================================================================
 
 	get isDamaged() {

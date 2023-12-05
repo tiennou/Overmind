@@ -638,16 +638,6 @@ export class MiningOverlord extends Overlord {
 		}
 		// At this point the miner is in the room so we have vision of the source
 
-		// Sleep until your source regens
-		if (this.isSleeping(miner)) {
-			this.debug(
-				`${miner.print} sleeping for ${
-					miner.memory.sleepUntil! - Game.time
-				}`
-			);
-			return true;
-		}
-
 		// Handle harvesting and moving closer if that fails
 		let result: number = OK;
 		if (this.secondSource) {
@@ -680,8 +670,9 @@ export class MiningOverlord extends Overlord {
 			if (ticksToRegen > (miner.ticksToLive || Infinity)) {
 				miner.retire();
 			} else {
+				// Sleep until the source regenerates
 				this.debug(`${miner.print} sleeping for ${ticksToRegen}`);
-				miner.memory.sleepUntil = Game.time + ticksToRegen;
+				miner.sleep(Game.time + ticksToRegen);
 			}
 
 			this.debug(
@@ -842,17 +833,6 @@ export class MiningOverlord extends Overlord {
 		}
 		if (!miner.pos.inRangeToPos(pos, range)) {
 			miner.goTo(pos, { range: range, pathOpts: { avoidSK: avoidSK } });
-			return true;
-		}
-		return false;
-	}
-
-	private isSleeping(miner: Zerg): boolean {
-		if (miner.memory.sleepUntil) {
-			if (Game.time >= miner.memory.sleepUntil) {
-				delete miner.memory.sleepUntil;
-				return false;
-			}
 			return true;
 		}
 		return false;

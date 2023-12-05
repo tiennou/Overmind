@@ -712,17 +712,22 @@ export abstract class Overlord {
 	) {
 		for (const creep of roleCreeps) {
 			if (creep.spawning) {
-				return;
+				continue;
 			}
+
 			if (!!fleeCallback) {
 				if (fleeCallback(creep)) {
 					continue;
 				}
 			}
+
 			if (creep.isIdle) {
 				if (creep.needsBoosts) {
 					this.handleBoosting(creep);
 				} else {
+					if (creep.isSleeping()) {
+						continue;
+					}
 					taskHandler(creep);
 				}
 			}
