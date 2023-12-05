@@ -8,7 +8,6 @@ import { normalizePos } from "movement/helpers";
 import { TerrainCosts } from "movement/types";
 import { profile } from "../profiler/decorator";
 import { Cartographer, ROOMTYPE_SOURCEKEEPER } from "../utilities/Cartographer";
-import { unpackPosList } from "../utilities/packrat";
 import { color, isAlly, rgbToHex } from "../utilities/utils";
 import { Visualizer } from "../visuals/Visualizer";
 
@@ -31,8 +30,6 @@ export interface MatrixOptions {
 	allowPortals: boolean;
 	/** Ignore structures (excluding roads) and impassible construction sites */
 	ignoreStructures: boolean;
-	/** Obstacles packed as packPos (not packCoord!); should rarely change */
-	obstacles: string;
 	/** The width of the squad (if any); >1 calls MatrixLib.applyMovingMaxPool() */
 	swarmWidth: number;
 	/** The height of the squad (if any); >1 calls MatrixLib.applyMovingMaxPool() */
@@ -52,14 +49,16 @@ export const getDefaultMatrixOptions: () => MatrixOptions = () => ({
 	avoidSK: true,
 	allowPortals: false,
 	ignoreStructures: false,
-	obstacles: "",
 	swarmWidth: 1,
 	swarmHeight: 1,
 });
 
 // This describes matrix options that generally only last for one tick. All properties here should be optional!
 export interface VolatileMatrixOptions {
-	blockCreeps?: boolean; // Whether to block creeps (default is undefined -> false)
+	/** Whether to block creeps (default is undefined -> false) */
+	blockCreeps?: boolean;
+	/** Obstacles that block positions in the room */
+	obstacles?: (RoomPosition | _HasRoomPosition)[];
 }
 
 /** How old must a SK outpost be before we ignore SK creeps in it completely */
@@ -73,6 +72,7 @@ export const MatrixCache: {
 		matrix: CostMatrix;
 		generated: number;
 		expiration?: number;
+		obstacles?: string;
 		invalidateCondition?: () => boolean;
 	};
 } = {};
@@ -95,7 +95,7 @@ export class MatrixLib {
 	): CostMatrix {
 		// Copy the opts objects because we don't want to back-modify it
 		opts = _.defaults(_.cloneDeep(opts), getDefaultMatrixOptions());
-		volatileOpts = _.cloneDeep(volatileOpts);
+		volatileOpts = _.clone(volatileOpts);
 
 		// Populate roomName and roomVisible properties
 		const room = Game.rooms[roomName] as Room | undefined;
@@ -260,6 +260,29 @@ export class MatrixLib {
 				}
 			} else {
 				// Can't block creeps without vision
+			}
+		}
+
+		// Block any other obstacles that might be specified
+		if (volatileOpts.obstacles) {
+			const obstacles = _.filter(
+				volatileOpts.obstacles,
+				(pos) => normalizePos(pos).roomName === opts.roomName
+			);
+			if (opts.swarmWidth > 1 || opts.swarmHeight > 1) {
+				MatrixLib.blockAfterMaxPooling(
+					clonedMatrix,
+					obstacles,
+					opts.swarmWidth,
+					opts.swarmHeight
+				);
+			} else {
+				MatrixLib.softBlock(
+					clonedMatrix,
+					obstacles,
+					opts.roomName,
+					0xff
+				);
 			}
 		}
 
@@ -440,15 +463,6 @@ export class MatrixLib {
 					}
 				}
 			}
-		}
-
-		// Block any other obstacles that might be specified
-		if (opts.obstacles.length > 0) {
-			const obstacles = _.filter(
-				unpackPosList(opts.obstacles),
-				(pos) => pos.roomName == roomName
-			);
-			MatrixLib.block(matrix, obstacles);
 		}
 
 		// Finally, as the very last step, we apply a smear to account for swarm size if greater than 1x1
@@ -730,7 +744,7 @@ export class MatrixLib {
 
 	/**
 	 * Blocks all specified positions for a swarm cost matrix that has already been "smeared" by
-	 * MatrixLib.applyMovingMaxPool().
+	 * {@link MatrixLib.applyMovingMaxPool}.
 	 * -> Do not run additional passes of applyMovingMaxPool after doing this!
 	 * -> This method assumes that you have already added explicit terrian costs.
 	 */

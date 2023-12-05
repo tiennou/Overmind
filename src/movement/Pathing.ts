@@ -8,7 +8,7 @@ import {
 	VolatileMatrixOptions,
 } from "../matrix/MatrixLib";
 import { profile } from "../profiler/decorator";
-import { packPos, packPosList } from "../utilities/packrat";
+import { packPos } from "../utilities/packrat";
 import { dump, minBy } from "../utilities/utils";
 import { Visualizer } from "../visuals/Visualizer";
 import { AnyZerg } from "../zerg/AnyZerg";
@@ -57,22 +57,21 @@ function getMatrixOptsFromPathOpts(opts: PathOptions): Partial<MatrixOptions> {
 		opts,
 		_defaultMatrixOptionsKeys
 	);
-	if (opts.obstacles) {
-		// might need to sort this string if I start adding nondeterministic obstacles
-		matrixOpts.obstacles = packPosList(opts.obstacles);
-	}
 	return matrixOpts;
 }
 
 function pathOptsToMatrixAndVolatileOpts(
 	opts: PathOptions
-): [Partial<MatrixOptions>, VolatileMatrixOptions] {
+): [MatrixOptions, VolatileMatrixOptions] {
 	const matrixOpts = getMatrixOptsFromPathOpts(opts);
 	const volatileMatrixOpts: VolatileMatrixOptions = {};
 	if (opts.blockCreeps) {
 		volatileMatrixOpts.blockCreeps = opts.blockCreeps;
 	}
-	return [matrixOpts, volatileMatrixOpts];
+	if (opts.obstacles) {
+		volatileMatrixOpts.obstacles = opts.obstacles;
+	}
+	return [<Required<MatrixOptions>>matrixOpts, volatileMatrixOpts];
 }
 
 /**
@@ -602,16 +601,16 @@ export class Pathing {
 		height: number,
 		opts: SwarmMoveOptions
 	): CostMatrix {
-		const matrixOpts: Partial<MatrixOptions> = {
-			explicitTerrainCosts: true,
-			ignoreStructures: opts.ignoreStructures,
-			swarmWidth: width,
-			swarmHeight: height,
-		};
-		const volatileMatrixOpts: VolatileMatrixOptions = {};
-		if (opts.pathOpts?.blockCreeps) {
-			volatileMatrixOpts.blockCreeps = opts.pathOpts.blockCreeps;
-		}
+		const [mOpts, vOpts] = pathOptsToMatrixAndVolatileOpts(opts);
+		const matrixOpts: Partial<MatrixOptions> = _.defaults(
+			<MatrixOptions>{
+				explicitTerrainCosts: true,
+				swarmWidth: width,
+				swarmHeight: height,
+			},
+			mOpts
+		);
+		const volatileMatrixOpts: VolatileMatrixOptions = _.defaults({}, vOpts);
 
 		const matrix = MatrixLib.getMatrix(
 			roomName,
