@@ -80,25 +80,33 @@ export class CombatIntel {
 
 	/**
 	 * Total tower damage from all towers in room at a given position
-	 * TODO needs to address stronghold
 	 */
 	static towerDamageAtPos(pos: RoomPosition, ignoreEnergy = false): number {
 		if (pos.room) {
 			let expectedDamage = 0;
 			for (const tower of pos.room.towers) {
-				if (tower.energy > 0 || ignoreEnergy) {
+				if (tower.store[RESOURCE_ENERGY] > 0 || ignoreEnergy) {
 					expectedDamage += this.singleTowerDamage(
 						pos.getRangeTo(tower)
 					);
 				}
 			}
 			return expectedDamage;
-		} else {
+		}
+
+		const structs = RoomIntel.getImportantStructureInfo(pos.roomName);
+		if (!structs) {
 			log.warning(
 				`CombatIntel.towerDamageAtPos: room visibility at ${pos.print}!`
 			);
 			return 0;
 		}
+
+		let expectedDamage = 0;
+		for (const tower of structs.towerPositions) {
+			expectedDamage += this.singleTowerDamage(pos.getRangeTo(tower));
+		}
+		return expectedDamage;
 	}
 
 	// Cost matrix calculations

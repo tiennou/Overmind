@@ -515,7 +515,7 @@ export class RoomIntel {
 	}
 
 	private static recordOwnedRoomStructures(room: Room) {
-		if (room.controller && room.controller.owner) {
+		if ((room.controller && room.controller.owner) || room.invaderCore) {
 			room.memory[RMEM.IMPORTANT_STRUCTURES] = {
 				[RMEM_STRUCTS.TOWERS]: packCoordList(
 					_.map(room.towers, (t) => t.pos)
