@@ -22,6 +22,7 @@ import { Stats } from "stats/stats";
 const FACTORY_USAGE_WINDOW = 100;
 
 export interface InfestedFactoryMemory {
+	enabled: boolean;
 	status: number;
 	statusTick: number;
 	activeProduction: Production | undefined;
@@ -51,6 +52,7 @@ const FactoryStageTimeouts = {
 };
 
 const getDefaultFactoryMemory: () => InfestedFactoryMemory = () => ({
+	enabled: true,
 	status: FactoryStatus.Idle,
 	statusTick: 0,
 	activeProduction: undefined,
@@ -388,63 +390,72 @@ export class InfestedFactory extends HiveCluster {
 	}
 
 	run(): void {
-		this.debug(
-			`run: status: ${this.memory.status}, suspended until: ${this.memory.suspendProductionUntil}, cooldown: ${this.factory.cooldown}`
-		);
-		if (
-			this.memory.suspendProductionUntil &&
-			Game.time > this.memory.suspendProductionUntil
-		) {
-			delete this.memory.suspendProductionUntil;
-		}
-
-		let product = this.memory.activeProduction;
-		if (!product && !this.memory.suspendProductionUntil) {
-			const nextProduction = Abathur.getNextProduction(this.colony);
-			// const nextProduction = ((): Production | undefined => undefined)();
+		if (this.memory.enabled) {
 			this.debug(
-				() => `next production: ${JSON.stringify(nextProduction)}`
+				`run: status: ${this.memory.status}, suspended until: ${this.memory.suspendProductionUntil}, cooldown: ${this.factory.cooldown}`
 			);
-			if (nextProduction) {
-				product = this.memory.activeProduction = nextProduction;
-				this.memory.produced = 0;
-			} else {
-				const sleepTime = getCacheExpiration(
-					InfestedFactory.settings.sleepDelay,
-					10
-				);
-				log.info(
-					`${this.print}: no production available; sleeping until ${sleepTime}.`
-				);
-				this.memory.suspendProductionUntil = sleepTime;
+			if (
+				this.memory.suspendProductionUntil &&
+				Game.time > this.memory.suspendProductionUntil
+			) {
+				delete this.memory.suspendProductionUntil;
 			}
-		}
 
-		this.debug(
-			`run: ${JSON.stringify(product)}, produced: ${this.memory.produced}`
-		);
-		if (
-			this.memory.status === FactoryStatus.Producing &&
-			product &&
-			this.factory.cooldown === 0
-		) {
-			this.debug(() => `producing: ${JSON.stringify(product)}`);
-			const result = this.factory.produce(product.commodityType);
-			if (result === OK) {
-				this.memory.produced += 1;
-
-				if (!this.memory.stats.totalProduction[product.commodityType]) {
-					this.memory.stats.totalProduction[product.commodityType] =
-						0;
-				}
-				this.memory.stats.totalProduction[product.commodityType] +=
-					product.size;
-			} else {
-				log.warning(
-					`${this.print}: couldn't run production (${errorForCode(
-						result
-					)})!`
+			let product = this.memory.activeProduction;
+			if (!product && !this.memory.suspendProductionUntil) {
+				const nextProduction = Abathur.getNextProduction(this.colony);
+				// const nextProduction = ((): Production | undefined => undefined)();
+				this.debug(
+					() => `next production: ${JSON.stringify(nextProduction)}`
 				);
+				if (nextProduction) {
+					product = this.memory.activeProduction = nextProduction;
+					this.memory.produced = 0;
+				} else {
+					const sleepTime = getCacheExpiration(
+						InfestedFactory.settings.sleepDelay,
+						10
+					);
+					log.info(
+						`${this.print}: no production available; sleeping until ${sleepTime}.`
+					);
+					this.memory.suspendProductionUntil = sleepTime;
+				}
+			}
+
+			this.debug(
+				`run: ${JSON.stringify(product)}, produced: ${
+					this.memory.produced
+				}`
+			);
+			if (
+				this.memory.status === FactoryStatus.Producing &&
+				product &&
+				this.factory.cooldown === 0
+			) {
+				this.debug(() => `producing: ${JSON.stringify(product)}`);
+				const result = this.factory.produce(product.commodityType);
+				if (result === OK) {
+					this.memory.produced += 1;
+
+					if (
+						!this.memory.stats.totalProduction[
+							product.commodityType
+						]
+					) {
+						this.memory.stats.totalProduction[
+							product.commodityType
+						] = 0;
+					}
+					this.memory.stats.totalProduction[product.commodityType] +=
+						product.size;
+				} else {
+					log.warning(
+						`${this.print}: couldn't run production (${errorForCode(
+							result
+						)})!`
+					);
+				}
 			}
 		}
 
