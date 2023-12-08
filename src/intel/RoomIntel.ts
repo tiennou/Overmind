@@ -1313,6 +1313,157 @@ export class RoomIntel {
 
 	static limitedRoomVisual: Set<string> | undefined;
 
+	private static drawMapVisuals(roomName: string) {
+		const exp = RoomIntel.getExpansionData(roomName);
+		const sec = RoomIntel.getSafetyData(roomName);
+		const objs = RoomIntel.getAllRoomObjectInfo(roomName);
+		const threatColor = interpolateColor(
+			"#00FF00",
+			"#FF0000",
+			sec.threatLevel
+		);
+		Game.map.visual.rect(new RoomPosition(2, 2, roomName), 4, 4, {
+			fill: threatColor,
+			stroke: "#FFFFFF",
+			opacity: 1,
+		});
+
+		if (roomName in Game.rooms) {
+			Game.map.visual.circle(new RoomPosition(4 + 4 + 2, 4, roomName), {
+				radius: 2,
+				fill: "#00CCCC",
+				stroke: "#000000",
+			});
+		}
+
+		const expPos = new RoomPosition(45, 5, roomName);
+		const expSize = 10;
+		if (objs?.controller === undefined && exp === undefined) {
+			Game.map.visual.text("?", expPos, {
+				fontSize: expSize,
+				color: "#AAAAAA",
+			});
+		} else if (exp === undefined) {
+			Game.map.visual.text("!", expPos, {
+				fontSize: expSize,
+				color: "#FFFF00",
+			});
+		} else if (exp === false) {
+			Game.map.visual.text("X", expPos, {
+				fontSize: expSize,
+				color: "#FF0000",
+			});
+		} else {
+			Game.map.visual.text("🏠", expPos, { fontSize: expSize });
+			Game.map.visual.text(
+				exp.score.toFixed(0),
+				new RoomPosition(48, 14, roomName),
+				{ fontSize: 4, color: "#00FF00", align: "right" }
+			);
+		}
+	}
+
+	private static drawRoomVisuals(roomName: string) {
+		const expData = [];
+
+		const exp = RoomIntel.getExpansionData(roomName);
+		const objs = RoomIntel.getAllRoomObjectInfo(roomName);
+
+		if (objs?.controller === undefined && exp === undefined) {
+			expData.push(["Incomplete"]);
+		} else if (exp === undefined) {
+			expData.push(["Incomplete"]);
+		} else if (exp === false) {
+			expData.push(["Uninhabitable"]);
+		} else {
+			expData.push(["Score", exp.score.toFixed(0)]);
+			expData.push([
+				"Anchor",
+				`${exp.bunkerAnchor.x}, ${exp.bunkerAnchor.y}`,
+			]);
+			expData.push(["Outposts:"]);
+			if (_.keys(exp.outposts).length !== 0) {
+				for (const outpost in exp.outposts) {
+					expData.push([outpost, exp.outposts[outpost].toString()]);
+				}
+			}
+		}
+
+		let boxY = 7;
+		boxY = Visualizer.infoBox(
+			`Expansion`,
+			expData,
+			{ x: 40, y: boxY, roomName: roomName },
+			6
+		);
+
+		const objData = [];
+		// Room objects
+		if (objs?.controller) {
+			const c = objs.controller;
+			if (c.owner) {
+				objData.push(["Controller"]);
+				objData.push([` ${c.owner}@${c.level}`]);
+				if (c.level !== 8 && c.progressTotal) {
+					objData.push([
+						"Progress",
+						`${((c.progress! / c.progressTotal) * 100).toFixed(
+							1
+						)}%`,
+					]);
+				}
+			}
+			if (c.reservation) {
+				objData.push([
+					"Reserved",
+					`${c.reservation.username} until ${c.reservation.ticksToEnd}`,
+				]);
+			}
+		}
+		if (objs?.sources.length) {
+			objData.push(["Sources", `${objs.sources.length}`]);
+		}
+		if (objs?.mineral) {
+			objData.push([
+				"Mineral",
+				`${objs.mineral.mineralType}@${objs.mineral.density}`,
+			]);
+		}
+		if (objs?.importantStructures) {
+			const s = objs.importantStructures;
+			objData.push(["Structures:"]);
+			if (s.spawnPositions.length) {
+				objData.push(["Spawns", `${s.spawnPositions.length}`]);
+			}
+			if (s.storagePos) {
+				objData.push(["Storage", `Yes`]);
+			}
+			if (s.terminalPos) {
+				objData.push(["Terminal", `Yes`]);
+			}
+			if (s.towerPositions.length) {
+				objData.push(["Towers", `${s.towerPositions.length}`]);
+			}
+			if (s.rampartPositions.length + s.rampartPositions.length) {
+				objData.push([
+					"Walls/Ramp.",
+					`${s.wallPositions.length}/${s.rampartPositions.length}`,
+				]);
+			}
+		}
+		if (!objData.length) {
+			objData.push(["Unexplored"]);
+		}
+		boxY = Visualizer.infoBox(
+			`Structures`,
+			objData,
+			{ x: 40, y: boxY, roomName: roomName },
+			8
+		);
+
+		<any>boxY;
+	}
+
 	static visuals(): void {
 		const until = Memory.settings.intelVisuals.until;
 		if (!Visualizer.enabled || until === undefined || Game.time > until) {
@@ -1350,146 +1501,8 @@ export class RoomIntel {
 				continue;
 			}
 
-			const expData = [];
-
-			const exp = RoomIntel.getExpansionData(name);
-			const sec = RoomIntel.getSafetyData(name);
-			const objs = RoomIntel.getAllRoomObjectInfo(name);
-			const threatColor = interpolateColor(
-				"#00FF00",
-				"#FF0000",
-				sec.threatLevel
-			);
-			Game.map.visual.rect(new RoomPosition(2, 2, name), 4, 4, {
-				fill: threatColor,
-				stroke: "#FFFFFF",
-				opacity: 1,
-			});
-
-			if (name in Game.rooms) {
-				Game.map.visual.circle(new RoomPosition(4 + 4 + 2, 4, name), {
-					radius: 2,
-					fill: "#00CCCC",
-					stroke: "#000000",
-				});
-			}
-
-			const expPos = new RoomPosition(45, 5, name);
-			const expSize = 10;
-			if (objs?.controller === undefined && exp === undefined) {
-				Game.map.visual.text("?", expPos, {
-					fontSize: expSize,
-					color: "#AAAAAA",
-				});
-				expData.push(["Incomplete"]);
-			} else if (exp === undefined) {
-				Game.map.visual.text("!", expPos, {
-					fontSize: expSize,
-					color: "#FFFF00",
-				});
-				expData.push(["Incomplete"]);
-			} else if (exp === false) {
-				Game.map.visual.text("X", expPos, {
-					fontSize: expSize,
-					color: "#FF0000",
-				});
-
-				expData.push(["Uninhabitable"]);
-			} else {
-				Game.map.visual.text("🏠", expPos, { fontSize: expSize });
-				Game.map.visual.text(
-					exp.score.toFixed(0),
-					new RoomPosition(48, 14, name),
-					{ fontSize: 4, color: "#00FF00", align: "right" }
-				);
-
-				expData.push(["Score", exp.score.toFixed(0)]);
-				expData.push([
-					"Anchor",
-					`${exp.bunkerAnchor.x}, ${exp.bunkerAnchor.y}`,
-				]);
-				expData.push(["Outposts:"]);
-				if (_.keys(exp.outposts).length !== 0) {
-					for (const outpost in exp.outposts) {
-						expData.push([
-							outpost,
-							exp.outposts[outpost].toString(),
-						]);
-					}
-				}
-			}
-
-			let boxY = 7;
-			boxY = Visualizer.infoBox(
-				`Expansion`,
-				expData,
-				{ x: 40, y: boxY, roomName: name },
-				6
-			);
-
-			const objData = [];
-			// Room objects
-			if (objs?.controller) {
-				const c = objs.controller;
-				if (c.owner) {
-					objData.push(["Controller"]);
-					objData.push([` ${c.owner}@${c.level}`]);
-					if (c.level !== 8 && c.progressTotal) {
-						objData.push([
-							"Progress",
-							`${((c.progress! / c.progressTotal) * 100).toFixed(
-								1
-							)}%`,
-						]);
-					}
-				}
-				if (c.reservation) {
-					objData.push([
-						"Reserved",
-						`${c.reservation.username} until ${c.reservation.ticksToEnd}`,
-					]);
-				}
-			}
-			if (objs?.sources.length) {
-				objData.push(["Sources", `${objs.sources.length}`]);
-			}
-			if (objs?.mineral) {
-				objData.push([
-					"Mineral",
-					`${objs.mineral.mineralType}@${objs.mineral.density}`,
-				]);
-			}
-			if (objs?.importantStructures) {
-				const s = objs.importantStructures;
-				objData.push(["Structures:"]);
-				if (s.spawnPositions.length) {
-					objData.push(["Spawns", `${s.spawnPositions.length}`]);
-				}
-				if (s.storagePos) {
-					objData.push(["Storage", `Yes`]);
-				}
-				if (s.terminalPos) {
-					objData.push(["Terminal", `Yes`]);
-				}
-				if (s.towerPositions.length) {
-					objData.push(["Towers", `${s.towerPositions.length}`]);
-				}
-				if (s.rampartPositions.length + s.rampartPositions.length) {
-					objData.push([
-						"Walls/Ramp.",
-						`${s.wallPositions.length}/${s.rampartPositions.length}`,
-					]);
-				}
-			}
-			if (!objData.length) {
-				objData.push(["Unexplored"]);
-			}
-			boxY = Visualizer.infoBox(
-				`Structures`,
-				objData,
-				{ x: 40, y: boxY, roomName: name },
-				8
-			);
+			this.drawMapVisuals(name);
+			this.drawRoomVisuals(name);
 		}
 	}
 }
