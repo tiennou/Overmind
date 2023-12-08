@@ -1,3 +1,4 @@
+import { log } from "console/log";
 import { profile } from "../profiler/decorator";
 
 const MAX_ACTIVE_SEGMENTS = 10;
@@ -130,32 +131,50 @@ export class Segmenter {
 		}
 	}
 
-	static getForeignSegment<T extends Segment>(): T | undefined {
-		if (RawMemory.foreignSegment) {
-			let segment: Segment;
-			try {
-				segment = <Segment>JSON.parse(RawMemory.foreignSegment.data);
-				return <T>segment;
-			} catch (e) {
-				console.log(`Could not parse RawMemory.foreignSegment.data!`);
-			}
+	static getForeignSegment<T extends Segment>(
+		expectedUsername: string,
+		expectedId: number
+	): T | undefined {
+		if (!RawMemory.foreignSegment) {
+			return undefined;
+		}
+		const { id, username, data } = RawMemory.foreignSegment;
+		if (expectedUsername !== username || expectedId !== id) {
+			log.warning(
+				`Segmenter: loaded foreign segment doesn't match expected! (${id}/${expectedId}, ${username}/${expectedUsername})`
+			);
+			return undefined;
+		}
+		let segment: Segment;
+		try {
+			segment = <Segment>JSON.parse(data);
+			return <T>segment;
+		} catch (e) {
+			console.log(`Could not parse RawMemory.foreignSegment.data!`);
 		}
 	}
 
 	static getForeignSegmentProperty<T extends Segment>(
+		expectedUsername: string,
+		expectedId: number,
 		key: keyof T
 	): T[typeof key] | undefined {
-		if (RawMemory.foreignSegment) {
-			let segment: T;
-			try {
-				segment = <T>JSON.parse(RawMemory.foreignSegment.data);
-				if (segment) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					return segment[key];
-				}
-			} catch (e) {
-				console.log(`Could not parse RawMemory.foreignSegment.data!`);
+		const { id, username, data } = RawMemory.foreignSegment ?? {};
+		if (expectedUsername !== username || expectedId !== id) {
+			log.warning(
+				`Segmenter: loaded foreign segment doesn't match expected! (${id}/${expectedId}, ${username}/${expectedUsername})`
+			);
+			return undefined;
+		}
+		let segment: T;
+		try {
+			segment = <T>JSON.parse(data);
+			if (segment) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return segment[key];
 			}
+		} catch (e) {
+			console.log(`Could not parse RawMemory.foreignSegment.data!`);
 		}
 		return undefined;
 	}

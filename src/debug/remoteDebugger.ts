@@ -65,8 +65,11 @@ export class RemoteDebugger {
 	 * Fetch the response from the debugee
 	 */
 	private fetchResponse_master(): string | undefined {
-		const response =
-			Segmenter.getForeignSegmentProperty<DebuggerSegment>("response");
+		const response = Segmenter.getForeignSegmentProperty<DebuggerSegment>(
+			config.MUON,
+			SEGMENTS.remoteDebugger,
+			"response"
+		);
 		return response;
 	}
 
@@ -74,8 +77,11 @@ export class RemoteDebugger {
 	 * Execute the commands you are given
 	 */
 	private fetchCommands_slave(): void {
-		const cmd =
-			Segmenter.getForeignSegmentProperty<DebuggerSegment>("command");
+		const cmd = Segmenter.getForeignSegmentProperty<DebuggerSegment>(
+			config.MUON,
+			SEGMENTS.remoteDebugger,
+			"command"
+		);
 		if (cmd) {
 			log.info(`[DEBUGGER] Executing command: ${cmd}`);
 			// eslint-disable-next-line
