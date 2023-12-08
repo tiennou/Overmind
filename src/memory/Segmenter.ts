@@ -77,8 +77,9 @@ export class Segmenter {
 			`getSegment: segment ${id}: atime: ${this.cache.lastAccessed[id]}, mtime: ${this.cache.lastAccessed[id]}`
 		);
 		if (
-			(this.cache.lastAccessed[id] || 0) >
-			(this.cache.lastModified[id] || 0)
+			(this.cache.lastAccessed[id] ?? 0) >=
+				(this.cache.lastModified[id] ?? 0) &&
+			this.cache.segments[id]
 		) {
 			this.debug(`getSegment: returning cached segment ${id}`);
 			return <T>this.cache.segments[id];
