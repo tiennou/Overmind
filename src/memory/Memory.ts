@@ -201,14 +201,13 @@ export class Mem {
 			memory[memName] = getDefaults();
 		} else if (Game.time == LATEST_GLOBAL_RESET_TICK) {
 			// mem defaults would only change with a global reset
-			_.defaultsDeep(memory[memName], getDefaults());
+			memory[memName] = _.defaultsDeep(
+				{},
+				memory[memName],
+				getDefaults()
+			);
 		}
-		// if (deep) {
-		// 	_.defaultsDeep(memory[memName], defaults);
-		// } else {
-		// 	_.defaults(memory[memName], defaults);
-		// }
-		return memory[memName];
+		return <D>memory[memName];
 	}
 
 	private static _setDeep(object: any, keys: string[], value: any): void {
