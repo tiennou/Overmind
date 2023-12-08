@@ -29,6 +29,7 @@ const DefaultSegmenterMemory: SegmenterMemory = {
 };
 
 export const SEGMENTS = {
+	stats: 55,
 	reinforcementLearning: 70,
 	remoteDebugger: 97,
 	assimilator: 98,
