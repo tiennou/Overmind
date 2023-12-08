@@ -1,4 +1,4 @@
-import { log } from "console/log";
+import { LogMessage, log } from "console/log";
 import { profile } from "../profiler/decorator";
 
 const MAX_ACTIVE_SEGMENTS = 10;
@@ -52,6 +52,12 @@ export class Segmenter {
 		return Memory.segmenter;
 	}
 
+	static debug(...args: LogMessage[]) {
+		if (false) {
+			log.alert("Segmenter", ...args);
+		}
+	}
+
 	static requestSegments(...ids: number[]) {
 		for (const id of ids) {
 			if (!this.memory.activeSegments.includes(id)) {
@@ -67,19 +73,25 @@ export class Segmenter {
 	}
 
 	static getSegment<T extends Segment>(id: number): T {
+		this.debug(
+			`getSegment: segment ${id}: atime: ${this.cache.lastAccessed[id]}, mtime: ${this.cache.lastAccessed[id]}`
+		);
 		if (
 			(this.cache.lastAccessed[id] || 0) >
 			(this.cache.lastModified[id] || 0)
 		) {
+			this.debug(`getSegment: returning cached segment ${id}`);
 			return <T>this.cache.segments[id];
 		}
 
 		const str = RawMemory.segments[id];
+		this.debug(`getSegment: raw ${str}`);
 		let segment: Segment;
 		try {
 			segment = <Segment>JSON.parse(str);
 		} catch (e) {
-			console.log(`Creating new object for RawMemory.segments[${id}].`);
+			log.warning(`Creating new object for RawMemory.segments[${id}]`);
+			this.debug(`error: ${e}, str: ${str}`);
 			segment = {};
 			this.cache.segments[id] = segment;
 			this.cache.lastModified[id] = Game.time;
@@ -88,6 +100,7 @@ export class Segmenter {
 		this.cache.segments[id] = segment;
 		this.cache.lastAccessed[id] = Game.time;
 
+		this.debug(`getSegment: returning parsed segment ${id}`);
 		return <T>this.cache.segments[id];
 	}
 
@@ -104,6 +117,11 @@ export class Segmenter {
 	static setSegment<T extends Segment>(id: number, value: T): void {
 		this.cache.segments[id] = value;
 		this.cache.lastModified[id] = Game.time;
+		this.debug(
+			`setSegment: segment ${id}: mtime: ${
+				this.cache.lastModified[id]
+			}, value: ${JSON.stringify(value)}`
+		);
 	}
 
 	static setSegmentProperty<T extends Segment>(
@@ -150,7 +168,9 @@ export class Segmenter {
 			segment = <Segment>JSON.parse(data);
 			return <T>segment;
 		} catch (e) {
-			console.log(`Could not parse RawMemory.foreignSegment.data!`);
+			log.warning(
+				`Segmenter: Could not parse RawMemory.foreignSegment.data!`
+			);
 		}
 	}
 
@@ -174,7 +194,9 @@ export class Segmenter {
 				return segment[key];
 			}
 		} catch (e) {
-			console.log(`Could not parse RawMemory.foreignSegment.data!`);
+			log.warning(
+				`Segmenter: Could not parse RawMemory.foreignSegment.data!`
+			);
 		}
 		return undefined;
 	}
@@ -192,13 +214,23 @@ export class Segmenter {
 			RawMemory.setActiveForeignSegment(null);
 		}
 		// Write things that have been modified this tick to memory
+		const start = Game.cpu.getUsed();
+		let count = 0;
 		for (const id in this.cache.lastModified) {
+			this.debug(
+				`checking segment ${id} for writing: ${this.cache.lastModified[id]}`
+			);
 			if (this.cache.lastModified[id] == Game.time) {
+				this.debug(`writing segment ${id}`);
+				count++;
 				RawMemory.segments[id] = JSON.stringify(
 					this.cache.segments[id]
 				);
 			}
 		}
+		this.debug(
+			`spent ${Game.cpu.getUsed() - start} CPU writing ${count} segments`
+		);
 	}
 }
 
