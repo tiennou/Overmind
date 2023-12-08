@@ -8,7 +8,13 @@ import { TransportRequestGroup } from "logistics/TransportRequestGroup";
 import { log } from "console/log";
 import { Priority } from "priorities/priorities";
 import { Production } from "resources/Abathur";
-import { ema, entries, getCacheExpiration, minMax } from "utilities/utils";
+import {
+	dump,
+	ema,
+	entries,
+	getCacheExpiration,
+	minMax,
+} from "utilities/utils";
 import { errorForCode } from "utilities/errors";
 import { rightArrow } from "utilities/stringConstants";
 import { Stats } from "stats/stats";
@@ -284,16 +290,49 @@ export class InfestedFactory extends HiveCluster {
 		}
 
 		const product = this.memory.activeProduction;
-		const produced = this.memory.produced;
 		if (!product) {
 			return;
 		}
 
+		const contents = { ...this.factory.store } as Omit<
+			StoreDefinition,
+			"contents" | "getCapacity" | "getUsedCapacity" | "getFreeCapacity"
+		>;
+
+		const produced = this.memory.produced;
 		const recipe = this.getProductionRecipe(product.commodityType);
 		for (const [component, amount] of recipe) {
-			const neededAmount =
-				amount * (product.requested - produced) -
-				this.factory.store[component];
+			const neededTotal = amount * (product.requested - produced);
+			const neededAmount = neededTotal - this.factory.store[component];
+
+			// Subtract from our current contents the quantity we're about to need of that component
+			contents[component] -= Math.max(neededTotal, 0);
+
+			this.debug(
+				() =>
+					`production of ${product.commodityType} needs ${amount} of ${component}, network: ${neededTotal}, transport: ${neededAmount}, in colony: ${this.colony.assets[component]}`
+			);
+
+			if (this.colony.assets[component] < neededTotal) {
+				this.debug(
+					() =>
+						`requesting ${neededTotal} of ${component} through terminal network`
+				);
+				this.terminalNetwork.requestResource(
+					this.colony,
+					component,
+					neededTotal,
+					0
+				);
+			}
+
+			this.debug(() => `locking ${neededTotal} of ${component}`);
+			this.terminalNetwork.lockResource(
+				this.colony,
+				component,
+				neededTotal
+			);
+
 			if (neededAmount <= 0) {
 				continue;
 			}
@@ -305,26 +344,22 @@ export class InfestedFactory extends HiveCluster {
 			);
 			this.debug(
 				() =>
-					`requesting input of ${neededAmount} of ${component}, capped at ${cappedAmount}`
+					`requesting transport of ${neededAmount} of ${component}, capped at ${cappedAmount}`
 			);
 			this.transportRequests.requestInput(this.factory, Priority.High, {
 				resourceType: component,
 				amount: cappedAmount,
 			});
 		}
-		const stored = Math.min(
-			this.factory.store[product.commodityType],
-			produced * product.size
-		);
-		if (stored > 0) {
-			this.debug(
-				() =>
-					`requesting output of ${stored} of ${product.commodityType}`
-			);
+
+		this.debug(() => `contents: ${dump(contents)}`);
+
+		for (const [component, amount] of entries(contents)) {
+			this.debug(() => `requesting removal of ${amount} of ${component}`);
 			this.transportRequests.requestOutput(
 				this.factory,
 				Priority.Normal,
-				{ resourceType: product.commodityType, amount: stored }
+				{ resourceType: component, amount: amount }
 			);
 		}
 	}
