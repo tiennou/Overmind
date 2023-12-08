@@ -531,3 +531,17 @@ export function rotatedMatrix<T>(
 export function cyclicListPermutation<T>(list: T[], offset: number): T[] {
 	return list.slice(offset).concat(list.slice(0, offset));
 }
+
+/**
+ * A simple tick clock
+ *
+ * This function will count down ticks until it hits the period (the 0),
+ * keeping it in sync with what a simpler `Game.time % period === 0`
+ * would do.
+ *
+ * @param period The length of the clock period
+ * @param phase The clock's initial phase
+ */
+export function tickClock(period: number, phase = 0) {
+	return ((Game.time - 1 + phase) % period) - period + 1;
+}
