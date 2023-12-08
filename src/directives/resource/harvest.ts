@@ -115,6 +115,7 @@ export class DirectiveHarvest extends Directive {
 		} else {
 			data.push(` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`);
 			data.push(` D: ${this.memory[HARVEST_MEM.DOWNTIME].toPercent()}`);
+			data.push(` E: ${this.overlords.mine.energyPerTick.toFixed(3)}`);
 			if (this.memory[MEM.DISTANCE]) {
 				data.push(
 					` P: ${this.memory[MEM.DISTANCE][MEM_DISTANCE.WEIGHTED]}`

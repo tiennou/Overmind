@@ -12,7 +12,7 @@ import {
 	Cartographer,
 	ROOMTYPE_SOURCEKEEPER,
 } from "../../utilities/Cartographer";
-import { getCacheExpiration, maxBy, minBy } from "../../utilities/utils";
+import { ema, getCacheExpiration, maxBy, minBy } from "../../utilities/utils";
 import { Zerg } from "../../zerg/Zerg";
 import { Overlord, OverlordMemory } from "../Overlord";
 import {
@@ -43,7 +43,10 @@ interface MiningOverlordMemory extends OverlordMemory {
 	[DISMANTLE_CHECK]?: number;
 	dismantleNeeded?: boolean;
 	containerPos?: string;
+	avgEnergy?: number;
 }
+
+const ENERGY_AVERAGE_WINDOW = 50;
 
 /**
  * Spawns miners to harvest from remote, owned, or sourcekeeper energy deposits. Standard mining actions have been
@@ -64,7 +67,8 @@ export class MiningOverlord extends Overlord {
 	constructionSite: ConstructionSite | undefined;
 	harvestPos: RoomPosition | undefined;
 	miners: Zerg[];
-	energyPerTick: number;
+	energyPerTickEstimate: number;
+	_energyPerTickAverage: number;
 	miningPowerNeeded: number;
 	setup: CreepSetup;
 	minersNeeded: number;
@@ -110,19 +114,20 @@ export class MiningOverlord extends Overlord {
 
 		// Compute energy output
 		if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_SOURCEKEEPER) {
-			this.energyPerTick =
+			this.energyPerTickEstimate =
 				SOURCE_ENERGY_KEEPER_CAPACITY / ENERGY_REGEN_TIME;
 		} else if (
 			this.colony.level >=
 			DirectiveOutpost.settings.canSpawnReserversAtRCL
 		) {
-			this.energyPerTick = SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME;
+			this.energyPerTickEstimate =
+				SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME;
 		} else {
-			this.energyPerTick =
+			this.energyPerTickEstimate =
 				SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
 		}
 		this.miningPowerNeeded =
-			Math.ceil(this.energyPerTick / HARVEST_POWER) + 1;
+			Math.ceil(this.energyPerTickEstimate / HARVEST_POWER) + 1;
 
 		const canAffordStandardMiner =
 			this.colony.room.energyCapacityAvailable >= StandardMinerSetupCost;
@@ -206,6 +211,24 @@ export class MiningOverlord extends Overlord {
 			this.pos.availableNeighbors(true).length
 		);
 		this.minersNeeded = this.isDisabled ? 0 : this.minersNeeded;
+	}
+
+	estimatedEnergyPerTick(estimate = false) {
+		if (estimate) {
+			return this.energyPerTickEstimate;
+		}
+		return this.energyPerTick;
+	}
+
+	get energyPerTick() {
+		return this.memory.avgEnergy ?? this.estimatedEnergyPerTick(true);
+	}
+
+	set energyPerTick(amount: number) {
+		if (Game.time % ENERGY_AVERAGE_WINDOW === 0) {
+			const avg = ema(amount, this.energyPerTick, ENERGY_AVERAGE_WINDOW);
+			this.memory.avgEnergy = avg;
+		}
 	}
 
 	/**
@@ -549,7 +572,7 @@ export class MiningOverlord extends Overlord {
 			) {
 				this.colony.logisticsNetwork.requestOutput(this.container, {
 					resourceType: "all",
-					dAmountdt: this.energyPerTick,
+					dAmountdt: this.energyPerTickEstimate,
 				});
 			}
 		}
