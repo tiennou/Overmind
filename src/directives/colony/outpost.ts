@@ -51,4 +51,8 @@ export class DirectiveOutpost extends Directive {
 			this.setPosition(this.room.controller.pos);
 		}
 	}
+
+	visuals(): void {
+		RoomIntel.invasionVisualsForRoom(this.pos.roomName);
+	}
 }

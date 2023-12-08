@@ -30,4 +30,8 @@ export class DirectiveSKOutpost extends Directive {
 	init(): void {}
 
 	run(): void {}
+
+	visuals(): void {
+		RoomIntel.invasionVisualsForRoom(this.pos.roomName);
+	}
 }

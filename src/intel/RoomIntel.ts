@@ -971,6 +971,30 @@ export class RoomIntel {
 		}
 	}
 
+	static invasionVisualsForRoom(roomName: string): void {
+		const invIntel = this.getInvasionData(roomName);
+		if (invIntel) {
+			const { harvested, lastSeen } = invIntel;
+			const invasionLikely = this.isInvasionLikely(roomName);
+
+			const invData = [];
+			invData.push(["Harvested:", `${harvested}`]);
+			invData.push(["Last seen:", `${Game.time - lastSeen}t ago`]);
+			invData.push([
+				"Invasion likely:",
+				`${invasionLikely ? "yes" : "no"}`,
+			]);
+
+			const boxY = 11;
+			Visualizer.infoBox(
+				`Invasion Data`,
+				invData,
+				{ x: 1, y: boxY, roomName },
+				9
+			);
+		}
+	}
+
 	static roomOwnedBy(roomName: string): string | undefined {
 		if (
 			Memory.rooms[roomName] &&
