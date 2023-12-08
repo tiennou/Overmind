@@ -3,11 +3,12 @@ import { Mem } from "../memory/Memory";
 import { profile } from "../profiler/decorator";
 import { ema, tickClock } from "../utilities/utils";
 import { log } from "console/log";
+import { config } from "config";
 
 /**
  * Operational statistics, stored in Memory.stats, will be updated every (this many) ticks
  */
-const LOG_STATS_INTERVAL = 8;
+const LOG_STATS_INTERVAL = config.LOG_STATS_INTERVAL ?? 8;
 
 @profile
 export class Stats {

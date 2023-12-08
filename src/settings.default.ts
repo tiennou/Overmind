@@ -93,6 +93,11 @@ export const RESERVE_CREDITS =
 export const NEW_OVERMIND_INTERVAL = onPublicServer() ? 20 : 5;
 
 /**
+ * How frequently should we log statistics
+ */
+export const LOG_STATS_INTERVAL = 60;
+
+/**
  * Master scale for the RoomVisuals GUI // TODO: not plugged in yet
  */
 export const GUI_SCALE = 1.0;
