@@ -8,6 +8,8 @@ import {
 } from "../utilities/errors";
 
 export interface MoveOptions {
+	/** enable debug output */
+	debug?: boolean;
 	/** whether to ignore Zerg.blockMovement */
 	force?: boolean;
 	/** ignore creeps currently standing on the destination */
@@ -35,6 +37,7 @@ export interface SwarmMoveOptions extends MoveOptions {
 }
 
 export interface CombatMoveOptions {
+	debug?: boolean;
 	allowExit?: boolean;
 	avoidPenalty?: number;
 	approachBonus?: number;
@@ -107,6 +110,8 @@ export const MatrixTypes = {
 };
 
 export interface PathOptions {
+	/** enable debug output */
+	debug?: boolean;
 	range?: number;
 	/** range to flee from targets */
 	fleeRange?: number;

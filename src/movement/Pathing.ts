@@ -9,7 +9,7 @@ import {
 } from "../matrix/MatrixLib";
 import { profile } from "../profiler/decorator";
 import { packPos, packPosList } from "../utilities/packrat";
-import { minBy } from "../utilities/utils";
+import { dump, minBy } from "../utilities/utils";
 import { Visualizer } from "../visuals/Visualizer";
 import { AnyZerg } from "../zerg/AnyZerg";
 import { getDefaultTerrainCosts, normalizePos } from "./helpers";
@@ -91,6 +91,11 @@ export class Pathing {
 		opts: PathOptions = {}
 	): PathingReturn {
 		_.defaults(opts, getDefaultPathOptions());
+		if (opts.debug) {
+			log.info(
+				`origin: ${origin}, dest: ${destination}, opts: ${dump(opts)}`
+			);
+		}
 
 		// check to see whether findRoute should be used
 		const linearDistance = Game.map.getRoomLinearDistance(

@@ -105,6 +105,7 @@ export class Movement {
 		const pathOpts = _.cloneDeep(opts.pathOpts) ?? {};
 		// Compute terrain costs
 		pathOpts.terrainCosts = getTerrainCosts(creep);
+		pathOpts.debug = opts.debug;
 		if (opts.movingTarget) {
 			opts.range = 0;
 		}
@@ -866,7 +867,9 @@ export class Movement {
 				if (goToPos) {
 					follower.goTo(goToPos);
 				} else {
-					follower.goTo(leader, { pathOpts: { blockCreeps: true } });
+					follower.goTo(leader, {
+						pathOpts: { debug: opts.debug, blockCreeps: true },
+					});
 				}
 			} else {
 				follower.goTo(leader, { stuckValue: 1 });
@@ -902,6 +905,7 @@ export class Movement {
 			range: 1, // Math.max(swarm.width, swarm.height),
 			blockCreeps: false,
 			exitCost: 10,
+			pathOpts: { debug: opts.debug },
 		});
 
 		// if (options.range! < Math.max(swarm.width, swarm.height)) {
@@ -1273,7 +1277,6 @@ export class Movement {
 			blockAlliedCreeps: false,
 		});
 
-		const debug = false;
 		const callback = (roomName: string) => {
 			const matrixOpts: Partial<MatrixOptions> = {
 				blockExits: !opts.allowExit, // todo: maybe refactor allowExit => blockExits
@@ -1333,7 +1336,7 @@ export class Movement {
 					swampCost: 10,
 				});
 				if (avoidRet.path.length > 0) {
-					if (debug) {
+					if (opts.debug) {
 						Pathing.serializePath(
 							creep.pos,
 							avoidRet.path,
@@ -1364,7 +1367,7 @@ export class Movement {
 					swampCost: 10,
 				});
 				if (approachRet.path.length > 0) {
-					if (debug) {
+					if (opts.debug) {
 						Pathing.serializePath(
 							creep.pos,
 							approachRet.path,
@@ -1406,7 +1409,7 @@ export class Movement {
 					}
 				);
 				if (ret.path.length > 0) {
-					if (debug) {
+					if (opts.debug) {
 						Pathing.serializePath(creep.pos, ret.path, "green");
 					}
 					outcome = creep.move(creep.pos.getDirectionTo(ret.path[0]));
@@ -1476,7 +1479,10 @@ export class Movement {
 		avoidGoals: (RoomPosition | _HasRoomPosition)[],
 		options: MoveOptions = {}
 	): ZergMoveReturnCode {
-		const opts = _.defaults({}, options.pathOpts ?? {}, {
+		const opts: PathOptions = _.defaults({}, options.pathOpts ?? {}, <
+			PathOptions
+		>{
+			debug: options.debug,
 			terrainCosts: getTerrainCosts(creep),
 		});
 		const nextPos = _.first(
@@ -1502,7 +1508,7 @@ export class Movement {
 		}
 		const terrainCosts = getTerrainCosts(creep);
 		const fleeDefaultOpts: MoveOptions = {
-			pathOpts: { terrainCosts: terrainCosts },
+			pathOpts: { debug: opts.debug, terrainCosts: terrainCosts },
 		};
 		_.defaults(opts, fleeDefaultOpts);
 
