@@ -1,6 +1,6 @@
 import { $ } from "caching/GlobalCache";
 import { profile } from "profiler/decorator";
-import { Colony } from "Colony";
+import { Colony, EnergyUse } from "Colony";
 import { HiveCluster } from "./_HiveCluster";
 import { Mem } from "memory/Memory";
 import { TerminalNetwork } from "logistics/TerminalNetwork";
@@ -420,6 +420,14 @@ export class InfestedFactory extends HiveCluster {
 			this.debug(() => `producing: ${JSON.stringify(product)}`);
 			const result = this.factory.produce(product.commodityType);
 			if (result === OK) {
+				const energyAmount =
+					COMMODITIES[product.commodityType].components.energy;
+				if (energyAmount > 0) {
+					this.colony.trackEnergyUse(
+						EnergyUse.FACTORY,
+						-energyAmount
+					);
+				}
 				this.memory.produced += 1;
 
 				if (!this.memory.stats.totalProduction[product.commodityType]) {

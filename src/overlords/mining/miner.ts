@@ -22,6 +22,7 @@ import {
 import { Colony } from "Colony";
 import { insideBunkerBounds } from "roomPlanner/layouts/bunker";
 import { packPos, unpackPos } from "utilities/packrat";
+import { EnergyUse } from "Colony";
 
 export const StandardMinerSetupCost = bodyCost(
 	Setups.drones.miners.standard.generateBody(Infinity)
@@ -692,6 +693,9 @@ export class MiningOverlord extends Overlord {
 		const inRange = miner.pos.inRangeTo(this.pos, 1);
 		if (result === OK) {
 			// All good!
+			const amount = 2 * miner.bodypartCounts[WORK];
+			this.energyPerTick = amount;
+			this.colony.trackEnergyUse(EnergyUse.MINED, amount);
 		} else if (result === ERR_NOT_ENOUGH_RESOURCES && inRange) {
 			// Do one last transfer before going to sleep so we're empty when resuming
 

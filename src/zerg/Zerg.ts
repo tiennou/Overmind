@@ -14,6 +14,7 @@ import { Task } from "../tasks/Task";
 import { AnyZerg } from "./AnyZerg";
 import { Visualizer } from "visuals/Visualizer";
 import { Pathing } from "movement/Pathing";
+import { EnergyUse } from "Colony";
 
 export function normalizeStandardZerg(creep: Zerg | Creep): Zerg | Creep {
 	return Overmind.zerg[creep.name] || creep;
@@ -281,7 +282,13 @@ export class Zerg extends AnyZerg {
 
 	repair(target: Structure) {
 		const result = this.creep.repair(target);
-		this.actionLog.repair ??= result == OK;
+		this.actionLog.repair ??= result === OK;
+		if (result === OK) {
+			this.colony?.trackEnergyUse(
+				EnergyUse.REPAIR,
+				-this.bodypartCounts[WORK]
+			);
+		}
 		return result;
 	}
 
@@ -306,6 +313,12 @@ export class Zerg extends AnyZerg {
 	upgradeController(controller: StructureController) {
 		const result = this.creep.upgradeController(controller);
 		this.actionLog.upgradeController ??= result == OK;
+		if (result === OK) {
+			this.colony?.trackEnergyUse(
+				EnergyUse.UPGRADE,
+				-this.bodypartCounts[WORK]
+			);
+		}
 		return result;
 	}
 

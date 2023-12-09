@@ -1,6 +1,6 @@
 import { RANGES } from "zerg/ranges";
 import { $ } from "../caching/GlobalCache";
-import { Colony } from "../Colony";
+import { Colony, EnergyUse } from "../Colony";
 import { log } from "../console/log";
 import { CombatIntel } from "../intel/CombatIntel";
 import { WorkerOverlord } from "../overlords/core/worker";
@@ -145,6 +145,11 @@ export class SporeCrawler extends HiveCluster {
 						`${tower.print} repairing rampart ${rampart.print}`
 					);
 					tower.repair(rampart);
+
+					this.colony.trackEnergyUse(
+						EnergyUse.REPAIR,
+						-TOWER_ENERGY_COST
+					);
 				}
 				return;
 			}

@@ -124,6 +124,15 @@ interface Destination {
 // Outpost that is currently not being maintained
 export interface OutpostData extends SuspensionMemory {}
 
+export enum EnergyUse {
+	MINED = "mined",
+	SPAWN = "spawn",
+	REPAIR = "repair",
+	UPGRADE = "upgrade",
+	FACTORY = "factory",
+	POWER_SPAWN = "powerspawn",
+}
+
 const getDefaultColonyMemory: () => ColonyMemory = () => ({
 	defcon: {
 		level: DEFCON.safe,
@@ -284,6 +293,8 @@ export class Colony {
 	// Room planner
 	roomPlanner: RoomPlanner;
 	// abathur: Abathur;
+	/** Energy use across the colony */
+	private energyUseStats: Record<EnergyUse, number>;
 
 	static settings = {
 		remoteSourcesByLevel: {
@@ -391,6 +402,8 @@ export class Colony {
 			this.creeps,
 			(creep) => creep.memory.role
 		);
+		this.energyUseStats = <Record<EnergyUse, number>>{};
+
 		// Register the rest of the colony components; the order in which these are called is important!
 		this.registerRoomObjects_cached(); // Register real colony components
 		this.registerOperationalState(); // Set the colony operational state
@@ -1072,6 +1085,11 @@ export class Colony {
 		this.destinations.set(key, dest);
 	}
 
+	trackEnergyUse(type: EnergyUse, amount: number) {
+		this.energyUseStats[type] ??= 0;
+		this.energyUseStats[type] += amount;
+	}
+
 	/**
 	 * Register colony-wide statistics
 	 */
@@ -1116,6 +1134,10 @@ export class Colony {
 			`colonies.${this.name}.miningSites.energyInPerTick`,
 			energyInPerTick
 		);
+
+		Stats.set(`colonies.${this.name}.energyUsage`, this.energyUseStats);
+		this.energyUseStats = <Record<EnergyUse, number>>{};
+
 		Stats.log(`colonies.${this.name}.assets`, this.assets);
 		// Log defensive properties
 		Stats.log(`colonies.${this.name}.defcon`, this.defcon);

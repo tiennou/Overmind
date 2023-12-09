@@ -3,7 +3,7 @@ import {
 	ERR_SPECIFIED_SPAWN_BUSY,
 } from "utilities/errors";
 import { $ } from "../caching/GlobalCache";
-import { Colony, DEFCON } from "../Colony";
+import { Colony, DEFCON, EnergyUse } from "../Colony";
 import { log } from "../console/log";
 import { CombatCreepSetup } from "../creepSetups/CombatCreepSetup";
 import { bodyCost, CreepSetup } from "../creepSetups/CreepSetup";
@@ -403,7 +403,8 @@ export class Hatchery extends HiveCluster {
 					s.store.getUsedCapacity(RESOURCE_ENERGY)
 				)
 			:	this.room.energyCapacityAvailable;
-		if (bodyCost(protoCreep.body) > availableEnergy) {
+		const creepCost = bodyCost(protoCreep.body);
+		if (creepCost > availableEnergy) {
 			return ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH;
 		}
 		// Get a spawn to use
@@ -471,6 +472,8 @@ export class Hatchery extends HiveCluster {
 			);
 
 			if (result == OK) {
+				this.colony.trackEnergyUse(EnergyUse.SPAWN, -creepCost);
+
 				// Creep has been successfully spawned; add cost into profiling
 				const overlordRef = protoCreep.memory[MEM.OVERLORD];
 				const overlord =
