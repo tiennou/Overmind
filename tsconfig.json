@@ -15,7 +15,6 @@
     "experimentalDecorators": true,
     "allowUnusedLabels": true,
     "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
     "removeComments": false,
     "typeRoots": [
       "./node_modules/@types",
