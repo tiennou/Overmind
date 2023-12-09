@@ -51,9 +51,9 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		let maxRooms;
 		if (Memory.settings.colonization.maxRooms === undefined) {
 			maxRooms =
-				Game.shard.name == "shard3" ?
-					config.SHARD3_MAX_OWNED_ROOMS
-				:	Math.min(Game.gcl.level, config.MAX_OWNED_ROOMS);
+				config.MAX_SHARD_OWNED_ROOMS[Game.shard.name] ??
+				config.MAX_OWNED_ROOMS;
+			maxRooms = Math.min(Game.gcl.level, maxRooms);
 		} else {
 			maxRooms = Math.min(
 				allColonies.length,

@@ -61,12 +61,19 @@ export const DEFAULT_OPERATION_MODE: operationMode = "automatic";
 /**
  * Limit how many rooms you can claim (for any shard)
  */
+export const MAX_SHARD_OWNED_ROOMS: { [shardName: string]: number } = {
+	shard3: 3, // shard3 has a CPU limit of 20, only claim this many rooms
+};
+
+/**
+ * Maximum limit for shards not specified in {@link MAX_SHARD_OWNED_ROOMS}
+ */
 export const MAX_OWNED_ROOMS = Infinity;
 
 /**
- * If you are running on shard3 (CPU limit 20), only claim this many rooms
+ * List of known shards for the server
  */
-export const SHARD3_MAX_OWNED_ROOMS = 3;
+export const SERVER_SHARDS = ["shard0", "shard1", "shard2", "shard3"];
 
 /**
  * The amount of credits that Overmind will try to keep in the bank. Default:
