@@ -4,7 +4,6 @@ import { Directive } from "../Directive";
 import { NotifierPriority } from "../Notifier";
 
 interface DirectiveInvasionDefenseMemory extends FlagMemory {
-	persistent?: boolean;
 	created: number;
 	safeSince: number;
 }

@@ -13,6 +13,9 @@ import { DirectiveHaul } from "../resource/haul";
 import { DirectiveDismantle } from "../targeting/dismantle";
 
 interface DirectiveClearRoomMemory extends FlagMemory {
+	keepStorageStructures?: boolean;
+	keepRoads?: boolean;
+	keepContainers?: boolean;
 	preexistingFlags: string[];
 	completedTime?: number;
 }

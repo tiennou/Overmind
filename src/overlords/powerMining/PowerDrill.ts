@@ -12,7 +12,7 @@ import { CombatZerg } from "../../zerg/CombatZerg";
 import { Zerg } from "../../zerg/Zerg";
 import { CombatOverlord, CombatOverlordMemory } from "../CombatOverlord";
 
-interface PowerDrillOverlordMemory extends CombatOverlordMemory {
+export interface PowerDrillOverlordMemory extends CombatOverlordMemory {
 	targetPBID?: string;
 }
 

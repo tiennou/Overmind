@@ -1,5 +1,8 @@
 import { log } from "../../console/log";
-import { PowerDrillOverlord } from "../../overlords/powerMining/PowerDrill";
+import {
+	PowerDrillOverlord,
+	PowerDrillOverlordMemory,
+} from "../../overlords/powerMining/PowerDrill";
 import { PowerHaulingOverlord } from "../../overlords/powerMining/PowerHauler";
 import { profile } from "../../profiler/decorator";
 import { calculateFormationStrength } from "../../utilities/creepUtils";
@@ -30,6 +33,7 @@ interface DirectivePowerMineMemory extends FlagMemory {
 	state: PowerMineState;
 	totalCollected: number;
 	expirationTime: number;
+	powerDrill?: PowerDrillOverlordMemory;
 }
 
 /**

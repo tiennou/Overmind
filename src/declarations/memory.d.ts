@@ -242,26 +242,21 @@ interface FlagMemory {
 		[MEM.EXPIRATION]: number;
 		incomplete?: boolean;
 	};
-	overlords?: any;
+	/** Act as a stopgap for the game sometimes not removing flags quickly enough */
+	removed?: boolean;
+	overlords?: { [name: string]: import("overlords/Overlord").Overlord };
 	debug?: boolean;
 	amount?: number;
 	persistent?: boolean;
 	setPos?: ProtoPos;
 	rotation?: number;
-	parent?: string;
 	maxPathLength?: number;
 	pathNotRequired?: boolean;
 	maxLinearRange?: number;
-	keepStorageStructures?: boolean;
-	keepRoads?: boolean;
-	keepContainers?: boolean;
-	// waypoints?: string[];
 	allowPortals?: boolean;
 	recalcColonyOnTick?: number;
 
 	combatIntel?: any;
-	sourceReaper?: any;
-	powerDrill?: any;
 }
 
 // Room memory key aliases to minimize memory size
