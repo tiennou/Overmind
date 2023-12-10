@@ -72,9 +72,6 @@ export class DirectiveHarvest extends Directive {
 	get energyAvailable() {
 		let energy = 0;
 		const mine = this.overlords.mine;
-		if (!(mine.source instanceof Source)) {
-			return energy;
-		}
 		if (mine.container) {
 			energy += mine.container.store.getUsedCapacity(RESOURCE_ENERGY);
 		}
