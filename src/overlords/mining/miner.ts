@@ -19,6 +19,8 @@ import {
 	SUSPENSION_OVERFILL_DEFAULT_DURATION,
 	SuspensionReason,
 } from "utilities/suspension";
+import { Colony } from "Colony";
+import { insideBunkerBounds } from "roomPlanner/layouts/bunker";
 
 export const StandardMinerSetupCost = bodyCost(
 	Setups.drones.miners.standard.generateBody(Infinity)
@@ -376,7 +378,8 @@ export class MiningOverlord extends Overlord {
 
 	static calculateContainerPos(
 		source: RoomPosition,
-		dropoffLocation?: RoomPosition
+		dropoffLocation?: RoomPosition,
+		colony?: Colony
 	): RoomPosition {
 		// log.debug(`Computing container position for mining overlord at ${source.print}...`);
 
@@ -386,6 +389,14 @@ export class MiningOverlord extends Overlord {
 			// We calculate positions that would conflict with our own preferred position
 			const obstacles: RoomPosition[] = [];
 			for (const pos of neighbors) {
+				if (
+					colony &&
+					colony.pos.roomName === pos.roomName &&
+					insideBunkerBounds(pos, colony)
+				) {
+					continue;
+				}
+
 				const structures = pos
 					.lookFor(LOOK_STRUCTURES)
 					.filter((s) => !s.isWalkable);
