@@ -60,7 +60,7 @@ interface Memory {
 	tick: number;
 	build: number;
 	Overmind: {
-		terminalNetwork?: import("logistics/TerminalNetwork_v2").TerminalNetworkMemory;
+		terminalNetwork?: import("logistics/TerminalNetwork").TerminalNetworkMemory;
 		trader?: import("logistics/TradeNetwork").TraderMemory;
 		versionMigrator?: { versions: {} };
 		versionUpdater?: any;
@@ -88,7 +88,7 @@ interface Memory {
 			build?: number;
 			lastBucket?: number;
 			avgBucketDelta?: number;
-			terminalNetwork?: import("logistics/TerminalNetwork_v2").TerminalNetworkStats;
+			terminalNetwork?: import("logistics/TerminalNetwork").TerminalNetworkStats;
 			trader?: import("logistics/TradeNetwork").TraderStats;
 		};
 		"cpu.heapStatistics"?: HeapStatistics;

@@ -226,7 +226,7 @@ interface ProvideOpts {
  */
 @profile
 @assimilationLocked
-export class TerminalNetworkV2 implements ITerminalNetwork {
+export class TerminalNetwork implements ITerminalNetwork {
 	name: string; // for console.debug() purposes
 
 	private colonies: Colony[];
@@ -472,7 +472,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 			(surplus != undefined && amount > surplus) ||
 			(amount > target + tolerance &&
 				this.getRemainingSpace(colony) <
-					TerminalNetworkV2.settings.minColonySpace)
+					TerminalNetwork.settings.minColonySpace)
 		) {
 			return TN_STATE.activeProvider;
 		}
@@ -837,12 +837,12 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 		if (resource == RESOURCE_ENERGY) {
 			requestAmount = Math.min(
 				requestAmount,
-				TerminalNetworkV2.settings.maxEnergySendAmount
+				TerminalNetwork.settings.maxEnergySendAmount
 			);
 		} else {
 			requestAmount = Math.min(
 				requestAmount,
-				TerminalNetworkV2.settings.maxResourceSendAmount
+				TerminalNetwork.settings.maxResourceSendAmount
 			);
 		}
 		// Try to find the best single colony to obtain resources from
@@ -1070,7 +1070,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 			if (
 				Abathur.isBaseMineral(resource) &&
 				colony.assets[resource] <
-					TerminalNetworkV2.settings.buyBaseMineralsDirectUnder
+					TerminalNetwork.settings.buyBaseMineralsDirectUnder
 			) {
 				if (opts.requestType == "active") {
 					buyOpts.preferDirect = true;
@@ -1120,18 +1120,18 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 			if (colony.state.isEvacuating) {
 				sendAmount = Math.min(
 					provideAmount,
-					TerminalNetworkV2.settings.maxEvacuateSendAmount
+					TerminalNetwork.settings.maxEvacuateSendAmount
 				);
 			} else {
 				if (resource == RESOURCE_ENERGY) {
 					sendAmount = Math.min(
 						provideAmount,
-						TerminalNetworkV2.settings.maxEnergySendAmount
+						TerminalNetwork.settings.maxEnergySendAmount
 					);
 				} else {
 					sendAmount = Math.min(
 						provideAmount,
-						TerminalNetworkV2.settings.maxResourceSendAmount
+						TerminalNetwork.settings.maxResourceSendAmount
 					);
 				}
 			}
@@ -1144,7 +1144,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 						partner.assets[resource] + sendAmount <=
 							this.thresholds(partner, resource).target &&
 						this.getRemainingSpace(partner) - sendAmount >=
-							TerminalNetworkV2.settings.minColonySpace
+							TerminalNetwork.settings.minColonySpace
 				);
 				// If that doesn't work, tfind partner where assets + sendAmount < target + tolerance and has space
 				if (validPartners.length == 0) {
@@ -1156,7 +1156,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 									this.thresholds(colony, resource)
 										.tolerance &&
 							this.getRemainingSpace(partner) - sendAmount >=
-								TerminalNetworkV2.settings.minColonySpace
+								TerminalNetwork.settings.minColonySpace
 					);
 				}
 				// If that doesn't work, just try to find any room with space that won't become an activeProvider
@@ -1164,7 +1164,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 					validPartners = _.filter(partners, (partner) => {
 						if (
 							this.getRemainingSpace(partner) - sendAmount <
-							TerminalNetworkV2.settings.minColonySpace
+							TerminalNetwork.settings.minColonySpace
 						) {
 							return false;
 						}
@@ -1239,7 +1239,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 			) {
 				if (
 					this.getRemainingSpace(colony) <
-					TerminalNetworkV2.settings.minColonySpace
+					TerminalNetwork.settings.minColonySpace
 				) {
 					sellOpts.preferDirect = true;
 					sellOpts.ignorePriceChecksForDirect = true;
@@ -1320,7 +1320,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 					!success &&
 					opts.complainIfUnfulfilled &&
 					Game.time %
-						TerminalNetworkV2.settings
+						TerminalNetwork.settings
 							.complainIfUnfulfilledFrequency ==
 						0
 				) {
@@ -1374,7 +1374,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 					!success &&
 					opts.complainIfUnfulfilled &&
 					Game.time %
-						TerminalNetworkV2.settings
+						TerminalNetwork.settings
 							.complainIfUnfulfilledFrequency ==
 						0
 				) {
@@ -1445,7 +1445,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 			for (const colony of this.colonies) {
 				if (
 					this.getRemainingSpace(colony) <
-						TerminalNetworkV2.settings.minColonySpace &&
+						TerminalNetwork.settings.minColonySpace &&
 					!colony.state.isRebuilding
 				) {
 					log.warning(
@@ -1485,7 +1485,7 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 				this.stats.terminals.avgCooldown[colony.name] = ema(
 					colony.terminal.cooldown,
 					this.stats.terminals.avgCooldown[colony.name] || 0,
-					TerminalNetworkV2.settings.terminalCooldownAveragingWindow
+					TerminalNetwork.settings.terminalCooldownAveragingWindow
 				);
 				this.stats.terminals.overload[colony.name] = ema(
 					this.terminalOverload[colony.name] ? 1 : 0,

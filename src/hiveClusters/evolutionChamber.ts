@@ -1,7 +1,7 @@
 import { $ } from "../caching/GlobalCache";
 import { Colony } from "../Colony";
 import { log } from "../console/log";
-import { TerminalNetworkV2 } from "../logistics/TerminalNetwork_v2";
+import { TerminalNetwork } from "../logistics/TerminalNetwork";
 import { TransportRequestGroup } from "../logistics/TransportRequestGroup";
 import { Mem } from "../memory/Memory";
 import { Pathing } from "../movement/Pathing";
@@ -84,7 +84,7 @@ function _labsAreEmpty(labs: StructureLab[]): boolean {
 @profile
 export class EvolutionChamber extends HiveCluster {
 	terminal: StructureTerminal; // The colony terminal
-	terminalNetwork: TerminalNetworkV2; // Reference to Overmind.terminalNetwork
+	terminalNetwork: TerminalNetwork; // Reference to Overmind.terminalNetwork
 	labs: StructureLab[]; // Colony labs
 	reagentLabs: StructureLab[];
 	productLabs: StructureLab[];
@@ -111,7 +111,7 @@ export class EvolutionChamber extends HiveCluster {
 		);
 		// Register physical components
 		this.terminal = terminal;
-		this.terminalNetwork = Overmind.terminalNetwork as TerminalNetworkV2;
+		this.terminalNetwork = Overmind.terminalNetwork as TerminalNetwork;
 		this.labs = colony.labs;
 		// Reserve some easily-accessible labs which are restricted not to be reagent labs
 		const restrictedLabs =

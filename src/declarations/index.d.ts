@@ -34,7 +34,7 @@ declare var Assimilator: IAssimilator;
 
 declare var Segmenter: import("memory/Segmenter").Segmenter;
 
-declare var TerminalNetwork: import("logistics/TerminalNetwork_v2").TerminalNetworkV2;
+declare var TerminalNetwork: import("logistics/TerminalNetwork").TerminalNetwork;
 declare var TradeNetwork: import("logistics/TradeNetwork").TraderJoe;
 
 declare var Cartographer: import("utilities/Cartographer").Cartographer;
