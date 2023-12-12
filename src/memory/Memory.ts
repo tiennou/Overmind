@@ -294,7 +294,11 @@ export class Mem {
 
 	static format() {
 		// Format the memory as needed, done once every global reset
-		_.defaultsDeep(Memory, config.DEFAULT_SETTINGS, Mem.getDefaultMemory());
+		_.defaultsDeep(
+			Memory,
+			{ settings: config.DEFAULT_SETTINGS },
+			Mem.getDefaultMemory()
+		);
 		// Increment build counter (if global reset is due to CPU halt, the count will have been decremented)
 		Memory.build++;
 		// Make global memory
