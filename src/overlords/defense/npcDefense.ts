@@ -25,17 +25,6 @@ export class DefenseNPCOverlord extends CombatOverlord {
 		this.guards = this.combatZerg(Roles.guardMelee);
 	}
 
-	// private reassignIdleGuards(): void {
-	// 	// Find all idle guards
-	// 	let idleGuards = _.filter(this.colony.getCreepsByRole('guard'), (guard: Zerg) => !guard.overlord);
-	// 	// Reassign them all to this flag
-	// 	for (let guard of idleGuards) {
-	// 		guard.overlord = this;
-	// 	}
-	// 	// Refresh the list of guards
-	// 	this.guards = this.creeps('guard');
-	// }
-
 	init() {
 		const amount =
 			(
