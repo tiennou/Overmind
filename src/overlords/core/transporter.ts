@@ -18,6 +18,7 @@ import { Zerg } from "../../zerg/Zerg";
 import { Overlord, OverlordMemory } from "../Overlord";
 import { deref, ema, minBy } from "utilities/utils";
 import { Stats } from "stats/stats";
+import { $ } from "caching/GlobalCache";
 
 const MAX_TRANSPORTERS = 10;
 
@@ -36,6 +37,7 @@ interface TransporterMemory extends OverlordMemory {
 export class TransportOverlord extends Overlord {
 	memory: TransporterMemory;
 	transporters: Zerg[];
+	_neededTransportPower: number;
 
 	constructor(
 		colony: Colony,
@@ -45,52 +47,87 @@ export class TransportOverlord extends Overlord {
 		this.transporters = this.zerg(Roles.transport);
 	}
 
-	private neededTransportPower(): number {
-		if (
-			!this.colony.storage &&
-			!(this.colony.hatchery && this.colony.hatchery.batteries) &&
-			!this.colony.upgradeSite.battery
-		) {
-			return 0;
-		}
+	private get neededTransportPower(): number {
+		return $.number(
+			this,
+			"_neededTransportPower",
+			() => {
+				if (
+					!this.colony.storage &&
+					!(this.colony.hatchery && this.colony.hatchery.batteries) &&
+					!this.colony.upgradeSite.battery
+				) {
+					this.debug(`no transport needed`);
+					return 0;
+				}
 
-		let transportPower = 0;
-		const scaling = 2; // this.colony.stage == ColonyStage.Larva ? 1.5 : 2.0; // aggregate round-trip multiplier
+				// aggregate round-trip multiplier
+				let scaling = 2;
+				if (this.colony.level < 3) {
+					scaling = 0.6;
+				} else if (this.colony.level < 5) {
+					scaling = 0.9;
+				}
 
-		// Add contributions to transport power from hauling energy from mining sites
-		for (const flagName in this.colony.miningSites) {
-			const o = this.colony.miningSites[flagName].overlords.mine;
-			// Only count sites which have a container output and which have at least one miner present
-			// (this helps in difficult "rebooting" situations)
-			if (
-				o.isSuspended ||
-				(this.colony.state.bootstrapping && o.miners.length === 0)
-			) {
-				continue;
-			}
-			if ((o.container && !o.link) || o.allowDropMining) {
-				transportPower += o.energyPerTick * scaling * o.distance;
-			}
-		}
+				// Add contributions to transport power from hauling energy from mining sites
+				let neededForMining = 0;
+				for (const flagName in this.colony.miningSites) {
+					const o = this.colony.miningSites[flagName].overlords.mine;
+					this.debug(() => {
+						const data = {
+							suspended: o.isSuspended,
+							miners: o.miners.length,
+							container: o.container && !o.link,
+							drop: o.allowDropMining,
+						};
+						return `checking mine ${o.print}: ${JSON.stringify(
+							data
+						)}`;
+					});
+					// Only count sites which have a container output and which have at least one miner present
+					// (this helps in difficult "rebooting" situations)
+					if (
+						o.isSuspended ||
+						(this.colony.state.bootstrapping && o.miners.length === 0)
+						) {
+							continue;
+						}
+						if ((o.container && !o.link) || o.allowDropMining) {
+							neededForMining += o.energyPerTick * scaling * o.distance;
+						}
+				}
 
-		// Add transport power needed to move to upgradeSite
-		if (this.colony.upgradeSite.battery) {
-			transportPower +=
-				UPGRADE_CONTROLLER_POWER *
-				this.colony.upgradeSite.upgradePowerNeeded *
-				scaling *
-				(Pathing.distance(
-					this.colony.pos,
-					this.colony.upgradeSite.battery.pos
-				) ?? 0);
-		}
+				// Add transport power needed to move to upgradeSite
+				let neededForUpgraders = 0;
+				if (this.colony.upgradeSite.battery) {
+					neededForUpgraders +=
+						UPGRADE_CONTROLLER_POWER *
+						this.colony.upgradeSite.upgradePowerNeeded *
+						scaling *
+						(Pathing.distance(
+							this.colony.pos,
+							this.colony.upgradeSite.battery.pos
+						) ?? 0);
+				}
 
-		if (this.colony.state.lowPowerMode) {
-			// Reduce needed transporters when colony is in low power mode
-			transportPower *= 0.5;
-		}
+				let transportPower = neededForMining + neededForUpgraders;
 
-		return transportPower / CARRY_CAPACITY;
+				const lowPower = !!this.colony.state.lowPowerMode;
+				// Reduce needed transporters when colony is in low power mode
+				if (lowPower) {
+					transportPower *= 0.5;
+				}
+
+				this.debug(
+					`neededTransportPower: ${
+						transportPower / CARRY_CAPACITY
+					}, mining: ${neededForMining}, upgrading: ${neededForUpgraders}, low power: ${lowPower}`
+				);
+
+				return transportPower / CARRY_CAPACITY;
+			},
+			5
+		);
 	}
 
 	init() {
@@ -104,7 +141,7 @@ export class TransportOverlord extends Overlord {
 			:	Setups.transporters.default;
 
 		const transportPowerEach = setup.getBodyPotential(CARRY, this.colony);
-		const neededTransportPower = this.neededTransportPower();
+		const neededTransportPower = this.neededTransportPower;
 		let numTransporters = 0;
 		if (transportPowerEach !== 0) {
 			numTransporters = Math.ceil(
@@ -115,9 +152,9 @@ export class TransportOverlord extends Overlord {
 		numTransporters = Math.min(numTransporters, MAX_TRANSPORTERS);
 
 		this.debug(
-			`requesting ${numTransporters} (${this.transporters.length}) because of ${neededTransportPower} needed by ${transportPowerEach}`
+			`requesting ${numTransporters} (current: ${this.transporters.length}) because of ${neededTransportPower} needed by ${transportPowerEach}`
 		);
-		if (this.transporters.length == 0) {
+		if (this.transporters.length === 0) {
 			this.wishlist(numTransporters, setup, {
 				priority: OverlordPriority.ownedRoom.firstTransport,
 			});
