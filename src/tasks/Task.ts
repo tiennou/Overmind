@@ -12,7 +12,7 @@
  * If you use Travler, change all occurrences of creep.moveTo() to creep.goTo()
  */
 
-import { MoveOptions, ZergMoveReturnCode } from "movement/Movement";
+import { MoveOptions, ZergMoveReturnCode } from "movement/types";
 import { log } from "../console/log";
 import { profile } from "../profiler/decorator";
 import { Zerg } from "../zerg/Zerg";

@@ -1,8 +1,6 @@
 import {
 	ERR_CANNOT_PUSH_CREEP,
 	ERR_SWARM_BUSY,
-	ERR_NOT_IMPLEMENTED,
-	ERR_SWARM_ROTATE_FAILED,
 	NO_ACTION,
 } from "utilities/errors";
 import { log } from "../console/log";
@@ -22,9 +20,16 @@ import { AnyZerg, normalizeAnyZerg } from "../zerg/AnyZerg";
 import { Swarm } from "../zerg/Swarm";
 import { Zerg } from "../zerg/Zerg";
 import { getTerrainCosts, isExit, normalizePos, sameCoord } from "./helpers";
-import { Pathing, PathOptions } from "./Pathing";
-
-export const CROSSING_PORTAL = 21;
+import { Pathing } from "./Pathing";
+import {
+	CombatMoveOptions,
+	MoveOptions,
+	MoveState,
+	PathOptions,
+	SwarmMoveOptions,
+	ZergMoveReturnCode,
+	ZergSwarmMoveReturnCode,
+} from "./types";
 
 const REPORT_CPU_THRESHOLD = 750; // Report when creep uses more than this amount of CPU over lifetime
 const REPORT_SWARM_CPU_THRESHOLD = 1500;
@@ -57,75 +62,10 @@ export const MovePriorities = {
 	default: 10,
 };
 
-export interface MoveOptions {
-	/** whether to ignore Zerg.blockMovement */
-	force?: boolean;
-	/** ignore creeps currently standing on the destination */
-	ignoreCreepsOnDestination?: boolean;
-	/** range to approach target */
-	range?: number;
-	/** range to flee from targets */
-	fleeRange?: number;
-	/** appends a direction to path in case creep moves */
-	movingTarget?: boolean;
-	/** creep is marked stuck after this many idle ticks */
-	stuckValue?: number;
-	/** probability of repathing on a given tick */
-	repathChance?: number;
-	/** whether to ignore pushing behavior */
-	noPush?: boolean;
-	pathOpts?: PathOptions;
-}
-
 export const getDefaultMoveOptions: () => MoveOptions = () => ({
 	stuckValue: DEFAULT_STUCK_VALUE,
 	pathOpts: {},
 });
-
-export interface SwarmMoveOptions {
-	range?: number;
-	ensureSingleRoom?: boolean;
-	ignoreStructures?: boolean; // ignore pathing around structures
-	blockCreeps?: boolean; // ignore pathing around creeps
-	maxOps?: number; // pathfinding times out after this many operations
-	stuckValue?: number; // creep is marked stuck after this many idle ticks
-	maxRooms?: number; // maximum number of rooms to path through
-	repathChance?: number; // probability of repathing on a given tick
-	displayCostMatrix?: boolean;
-}
-
-export interface CombatMoveOptions {
-	allowExit?: boolean;
-	avoidPenalty?: number;
-	approachBonus?: number;
-	preferRamparts?: boolean;
-	requireRamparts?: boolean;
-	displayCostMatrix?: boolean;
-	displayAvoid?: boolean;
-	blockMyCreeps?: boolean;
-	blockHostileCreeps?: boolean;
-	blockAlliedCreeps?: boolean;
-}
-
-export interface MoveState {
-	stuckCount: number;
-	lastCoord: Coord;
-	destination: RoomPosition;
-	cpu: number;
-	currentXY?: Coord;
-}
-
-export type ZergMoveReturnCode =
-	| CreepMoveReturnCode
-	| ERR_NO_PATH
-	| ERR_CANNOT_PUSH_CREEP
-	| ERR_NOT_IN_RANGE
-	| NO_ACTION;
-export type ZergSwarmMoveReturnCode =
-	| ZergMoveReturnCode
-	| ERR_SWARM_BUSY
-	| ERR_NOT_IMPLEMENTED
-	| ERR_SWARM_ROTATE_FAILED;
 
 /**
  * This is the movement library for Overmind. It was originally based on BonzAI's Traveler library, but it has been

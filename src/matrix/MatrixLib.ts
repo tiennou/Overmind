@@ -4,8 +4,8 @@
 import { PERMACACHE } from "caching/PermaCache";
 import { log } from "../console/log";
 import { RoomIntel } from "../intel/RoomIntel";
-import { normalizePos } from "../movement/helpers";
-import { TerrainCosts } from "../movement/Pathing";
+import { normalizePos } from "movement/helpers";
+import { TerrainCosts } from "movement/types";
 import { profile } from "../profiler/decorator";
 import { Cartographer, ROOMTYPE_SOURCEKEEPER } from "../utilities/Cartographer";
 import { unpackPosList } from "../utilities/packrat";

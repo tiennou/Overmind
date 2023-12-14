@@ -1,6 +1,7 @@
 import { NO_ACTION } from "utilities/errors";
 import { CombatIntel } from "../intel/CombatIntel";
-import { CombatMoveOptions, Movement } from "../movement/Movement";
+import { CombatMoveOptions } from "../movement/types";
+import { Movement } from "movement/Movement";
 import { profile } from "../profiler/decorator";
 import { CombatTargeting } from "../targeting/CombatTargeting";
 import { GoalFinder } from "../targeting/GoalFinder";

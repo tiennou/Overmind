@@ -1,4 +1,4 @@
-import { ZergMoveReturnCode } from "movement/Movement";
+import { ZergMoveReturnCode } from "movement/types";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 

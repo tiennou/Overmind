@@ -1,4 +1,4 @@
-import { MoveOptions } from "movement/Movement";
+import { MoveOptions } from "movement/types";
 import { Colony } from "../../Colony";
 import { Roles, Setups } from "../../creepSetups/setups";
 import { OverlordPriority } from "../../priorities/priorities_overlords";

@@ -10,12 +10,12 @@ import { hasPos } from "../declarations/typeGuards";
 import { CombatIntel } from "../intel/CombatIntel";
 import { Mem } from "../memory/Memory";
 import { normalizePos } from "../movement/helpers";
+import { Movement } from "movement/Movement";
 import {
 	CombatMoveOptions,
-	Movement,
 	SwarmMoveOptions,
 	ZergSwarmMoveReturnCode,
-} from "../movement/Movement";
+} from "movement/types";
 import { CombatOverlord } from "../overlords/CombatOverlord";
 import { profile } from "../profiler/decorator";
 import { CombatTargeting } from "../targeting/CombatTargeting";

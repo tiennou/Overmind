@@ -1,6 +1,9 @@
 export type NO_ACTION = 1;
 export const NO_ACTION: NO_ACTION = 1;
 
+export type CROSSING_PORTAL = 21;
+export const CROSSING_PORTAL: CROSSING_PORTAL = 21;
+
 export type ERR_NOT_IMPLEMENTED = -999;
 export const ERR_NOT_IMPLEMENTED: ERR_NOT_IMPLEMENTED = -999;
 
@@ -73,6 +76,7 @@ export type OvermindReturnCode =
 	| ScreepsReturnCode
 	| TerminalNetworkReturnCode
 	| NO_ACTION
+	| CROSSING_PORTAL
 	| ERR_SWARM_BUSY
 	| ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH
 	| ERR_SPECIFIED_SPAWN_BUSY
@@ -81,6 +85,7 @@ export type OvermindReturnCode =
 	| ERR_SWARM_ROTATE_FAILED;
 
 const errorMap: Record<OvermindReturnCode, string> = {
+	"21": "CROSSING_PORTAL",
 	"1": "NO_ACTION",
 	"0": "OK",
 	"-1": "ERR_NOT_OWNER",

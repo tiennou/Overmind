@@ -21,7 +21,7 @@ import {
 } from "../utilities/utils";
 import { CombatIntel } from "./CombatIntel";
 import { Visualizer } from "../visuals/Visualizer";
-import { FIND_EXIT_PORTAL } from "movement/Pathing";
+import { FIND_EXIT_PORTAL } from "movement/types";
 
 const RECACHE_TIME = 5000;
 const OWNED_RECACHE_TIME = 1000;

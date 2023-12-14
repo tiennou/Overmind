@@ -3,7 +3,8 @@ import { $ } from "../caching/GlobalCache";
 import { Colony, DEFCON, getAllColonies } from "../Colony";
 import { log } from "../console/log";
 import { Mem } from "../memory/Memory";
-import { MatrixTypes, Pathing } from "../movement/Pathing";
+import { Pathing } from "movement/Pathing";
+import { MatrixTypes } from "movement/types";
 import { profile } from "../profiler/decorator";
 import {
 	packCoord,

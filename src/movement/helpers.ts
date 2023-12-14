@@ -4,7 +4,11 @@ import {
 	isStandardZerg,
 } from "declarations/typeGuards";
 import { AnyZerg } from "zerg/AnyZerg";
-import { TerrainCosts, getDefaultTerrainCosts } from "./Pathing";
+import {
+	TERRAIN_PLAIN_DEFAULT_COST,
+	TERRAIN_SWAMP_DEFAULT_COST,
+	TerrainCosts,
+} from "./types";
 
 /**
  * Returns destination.pos if destination has a position, or destination if destination is a RoomPosition
@@ -65,6 +69,12 @@ export function getCreepWeightInfo(
 	};
 }
 
+export const getDefaultTerrainCosts: () => TerrainCosts = () => ({
+	plainCost: TERRAIN_PLAIN_DEFAULT_COST,
+	swampCost: TERRAIN_SWAMP_DEFAULT_COST,
+	roadCost: "auto",
+});
+
 /**
  * Get terrain costs which take into account a creep's individual fatigue stats
  */
@@ -91,3 +101,6 @@ export function getTerrainCosts(
 	}
 	return getDefaultTerrainCosts();
 }
+
+// @ts-expect-error global
+global.getTerrainCosts = getTerrainCosts;
