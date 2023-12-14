@@ -1,5 +1,5 @@
 import { DirectiveAvoid } from "directives/targeting/avoid";
-import { Colony, getAllColonies, OutpostSuspensionReason } from "./Colony";
+import { Colony, getAllColonies } from "./Colony";
 import { log } from "./console/log";
 import { bodyCost } from "./creepSetups/CreepSetup";
 import { Roles } from "./creepSetups/setups";
@@ -43,6 +43,10 @@ import {
 import { config } from "config";
 import { DirectiveGather } from "directives/resource/gather";
 import { DEPOSIT_COOLDOWN_CUTOFF } from "overlords/mining/gatherer";
+import {
+	SUSPENSION_STRONGHOLD_DEFAULT_DURATION,
+	SuspensionReason,
+} from "utilities/suspension";
 
 // export const DIRECTIVE_CHECK_FREQUENCY = 2;
 
@@ -265,17 +269,20 @@ export class Overseer implements IOverseer {
 
 		// Initialize overlords
 		for (const overlord of this.overlords) {
-			if (!overlord.isSuspended && overlord.isActive) {
-				if (overlord.profilingActive) {
-					const start = Game.cpu.getUsed();
-					overlord.preInit();
-					this.try(() => overlord.init());
-					overlord.memory[MEM.STATS]!.cpu +=
-						Game.cpu.getUsed() - start;
-				} else {
-					overlord.preInit();
-					this.try(() => overlord.init());
-				}
+			if (overlord.isSuspended) {
+				overlord.debug(
+					`is suspended because ${overlord.suspensionReason}, skipping init!`
+				);
+				continue;
+			}
+			if (overlord.profilingActive) {
+				const start = Game.cpu.getUsed();
+				overlord.preInit();
+				this.try(() => overlord.init());
+				overlord.memory[MEM.STATS]!.cpu += Game.cpu.getUsed() - start;
+			} else {
+				overlord.preInit();
+				this.try(() => overlord.init());
 			}
 		}
 
@@ -399,11 +406,10 @@ export class Overseer implements IOverseer {
 					log.warning(
 						`Outpost ${room.name} of ${colony.print} is suspended for ${duration}: controller reserved`
 					);
-					colony.suspendOutpost(
-						room.name,
-						OutpostSuspensionReason.reserved,
-						duration
-					);
+					colony.suspendOutpost(room.name, {
+						reason: SuspensionReason.reserved,
+						duration,
+					});
 				}
 			}
 		}
@@ -712,8 +718,6 @@ export class Overseer implements IOverseer {
 	// Harass Response =================================================================================================
 
 	private handleUnkillableStrongholds(colony: Colony): void {
-		const suspensionDuration = 5000;
-
 		for (const room of colony.outposts) {
 			if (
 				Cartographer.roomType(room.name) == ROOMTYPE_SOURCEKEEPER &&
@@ -723,11 +727,10 @@ export class Overseer implements IOverseer {
 				log.warning(
 					`Disabling outpost ${room.print} due to Stronghold presence`
 				);
-				colony.suspendOutpost(
-					room.name,
-					OutpostSuspensionReason.stronghold,
-					suspensionDuration
-				);
+				colony.suspendOutpost(room.name, {
+					reason: SuspensionReason.stronghold,
+					duration: SUSPENSION_STRONGHOLD_DEFAULT_DURATION,
+				});
 			}
 		}
 	}
@@ -799,15 +802,18 @@ export class Overseer implements IOverseer {
 			directive.run();
 		}
 		for (const overlord of this.overlords) {
-			if (!overlord.isSuspended && overlord.isActive) {
-				if (overlord.profilingActive) {
-					const start = Game.cpu.getUsed();
-					this.try(() => overlord.run());
-					overlord.memory[MEM.STATS]!.cpu +=
-						Game.cpu.getUsed() - start;
-				} else {
-					this.try(() => overlord.run());
-				}
+			if (overlord.isSuspended) {
+				overlord.debug(
+					`is suspended because ${overlord.suspensionReason}, skipping run!`
+				);
+				continue;
+			}
+			if (overlord.profilingActive) {
+				const start = Game.cpu.getUsed();
+				this.try(() => overlord.run());
+				overlord.memory[MEM.STATS]!.cpu += Game.cpu.getUsed() - start;
+			} else {
+				this.try(() => overlord.run());
 			}
 		}
 		for (const colony of getAllColonies()) {

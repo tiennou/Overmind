@@ -15,6 +15,10 @@ import {
 import { getCacheExpiration, maxBy, minBy } from "../../utilities/utils";
 import { Zerg } from "../../zerg/Zerg";
 import { Overlord, OverlordMemory } from "../Overlord";
+import {
+	SUSPENSION_OVERFILL_DEFAULT_DURATION,
+	SuspensionReason,
+} from "utilities/suspension";
 
 export const StandardMinerSetupCost = bodyCost(
 	Setups.drones.miners.standard.generateBody(Infinity)
@@ -333,6 +337,12 @@ export class MiningOverlord extends Overlord {
 		}
 	}
 
+	get deactivationReasons(): Set<SuspensionReason> {
+		const reasons = super.deactivationReasons;
+		reasons.add(SuspensionReason.overfilled);
+		return reasons;
+	}
+
 	refresh() {
 		if (!this.room && Game.rooms[this.pos.roomName]) {
 			// if you just gained vision of this room
@@ -348,6 +358,20 @@ export class MiningOverlord extends Overlord {
 			"link",
 			"constructionSite"
 		);
+
+		if (this.colony.state.isOverfilled && !this.isSuspended) {
+			log.alert(
+				`${this.colony.print} overfilled, suspending ${this.print} for ${SUSPENSION_OVERFILL_DEFAULT_DURATION}`
+			);
+			this.suspend({
+				reason: SuspensionReason.overfilled,
+				duration: SUSPENSION_OVERFILL_DEFAULT_DURATION,
+			});
+		}
+	}
+
+	get isSuspended() {
+		return super.isSuspended || this.isDisabled;
 	}
 
 	static calculateContainerPos(
@@ -497,10 +521,6 @@ export class MiningOverlord extends Overlord {
 				this.colony.linkNetwork.requestTransmit(this.link);
 			}
 		}
-	}
-
-	get isActive() {
-		return super.isActive && !this.isDisabled;
 	}
 
 	init() {

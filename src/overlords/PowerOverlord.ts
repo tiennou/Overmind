@@ -20,6 +20,7 @@ export interface PowerOverlordMemory extends OverlordMemory {
 export interface PowerOverlordOptions {}
 
 const getDefaultPowerOverlordMemory: () => PowerOverlordMemory = () => ({
+	active: true,
 	[MEM.TICK]: Game.time,
 });
 

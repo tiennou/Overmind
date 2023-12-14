@@ -6,6 +6,7 @@ import { PowerOverlord, PowerOverlordMemory } from "../PowerOverlord";
 interface OperatorOverlordMemory extends PowerOverlordMemory {}
 
 const getDefaultOperatorOverlordMemory: () => OperatorOverlordMemory = () => ({
+	active: true,
 	[MEM.TICK]: Game.time,
 });
 

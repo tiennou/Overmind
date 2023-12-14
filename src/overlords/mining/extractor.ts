@@ -8,6 +8,10 @@ import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import { Zerg } from "../../zerg/Zerg";
 import { Overlord } from "../Overlord";
+import {
+	SUSPENSION_OVERFILL_DEFAULT_DURATION,
+	SuspensionReason,
+} from "utilities/suspension";
 
 const BUILD_OUTPUT_FREQUENCY = 15;
 
@@ -57,6 +61,12 @@ export class ExtractorOverlord extends Overlord {
 		}
 	}
 
+	get deactivationReasons(): Set<SuspensionReason> {
+		const reasons = super.deactivationReasons;
+		reasons.add(SuspensionReason.overfilled);
+		return reasons;
+	}
+
 	refresh() {
 		if (!this.room && Game.rooms[this.pos.roomName]) {
 			// if you just gained vision of this room
@@ -64,6 +74,16 @@ export class ExtractorOverlord extends Overlord {
 		}
 		super.refresh();
 		$.refresh(this, "extractor", "mineral", "container");
+
+		if (this.colony.state.isOverfilled && !this.isSuspended) {
+			log.alert(
+				`${this.colony.print} overfilled, suspending ${this.print} for ${SUSPENSION_OVERFILL_DEFAULT_DURATION}`
+			);
+			this.suspend({
+				reason: SuspensionReason.overfilled,
+				duration: SUSPENSION_OVERFILL_DEFAULT_DURATION,
+			});
+		}
 	}
 
 	private registerOutputRequests(): void {

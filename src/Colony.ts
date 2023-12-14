@@ -49,6 +49,13 @@ import { Visualizer } from "./visuals/Visualizer";
 import { Zerg } from "./zerg/Zerg";
 import { CombatCreepSetup } from "creepSetups/CombatCreepSetup";
 import { CreepSetup } from "creepSetups/CreepSetup";
+import {
+	SuspensionMemory,
+	SuspensionOptions,
+	expireSuspension,
+	suspend,
+	unsuspend,
+} from "utilities/suspension";
 
 export enum DEFCON {
 	safe = 0,
@@ -103,19 +110,7 @@ export interface ColonyMemory {
 }
 
 // Outpost that is currently not being maintained
-export interface OutpostData {
-	active: boolean;
-	suspendReason?: OutpostSuspensionReason;
-	[MEM.EXPIRATION]?: number; // Tick to recalculate
-}
-
-export enum OutpostSuspensionReason {
-	cpu = "cpu", // CPU limitations
-	upkeep = "upkeep", // room can't sustain this remote because rebooting, spawn pressure, etc
-	harassment = "harassment",
-	reserved = "reserved", // room controller has been reserved/claimed from us
-	stronghold = "stronghold",
-}
+export interface OutpostData extends SuspensionMemory {}
 
 const getDefaultColonyMemory: () => ColonyMemory = () => ({
 	defcon: {
@@ -852,26 +847,22 @@ export class Colony {
 	/**
 	 * Deactivates an outpost and suspends operations in that room
 	 */
-	suspendOutpost(
-		roomName: string,
-		reason: OutpostSuspensionReason,
-		duration: number
-	): void {
-		this.memory.outposts[roomName] = {
-			active: false,
-			suspendReason: reason,
-			[MEM.EXPIRATION]: Game.time + duration,
-		};
+	suspendOutpost(roomName: string, options: SuspensionOptions): void {
+		suspend(this.memory.outposts[roomName], options);
 	}
 
-	private handleReactivatingOutposts(): void {
+	/**
+	 * Reactivates an outpost and resumes operations in that room
+	 */
+	unsuspendOutpost(roomName: string) {
+		unsuspend(this.memory.outposts[roomName]);
+	}
+
+	private handleOutpostSuspension(): void {
+		// Go through outposts and unsuspend then
 		for (const roomName in this.memory.outposts) {
-			const outpostData = this.memory.outposts[roomName];
-			if (
-				!outpostData.active &&
-				Game.time >= (outpostData[MEM.EXPIRATION] || Infinity)
-			) {
-				this.memory.outposts[roomName] = { active: true };
+			if (expireSuspension(this.memory.outposts[roomName])) {
+				log.info(`${this.print} outpost ${roomName} unsuspended`);
 			}
 		}
 	}
@@ -1021,7 +1012,7 @@ export class Colony {
 	 * Initializes the state of the colony each tick
 	 */
 	init(): void {
-		this.handleReactivatingOutposts();
+		this.handleOutpostSuspension();
 		// Initialize each hive cluster
 		for (const hiveCluster of this.hiveClusters) {
 			if (hiveCluster.memory?.debug) {

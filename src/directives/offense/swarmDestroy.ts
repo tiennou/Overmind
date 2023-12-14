@@ -5,6 +5,7 @@ import { Visualizer } from "../../visuals/Visualizer";
 import { Directive } from "../Directive";
 
 export interface DirectiveSwarmDestroyMemory extends FlagMemory {
+	active: boolean;
 	amount: number;
 	[swarmName: string]: any;
 }

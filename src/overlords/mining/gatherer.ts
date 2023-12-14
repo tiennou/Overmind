@@ -9,6 +9,10 @@ import { Overlord, OverlordMemory } from "../Overlord";
 import { DirectiveGather } from "directives/resource/gather";
 import { Pathing } from "movement/Pathing";
 import { getTerrainCosts } from "movement/helpers";
+import {
+	SUSPENSION_OVERFILL_DEFAULT_DURATION,
+	SuspensionReason,
+} from "utilities/suspension";
 
 export const DEPOSIT_COOLDOWN_CUTOFF = 160;
 
@@ -23,6 +27,7 @@ interface GatheringOverlordMemory extends OverlordMemory {
 
 const getDefaultGatheringOverlordMemory: () => GatheringOverlordMemory =
 	() => ({
+		active: true,
 		lastCooldown: 0,
 		harvested: 0,
 		loadedDistance: null,
@@ -38,7 +43,6 @@ export class GatheringOverlord extends Overlord {
 
 	room: Room | undefined;
 	deposit: Deposit | undefined;
-	isDisabled: boolean;
 	gatherers: Zerg[];
 
 	constructor(
@@ -56,6 +60,12 @@ export class GatheringOverlord extends Overlord {
 		this.updateMemory();
 	}
 
+	get deactivationReasons(): Set<SuspensionReason> {
+		const reasons = super.deactivationReasons;
+		reasons.add(SuspensionReason.overfilled);
+		return reasons;
+	}
+
 	refresh() {
 		if (!this.room && Game.rooms[this.pos.roomName]) {
 			// if you just gained vision of this room
@@ -65,6 +75,16 @@ export class GatheringOverlord extends Overlord {
 		// Refresh your references to the objects
 		$.refresh(this, "deposit");
 		this.updateMemory();
+
+		if (this.colony.state.isOverfilled && !this.isSuspended) {
+			log.alert(
+				`${this.colony.print} overfilled, suspending ${this.print} for ${SUSPENSION_OVERFILL_DEFAULT_DURATION}`
+			);
+			this.suspend({
+				reason: SuspensionReason.overfilled,
+				duration: SUSPENSION_OVERFILL_DEFAULT_DURATION,
+			});
+		}
 	}
 
 	updateMemory() {
@@ -73,10 +93,6 @@ export class GatheringOverlord extends Overlord {
 		}
 
 		this.memory.lastCooldown = this.deposit.lastCooldown;
-	}
-
-	get isActive() {
-		return super.isActive && !this.isDisabled;
 	}
 
 	init() {

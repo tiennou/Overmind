@@ -1,4 +1,13 @@
-import { Colony, OutpostSuspensionReason } from "../Colony";
+import {
+	SuspensionMemory,
+	SuspensionOptions,
+	SuspensionReason,
+	expireSuspension,
+	suspend,
+	suspensionReason,
+	unsuspend,
+} from "utilities/suspension";
+import { Colony } from "../Colony";
 import { LogMessage, log } from "../console/log";
 import { CombatCreepSetup } from "../creepSetups/CombatCreepSetup";
 import { CreepSetup } from "../creepSetups/CreepSetup";
@@ -60,13 +69,14 @@ export interface OverlordSuspendOptions {
 	};
 }
 
-export interface OverlordMemory {
-	suspend?: OverlordSuspendOptions | boolean;
+export interface OverlordMemory extends SuspensionMemory {
 	[MEM.STATS]?: OverlordStats;
 	debug?: boolean;
 }
 
-const getDefaultOverlordMemory: () => OverlordMemory = () => ({});
+const getDefaultOverlordMemory: () => OverlordMemory = () => ({
+	active: true,
+});
 
 /**
  * An Overlord is roughly analogous to a process in an OS: it is a generalization of a set of related things that need
@@ -162,6 +172,10 @@ export abstract class Overlord {
 				}
 			}
 		}
+
+		if (expireSuspension(this.memory)) {
+			log.info(`${this.print} unsuspended`);
+		}
 	}
 
 	recalculateCreeps(): void {
@@ -187,80 +201,43 @@ export abstract class Overlord {
 	 */
 	get deactivationReasons() {
 		return new Set([
-			OutpostSuspensionReason.cpu,
-			OutpostSuspensionReason.upkeep,
-			OutpostSuspensionReason.harassment,
-			OutpostSuspensionReason.reserved,
-			OutpostSuspensionReason.stronghold,
+			SuspensionReason.cpu,
+			SuspensionReason.upkeep,
+			SuspensionReason.harassment,
+			SuspensionReason.reserved,
+			SuspensionReason.stronghold,
 		]);
 	}
 
-	/**
-	 * Returns whether the overlord is currently active
-	 */
-	get isActive() {
-		const outpostMemory = this.colony.memory.outposts[this.pos.roomName];
-
-		// Consider the overlord active if the room it's in isn't part of a colony
-		if (!outpostMemory) {
-			return true;
+	get suspensionReason() {
+		let reason = suspensionReason(
+			this.colony.memory.outposts[this.pos.roomName]
+		);
+		if (!reason) {
+			reason = suspensionReason(this.memory);
 		}
-
-		// If the outpost is disabled and its suspension reason should cause deactivation, deactivate
-		if (
-			!outpostMemory.active &&
-			(!outpostMemory.suspendReason ||
-				this.deactivationReasons.has(outpostMemory.suspendReason))
-		) {
-			return false;
-		}
-
-		return true;
+		return reason;
 	}
 
-	/**
-	 * Returns whether the overlord is currently suspended
-	 */
-	get isSuspended(): boolean {
-		const suspend = this.memory.suspend;
-		if (typeof suspend === "boolean") {
-			return true;
-		} else if (suspend && suspend.endTick) {
-			if (Game.time < suspend.endTick) {
-				return true;
+	get isSuspended() {
+		const reason = this.suspensionReason;
+		let isSuspended = false;
+		if (reason) {
+			if (reason === true) {
+				isSuspended = true;
 			} else {
-				delete this.memory.suspend;
-				return false;
+				isSuspended = this.deactivationReasons.has(reason);
 			}
-		} else if (suspend && suspend.condition) {
-			log.error("NOT IMPLEMENTED"); // TODO
-			// const {fn, freq} = this.memory.suspend.condition;
-			// if (Game.time % freq == 0) {
-			// 	const condition = new Function(fn);
-			// 	// TODO - finish this
-			// }
 		}
-		return false;
+		return isSuspended;
 	}
 
-	suspend(): void {
-		this.memory.suspend = true;
+	suspend(options: SuspensionOptions): void {
+		suspend(this.memory, options);
 	}
 
 	unsuspend(): void {
-		delete this.memory.suspend;
-	}
-
-	suspendFor(ticks: number): void {
-		this.memory.suspend = {
-			endTick: Game.time + ticks,
-		};
-	}
-
-	suspendUntil(endTick: number): void {
-		this.memory.suspend = {
-			endTick: endTick,
-		};
+		unsuspend(this.memory);
 	}
 
 	/**

@@ -7,7 +7,9 @@ import { Overlord, OverlordMemory } from "../Overlord";
 
 interface EmptyOverlordMemory extends OverlordMemory {}
 
-const getDefaultEmptyOverlordMemory: () => EmptyOverlordMemory = () => ({});
+const getDefaultEmptyOverlordMemory: () => EmptyOverlordMemory = () => ({
+	active: true,
+});
 
 /**
  * DOCUMENTATION GOES HERE

@@ -1,4 +1,4 @@
-import { OutpostSuspensionReason } from "Colony";
+import { SuspensionReason } from "utilities/suspension";
 import { Directive } from "../directives/Directive";
 import { SpawnGroup } from "../logistics/SpawnGroup";
 import { profile } from "../profiler/decorator";
@@ -15,6 +15,7 @@ export interface CombatOverlordOptions {
 }
 
 const getDefaultCombatOverlordMemory: () => CombatOverlordMemory = () => ({
+	active: true,
 	[MEM.TICK]: Game.time,
 });
 
@@ -54,10 +55,7 @@ export abstract class CombatOverlord extends Overlord {
 	 * Subclasses should override this.
 	 */
 	get deactivationReasons() {
-		return new Set([
-			OutpostSuspensionReason.cpu,
-			OutpostSuspensionReason.upkeep,
-		]);
+		return new Set([SuspensionReason.cpu, SuspensionReason.upkeep]);
 	}
 
 	// Standard sequence of actions for running combat creeps

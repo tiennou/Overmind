@@ -7,7 +7,7 @@ import { profile } from "../../profiler/decorator";
 import { Tasks } from "../../tasks/Tasks";
 import { Zerg } from "../../zerg/Zerg";
 import { Overlord, OverlordMemory } from "../Overlord";
-import { OutpostSuspensionReason } from "Colony";
+import { SuspensionReason } from "utilities/suspension";
 
 /** Tick bias used to calculate if a reserver needs to be sent */
 const RESERVE_BUFFER_TIME = 1000;
@@ -42,10 +42,10 @@ export class ReservingOverlord extends Overlord {
 
 	get deactivationReasons() {
 		return new Set([
-			OutpostSuspensionReason.cpu,
-			OutpostSuspensionReason.upkeep,
-			OutpostSuspensionReason.harassment,
-			OutpostSuspensionReason.reserved,
+			SuspensionReason.cpu,
+			SuspensionReason.upkeep,
+			SuspensionReason.harassment,
+			SuspensionReason.reserved,
 		]);
 	}
 
@@ -90,7 +90,7 @@ export class ReservingOverlord extends Overlord {
 		if (
 			this.isSuspended &&
 			this.colony.memory.outposts[this.pos.roomName].suspendReason ===
-				OutpostSuspensionReason.reserved
+				SuspensionReason.reserved
 		) {
 			priority = OverlordPriority.outpostDefense.reserve;
 		}

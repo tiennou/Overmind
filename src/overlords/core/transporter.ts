@@ -60,12 +60,16 @@ export class TransportOverlord extends Overlord {
 		// Add contributions to transport power from hauling energy from mining sites
 		for (const flagName in this.colony.miningSites) {
 			const o = this.colony.miningSites[flagName].overlords.mine;
-			if (!o.isSuspended && o.miners.length > 0) {
-				// Only count sites which have a container output and which have at least one miner present
-				// (this helps in difficult "rebooting" situations)
-				if ((o.container && !o.link) || o.allowDropMining) {
-					transportPower += o.energyPerTick * scaling * o.distance;
-				}
+			// Only count sites which have a container output and which have at least one miner present
+			// (this helps in difficult "rebooting" situations)
+			if (
+				o.isSuspended ||
+				(this.colony.state.bootstrapping && o.miners.length === 0)
+			) {
+				continue;
+			}
+			if ((o.container && !o.link) || o.allowDropMining) {
+				transportPower += o.energyPerTick * scaling * o.distance;
 			}
 		}
 

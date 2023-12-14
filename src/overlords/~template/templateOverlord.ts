@@ -15,6 +15,7 @@ interface TemplateOverlordMemory extends OverlordMemory {
 
 // Default memory should be wrapped as a function to avoid default-modifying bugs
 const getDefaultTemplateOverlordMemory: () => TemplateOverlordMemory = () => ({
+	active: true,
 	memoryProperty1: 69,
 });
 
