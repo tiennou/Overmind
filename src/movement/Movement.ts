@@ -951,7 +951,7 @@ export class Movement {
 
 		// handle case where creep is stuck
 		if (state.stuckCount >= opts.stuckValue!) {
-			opts.blockCreeps = true;
+			opts.pathOpts!.blockCreeps = true;
 			shouldRepath = true;
 		}
 

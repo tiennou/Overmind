@@ -27,15 +27,10 @@ export interface MoveOptions {
 	pathOpts?: PathOptions;
 }
 
-export interface SwarmMoveOptions {
-	range?: number;
-	ensureSingleRoom?: boolean;
-	ignoreStructures?: boolean; // ignore pathing around structures
-	blockCreeps?: boolean; // ignore pathing around creeps
-	maxOps?: number; // pathfinding times out after this many operations
-	stuckValue?: number; // creep is marked stuck after this many idle ticks
-	maxRooms?: number; // maximum number of rooms to path through
-	repathChance?: number; // probability of repathing on a given tick
+export interface SwarmMoveOptions extends MoveOptions {
+	/** ignore pathing around structures */
+	ignoreStructures?: boolean;
+	/** visualize the final cost matrix */
 	displayCostMatrix?: boolean;
 }
 

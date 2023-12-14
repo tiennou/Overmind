@@ -604,8 +604,8 @@ export class Pathing {
 			swarmHeight: height,
 		};
 		const volatileMatrixOpts: VolatileMatrixOptions = {};
-		if (opts.blockCreeps) {
-			volatileMatrixOpts.blockCreeps = opts.blockCreeps;
+		if (opts.pathOpts?.blockCreeps) {
+			volatileMatrixOpts.blockCreeps = opts.pathOpts.blockCreeps;
 		}
 
 		const matrix = MatrixLib.getMatrix(
