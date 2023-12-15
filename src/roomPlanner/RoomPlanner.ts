@@ -21,7 +21,7 @@ import {
 } from "../utilities/utils";
 import { Visualizer } from "../visuals/Visualizer";
 import { BarrierPlanner } from "./BarrierPlanner";
-import { bunkerLayout } from "./layouts/bunker";
+import { bunkerLayout, insideBunkerBounds } from "./layouts/bunker";
 import { commandCenterLayout } from "./layouts/commandCenter";
 import { hatcheryLayout } from "./layouts/hatchery";
 import { RoadPlanner } from "./RoadPlanner";
@@ -1122,7 +1122,9 @@ export class RoomPlanner {
 		);
 		// UpgradeSite goes first
 		const upgradeLink =
-			this.colony.controller.pos.findClosestByLimitedRange(linksEtAl, 3);
+			this.colony.controller.pos.findClosestByLimitedRange(linksEtAl, 3, {
+				filter: (pos) => !insideBunkerBounds(pos, this.colony),
+			});
 		if (!upgradeLink) {
 			return this.colony.controller.pos;
 		}

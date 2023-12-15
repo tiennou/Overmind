@@ -64,7 +64,11 @@ export class UpgradeSite extends HiveCluster {
 			const allowableContainers = _.filter(
 				this.room.containers,
 				(container) =>
-					container.pos.findInRange(FIND_SOURCES, 1).length == 0
+					container.pos.findInRange(FIND_SOURCES, 1).length == 0 &&
+					container.pos.findInRange(FIND_MINERALS, 1).length == 0 &&
+					this.colony.hatchery?.batteries.some(
+						(b) => !b.pos.isEqualTo(container)
+					)
 			);
 			return this.pos.findClosestByLimitedRange(allowableContainers, 3);
 		});
@@ -193,7 +197,13 @@ export class UpgradeSite extends HiveCluster {
 		// Find all positions at range 2 from controller
 		let inputLocations: RoomPosition[] = [];
 		for (const pos of this.pos.getPositionsAtRange(2)) {
-			if (pos.isWalkable(true) && !insideBunkerBounds(pos, this.colony)) {
+			if (
+				pos.isWalkable(true) &&
+				!insideBunkerBounds(pos, this.colony) &&
+				!this.colony.hatchery?.batteries.some((b) =>
+					b.pos.isEqualTo(pos)
+				)
+			) {
 				inputLocations.push(pos);
 			}
 		}
