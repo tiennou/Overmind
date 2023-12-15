@@ -45,7 +45,11 @@ export class PioneerOverlord extends Overlord {
 	}
 
 	init() {
-		this.wishlist(4, Setups.pioneer);
+		let pioneersNeeded = 4;
+		if ((this.colony.hatchery?.spawns.length ?? 0) < 2) {
+			pioneersNeeded = 2;
+		}
+		this.wishlist(pioneersNeeded, Setups.pioneer);
 	}
 
 	private findStructureBlockingController(
