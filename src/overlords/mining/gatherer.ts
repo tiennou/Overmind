@@ -84,7 +84,11 @@ export class GatheringOverlord extends Overlord {
 			return;
 		}
 
-		this.wishlist(1, Setups.gatherer.deposit);
+		let gathererCount = 1;
+		if (!this.colony.storage) {
+			gathererCount = 0;
+		}
+		this.wishlist(gathererCount, Setups.gatherer.deposit);
 	}
 
 	distanceForLoadedCreep(gatherer: Zerg) {
