@@ -85,7 +85,12 @@ export class PioneerOverlord extends Overlord {
 			}
 			// Build and recharge
 			if (pioneer.store.energy == 0) {
-				pioneer.task = Tasks.recharge();
+				const task = Tasks.recharge();
+				if (this.directive.toColonize?.sources.length) {
+					task.data.sourcesIDs =
+						this.directive.toColonize?.sources.map((s) => s.id);
+				}
+				pioneer.task = task;
 			} else if (
 				this.room &&
 				this.room.controller &&

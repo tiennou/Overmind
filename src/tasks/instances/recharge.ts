@@ -18,11 +18,29 @@ export const rechargeTaskName = "recharge";
 export class TaskRecharge extends Task<rechargeTargetType> {
 	data: {
 		minEnergy: number;
+		sourcesIDs?: Id<Source>[];
 	};
+	_sources: Source[];
 
 	constructor(minEnergy = 0, options: TaskOptions = {}) {
 		super(rechargeTaskName, null, options);
 		this.data.minEnergy = minEnergy;
+	}
+
+	get sources() {
+		if (!this._sources) {
+			if (this.data.sourcesIDs) {
+				this._sources = <Source[]>(
+					this.data.sourcesIDs
+						.map((id) => Game.getObjectById(id))
+						.filter((s) => s)
+				);
+			}
+			if (this._sources && this._sources.length === 0) {
+				this._sources = this.creep.room.sources;
+			}
+		}
+		return this._sources;
 	}
 
 	private rechargeRateForCreep(
@@ -126,7 +144,7 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 			if (canHarvest) {
 				// Harvest from a source if there is no recharge target available
 				const availableSources = _.filter(
-					creep.room.sources,
+					this.sources,
 					function (source) {
 						const filledSource =
 							source.energy > 0 ||
