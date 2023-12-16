@@ -153,7 +153,7 @@ export class Overseer implements IOverseer {
 
 	getDirectivesOfType(directiveName: string): Directive[] {
 		this.ensureDirectivesCached();
-		return this.directivesByType[directiveName] || [];
+		return this.directivesByType[directiveName] ?? [];
 	}
 
 	getDirectivesInRoom(roomName: string): Directive[] {
@@ -299,8 +299,9 @@ export class Overseer implements IOverseer {
 	}
 
 	private placeGatheringDirectives() {
-		const gatherDirectives =
-			this.directivesByType[DirectiveGather.directiveName];
+		const gatherDirectives = this.getDirectivesOfType(
+			DirectiveGather.directiveName
+		);
 		for (const [roomName] of entries(Memory.rooms)) {
 			const info = RoomIntel.getAllRoomObjectInfo(roomName);
 			if (!info || !info.deposits) {
@@ -605,8 +606,9 @@ export class Overseer implements IOverseer {
 
 	private handleAutoPoisoning() {
 		// Can only have a max number of concurrent poisons at a time
-		const poisonDirectives =
-			this.directivesByType[DirectivePoisonRoom.directiveName];
+		const poisonDirectives = this.getDirectivesOfType(
+			DirectivePoisonRoom.directiveName
+		);
 		if (
 			poisonDirectives.length >= Memory.settings.autoPoison.maxConcurrent
 		) {
