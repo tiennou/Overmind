@@ -3,6 +3,7 @@ import { log } from "../../console/log";
 import { profile } from "../../profiler/decorator";
 import { BOOST_PARTS } from "../../resources/map_resources";
 import { Task } from "../Task";
+import { errorForCode } from "utilities/errors";
 
 export type getBoostedTargetType = StructureLab;
 export const getBoostedTaskName = "getBoosted";
@@ -37,60 +38,71 @@ export class TaskGetBoosted extends Task<getBoostedTargetType> {
 			this.creep.ticksToLive &&
 			this.creep.ticksToLive < MIN_LIFETIME_FOR_BOOST * lifetime
 		) {
-			return false; // timeout after this amount of lifespan has passed
+			// timeout after this amount of lifespan has passed
+			return false;
 		}
 		// else if (BOOST_PARTS[this.data.resourceType] == MOVE &&
 		// this.creep.getActiveBodyparts(BOOST_PARTS[this.data.resourceType]) >= this.creep.body.length / 2) {
 		// 	Game.notify(`Bad boosting of move on creep ${this.creep}, invalid task.`);
 		// 	return false;
 		// }
+
+		const { resourceType } = this.data;
+		const partCount = this.partCount;
+		return (this.creep.boostCounts[resourceType] ?? 0) < partCount;
+	}
+
+	get partCount() {
+		const { amount, resourceType } = this.data;
 		const partCount =
-			this.data.amount ||
-			this.creep.getActiveBodyparts(BOOST_PARTS[this.data.resourceType]);
+			amount ??
+			this.creep.getActiveBodyparts(BOOST_PARTS[resourceType]) ??
+			0;
+		return partCount;
+	}
+
+	get targetHasEnoughMinerals() {
+		const { resourceType } = this.data;
+		const partCount = this.partCount;
 		return (
-			(this.creep.boostCounts[this.data.resourceType] || 0) < partCount
+			this.target &&
+			this.target.mineralType === resourceType &&
+			this.target.store[resourceType] >= LAB_BOOST_MINERAL * partCount &&
+			this.target.store[RESOURCE_ENERGY] >= LAB_BOOST_ENERGY * partCount
 		);
 	}
 
 	isValidTarget() {
-		const partCount =
-			this.data.amount ||
-			this.creep.getActiveBodyparts(BOOST_PARTS[this.data.resourceType]);
-		return (
-			this.target &&
-			this.target.mineralType == this.data.resourceType &&
-			this.target.mineralAmount >= LAB_BOOST_MINERAL * partCount &&
-			this.target.energy >= LAB_BOOST_ENERGY * partCount
-		);
+		return this.targetHasEnoughMinerals;
 	}
 
 	work() {
 		if (this.creep.spawning) {
 			return ERR_INVALID_TARGET;
 		}
-		const partCount =
-			this.data.amount ||
-			this.creep.getActiveBodyparts(BOOST_PARTS[this.data.resourceType]);
+		const { amount, resourceType } = this.data;
+		const partCount = this.partCount;
+		// amount || this.creep.getActiveBodyparts(BOOST_PARTS[resourceType]);
 		// if (BOOST_PARTS[this.data.resourceType] == MOVE && partCount >= this.creep.body.length / 2){
 		// 	Game.notify(`Bad boosting of move on creep ${this.creep}, exiting work.`);
 		// 	return ERR_INVALID_TARGET;
 		// }
-		if (
-			this.target.mineralType == this.data.resourceType &&
-			this.target.mineralAmount >= LAB_BOOST_MINERAL * partCount &&
-			this.target.energy >= LAB_BOOST_ENERGY * partCount
-		) {
-			const result = this.target.boostCreep(
-				deref(this._creep.name) as Creep,
-				this.data.amount
-			);
-			log.info(
-				`Lab@${this.target.pos.print}: boosting creep ${this.creep.print} with ${this.target.mineralType}!` +
-					` Response: ${result}`
-			);
-			return result;
-		} else {
-			return ERR_NOT_FOUND;
+
+		if (!this.targetHasEnoughMinerals) {
+			return ERR_NOT_ENOUGH_RESOURCES;
 		}
+
+		const result = this.target.boostCreep(
+			deref(this._creep.name) as Creep,
+			amount
+		);
+		log.info(
+			`${this.target.print}@${this.target.pos.print}: boosting creep ${
+				this.creep.print
+			} with ${partCount} of ${resourceType} (${
+				this.target.mineralType
+			})! ${errorForCode(result)}`
+		);
+		return result;
 	}
 }
