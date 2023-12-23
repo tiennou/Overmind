@@ -139,6 +139,7 @@ export enum EnergyUse {
 	UPGRADE = "upgrade",
 	FACTORY = "factory",
 	POWER_SPAWN = "powerspawn",
+	LAB = "lab",
 }
 
 const getDefaultColonyMemory: () => ColonyMemory = () => ({

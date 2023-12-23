@@ -3,6 +3,7 @@ import { log } from "../../console/log";
 import { profile } from "../../profiler/decorator";
 import { BOOST_PARTS } from "../../resources/map_resources";
 import { Task } from "../Task";
+import type { EnergyUse } from "Colony";
 import { errorForCode } from "utilities/errors";
 
 export type getBoostedTargetType = StructureLab;
@@ -96,6 +97,13 @@ export class TaskGetBoosted extends Task<getBoostedTargetType> {
 			deref(this._creep.name) as Creep,
 			amount
 		);
+		if (result === OK) {
+			// We do not want tasks to depend on stuff like Colony, so hide that
+			this.creep.colony?.trackEnergyUse(
+				"lab" as EnergyUse,
+				-LAB_BOOST_ENERGY
+			);
+		}
 		log.info(
 			`${this.target.print}@${this.target.pos.print}: boosting creep ${
 				this.creep.print
