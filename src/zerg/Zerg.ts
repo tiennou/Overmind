@@ -668,7 +668,11 @@ export class Zerg extends AnyZerg {
 					if (lastStep.roomName !== this.pos.roomName || true) {
 						const lastData = [
 							this.name,
-							`eta: ${this.task?.eta ?? NaN}`,
+							`eta: ${
+								this.task?.eta ??
+								this.memory._go.path.length ??
+								NaN
+							}`,
 						];
 						new RoomVisual(lastStep.roomName).infoBox(
 							lastData,
