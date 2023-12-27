@@ -68,6 +68,7 @@ export const OverlordPriority = {
 	remoteRoom: {
 		mine: 510,
 		reserve: 511,
+		transport: 513,
 		roomIncrement: 2,
 	},
 

@@ -84,17 +84,25 @@ export class TransportOverlord extends Overlord {
 							data
 						)}`;
 					});
-					// Only count sites which have a container output and which have at least one miner present
-					// (this helps in difficult "rebooting" situations)
+					// Only count sites that are active, have a miner present,
+					// and if the colony is rebooting, has at least 1000 energy to fetch.
+					// This helps in difficult "rebooting" situations and stops transporters
+					// from jamming the spawn queue.
 					if (
 						o.isSuspended ||
-						(this.colony.state.bootstrapping && o.miners.length === 0)
-						) {
-							continue;
-						}
-						if ((o.container && !o.link) || o.allowDropMining) {
-							neededForMining += o.energyPerTick * scaling * o.distance;
-						}
+						o.miners.length === 0 ||
+						(this.colony.state.bootstrapping &&
+							!o.allowDropMining &&
+							((o.container || o.link)?.store.getUsedCapacity(
+								RESOURCE_ENERGY
+							) ?? 0) > 1000)
+					) {
+						continue;
+					}
+					if ((o.container && !o.link) || o.allowDropMining) {
+						neededForMining +=
+							o.energyPerTick * scaling * o.distance;
+					}
 				}
 
 				// Add transport power needed to move to upgradeSite
@@ -158,8 +166,12 @@ export class TransportOverlord extends Overlord {
 			this.wishlist(numTransporters, setup, {
 				priority: OverlordPriority.ownedRoom.firstTransport,
 			});
-		} else {
+		} else if (numTransporters < this.colony.room.sources.length + 1) {
 			this.wishlist(numTransporters, setup);
+		} else {
+			this.wishlist(numTransporters, setup, {
+				priority: OverlordPriority.remoteRoom.transport,
+			});
 		}
 	}
 
