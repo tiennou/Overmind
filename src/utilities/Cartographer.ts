@@ -297,7 +297,7 @@ export class Cartographer {
 	static describeExits(roomName: string) {
 		const exits = Game.map.describeExits(roomName);
 		if (!exits) {
-			return exits;
+			return {};
 		}
 		const radius = Math.ceil(Game.map.getWorldSize() / 2) - 1;
 		const coord = this.getRoomCoordinates(roomName);
