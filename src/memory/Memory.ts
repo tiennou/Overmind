@@ -283,6 +283,7 @@ export class Mem {
 				},
 				colonization: {
 					maxRooms: undefined,
+					safeZone: 1,
 				},
 				intelVisuals: {},
 				attitude: {

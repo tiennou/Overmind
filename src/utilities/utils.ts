@@ -204,6 +204,13 @@ export function isAlly(username: string): boolean {
 	);
 }
 
+/** Names for server-managed players */
+const NPC_NAMES = new Set(["Invader", "Source Keeper", "Screeps"]);
+
+export function isPlayer(username: string): boolean {
+	return !NPC_NAMES.has(username);
+}
+
 export function hasJustSpawned(): boolean {
 	return (
 		_.keys(Overmind.colonies).length == 1 &&

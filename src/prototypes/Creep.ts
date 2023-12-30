@@ -1,6 +1,7 @@
 // Creep properties ====================================================================================================
 
 import { PERMACACHE } from "caching/PermaCache";
+import { isPlayer } from "utilities/utils";
 
 // Boosting logic ------------------------------------------------------------------------------------------------------
 
@@ -90,10 +91,7 @@ PERMACACHE.isPlayer = PERMACACHE.isPlayer || {};
 Object.defineProperty(Creep.prototype, "isPlayer", {
 	get(this: Creep) {
 		if (PERMACACHE.isPlayer[this.id] === undefined) {
-			PERMACACHE.isPlayer[this.id] =
-				this.owner.username != "Invader" &&
-				this.owner.username != "Source Keeper" &&
-				this.owner.username != "Screeps";
+			PERMACACHE.isPlayer[this.id] = isPlayer(this.owner.username);
 		}
 		return PERMACACHE.isPlayer[this.id];
 	},

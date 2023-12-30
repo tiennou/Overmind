@@ -45,7 +45,10 @@ interface MemorySettings {
 		allowDestroy: boolean;
 	};
 	colonization: {
+		/** The max number of rooms to colonize. Set to `undefined` to use GCL */
 		maxRooms: number | undefined;
+		/** How close of another player a room we could expand into can be */
+		safeZone: number;
 	};
 	attitude: {
 		/**

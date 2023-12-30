@@ -7,7 +7,7 @@ import { Autonomy, getAutonomyLevel, Mem } from "../memory/Memory";
 import { Pathing } from "../movement/Pathing";
 import { profile } from "../profiler/decorator";
 import { Cartographer } from "../utilities/Cartographer";
-import { maxBy } from "../utilities/utils";
+import { isAlly, isPlayer, maxBy } from "../utilities/utils";
 import { MIN_EXPANSION_DISTANCE } from "./ExpansionEvaluator";
 import { DirectiveIncubate } from "directives/colony/incubate";
 import { config } from "config";
@@ -154,15 +154,28 @@ export class ExpansionPlanner implements IExpansionPlanner {
 				) {
 					score -= TOO_CLOSE_PENALTY;
 				}
+
 				// Are there powerful hostile rooms nearby?
 				const adjacentRooms = Cartographer.findRoomsInRange(
 					roomName,
-					1
+					Memory.settings.colonization.safeZone
 				);
 				if (
-					_.any(adjacentRooms, (roomName) =>
-						RoomIntel.isConsideredHostile(roomName)
-					)
+					_.any(adjacentRooms, (roomName) => {
+						if (RoomIntel.isConsideredHostile(roomName)) {
+							return true;
+						}
+						const cont = RoomIntel.getControllerInfo(roomName);
+						if (
+							!cont ||
+							(cont.owner &&
+								isPlayer(cont.owner) &&
+								!isAlly(cont.owner))
+						) {
+							return true;
+						}
+						return false;
+					})
 				) {
 					continue;
 				}
