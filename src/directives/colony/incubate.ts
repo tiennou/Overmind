@@ -20,6 +20,7 @@ export class DirectiveIncubate extends Directive {
 
 	static requiredRCL = 4;
 
+	/** The colony being incubated */
 	incubatee: Colony | undefined;
 
 	constructor(flag: Flag) {
@@ -45,19 +46,32 @@ export class DirectiveIncubate extends Directive {
 
 	refresh() {
 		if (this.incubatee) {
-			this.incubatee.state.isIncubating = true;
-			this.incubatee.spawnGroup = new SpawnGroup(this.flag, {
+			const group = new SpawnGroup(this.flag, {
 				requiredRCL: DirectiveIncubate.requiredRCL,
 				maxPathDistance: 400,
 				spawnPriorityThreshold: OverlordPriority.incubationThreshold,
 				spawnPriorityBoost: 200,
 			});
-			if (this.incubatee.spawnGroup.colonyNames.length === 0) {
+			if (group.colonyNames.length === 0) {
 				log.warning(
 					`${this.print}: unable to find any nearby colony to be the incubator, removing directive`
 				);
 				this.remove();
+				return;
 			}
+
+			// Manually add the incubated room to the spawn group's colonies
+			// as soon as it gets its spawn up, since its level is below the
+			// directive's minimum RCL
+			if (
+				this.incubatee.spawns.length > 0 &&
+				!group.memory.colonies.includes(this.pos.roomName)
+			) {
+				group.memory.colonies.push(this.pos.roomName);
+			}
+
+			this.incubatee.spawnGroup = group;
+			this.incubatee.state.isIncubating = true;
 		}
 	}
 
