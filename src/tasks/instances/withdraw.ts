@@ -35,11 +35,13 @@ export class TaskWithdraw extends Task<withdrawTargetType> {
 	}
 
 	isValidTarget() {
+		if (!this.target.store) {
+			return false;
+		}
 		const amount = this.data.amount || 1;
-		return (
-			(this.target.store.getUsedCapacity(this.data.resourceType) || 0) >=
-			amount
-		);
+		const used =
+			this.target.store.getUsedCapacity(this.data.resourceType) ?? 0;
+		return used >= amount;
 	}
 
 	work() {
