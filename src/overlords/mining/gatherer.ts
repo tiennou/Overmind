@@ -138,8 +138,8 @@ export class GatheringOverlord extends Overlord {
 	/**
 	 * Preliminary actions performed before going into the harvest-transfer loop
 	 *
-	 * This check for anything to dismantle, repair or build, then ensure the creep
-	 * is at least in the correct room to harvest.
+	 * This checks for being in the deposit's room, then sends the creep back to its
+	 * drop-off point if its getting close to retirement, and retires it once
 	 */
 	private prepareActions(gatherer: Zerg) {
 		if (!this.deposit) {
@@ -149,7 +149,7 @@ export class GatheringOverlord extends Overlord {
 				gatherer.store.getFreeCapacity() !== 0
 			) {
 				this.debug(
-					`${gatherer.print} not in range, moving closer to ${this.pos}`
+					`${gatherer.print} not in range, moving closer to ${this.pos.print}`
 				);
 				return this.goToGatheringSite(gatherer, true);
 			}
@@ -157,24 +157,46 @@ export class GatheringOverlord extends Overlord {
 			return true;
 		}
 
+		const storage = this.colony.storage;
+		if (!storage) {
+			log.error(
+				`${gatherer.print} cannot find colony ${this.colony.print} storage!`
+			);
+			return false;
+		}
+
 		// Check our lifetime so we're guaranteed to drop-off properly
 		const distance = this.distanceForLoadedCreep(gatherer);
-		if (
-			this.colony.storage &&
-			distance !== null &&
-			distance !== Infinity &&
-			(gatherer.ticksToLive ?? Infinity) <=
-				distance + GATHERER_LIFETIME_BUFFER
-		) {
-			this.debug(`${gatherer.print} is nearing death, emptying out`);
-			gatherer.task = Tasks.transfer(
-				this.colony.storage,
-				this.deposit.depositType
+		if (distance === null || !isFinite(distance)) {
+			log.error(
+				`${gatherer.print} got invalid distance (${distance}) to drop-off point ${storage.print}!`
 			);
+			return false;
+		}
+
+		if (
+			(gatherer.ticksToLive ?? Infinity) <=
+			distance + GATHERER_LIFETIME_BUFFER
+		) {
+			this.debug(
+				`${gatherer.print} is nearing death (${gatherer.ticksToLive}), dropping off at ${storage.print}`
+			);
+			gatherer.task = Tasks.transfer(storage, this.deposit.depositType);
 			return true;
 		}
 
-		if (gatherer.store.getFreeCapacity() !== 0 && this.isDepleted) {
+		if (gatherer.store.getUsedCapacity() !== 0 && this.isDepleted) {
+			this.debug(
+				`${gatherer.print} has carry but deposit depleted, dropping off at ${storage.print}`
+			);
+			gatherer.task = Tasks.transfer(storage, this.deposit.depositType);
+			return true;
+		}
+
+		if (gatherer.store.getUsedCapacity() === 0 && this.isDepleted) {
+			this.debug(
+				`${gatherer.print} has no carry and deposit depleted, retiring!`
+			);
 			gatherer.retire();
 			return true;
 		}
@@ -182,9 +204,9 @@ export class GatheringOverlord extends Overlord {
 	}
 
 	/**
-	 * Actions for handling harvesting from the source(s)
+	 * Actions for handling gathering from the deposit
 	 *
-	 * This will cause the miner to try and harvest from its mining site's source(s),
+	 * This will cause the gatherer to try and harvest from its deposit,
 	 * potentially sending it to sleep after dropping off its last batch, or move it
 	 * closer if it's still too far.
 	 */
@@ -230,9 +252,11 @@ export class GatheringOverlord extends Overlord {
 			(result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_TIRED)
 		) {
 			// Do one last transfer before going to sleep so we're empty when resuming
-
 			const ticksToRegen = this.deposit.cooldown;
 			if (ticksToRegen > (gatherer.ticksToLive || Infinity)) {
+				this.debug(
+					`${gatherer.print} retiring as death comes (${gatherer.ticksToLive}) and deposit on cooldown (${ticksToRegen})`
+				);
 				gatherer.retire();
 			} else {
 				this.debug(`${gatherer.print} sleeping for ${ticksToRegen}`);
@@ -253,7 +277,7 @@ export class GatheringOverlord extends Overlord {
 			gatherer.retire();
 		} else {
 			log.error(
-				`${gatherer.print}: unhandled miner.harvest() exception: ${result}`
+				`${gatherer.print}: unhandled gatherer.harvest() exception: ${result}`
 			);
 		}
 		// We return false here so that we attempt to transfer
@@ -324,7 +348,9 @@ export class GatheringOverlord extends Overlord {
 		}
 
 		// Transfer resources out to storage
-		this.handleTransfer(gatherer);
+		if (this.handleTransfer(gatherer)) {
+			return;
+		}
 	}
 
 	run() {
