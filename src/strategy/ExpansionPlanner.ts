@@ -47,6 +47,9 @@ export class ExpansionPlanner implements IExpansionPlanner {
 
 	private handleExpansion(): void {
 		const allColonies = getAllColonies();
+		const currentlyColonizing = DirectiveColonize.find(
+			Object.values(Game.flags)
+		).length;
 
 		let maxRooms;
 		if (Memory.settings.colonization.maxRooms === undefined) {
@@ -61,7 +64,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 			);
 		}
 
-		if (allColonies.length >= maxRooms) {
+		if (allColonies.length + currentlyColonizing >= maxRooms) {
 			log.info(`Colonization capped at ${maxRooms}. Not expanding!`);
 			return;
 		}
