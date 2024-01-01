@@ -61,7 +61,7 @@ export class Tasks {
 		}
 		if (setNextPos) {
 			for (let i = 0; i < tasks.length - 1; i++) {
-				tasks[i].options.nextPos = tasks[i + 1].targetPos;
+				tasks[i].data.nextPos = tasks[i + 1].targetPos;
 			}
 		}
 		// Make the accumulator task from the end and iteratively fork it

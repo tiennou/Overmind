@@ -8,11 +8,12 @@ interface TaskSettings {
 
 interface TaskOptions {
 	blind?: boolean;
-	nextPos?: ProtoPos;
 	moveOptions?: import("movement/Movement").MoveOptions;
 }
 
 interface TaskData {
+	nextPos?: ProtoPos;
+
 	quiet?: boolean;
 	resourceType?: string;
 	amount?: number;

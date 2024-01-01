@@ -321,8 +321,8 @@ export abstract class Task<
 	 * Moves to the next position on the agenda if specified - call this in some tasks after work() is completed
 	 */
 	moveToNextPos() {
-		if (this.options.nextPos) {
-			const nextPos = derefRoomPosition(this.options.nextPos);
+		if (this.data.nextPos) {
+			const nextPos = derefRoomPosition(this.data.nextPos);
 			return this.creep.goTo(nextPos);
 		}
 		return ERR_NO_PATH;
