@@ -1,19 +1,20 @@
 import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type transferTargetType = TransferrableStoreStructure | Creep;
 
 export const transferTaskName = "transfer";
 
+interface TaskTransferData extends TaskData {
+	resourceType: ResourceConstant;
+	amount: number | undefined;
+}
+
 @profile
 export class TaskTransfer extends Task<AnyZerg, transferTargetType> {
-	data: {
-		resourceType: ResourceConstant;
-		amount: number | undefined;
-	};
-
+	data: TaskTransferData;
 	constructor(
 		target: transferTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,

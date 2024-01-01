@@ -6,23 +6,25 @@ import { BOOST_PARTS } from "../../resources/map_resources";
 import { Task } from "../Task";
 import type { EnergyUse } from "Colony";
 import { errorForCode } from "utilities/errors";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type getBoostedTargetType = StructureLab;
 export const getBoostedTaskName = "getBoosted";
 
 export const MIN_LIFETIME_FOR_BOOST = 0.85;
 
+interface TaskGetBoostedData extends TaskData {
+	resourceType: _ResourceConstantSansEnergy;
+	amount: number | undefined;
+}
+
 @profile
 export class TaskGetBoosted extends Task<Zerg, getBoostedTargetType> {
-	data: {
-		resourceType: ResourceConstant;
-		amount: number | undefined;
-	};
+	data: TaskGetBoostedData;
 
 	constructor(
 		target: getBoostedTargetType,
-		boostType: ResourceConstant,
+		boostType: _ResourceConstantSansEnergy,
 		partCount?: number,
 		options: TaskOptions = {}
 	) {

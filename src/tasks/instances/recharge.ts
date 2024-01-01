@@ -9,7 +9,7 @@ import { pickupTaskName, TaskPickup } from "./pickup";
 import { TaskWithdraw, withdrawTaskName } from "./withdraw";
 import { Roles } from "creepSetups/setups";
 import { AnyZerg } from "zerg/AnyZerg";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type rechargeTargetType = null;
 export const rechargeTaskName = "recharge";
@@ -18,12 +18,14 @@ const RECHARGE_MAX_DISTANCE = 40;
 
 // This is a "dispenser task" which is not itself a valid task, but dispenses a task when assigned to a creep.
 
+interface TaskRechargeData extends TaskData {
+	minEnergy: number;
+	sourcesIDs?: Id<Source>[];
+}
+
 @profile
 export class TaskRecharge extends Task<AnyZerg, rechargeTargetType> {
-	data: {
-		minEnergy: number;
-		sourcesIDs?: Id<Source>[];
-	};
+	data: TaskRechargeData;
 	_sources: Source[];
 
 	constructor(minEnergy = 0, options: TaskOptions = {}) {

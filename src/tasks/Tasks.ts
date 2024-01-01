@@ -126,7 +126,7 @@ export class Tasks {
 
 	static getBoosted(
 		target: getBoostedTargetType,
-		boostType: ResourceConstant,
+		boostType: _ResourceConstantSansEnergy,
 		amount?: number,
 		options: TaskOptions = {}
 	): TaskGetBoosted {

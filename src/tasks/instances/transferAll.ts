@@ -1,7 +1,7 @@
 import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type transferAllTargetType =
 	| StructureStorage
@@ -10,11 +10,13 @@ export type transferAllTargetType =
 
 export const transferAllTaskName = "transferAll";
 
+interface TaskTransferAllData extends TaskData {
+	skipEnergy?: boolean;
+}
+
 @profile
 export class TaskTransferAll extends Task<AnyZerg, transferAllTargetType> {
-	data: {
-		skipEnergy?: boolean;
-	};
+	data: TaskTransferAllData;
 
 	constructor(
 		target: transferAllTargetType,

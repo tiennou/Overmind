@@ -786,7 +786,7 @@ export abstract class Overlord {
 				if (boostLab) {
 					zerg.task = Tasks.getBoosted(
 						boostLab,
-						<ResourceConstant>boost
+						<_ResourceConstantSansEnergy>boost
 					);
 					return;
 				}

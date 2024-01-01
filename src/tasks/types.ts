@@ -23,12 +23,6 @@ export interface TaskOptions {
 
 export interface TaskData {
 	nextPos?: ProtoPos;
-
-	quiet?: boolean;
-	resourceType?: string;
-	amount?: number;
-
-	[other: string]: any;
 }
 
 export interface ProtoTask {

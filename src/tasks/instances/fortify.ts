@@ -1,16 +1,18 @@
 import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type fortifyTargetType = StructureWall | StructureRampart;
 export const fortifyTaskName = "fortify";
 
+interface TaskFortifyData extends TaskData {
+	hitsMax: number | undefined;
+}
+
 @profile
 export class TaskFortify extends Task<Zerg, fortifyTargetType> {
-	data: {
-		hitsMax: number | undefined;
-	};
+	data: TaskFortifyData;
 
 	constructor(
 		target: fortifyTargetType,

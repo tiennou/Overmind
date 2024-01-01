@@ -2,19 +2,20 @@
 import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type withdrawTargetType = AnyStoreStructure;
 
 export const withdrawTaskName = "withdraw";
 
+interface TaskWithdrawData extends TaskData {
+	resourceType: ResourceConstant;
+	amount: number | undefined;
+}
+
 @profile
 export class TaskWithdraw extends Task<AnyZerg, withdrawTargetType> {
-	data: {
-		resourceType: ResourceConstant;
-		amount: number | undefined;
-	};
-
+	data: TaskWithdrawData;
 	constructor(
 		target: withdrawTargetType,
 		resourceType: ResourceConstant = RESOURCE_ENERGY,

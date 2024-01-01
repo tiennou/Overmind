@@ -1,18 +1,21 @@
 import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
-import { TaskOptions } from "tasks/types";
+import { TaskData, TaskOptions } from "tasks/types";
 
 export type dropTargetType = (HasRef & _HasRoomPosition) | RoomPosition;
 export const dropTaskName = "drop";
 
+interface TaskDropData extends TaskData {
+	resourceType: ResourceConstant;
+	amount: number | undefined;
+}
+
 @profile
 export class TaskDrop extends Task<AnyZerg, dropTargetType> {
 	static taskName = "drop";
-	data: {
-		resourceType: ResourceConstant;
-		amount: number | undefined;
-	};
+
+	data: TaskDropData;
 
 	constructor(
 		target: dropTargetType,

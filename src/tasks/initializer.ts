@@ -141,6 +141,7 @@ export function initializeTask(protoTask: ProtoTask): GenericTask {
 		case getBoostedTaskName:
 			task = new TaskGetBoosted(
 				target as getBoostedTargetType,
+				// @ts-expect-error this is set in the constructor
 				protoTask.data.resourceType as _ResourceConstantSansEnergy
 			);
 			break;
