@@ -325,7 +325,7 @@ export class RoadPlanner {
 		destination: RoomPosition,
 		obstacles: RoomPosition[]
 	): RoomPosition[] | undefined {
-		const callback = (roomName: string): CostMatrix | boolean => {
+		const roomCallback = (roomName: string): CostMatrix | boolean => {
 			if (!this.colony.roomNames.includes(roomName)) {
 				// only route through colony rooms
 				return false;
@@ -344,15 +344,23 @@ export class RoadPlanner {
 			return this.costMatrices[roomName];
 		};
 
+		const maxOps = 40000;
 		const ret = PathFinder.search(
 			origin,
 			{ pos: destination, range: 1 },
-			{ roomCallback: callback, maxOps: 40000 }
+			{ roomCallback, maxOps }
 		);
 
 		if (ret.incomplete) {
 			log.warning(
 				`Roadplanner for ${this.colony.print}: could not plan road path!`
+			);
+			log.info(
+				`Road: ${origin.print} -> ${destination.print}, ops: ${
+					ret.ops
+				}/${maxOps}, length: ${ret.path.length}, end: ${ret.path[
+					ret.path.length - 1
+				]?.print}`
 			);
 			return;
 		}
