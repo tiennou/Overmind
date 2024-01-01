@@ -1,6 +1,7 @@
 import { Zerg } from "zerg/Zerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
+import { TaskOptions } from "tasks/types";
 
 export type claimTargetType = StructureController;
 export const claimTaskName = "claim";

@@ -9,6 +9,7 @@ import { pickupTaskName, TaskPickup } from "./pickup";
 import { TaskWithdraw, withdrawTaskName } from "./withdraw";
 import { Roles } from "creepSetups/setups";
 import { AnyZerg } from "zerg/AnyZerg";
+import { TaskOptions } from "tasks/types";
 
 export type rechargeTargetType = null;
 export const rechargeTaskName = "recharge";

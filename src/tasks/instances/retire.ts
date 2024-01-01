@@ -2,6 +2,7 @@ import { log } from "console/log";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 import { Zerg } from "zerg/Zerg";
+import { TaskOptions } from "tasks/types";
 
 export type retireTargetType = StructureSpawn;
 export const retireTaskName = "retire";

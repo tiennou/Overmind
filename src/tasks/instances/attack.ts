@@ -2,6 +2,7 @@ import { ZergMoveReturnCode } from "movement/types";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
 import { Zerg } from "zerg/Zerg";
+import { TaskOptions } from "tasks/types";
 
 // Attack task, includes attack and ranged attack if applicable.
 // Use meleeAttack and rangedAttack for the exclusive variants.

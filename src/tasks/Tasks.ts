@@ -45,6 +45,7 @@ import {
 	withdrawAllTargetType,
 } from "./instances/withdrawAll";
 import { Task } from "./Task";
+import { TaskOptions } from "./types";
 
 /**
  * Tasks class provides conveient wrappers for dispensing new Task instances

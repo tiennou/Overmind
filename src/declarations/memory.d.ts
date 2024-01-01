@@ -169,7 +169,7 @@ interface CreepMemory {
 	[MEM.OVERLORD]: string | null;
 	[MEM.COLONY]: string | null;
 	role: string;
-	task: ProtoTask | null;
+	task: import("tasks/types").ProtoTask | null;
 	sleepUntil?: number;
 	needBoosts?: MineralBoostConstant[];
 	data: {

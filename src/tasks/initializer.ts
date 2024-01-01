@@ -103,6 +103,7 @@ import {
 	withdrawAllTaskName,
 } from "./instances/withdrawAll";
 import { GenericTask } from "./Task";
+import { ProtoTask } from "./types";
 
 /**
  * The task initializer maps serialized prototasks to Task instances

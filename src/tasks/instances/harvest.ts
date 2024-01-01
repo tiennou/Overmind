@@ -2,6 +2,7 @@ import { Zerg } from "zerg/Zerg";
 import { isSource } from "../../declarations/typeGuards";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
+import { TaskOptions } from "tasks/types";
 
 export type harvestTargetType = Source | Mineral;
 export const harvestTaskName = "harvest";

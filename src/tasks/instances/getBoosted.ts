@@ -6,6 +6,7 @@ import { BOOST_PARTS } from "../../resources/map_resources";
 import { Task } from "../Task";
 import type { EnergyUse } from "Colony";
 import { errorForCode } from "utilities/errors";
+import { TaskOptions } from "tasks/types";
 
 export type getBoostedTargetType = StructureLab;
 export const getBoostedTaskName = "getBoosted";

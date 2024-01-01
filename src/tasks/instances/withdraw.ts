@@ -2,6 +2,7 @@
 import { AnyZerg } from "zerg/AnyZerg";
 import { profile } from "../../profiler/decorator";
 import { Task } from "../Task";
+import { TaskOptions } from "tasks/types";
 
 export type withdrawTargetType = AnyStoreStructure;
 

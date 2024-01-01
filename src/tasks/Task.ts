@@ -19,6 +19,7 @@ import type { AnyZerg } from "zerg/AnyZerg";
 import { initializeTask } from "./initializer";
 import { deref, derefRoomPosition } from "utilities/utils";
 import { errorForCode, OvermindReturnCode } from "utilities/errors";
+import type { ProtoTask, TaskData, TaskOptions, TaskSettings } from "./types";
 
 interface AbstractTaskTarget {
 	ref: string; // Target id or name
@@ -113,11 +114,11 @@ export abstract class Task<
 		// log.debug(`creating task ${this.constructor.name}, ${taskName}, target: ${target}, ${print(this._target)}`);
 		this._parent = null;
 		this.settings = {
-			targetRange: 1, // range at which you can perform action
-			workOffRoad: false, // whether work() should be performed off road
-			oneShot: false, // remove this task once work() returns OK, regardless of validity
-			timeout: Infinity, // task becomes invalid after this long
-			blind: true, // don't require vision of target unless in room
+			targetRange: 1,
+			workOffRoad: false,
+			oneShot: false,
+			timeout: Infinity,
+			blind: true,
 		};
 		this.tick = Game.time;
 		this.options = options;
