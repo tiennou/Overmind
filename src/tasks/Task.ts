@@ -56,17 +56,24 @@ export abstract class Task<
 > {
 	static taskName: string;
 
-	name: string; // Name of the task type, e.g. 'upgrade'
+	/** Name of the task type, e.g. 'upgrade' */
+	name: string;
+	/** Data for the creep the task is assigned to */
 	_creep: {
-		// Data for the creep the task is assigned to
-		name: string; // Name of the creep
+		name: string;
 	};
-	_target: AbstractTaskTarget; // Data for the target the task is directed to:
-	_parent: ProtoTask | null; // The parent of this task, if any. Task is changed to parent upon completion.
-	tick: number; // When the task was set
-	settings: TaskSettings; // Settings for a given type of task; shouldn't be modified on an instance-basis
-	options: TaskOptions; // Options for a specific instance of a task
-	data: TaskData; // Data pertaining to a given instance of a task
+	/** Data for the target the task is directed to */
+	_target: AbstractTaskTarget;
+	/** The parent of this task, if any. Task is changed to parent upon completion. */
+	_parent: ProtoTask | null;
+	/** When the task was set */
+	tick: number;
+	/** Settings for a given type of task; shouldn't be modified on an instance-basis */
+	settings: TaskSettings;
+	/** Options for a specific instance of a task */
+	options: TaskOptions;
+	/** Data pertaining to a given instance of a task */
+	data: TaskData;
 
 	private _targetPos: RoomPosition;
 
