@@ -1,4 +1,4 @@
-import { NO_ACTION } from "utilities/errors";
+import { NO_ACTION, errorForCode } from "utilities/errors";
 import { Colony, getAllColonies } from "../Colony";
 import { LogMessage, log } from "../console/log";
 import { isAnyZerg, isPowerCreep } from "../declarations/typeGuards";
@@ -477,6 +477,7 @@ export abstract class AnyZerg {
 
 			if (this.task) {
 				data.push(`task: ${this.task.name}`);
+				data.push(`status: ${errorForCode(res ?? OK)}`);
 				data.push(`pos: ${this.task.targetPos.printPlain}`);
 			} else {
 				data.push(`idle`);
