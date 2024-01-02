@@ -26,7 +26,9 @@ export class DirectiveAvoid extends Directive {
 
 	init(): void {}
 
-	run(): void {}
+	run(): void {
+		Overmind.overseer.blockRoom(this.pos.roomName);
+	}
 
 	visuals(): void {}
 }

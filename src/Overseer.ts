@@ -1,4 +1,3 @@
-import { DirectiveAvoid } from "directives/targeting/avoid";
 import { Colony, getAllColonies } from "./Colony";
 import { log } from "./console/log";
 import { bodyCost } from "./creepSetups/CreepSetup";
@@ -73,6 +72,8 @@ export class Overseer implements IOverseer {
 	private _directiveCached: boolean;
 	private _overlordsCached: boolean;
 
+	private blockedRooms: Set<string>;
+
 	combatPlanner: CombatPlanner;
 	notifier: Notifier;
 
@@ -88,6 +89,7 @@ export class Overseer implements IOverseer {
 		this._overlordsCached = false;
 		this.notifier = new Notifier();
 		this.combatPlanner = new CombatPlanner();
+		this.blockedRooms = new Set();
 	}
 
 	refresh() {
@@ -519,6 +521,20 @@ export class Overseer implements IOverseer {
 		}
 	}
 
+	/**
+	 * Check if a given room is blocked
+	 */
+	roomIsBlocked(roomName: string) {
+		return this.blockedRooms.has(roomName);
+	}
+
+	/**
+	 * Mark the given room as blocked
+	 */
+	blockRoom(roomName: string) {
+		this.blockedRooms.add(roomName);
+	}
+
 	private computePossibleOutposts(colony: Colony, depth = 3): string[] {
 		const colonyRoomStatus = RoomIntel.getRoomStatus(
 			colony.room.name
@@ -540,7 +556,7 @@ export class Overseer implements IOverseer {
 				}
 				const alreadyOwned = RoomIntel.roomOwnedBy(roomName);
 				const alreadyReserved = RoomIntel.roomReservedBy(roomName);
-				const isBlocked = DirectiveAvoid.isPresent(roomName);
+				const isBlocked = this.roomIsBlocked(roomName);
 				if (isBlocked) {
 					log.info(
 						`Room ${roomName} is blocked, not expanding there.`

@@ -582,6 +582,10 @@ export class Pathing {
 			if (!opts.allowHostile && RoomIntel.isConsideredHostile(roomName)) {
 				return false; // don't go through hostile rooms
 			}
+			// Skip blocked rooms entirely
+			if (Overmind.overseer.roomIsBlocked(roomName)) {
+				return false;
+			}
 		}
 
 		const [matrixOpts, volatileMatrixOpts] =
