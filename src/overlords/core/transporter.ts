@@ -120,16 +120,22 @@ export class TransportOverlord extends Overlord {
 
 				let transportPower = neededForMining + neededForUpgraders;
 
-				const lowPower = !!this.colony.state.lowPowerMode;
+				const { lowPowerMode, isOverfilled } = this.colony.state;
+				// Severely limit the number of transporters if we're overfilled
+				if (isOverfilled) {
+					transportPower = 2000;
+				}
 				// Reduce needed transporters when colony is in low power mode
-				if (lowPower) {
+				if (lowPowerMode) {
 					transportPower *= 0.5;
 				}
 
 				this.debug(
 					`neededTransportPower: ${
 						transportPower / CARRY_CAPACITY
-					}, mining: ${neededForMining}, upgrading: ${neededForUpgraders}, low power: ${lowPower}`
+					}, mining: ${neededForMining}, upgrading: ${neededForUpgraders}, ${JSON.stringify(
+						{ lowPowerMode, isOverfilled }
+					)}`
 				);
 
 				return transportPower / CARRY_CAPACITY;
