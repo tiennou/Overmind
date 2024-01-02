@@ -55,7 +55,7 @@ export class MiningOverlord extends Overlord {
 	source: Source | undefined;
 	secondSource: Source | undefined;
 	/** Tracks whether we've lost to the second source miner */
-	isDisabled: boolean;
+	private isDisabled: boolean;
 	container: StructureContainer | undefined;
 	link: StructureLink | undefined;
 	constructionSite: ConstructionSite | undefined;

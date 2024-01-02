@@ -108,20 +108,23 @@ export class DirectiveHarvest extends Directive {
 			return;
 		}
 
-		const isDisabled = this.overlords.mine.isDisabled;
-		const data = [
-			this.name,
-			` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`,
-			` D: ${this.memory[HARVEST_MEM.DOWNTIME].toPercent()}`,
-		];
-		if (this.memory[MEM.DISTANCE]) {
-			data.push(
-				` P: ${this.memory[MEM.DISTANCE][MEM_DISTANCE.WEIGHTED]}`
-			);
+		const isSuspended = this.overlords.mine.suspensionReason;
+		const data = [this.name];
+		if (isSuspended) {
+			data.push(` S: ${isSuspended === true ? "manual" : isSuspended}`);
+		} else {
+			data.push(` U: ${this.memory[HARVEST_MEM.USAGE].toPercent()}`);
+			data.push(` D: ${this.memory[HARVEST_MEM.DOWNTIME].toPercent()}`);
+			if (this.memory[MEM.DISTANCE]) {
+				data.push(
+					` P: ${this.memory[MEM.DISTANCE][MEM_DISTANCE.WEIGHTED]}`
+				);
+			}
 		}
+
 		const { x, y, roomName } = this.pos;
 		new RoomVisual(roomName).infoBox(data, x, y, {
-			color: isDisabled ? "#85783E" : "#FFE87B",
+			color: !isSuspended ? "#85783E" : "#D8DBC3",
 		});
 	}
 }

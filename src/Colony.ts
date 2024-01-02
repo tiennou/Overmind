@@ -57,6 +57,7 @@ import {
 	suspend,
 	unsuspend,
 } from "utilities/suspension";
+import { NotifierPriority } from "directives/Notifier";
 
 export enum DEFCON {
 	safe = 0,
@@ -700,10 +701,9 @@ export class Colony {
 		// Set colony state to blank - other directives can modify this
 		this.state = {};
 		this.state.isOverfilled =
-			this.storage &&
-			this.terminal &&
-			ResourceManager.isOverCapacity(this.storage) &&
-			ResourceManager.isOverCapacity(this.terminal);
+			(this.storage || this.terminal) &&
+			(!this.storage || ResourceManager.isOverCapacity(this.storage)) &&
+			(!this.terminal || ResourceManager.isOverCapacity(this.terminal));
 		this.state.lowPowerMode = this.state.isOverfilled && this.level === 8;
 	}
 
@@ -1043,6 +1043,13 @@ export class Colony {
 	 * Runs the colony, performing state-changing actions each tick
 	 */
 	run(): void {
+		if (this.state.isOverfilled) {
+			Overmind.overseer.notifier.alert(
+				`Colony is overfilled!`,
+				this.room.name,
+				NotifierPriority.High
+			);
+		}
 		// Run each hive cluster
 		for (const hiveCluster of this.hiveClusters) {
 			if (hiveCluster.memory?.debug) {
