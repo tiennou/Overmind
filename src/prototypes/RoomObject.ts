@@ -74,3 +74,10 @@ RoomObject.prototype.serialize = function (this: RoomObject): ProtoRoomObject {
 		ref: this.ref,
 	};
 };
+
+RoomObject.prototype.getEffect = function (
+	this: RoomObject,
+	effectId: EffectConstant | PowerConstant
+) {
+	return this.effects?.find((e) => e.effect === effectId) ?? null;
+};

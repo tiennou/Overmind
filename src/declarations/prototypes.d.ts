@@ -173,6 +173,10 @@ interface RoomObject {
 	targetedBy: string[];
 
 	serialize(): ProtoRoomObject;
+
+	getEffect(
+		effectId: EffectConstant | PowerConstant
+	): RoomObjectEffect | null;
 }
 
 interface FindOptions<T> {
