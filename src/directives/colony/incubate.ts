@@ -27,6 +27,7 @@ export class DirectiveIncubate extends Directive {
 			flag,
 			(colony) =>
 				colony.level >= DirectiveIncubate.requiredRCL &&
+				flag.pos.roomName !== colony.room.name &&
 				_.filter(colony.flags, (flag) => DirectiveIncubate.filter(flag))
 					.length == 0 &&
 				Game.map.getRoomLinearDistance(
