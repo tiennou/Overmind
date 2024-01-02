@@ -722,8 +722,10 @@ export class _Abathur {
 		/** How much of a product we can make given its components' availability */
 		let batchAmount = Infinity;
 		let possibleProductions = PRIORITIZED_COMMODITIES;
+		// The factory can only produce commodities of exactly the same level, or "any level" commodities.
 		possibleProductions = possibleProductions.filter(
-			([_prod, data]) => (data.level ?? 0) <= (colony.factory!.level ?? 0)
+			([_prod, data]) =>
+				data.level === undefined || data.level === colony.factory!.level
 		);
 
 		this.debug(

@@ -451,9 +451,9 @@ export class InfestedFactory extends HiveCluster {
 						product.size;
 				} else {
 					log.warning(
-						`${this.print}: couldn't run production (${errorForCode(
+						`${this.print}: couldn't run production: ${errorForCode(
 							result
-						)})!`
+						)}!`
 					);
 				}
 			}
