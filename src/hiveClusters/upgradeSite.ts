@@ -82,7 +82,7 @@ export class UpgradeSite extends HiveCluster {
 			);
 		});
 		if (this.batteryPos) {
-			this.colony.destinations.push({ pos: this.batteryPos, order: 0 });
+			this.colony.markDestination(this.pos, 0);
 		}
 		// Register link
 		$.set(this, "link", () =>

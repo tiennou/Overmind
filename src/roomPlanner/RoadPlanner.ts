@@ -93,7 +93,7 @@ export class RoadPlanner {
 		ignoreInactiveRooms = true
 	) {
 		// Compute coverage for each path
-		for (const destination of this.colony.destinations) {
+		for (const destination of this.colony.destinations.values()) {
 			const destName = destination.pos.readableName;
 
 			if (!!this.memory.roadCoordsPacked[destination.pos.roomName]) {
@@ -229,7 +229,7 @@ export class RoadPlanner {
 		this.costMatrices = {};
 		this.roadPositions = [];
 		const destinations = _.sortBy(
-			this.colony.destinations,
+			[...this.colony.destinations.values()],
 			(destination) => destination.order
 		);
 		// Connect commandCenter to each destination in colony
@@ -553,7 +553,7 @@ export class RoadPlanner {
 
 	/* Clean up leftover road coverage locations from remotes that aren't mined or old structures */
 	private cleanRoadCoverage() {
-		const colonyDestinations = this.colony.destinations.map(
+		const colonyDestinations = [...this.colony.destinations.values()].map(
 			(dest) => dest.pos.readableName
 		);
 		log.debug(

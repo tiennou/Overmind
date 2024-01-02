@@ -112,6 +112,11 @@ export interface ColonyMemory {
 	infestedFactory?: import("hiveClusters/infestedFactory").InfestedFactoryMemory;
 }
 
+interface Destination {
+	pos: RoomPosition;
+	order: number;
+}
+
 // Outpost that is currently not being maintained
 export interface OutpostData extends SuspensionMemory {}
 
@@ -190,7 +195,7 @@ export class Colony {
 	repairables: Structure[];
 	/** Things that can be recharged from */
 	rechargeables: rechargeObjectType[];
-	destinations: { pos: RoomPosition; order: number }[];
+	destinations: Map<string, Destination>;
 
 	// Hive clusters
 	/** List of all hive clusters */
@@ -424,7 +429,7 @@ export class Colony {
 	private registerRoomObjects(): void {
 		// Create placeholder arrays for remaining properties to be filled in by the Overmind
 		this.flags = []; // filled in by directives
-		this.destinations = []; // filled in by various hive clusters and directives
+		this.destinations = new Map(); // filled in by various hive clusters and directives
 		// Register room objects across colony rooms
 		this.controller = this.room.controller!; // must be controller since colonies are based in owned rooms
 		this.spawns = _.sortBy(
@@ -500,7 +505,7 @@ export class Colony {
 	private registerRoomObjects_cached(): void {
 		// Create placeholder arrays for remaining properties to be filled in by the Overmind
 		this.flags = []; // filled in by directives
-		this.destinations = []; // filled in by various hive clusters and directives
+		this.destinations = new Map(); // filled in by various hive clusters and directives
 		// Register room objects across colony rooms
 		this.controller = this.room.controller!; // must be controller since colonies are based in owned rooms
 		this.extensions = this.room.extensions;
@@ -1066,6 +1071,12 @@ export class Colony {
 			this.logisticsNetwork.summarize();
 			this.logisticsNetwork.summarizeMatching();
 		}
+	}
+
+	markDestination(pos: RoomPosition, order?: number) {
+		const key = `${pos.roomName}-${pos.x}-${pos.y}`;
+		const dest: Destination = { pos: pos, order: order ?? 0 };
+		this.destinations.set(key, dest);
 	}
 
 	/**

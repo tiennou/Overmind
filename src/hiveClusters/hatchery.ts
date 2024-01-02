@@ -129,7 +129,7 @@ export class Hatchery extends HiveCluster {
 			getDefaultHatcheryMemory
 		);
 		if (this.colony.layout == "twoPart") {
-			this.colony.destinations.push({ pos: this.pos, order: -1 });
+			this.colony.markDestination(this.pos, -1);
 		}
 		this.spawns = colony.spawns;
 		this.availableSpawns = _.filter(
