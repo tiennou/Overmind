@@ -124,7 +124,7 @@ export class DirectiveHarvest extends Directive {
 
 		const { x, y, roomName } = this.pos;
 		new RoomVisual(roomName).infoBox(data, x, y, {
-			color: !isSuspended ? "#85783E" : "#D8DBC3",
+			color: !isSuspended ? "#FFE87B" : "#D8DBC3",
 		});
 	}
 }
