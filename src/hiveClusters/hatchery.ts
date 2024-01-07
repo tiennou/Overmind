@@ -423,15 +423,40 @@ export class Hatchery extends HiveCluster {
 		}
 		// If you have a spawn available then spawn the creep
 		if (spawnToUse) {
+			let directions = options.directions;
+
+			// Safe-guard the specified direction
+			if (
+				directions &&
+				!directions.reduce((cur: RoomPosition | null, dir) => {
+					if (!cur) {
+						return null;
+					}
+					const pos = cur.getPositionAtDirection(dir);
+					return pos.isWalkable(true) ? pos : null;
+				}, spawnToUse.pos)
+			) {
+				log.error(
+					`${this.print}: spawning directions "${directions}" from ${spawnToUse.print} not walkable!`
+				);
+				directions = undefined;
+			}
+
 			if (
 				this.colony.bunker &&
 				this.colony.bunker.coreSpawn &&
 				spawnToUse.id == this.colony.bunker.coreSpawn.id &&
 				!options.directions
 			) {
-				options.directions = [TOP, RIGHT]; // don't spawn into the manager spot
+				// don't spawn into the manager spot
+				this.debug(
+					`no directions, and spawn is core spawn, side-stepping center spot`
+				);
+				directions = [TOP, RIGHT];
 			}
-			protoCreep.name = this.generateCreepName(protoCreep.name); // modify the creep name to make it unique
+
+			// modify the creep name to make it unique
+			protoCreep.name = this.generateCreepName(protoCreep.name);
 			protoCreep.memory.data.origin = spawnToUse.pos.roomName;
 
 			// Spawn the creep
@@ -441,7 +466,7 @@ export class Hatchery extends HiveCluster {
 				{
 					memory: protoCreep.memory,
 					energyStructures: this.energyStructures,
-					directions: options.directions,
+					directions: directions,
 				}
 			);
 
