@@ -245,8 +245,9 @@ export class VersionMigration {
 	}
 
 	static migrate_050_051_part3() {
-		if (Memory.assimilator && Memory.assimilator.users) {
-			delete Memory.assimilator.users;
+		const mem = <{ users: any }>(<unknown>Memory.assimilator);
+		if (mem && mem.users) {
+			delete mem.users;
 		}
 		this.memory.versions["05Xto051_part3"] = true;
 		log.alert(
@@ -475,8 +476,8 @@ export class VersionMigration {
 
 		// Clean some properties we don't use anymore
 		log.alert(`Cleaning memory...`);
-		delete Memory.strategist;
-		delete Memory.zoneRooms;
+		delete (<{ strategist: any }>(<unknown>Memory)).strategist;
+		delete (<{ zoneRooms: any }>(<unknown>Memory)).zoneRooms;
 		// @ts-expect-error reset this
 		Memory.roomIntel = {};
 

@@ -5,8 +5,8 @@ import { Stats } from "../stats/stats";
 import { ema, isIVM } from "../utilities/utils";
 import { SegmenterMemory } from "./Segmenter";
 import { DebuggerMemory } from "debug/remoteDebugger";
-import { CombatPlannerMemory } from "strategy/CombatPlanner";
-import { NukePlannerMemory } from "strategy/NukePlanner";
+import type { CombatPlannerMemory } from "strategy/CombatPlanner";
+import type { NukePlannerMemory } from "strategy/NukePlanner";
 import { config } from "config";
 
 export enum Autonomy {
@@ -239,7 +239,6 @@ export class Mem {
 		return {
 			tick: Game.time,
 			build: 0,
-			assimilator: {},
 			Overmind: {},
 			combatPlanner: <CombatPlannerMemory>{},
 			profiler: {},
@@ -258,6 +257,7 @@ export class Mem {
 			playerCreepTracker: {},
 			remoteDebugger: <DebuggerMemory>{},
 			nukePlanner: <NukePlannerMemory>{},
+			expansionPlanner: {},
 			settings: {
 				signature: DEFAULT_OVERMIND_SIGNATURE,
 				operationMode: "automatic",

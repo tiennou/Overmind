@@ -121,7 +121,7 @@ interface Memory {
 
 	remoteDebugger: import("debug/remoteDebugger").DebuggerMemory;
 	nukePlanner: import("strategy/NukePlanner").NukePlannerMemory;
-	[otherProperty: string]: any;
+	expansionPlanner: import("strategy/ExpansionPlanner").ExpansionPlannerMemory;
 }
 
 interface StatsMemory {

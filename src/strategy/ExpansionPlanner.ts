@@ -20,7 +20,7 @@ const MAX_SCORE_BONUS = _.sum([UNOWNED_MINERAL_BONUS, CATALYST_BONUS]);
 
 const TOO_CLOSE_PENALTY = 100;
 
-interface ExpansionPlannerMemory {}
+export interface ExpansionPlannerMemory {}
 
 const defaultExpansionPlannerMemory: () => ExpansionPlannerMemory = () => ({});
 
