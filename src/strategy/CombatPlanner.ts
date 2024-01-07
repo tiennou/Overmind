@@ -377,3 +377,6 @@ export class CombatPlanner {
 
 	visuals() {}
 }
+
+// @ts-expect-error global shenanigans
+global.CombatPlanner = CombatPlanner;
