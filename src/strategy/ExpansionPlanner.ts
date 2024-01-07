@@ -173,7 +173,10 @@ export class ExpansionPlanner implements IExpansionPlanner {
 							!cont ||
 							(cont.owner &&
 								isPlayer(cont.owner) &&
-								!isAlly(cont.owner))
+								!isAlly(cont.owner)) ||
+							(cont.reservation &&
+								isPlayer(cont.reservation.username) &&
+								!isAlly(cont.reservation.username))
 						) {
 							return true;
 						}
