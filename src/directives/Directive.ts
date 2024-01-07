@@ -43,6 +43,7 @@ export abstract class Directive {
 	memory: FlagMemory; // Flag memory
 	overlords: { [name: string]: Overlord }; // Overlords
 	// waypoints?: RoomPosition[];					// List of portals to travel through to reach destination
+	_didBecomeVisible: boolean;
 
 	constructor(flag: Flag, colonyFilter?: (colony: Colony) => boolean) {
 		this.memory = flag.memory;
@@ -110,6 +111,7 @@ export abstract class Directive {
 		this.colony = colony;
 		this.colony.flags.push(flag);
 		this.overlords = {};
+		this._didBecomeVisible = false;
 
 		// Run creation actions if needed
 		if (this.age == 0) {
@@ -210,7 +212,12 @@ export abstract class Directive {
 		}
 		this.memory = flag.memory;
 		this.pos = flag.pos;
+		this._didBecomeVisible = Game.rooms[this.pos.roomName] && !this.room;
 		this.room = flag.room;
+	}
+
+	get didBecomeVisible() {
+		return this._didBecomeVisible;
 	}
 
 	alert(message: string, priority = NotifierPriority.Normal): void {
