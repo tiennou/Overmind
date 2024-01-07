@@ -582,7 +582,6 @@ export class Swarm implements ProtoSwarm {
 					const ret = creep.goTo(destination, {
 						noPush: creep.pos.inRangeToPos(destination, 5),
 						ignoreCreepsOnDestination: true,
-						// ignoreCreeps: !creep.pos.inRangeToPos(destination, Math.max(this.width, this.height))
 					});
 					console.log(
 						`${creep.print} moves to ${
@@ -664,16 +663,16 @@ export class Swarm implements ProtoSwarm {
 		destination: RoomPosition | _HasRoomPosition,
 		options: SwarmMoveOptions = {}
 	) {
-		// if (DEBUG) {
-		// 	options.displayCostMatrix = true;
-		// }
+		_.defaultsDeep(options, <SwarmMoveOptions>{
+			pathOpts: { allowHostile: true },
+		});
 		return Movement.swarmMove(this, destination, options);
 	}
 
 	goToRoom(roomName: string, options: SwarmMoveOptions = {}) {
-		// if (DEBUG) {
-		// 	options.displayCostMatrix = true;
-		// }
+		_.defaultsDeep(options, <SwarmMoveOptions>{
+			pathOpts: { allowHostile: true },
+		});
 		return Movement.goToRoom_swarm(this, roomName, options);
 	}
 
