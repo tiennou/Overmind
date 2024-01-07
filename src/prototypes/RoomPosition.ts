@@ -392,7 +392,7 @@ RoomPosition.prototype.findClosestByLimitedRange = function <
 	opts?: FindOptions<T>
 ): T | undefined {
 	const objectsInRange = this.findInRange<T>(objects, rangeLimit, opts);
-	return this.findClosestByRange(objectsInRange, opts) || undefined;
+	return this.findClosestByRange(objectsInRange, opts) ?? undefined;
 };
 
 RoomPosition.prototype.findClosestByMultiRoomRange = function <
@@ -408,12 +408,13 @@ RoomPosition.prototype.findClosestByRangeThenPath = function <
 	const distances = _.map(objects, (obj) => this.getRangeTo(obj));
 	const minDistance = _.min(distances);
 	if (minDistance > 4) {
-		return this.findClosestByRange(objects) || undefined;
+		return this.findClosestByRange(objects) ?? undefined;
 	} else {
 		const closestObjects = _.filter(
 			objects,
 			(obj) => this.getRangeTo(obj) == minDistance
 		);
-		return this.findClosestByPath(closestObjects) || undefined; // don't clutter up pathing.distance cached values
+		// don't clutter up pathing.distance cached values
+		return this.findClosestByPath(closestObjects) ?? undefined;
 	}
 };

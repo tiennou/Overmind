@@ -736,23 +736,15 @@ export class Colony {
 				(c) => getPosFromBunkerCoord(c, this)
 			);
 			// log.debug(JSON.stringify(`spawnPositions for ${this.name}: ${spawnPositions}`));
-			const rightSpawnPos = maxBy(
-				spawnPositions,
-				(pos) => pos.x
-			) as RoomPosition;
-			const topSpawnPos = minBy(
-				spawnPositions,
-				(pos) => pos.y
-			) as RoomPosition;
-			const coreSpawnPos = anchor.findClosestByRange(
-				spawnPositions
-			) as RoomPosition;
+			const rightSpawnPos = maxBy(spawnPositions, (pos) => pos.x);
+			const topSpawnPos = minBy(spawnPositions, (pos) => pos.y);
+			const coreSpawnPos = anchor.findClosestByRange(spawnPositions);
 			// log.debug(JSON.stringify(`spawnPoses: ${rightSpawnPos}, ${topSpawnPos}, ${coreSpawnPos}`));
 			this.bunker = {
 				anchor: anchor,
-				topSpawn: topSpawnPos.lookForStructure(STRUCTURE_SPAWN),
-				coreSpawn: coreSpawnPos.lookForStructure(STRUCTURE_SPAWN),
-				rightSpawn: rightSpawnPos.lookForStructure(STRUCTURE_SPAWN),
+				topSpawn: topSpawnPos?.lookForStructure(STRUCTURE_SPAWN),
+				coreSpawn: coreSpawnPos?.lookForStructure(STRUCTURE_SPAWN),
+				rightSpawn: rightSpawnPos?.lookForStructure(STRUCTURE_SPAWN),
 			};
 		} else {
 			this.layout = "twoPart";
@@ -777,19 +769,16 @@ export class Colony {
 		this.roomPlanner.refresh();
 		if (this.bunker) {
 			if (this.bunker.topSpawn) {
-				this.bunker.topSpawn = Game.getObjectById(
-					this.bunker.topSpawn.id
-				) as StructureSpawn | undefined;
+				this.bunker.topSpawn =
+					Game.getObjectById(this.bunker.topSpawn.id) ?? undefined;
 			}
 			if (this.bunker.coreSpawn) {
-				this.bunker.coreSpawn = Game.getObjectById(
-					this.bunker.coreSpawn.id
-				) as StructureSpawn | undefined;
+				this.bunker.coreSpawn =
+					Game.getObjectById(this.bunker.coreSpawn.id) ?? undefined;
 			}
 			if (this.bunker.rightSpawn) {
-				this.bunker.rightSpawn = Game.getObjectById(
-					this.bunker.rightSpawn.id
-				) as StructureSpawn | undefined;
+				this.bunker.rightSpawn =
+					Game.getObjectById(this.bunker.rightSpawn.id) ?? undefined;
 			}
 		}
 		this.roadLogistics.refresh();

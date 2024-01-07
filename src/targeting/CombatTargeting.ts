@@ -172,18 +172,16 @@ export class CombatTargeting {
 					)
 				);
 			} else {
-				return zerg.pos.findClosestByRange(targets) as
-					| Creep
-					| undefined;
+				return zerg.pos.findClosestByRange(targets) ?? undefined;
 			}
 		}
 	}
 
 	// This method is expensive
-	static findClosestReachable(
+	static findClosestReachable<T extends Creep | Structure>(
 		pos: RoomPosition,
-		targets: (Creep | Structure)[]
-	): Creep | Structure | undefined {
+		targets: T[]
+	): T | undefined {
 		const targetsByRange = _.sortBy(targets, (target) =>
 			pos.getRangeTo(target)
 		);
@@ -268,14 +266,12 @@ export class CombatTargeting {
 				const closestReachable = this.findClosestReachable(
 					zerg.pos,
 					structures
-				) as Structure | undefined;
+				);
 				if (closestReachable) {
 					return closestReachable;
 				}
 			} else {
-				return zerg.pos.findClosestByRange(structures) as
-					| Structure
-					| undefined;
+				return zerg.pos.findClosestByRange(structures) ?? undefined;
 			}
 		}
 		const core = _.filter(
