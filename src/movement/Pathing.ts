@@ -1296,6 +1296,7 @@ export class Pathing {
 			const ret = this.findPath(pos1, pos2, {
 				avoidSK: false,
 				allowHostile: true,
+				ignoreStructures: true,
 			});
 			if (!ret.incomplete) {
 				Memory.pathing.distances[name1][name2] = ret.path.length;
