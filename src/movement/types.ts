@@ -152,5 +152,8 @@ export interface PathOptions {
 	/** can be useful if route keeps being found as incomplete */
 	ensurePath?: boolean;
 	/** modifications to default cost matrix calculations */
-	modifyRoomCallback?: (r: Room, m: CostMatrix) => CostMatrix;
+	modifyRoomCallback?: (
+		roomName: string,
+		matrix: CostMatrix
+	) => CostMatrix | false;
 }

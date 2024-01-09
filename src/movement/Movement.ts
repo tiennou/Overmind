@@ -1424,10 +1424,14 @@ export class Movement {
 	}
 
 	private static invasionMoveCallbackModifier(
-		room: Room,
+		roomName: string,
 		matrix: CostMatrix
 	): CostMatrix {
 		// This is only applied once creep is in the target room
+		const room = Game.rooms[roomName] as Room | undefined;
+		if (!room) {
+			return matrix;
+		}
 		MatrixLib.blockExits(matrix);
 		for (const hostile of room.invaders) {
 			if (hostile.getActiveBodyparts(RANGED_ATTACK) > 1) {
@@ -1464,8 +1468,8 @@ export class Movement {
 		if (creep.room.name == dest.roomName) {
 			_.defaultsDeep(opts.pathOpts!, {
 				maxRooms: 1,
-				modifyRoomCallback: (room, matrix) =>
-					Movement.invasionMoveCallbackModifier(room, matrix),
+				modifyRoomCallback: (roomName, matrix) =>
+					Movement.invasionMoveCallbackModifier(roomName, matrix),
 			} as PathOptions);
 		}
 		return creep.goTo(dest, opts);

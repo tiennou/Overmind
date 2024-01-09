@@ -596,12 +596,9 @@ export class Pathing {
 			volatileMatrixOpts
 		);
 
-		if (opts.modifyRoomCallback && Game.rooms[roomName]) {
+		if (opts.modifyRoomCallback) {
 			// Return a modified copy the matrix
-			return opts.modifyRoomCallback(
-				Game.rooms[roomName],
-				matrix.clone()
-			);
+			return opts.modifyRoomCallback(roomName, matrix.clone());
 		} else {
 			// No modifications necessary; return the matrix
 			return matrix;
@@ -613,7 +610,7 @@ export class Pathing {
 		width: number,
 		height: number,
 		opts: SwarmMoveOptions
-	): CostMatrix {
+	): CostMatrix | boolean {
 		const [mOpts, vOpts] = pathOptsToMatrixAndVolatileOpts(opts);
 		const matrixOpts: Partial<MatrixOptions> = _.defaultsDeep(
 			<MatrixOptions>{
@@ -633,6 +630,17 @@ export class Pathing {
 			matrixOpts,
 			volatileMatrixOpts
 		);
+
+		if (opts.pathOpts?.modifyRoomCallback) {
+			// Return a modified copy the matrix
+			const modMatrix = opts.pathOpts.modifyRoomCallback(
+				roomName,
+				matrix.clone()
+			);
+			if (modMatrix === false) {
+				return false;
+			}
+		}
 
 		if (opts.displayCostMatrix) {
 			Visualizer.displayCostMatrix(matrix, roomName);
@@ -707,11 +715,8 @@ export class Pathing {
 				volatileMatrixOpts
 			);
 			// Modify cost matrix if needed
-			if (opts.modifyRoomCallback && Game.rooms[roomName]) {
-				return opts.modifyRoomCallback(
-					Game.rooms[roomName],
-					matrix.clone()
-				);
+			if (opts.modifyRoomCallback) {
+				return opts.modifyRoomCallback(roomName, matrix.clone());
 			} else {
 				return matrix;
 			}
