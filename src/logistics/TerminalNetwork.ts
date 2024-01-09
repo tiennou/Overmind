@@ -202,20 +202,30 @@ const _EMPTY_COLONY_TIER: { [resourceType: string]: Colony[] } = _.zipObject(
 );
 
 interface RequestOpts {
+	/** If no colony is sufficient to send you the resources, try to divvy it up among several colonies. @default false */
 	allowDivvying?: boolean;
+	/** Allow the request to cause another colony to dip below its thresholds. @default false */
 	takeFromColoniesBelowTarget?: boolean;
 	requestType?: "active" | "passive";
 	// sendTargetPlusTolerance?: boolean;
+	/** Allow market use to fulfill the request */
 	allowMarketBuy?: boolean;
+	/** Skip terminals that have received in this tick. @default false */
 	receiveOnlyOncePerTick?: boolean;
+	/** Log a message if the request can't be fulfilled. @default false*/
 	complainIfUnfulfilled?: boolean;
+	/** Handle the request but don't actually act on it. @default false */
 	dryRun?: boolean;
 }
 
 interface ProvideOpts {
+	/** Allow sending extra resources to other colonies */
 	allowPushToOtherRooms?: boolean;
+	/** Allow market use to fulfill the request */
 	allowMarketSell?: boolean;
+	/** Log a message if the request can't be fulfilled. @default false*/
 	complainIfUnfulfilled?: boolean;
+	/** Handle the request but don't actually act on it. @default false */
 	dryRun?: boolean;
 }
 
@@ -282,12 +292,17 @@ export class TerminalNetwork implements ITerminalNetwork {
 	private terminalOverload: { [colName: string]: boolean };
 
 	static settings = {
-		maxEnergySendAmount: 25000, // max size you can send of energy in one tick
-		maxResourceSendAmount: 3000, // max size of resources you can send in one tick
+		/** max size you can send of energy in one tick */
+		maxEnergySendAmount: 25000,
+		/** max size of resources you can send in one tick */
+		maxResourceSendAmount: 3000,
 		maxEvacuateSendAmount: 50000,
-		minColonySpace: 20000, // colonies should have at least this much space in the room
-		terminalCooldownAveragingWindow: 1000, // duration for computing rolling average of terminal cooldowns
-		buyBaseMineralsDirectUnder: DEFAULT_TARGET - DEFAULT_TOLERANCE, // buy base mins directly if very low
+		/** colonies should have at least this much space in the room */
+		minColonySpace: 20000,
+		/** duration for computing rolling average of terminal cooldowns */
+		terminalCooldownAveragingWindow: 1000,
+		/** buy base mins directly if very low */
+		buyBaseMineralsDirectUnder: DEFAULT_TARGET - DEFAULT_TOLERANCE,
 		complainIfUnfulfilledFrequency: 20,
 	};
 
@@ -666,6 +681,7 @@ export class TerminalNetwork implements ITerminalNetwork {
 
 	/**
 	 * Returns whether the terminal network would be able to fulfill an activeRequest for an amount of resource.
+	 *
 	 * Performs a dry run of the request handling logic and returns true if the transfer would have been made.
 	 */
 	canObtainResource(
@@ -1306,7 +1322,7 @@ export class TerminalNetwork implements ITerminalNetwork {
 			receiveOnlyOncePerTick: false,
 			complainIfUnfulfilled: true,
 			dryRun: false,
-		});
+		} as RequestOpts);
 		for (const resource of RESOURCE_EXCHANGE_ORDER) {
 			for (const colony of requestors[resource] || []) {
 				// Skip if the terminal if it has received in this tick if option is specified
