@@ -16,6 +16,7 @@ export class DismantleOverlord extends Overlord {
 	dismantlers: Zerg[];
 	directive: DirectiveModularDismantle;
 	target?: Structure;
+	_dismantlersNeeded: number;
 
 	constructor(
 		directive: DirectiveModularDismantle,
@@ -27,22 +28,29 @@ export class DismantleOverlord extends Overlord {
 		this.dismantlers = this.zerg(Roles.dismantler);
 	}
 
-	init() {
-		// Spawn a number of dismantlers, up to a max
-		const MAX_DISMANTLERS = 2;
+	get dismantlerSetup() {
 		let setup;
 		// TODO: need to move this to the new CombatCreepSetup system
 		if (!!this.directive.memory.attackInsteadOfDismantle) {
 			setup = CombatSetups.dismantlers.attackDismantlers;
 			// } else if (this.canBoostSetup(CombatSetups.dismantlers.boosted_T3)) {
-			// 	setup = CombatSetups.dismantlers.boosted_T3;
+			// setup = CombatSetups.dismantlers.boosted_T3;
 			// }
 		} else {
 			setup = CombatSetups.dismantlers.default;
 		}
 		setup = CombatSetups.dismantlers.default;
+		return setup;
+	}
+
+	get dismantlersNeeded() {
+		// setup.create below can require that if boosting is involved
+		if (PHASE !== "run") {
+			return this._dismantlersNeeded;
+		}
+
 		// Estimate how good the setup is at dismantling
-		const dismantlerSetup = setup.create(this.colony, true);
+		const dismantlerSetup = this.dismantlerSetup.create(this.colony, true);
 		let dismantlingPower;
 		if (this.directive.memory.attackInsteadOfDismantle) {
 			const attackParts = CombatIntel.getBodyPartPotential(
@@ -59,12 +67,29 @@ export class DismantleOverlord extends Overlord {
 			);
 			dismantlingPower = dismantlingParts * DISMANTLE_POWER;
 		}
+
 		// Calculate total needed amount of dismantling power as (resource amount * trip distance)
 		const tripDistance =
-			Pathing.distance(this.colony.pos, this.directive.pos) || 0;
+			Pathing.distance(this.colony.pos, this.directive.pos) ?? 0;
 		const dismantleLifetimePower =
 			(CREEP_LIFE_TIME - tripDistance) * dismantlingPower;
+		this._dismantlersNeeded = Math.ceil(
+			(this.target ? this.target.hits : 50000) / dismantleLifetimePower
+		);
+
+		return this._dismantlersNeeded;
+	}
+
+	init() {
+		// Spawn a number of dismantlers, up to a max
+		const MAX_DISMANTLERS = 2;
+
 		// Calculate number of dismantlers
+		const dismantlersNeeded = this.dismantlersNeeded;
+		if (dismantlersNeeded === undefined) {
+			return;
+		}
+
 		if (
 			this.directive.room &&
 			this.target &&
@@ -78,16 +103,17 @@ export class DismantleOverlord extends Overlord {
 			:	1;
 
 		// needs to be reachable spots
-		const dismantleNeeded = Math.ceil(
-			(this.target ? this.target.hits : 50000) / dismantleLifetimePower
-		);
+
 		const numDismantlers = Math.min(
 			nearbySpots,
 			MAX_DISMANTLERS,
-			dismantleNeeded
+			dismantlersNeeded
 		);
+
 		// Request the dismantlers
-		this.wishlist(numDismantlers, setup, { reassignIdle: true });
+		this.wishlist(numDismantlers, this.dismantlerSetup, {
+			reassignIdle: true,
+		});
 	}
 
 	private runDismantler(dismantler: Zerg) {
@@ -137,6 +163,8 @@ export class DismantleOverlord extends Overlord {
 	}
 
 	run() {
+		// Call this here so that the calculation happens in the RUN phase
+		const _needed = this.dismantlersNeeded;
 		this.autoRun(this.dismantlers, (dismantler) =>
 			this.runDismantler(dismantler)
 		);
