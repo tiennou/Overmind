@@ -89,7 +89,7 @@ export class Pathing {
 		destination: RoomPosition,
 		opts: PathOptions = {}
 	): PathingReturn {
-		_.defaults(opts, getDefaultPathOptions());
+		_.defaultsDeep(opts, getDefaultPathOptions());
 		if (opts.debug) {
 			log.info(
 				`origin: ${origin}, dest: ${destination}, opts: ${dump(opts)}`
@@ -264,7 +264,7 @@ export class Pathing {
 		destination: string,
 		opts: PathOptions = {}
 	): Route | ERR_NO_PATH {
-		_.defaults(opts, getDefaultPathOptions());
+		_.defaultsDeep(opts, getDefaultPathOptions());
 
 		const linearDistance = Game.map.getRoomLinearDistance(
 			origin,
@@ -482,11 +482,11 @@ export class Pathing {
 		height: number,
 		options: PathOptions = {}
 	): PathFinderPath {
-		_.defaults(options, {
+		_.defaultsDeep(options, {
 			blockCreeps: false,
 			maxOps: 2 * DEFAULT_MAXOPS,
 			range: 1,
-		});
+		} as PathOptions);
 		// Make copies of the destination offset for where anchor could be
 		const destinations = this.getPosWindow(destination, -width, -height);
 		const callback = (roomName: string) =>
@@ -530,7 +530,7 @@ export class Pathing {
 			range: 1,
 			terrainCosts: { plainCost: 1, swampCost: 1, roadCost: 1 },
 		};
-		_.defaults(opts, optDefaults);
+		_.defaultsDeep(opts, optDefaults);
 		const ret = this.findPath(startPos, endPos, opts);
 		if (ret.incomplete) {
 			log.alert(
@@ -615,7 +615,7 @@ export class Pathing {
 		opts: SwarmMoveOptions
 	): CostMatrix {
 		const [mOpts, vOpts] = pathOptsToMatrixAndVolatileOpts(opts);
-		const matrixOpts: Partial<MatrixOptions> = _.defaults(
+		const matrixOpts: Partial<MatrixOptions> = _.defaultsDeep(
 			<MatrixOptions>{
 				explicitTerrainCosts: true,
 				swarmWidth: width,
@@ -623,7 +623,10 @@ export class Pathing {
 			},
 			mOpts
 		);
-		const volatileMatrixOpts: VolatileMatrixOptions = _.defaults({}, vOpts);
+		const volatileMatrixOpts: VolatileMatrixOptions = _.defaultsDeep(
+			{},
+			vOpts
+		);
 
 		const matrix = MatrixLib.getMatrix(
 			roomName,
@@ -655,9 +658,9 @@ export class Pathing {
 		fleeFrom: (RoomPosition | _HasRoomPosition)[],
 		opts: PathOptions = {}
 	): PathFinderPath {
-		_.defaults(opts, {
+		_.defaultsDeep(opts, {
 			fleeRange: DEFAULT_FLEE_RANGE,
-		});
+		} as PathOptions);
 		const fleeFromPos = _.map(fleeFrom, (flee) => normalizePos(flee));
 		const avoidGoals = _.map(fleeFromPos, (pos) => {
 			return { pos: pos, range: opts.fleeRange! };
@@ -677,9 +680,9 @@ export class Pathing {
 		fleeFrom: (RoomPosition | _HasRoomPosition)[],
 		opts: PathOptions = {}
 	): PathFinderPath {
-		_.defaults(opts, {
+		_.defaultsDeep(opts, {
 			terrainCosts: getDefaultTerrainCosts(),
-		});
+		} as PathOptions);
 		if (opts.fleeRange == undefined) {
 			opts.fleeRange = opts.terrainCosts!.plainCost > 1 ? 20 : 10;
 		}
@@ -1360,12 +1363,12 @@ export class Pathing {
 		obstacles: (RoomPosition | _HasRoomPosition)[],
 		options: PathOptions = {}
 	): boolean {
-		_.defaults(options, {
+		_.defaultsDeep(options, {
 			blockCreeps: false,
 			range: 1,
 			maxOps: 2000,
 			ensurePath: false,
-		});
+		} as PathOptions);
 		if (startPos.roomName != endPos.roomName) {
 			log.error(
 				`isReachable() should only be used within a single room!`
@@ -1411,12 +1414,12 @@ export class Pathing {
 		obstacles: (RoomPosition | _HasRoomPosition)[],
 		options: PathOptions = {}
 	): RoomPosition | undefined {
-		_.defaults(options, {
+		_.defaultsDeep(options, {
 			blockCreeps: false,
 			range: 1,
 			maxOps: 2000,
 			ensurePath: false,
-		});
+		} as PathOptions);
 		if (startPos.roomName !== endPos.roomName) {
 			// Start and end aren't in the same room.
 			const pathToEnd = this.findPath(startPos, endPos, options);

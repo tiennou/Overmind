@@ -901,12 +901,12 @@ export class Movement {
 		}
 
 		// Set default options
-		_.defaults(opts, {
+		_.defaultsDeep(opts, {
 			range: 1, // Math.max(swarm.width, swarm.height),
 			blockCreeps: false,
 			exitCost: 10,
 			pathOpts: { debug: opts.debug },
-		});
+		} as SwarmMoveOptions);
 
 		// if (options.range! < Math.max(swarm.width, swarm.height)) {
 		// 	log.warning(`Range specified is ${options.range}; not allowable for ${swarm.width}x${swarm.height} swarm!`);
@@ -1106,13 +1106,13 @@ export class Movement {
 		avoid: PathFinderGoal[],
 		options: CombatMoveOptions = {}
 	): ZergSwarmMoveReturnCode {
-		_.defaults(options, {
+		_.defaultsDeep(options, {
 			allowExit: false,
 			avoidPenalty: 10,
 			approachBonus: 5,
 			preferRamparts: true,
 			blockMyCreeps: true, // todo: is this necessary?
-		});
+		} as CombatMoveOptions);
 
 		const debug = false;
 		const callback = (roomName: string) => {
@@ -1266,7 +1266,7 @@ export class Movement {
 		avoid: PathFinderGoal[],
 		opts: CombatMoveOptions = {}
 	): ZergMoveReturnCode {
-		_.defaults(opts, {
+		_.defaultsDeep(opts, {
 			allowExit: false,
 			avoidPenalty: 10,
 			approachBonus: 5,
@@ -1455,18 +1455,18 @@ export class Movement {
 		destination: RoomPosition | _HasRoomPosition,
 		opts: MoveOptions = {}
 	): ZergMoveReturnCode {
-		_.defaults(opts, getDefaultMoveOptions());
+		_.defaultsDeep(opts, getDefaultMoveOptions());
 		const dest = normalizePos(destination);
 		if (creep.pos.getRangeTo(dest) > 8) {
 			opts.repathChance = 0.1;
 			opts.movingTarget = true;
 		}
 		if (creep.room.name == dest.roomName) {
-			_.defaults(opts.pathOpts!, <PathOptions>{
+			_.defaultsDeep(opts.pathOpts!, {
 				maxRooms: 1,
 				modifyRoomCallback: (room, matrix) =>
 					Movement.invasionMoveCallbackModifier(room, matrix),
-			});
+			} as PathOptions);
 		}
 		return creep.goTo(dest, opts);
 	}
@@ -1479,7 +1479,7 @@ export class Movement {
 		avoidGoals: (RoomPosition | _HasRoomPosition)[],
 		options: MoveOptions = {}
 	): ZergMoveReturnCode {
-		const opts: PathOptions = _.defaults({}, options.pathOpts ?? {}, <
+		const opts: PathOptions = _.defaultsDeep({}, options.pathOpts ?? {}, <
 			PathOptions
 		>{
 			debug: options.debug,
@@ -1510,7 +1510,7 @@ export class Movement {
 		const fleeDefaultOpts: MoveOptions = {
 			pathOpts: { debug: opts.debug, terrainCosts: terrainCosts },
 		};
-		_.defaults(opts, fleeDefaultOpts);
+		_.defaultsDeep(opts, fleeDefaultOpts);
 
 		const fleeRange =
 			opts.fleeRange || (terrainCosts.plainCost > 1 ? 8 : 16);
