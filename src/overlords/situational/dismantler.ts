@@ -41,15 +41,24 @@ export class DismantleOverlord extends Overlord {
 			setup = CombatSetups.dismantlers.default;
 		}
 		setup = CombatSetups.dismantlers.default;
-		const dismantlingParts = setup.getBodyPotential(
-			!!this.directive.memory.attackInsteadOfDismantle ? ATTACK : WORK,
-			this.colony
-		);
-		const dismantlingPower =
-			dismantlingParts *
-			(!!this.directive.memory.attackInsteadOfDismantle ?
-				ATTACK_POWER
-			:	DISMANTLE_POWER);
+		// Estimate how good the setup is at dismantling
+		const dismantlerSetup = setup.create(this.colony, true);
+		let dismantlingPower;
+		if (this.directive.memory.attackInsteadOfDismantle) {
+			const attackParts = CombatIntel.getBodyPartPotential(
+				dismantlerSetup.body,
+				"attack",
+				dismantlerSetup.boosts
+			);
+			dismantlingPower = attackParts * ATTACK_POWER;
+		} else {
+			const dismantlingParts = CombatIntel.getBodyPartPotential(
+				dismantlerSetup.body,
+				"dismantle",
+				dismantlerSetup.boosts
+			);
+			dismantlingPower = dismantlingParts * DISMANTLE_POWER;
+		}
 		// Calculate total needed amount of dismantling power as (resource amount * trip distance)
 		const tripDistance =
 			Pathing.distance(this.colony.pos, this.directive.pos) || 0;
