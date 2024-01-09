@@ -286,31 +286,27 @@ export class RoadPlanner {
 
 		const room = Game.rooms[roomName];
 		if (room) {
-			const impassibleStructures: Structure[] = [];
-			_.forEach(room.find(FIND_STRUCTURES), (s: Structure) => {
-				if (!s.isWalkable) {
-					impassibleStructures.push(s);
+			// Mark unpassable structures & construction sites
+			for (const structure of [
+				...room.structures,
+				...room.constructionSites,
+			]) {
+				if (structure.isWalkable) {
+					continue;
 				}
-			});
-			for (const s of impassibleStructures) {
-				matrix.set(s.pos.x, s.pos.y, 0xff);
-			}
-			// Set passability of construction sites
-			for (const site of room.find(FIND_MY_CONSTRUCTION_SITES)) {
-				if (!site.isWalkable) {
-					matrix.set(site.pos.x, site.pos.y, 0xff);
-				}
+				matrix.set(structure.pos.x, structure.pos.y, 0xff);
 			}
 
 			// If we generating a new path, ensure the current roads are reused
-			if (
-				RoadPlanner.settings.encourageRoadMerging &&
-				!this.costMatrices[roomName]
-			) {
+			if (RoadPlanner.settings.encourageRoadMerging) {
 				const roads = room.find<StructureRoad>(FIND_STRUCTURES, {
 					filter: { structureType: STRUCTURE_ROAD },
 				});
 				for (const road of roads) {
+					// Only reuse roads that should already be there
+					if (matrix.get(road.pos.x, road.pos.y) === 0xff) {
+						continue;
+					}
 					matrix.set(road.pos.x, road.pos.y, EXISTING_PATH_COST);
 				}
 			}
