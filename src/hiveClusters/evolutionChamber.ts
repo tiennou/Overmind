@@ -530,42 +530,7 @@ export class EvolutionChamber extends HiveCluster {
 				)
 			);
 		}
-		// let boostFilter: (resource: ResourceConstant) => boolean;
-		// switch (boostType) {
-		// 	case 'attack':
-		// 		boostFilter = Abathur.isAttackBoost;
-		// 		break;
-		// 	case 'carry':
-		// 		boostFilter = Abathur.isCarryBoost;
-		// 		break;
-		// 	case 'ranged':
-		// 		boostFilter = Abathur.isRangedBoost;
-		// 		break;
-		// 	case 'heal':
-		// 		boostFilter = Abathur.isHealBoost;
-		// 		break;
-		// 	case 'move':
-		// 		boostFilter = Abathur.isMoveBoost;
-		// 		break;
-		// 	case 'tough':
-		// 		boostFilter = Abathur.isToughBoost;
-		// 		break;
-		// 	case 'harvest':
-		// 		boostFilter = Abathur.isHarvestBoost;
-		// 		break;
-		// 	case 'construct':
-		// 		boostFilter = Abathur.isConstructBoost;
-		// 		break;
-		// 	case 'dismantle':
-		// 		boostFilter = Abathur.isDismantleBoost;
-		// 		break;
-		// 	case 'upgrade':
-		// 		boostFilter = Abathur.isUpgradeBoost;
-		// 		break;
-		// 	default:
-		// 		log.error(`${this.print}: ${boostType} is not a valid boostType!`);
-		// 		return;
-		// }
+
 		const boosts = BOOST_TIERS[boostType];
 		for (const boost of [boosts.T3, boosts.T2, boosts.T1]) {
 			if (this.colony.assets[boost] >= amount) {
