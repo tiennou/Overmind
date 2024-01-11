@@ -69,15 +69,17 @@ export function isSuspended(obj: SuspensionMemory) {
 /**
  * Mark the given object for suspension
  */
-export function suspend(obj: SuspensionMemory, opts: SuspensionOptions) {
+export function suspend(obj: SuspensionMemory, opts?: SuspensionOptions) {
 	if (!obj) {
 		return;
 	}
 	obj.active = false;
-	obj.suspendReason = opts.reason;
-	if (opts.until) {
+	if (opts?.reason) {
+		obj.suspendReason = opts.reason;
+	}
+	if (opts?.until) {
 		obj[MEM.EXPIRATION] = opts.until;
-	} else if (opts.duration) {
+	} else if (opts?.duration) {
 		obj[MEM.EXPIRATION] = Game.time + opts.duration;
 	}
 }

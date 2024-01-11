@@ -210,11 +210,11 @@ export abstract class Overlord {
 	}
 
 	get suspensionReason() {
-		let reason = suspensionReason(
-			this.colony.memory.outposts[this.pos.roomName]
-		);
-		if (!reason) {
-			reason = suspensionReason(this.memory);
+		let reason = suspensionReason(this.memory);
+		if (!reason && this.colony instanceof Colony) {
+			reason = suspensionReason(
+				this.colony.memory.outposts[this.pos.roomName]
+			);
 		}
 		return reason;
 	}
@@ -232,7 +232,7 @@ export abstract class Overlord {
 		return isSuspended;
 	}
 
-	suspend(options: SuspensionOptions): void {
+	suspend(options?: SuspensionOptions): void {
 		suspend(this.memory, options);
 	}
 
