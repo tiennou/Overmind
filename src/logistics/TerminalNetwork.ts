@@ -1135,8 +1135,9 @@ export class TerminalNetwork {
 			this.debug(
 				`Buying ${requestAmount} ${resource} for ${
 					colony.print
-				} with opts=${JSON.stringify(buyOpts)}` +
-					`from trade network (${ret})`
+				} with opts=${JSON.stringify(
+					buyOpts
+				)} from trade network (${ret})`
 			);
 			if (ret >= 0) {
 				return true;
@@ -1293,10 +1294,11 @@ export class TerminalNetwork {
 				sellOpts
 			);
 			this.debug(
-				`Selling ${provideAmount} ${resource} from ${colony.print} with ` +
-					`opts=${JSON.stringify(
-						sellOpts
-					)} via trade network: ${errorForCode(ret)}`
+				`Selling ${provideAmount} ${resource} from ${
+					colony.print
+				} with opts=${JSON.stringify(
+					sellOpts
+				)} via trade network: ${errorForCode(ret)}`
 			);
 			if (ret >= 0) {
 				return true;
@@ -1496,7 +1498,9 @@ export class TerminalNetwork {
 			}
 		}
 
-		// this.summarize();
+		if (this.memory.debug) {
+			this.summarize();
+		}
 
 		// Display notifications
 		if (this.notifications.length > 0) {
