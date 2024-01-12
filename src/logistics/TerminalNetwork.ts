@@ -261,7 +261,7 @@ interface ProvideOpts {
  */
 @profile
 @assimilationLocked
-export class TerminalNetwork implements ITerminalNetwork {
+export class TerminalNetwork {
 	name: string; // for console.debug() purposes
 
 	private colonies: Colony[];

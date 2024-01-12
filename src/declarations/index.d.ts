@@ -143,8 +143,8 @@ interface IOvermind {
 	spawnGroups: { [ref: string]: import("logistics/SpawnGroup").SpawnGroup };
 	colonyMap: { [roomName: string]: string };
 	memory: IOvermindMemory;
-	terminalNetwork: ITerminalNetwork; // is actually TerminalNetwork
-	tradeNetwork: ITradeNetwork; // is actually TradeNetwork
+	terminalNetwork: import("logistics/TerminalNetwork").TerminalNetwork;
+	tradeNetwork: import("logistics/TradeNetwork").TraderJoe;
 	expansionPlanner: import("strategy/ExpansionPlanner").ExpansionPlanner;
 	exceptions: Error[];
 
@@ -228,91 +228,7 @@ type TerminalNetworkThresholds = Record<
 > &
 	Partial<Record<TerminalNetworkThresholdResourceType, Threshold>>;
 
-interface ITerminalNetwork {
-	addColony(colony: IColony): void;
-
-	refresh(): void;
-
-	getAssets(): { [resourceType: string]: number };
-
-	thresholds(colony: IColony, resource: ResourceConstant): Threshold;
-
-	canObtainResource(
-		requestor: IColony,
-		resource: ResourceConstant,
-		totalAmount: number
-	): boolean;
-
-	requestResource(
-		requestor: IColony,
-		resource: ResourceConstant,
-		totalAmount: number,
-		tolerance?: number
-	): void;
-
-	lockResource(
-		requestor: IColony,
-		resource: ResourceConstant,
-		lockedAmount: number
-	): void;
-
-	exportResource(
-		provider: IColony,
-		resource: ResourceConstant,
-		thresholds?: Threshold
-	): void;
-
-	init(): void;
-
-	run(): void;
-}
-
-interface TradeOpts {
-	/** Prefer to sell directly via a .deal() call */
-	preferDirect?: boolean;
-	/** Is it okay filling the transaction with several smaller transactions */
-	flexibleAmount?: boolean;
-	/** Ignore quantity checks (e.g. T5 commodities in small amounts) */
-	ignoreMinAmounts?: boolean;
-	/** Bypass price sanity checks when .deal'ing */
-	ignorePriceChecksForDirect?: boolean;
-	/** Don't actually execute the trade, just check to see if you can make it */
-	dryRun?: boolean;
-}
-
-interface ITradeNetwork {
-	memory: any;
-
-	refresh(): void;
-
-	getExistingOrders(
-		type: ORDER_BUY | ORDER_SELL,
-		resource: ResourceConstant | "any",
-		roomName?: string
-	): Order[];
-
-	priceOf(resource: ResourceConstant): number;
-
-	ordersProcessedThisTick(): boolean;
-
-	buy(
-		terminal: StructureTerminal,
-		resource: ResourceConstant,
-		amount: number,
-		opts?: TradeOpts
-	): import("utilities/errors").OvermindReturnCode;
-
-	sell(
-		terminal: StructureTerminal,
-		resource: ResourceConstant,
-		amount: number,
-		opts?: TradeOpts
-	): import("utilities/errors").OvermindReturnCode;
-
-	init(): void;
-
-	run(): void;
-}
+type TradeOpts = import("logistics/TradeNetwork").TradeOpts;
 
 interface Coord {
 	x: number;

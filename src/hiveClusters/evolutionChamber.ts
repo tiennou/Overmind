@@ -112,7 +112,7 @@ export class EvolutionChamber extends HiveCluster {
 		);
 		// Register physical components
 		this.terminal = terminal;
-		this.terminalNetwork = Overmind.terminalNetwork as TerminalNetwork;
+		this.terminalNetwork = Overmind.terminalNetwork;
 		this.labs = colony.labs;
 		// Reserve some easily-accessible labs which are restricted not to be reagent labs
 		const restrictedLabs =

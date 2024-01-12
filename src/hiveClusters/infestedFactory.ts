@@ -90,7 +90,7 @@ export class InfestedFactory extends HiveCluster {
 		);
 		this.factory = factory;
 		this.terminal = colony.terminal!;
-		this.terminalNetwork = Overmind.terminalNetwork as TerminalNetwork;
+		this.terminalNetwork = Overmind.terminalNetwork;
 		this.transportRequests = this.colony.commandCenter!.transportRequests;
 	}
 

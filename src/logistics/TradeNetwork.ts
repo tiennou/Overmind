@@ -111,6 +111,19 @@ export const maxMarketPrices: { [resourceType: string]: number } = {
 	[RESOURCE_CATALYZED_GHODIUM_ACID]: 1.2,
 };
 
+export interface TradeOpts {
+	/** Prefer to sell directly via a .deal() call */
+	preferDirect?: boolean;
+	/** Is it okay filling the transaction with several smaller transactions */
+	flexibleAmount?: boolean;
+	/** Ignore quantity checks (e.g. T5 commodities in small amounts) */
+	ignoreMinAmounts?: boolean;
+	/** Bypass price sanity checks when .deal'ing */
+	ignorePriceChecksForDirect?: boolean;
+	/** Don't actually execute the trade, just check to see if you can make it */
+	dryRun?: boolean;
+}
+
 const defaultTradeOpts: TradeOpts = {
 	preferDirect: false,
 	flexibleAmount: true,
@@ -124,7 +137,7 @@ const defaultTradeOpts: TradeOpts = {
  */
 @profile
 @assimilationLocked
-export class TraderJoe implements ITradeNetwork {
+export class TraderJoe {
 	static settings = {
 		cache: {
 			timeout: 250,
