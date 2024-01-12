@@ -219,3 +219,6 @@ export class ResourceManager {
 		return target;
 	}
 }
+
+// @ts-expect-error global
+global.ResourceManager = ResourceManager;
