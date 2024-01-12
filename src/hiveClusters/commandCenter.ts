@@ -315,8 +315,8 @@ export class CommandCenter extends HiveCluster {
 				this.terminal.store[resource] > target + tolerance ||
 				(isRebuildingTerminal &&
 					this.storage.store[resource] >
-						ResourceManager.settings.storage.energy
-							.destroyTerminalThreshold)
+						ResourceManager.settings
+							.minimumEnergyTerminalRebuilding)
 			) {
 				const transferAmount = Math.min(
 					this.terminal.store[resource] - target,

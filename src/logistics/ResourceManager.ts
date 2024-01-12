@@ -76,36 +76,44 @@ const TERMINAL_THRESHOLDS_ALL: {
 	_.map(RESOURCES_ALL, (resource) => getTerminalThresholds(resource))
 );
 
+interface StructureOverfillThresholds {
+	overfill: number;
+	dump: number;
+}
+
 /**
  * Resource manager; makes high-level decisions based on resource amounts & capacity
  */
 export class ResourceManager {
-	static settings = {
+	static overfillThresholds: {
+		[structureType: string]: StructureOverfillThresholds;
+	} = {
 		storage: {
-			total: {
-				overfill: 100000,
-				dump: 5000,
-			},
-			energy: {
-				/** Won't rebuild terminal until you have this much energy in storage */
-				destroyTerminalThreshold: 200000,
-			},
+			overfill: 100000,
+			dump: 5000,
 		},
 		terminal: {
-			total: {
-				overfill: 50000,
-				dump: 5000,
-			},
+			overfill: 50000,
+			dump: 5000,
 		},
 	};
 
+	static settings = {
+		/** Won't rebuild terminal until you have this much energy in storage */
+		minimumEnergyTerminalRebuilding: 200000,
+	};
+
+	/** Returns the maximum capacity considered safe for the structure */
+	static getSafeCapacity(store: ManagedResourceStructure) {
+		return (
+			store.store.getCapacity() -
+			this.overfillThresholds[store.structureType].overfill
+		);
+	}
+
 	/** Check if the given storage structure is getting close to full */
 	static isOverCapacity(store: ManagedResourceStructure) {
-		return (
-			store.store.getUsedCapacity() >
-			store.store.getCapacity() -
-				this.settings[store.structureType].total.overfill
-		);
+		return store.store.getUsedCapacity() > this.getSafeCapacity(store);
 	}
 
 	/** Check if we should dump instead of trying to transfer to the given structure */
@@ -113,7 +121,7 @@ export class ResourceManager {
 		return (
 			store.store.getUsedCapacity() >
 			store.store.getCapacity() -
-				this.settings[store.structureType].total.dump
+				this.overfillThresholds[store.structureType].dump
 		);
 	}
 

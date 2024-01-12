@@ -891,8 +891,8 @@ export class RoomPlanner {
 								this.colony.storage.pos
 							) &&
 							this.colony.storage.energy <
-								ResourceManager.settings.storage.energy
-									.destroyTerminalThreshold
+								ResourceManager.settings
+									.minimumEnergyTerminalRebuilding
 						) {
 							log.info(
 								`${this.colony.name}: waiting to move energy to storage before removing terminal`
