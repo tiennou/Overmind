@@ -22,6 +22,7 @@ import {
 import { ema, maxBy, mergeSum, minBy, printRoomName } from "../utilities/utils";
 import { TraderJoe } from "./TradeNetwork";
 import { errorForCode } from "utilities/errors";
+import { ResourceManager } from "./ResourceManager";
 
 export interface TerminalNetworkMemory {
 	debug?: boolean;
@@ -297,8 +298,6 @@ export class TerminalNetwork {
 		/** max size of resources you can send in one tick */
 		maxResourceSendAmount: 3000,
 		maxEvacuateSendAmount: 50000,
-		/** colonies should have at least this much space in the room */
-		minColonySpace: 20000,
 		/** duration for computing rolling average of terminal cooldowns */
 		terminalCooldownAveragingWindow: 1000,
 		/** buy base mins directly if very low */
@@ -440,33 +439,6 @@ export class TerminalNetwork {
 	}
 
 	/**
-	 * Returns the remaining amount of capacity in a colony. Overfilled storages (from OPERATE_STORAGE) are
-	 * counted as just being at 100% capacity. Optionally takes an additionalAssets argument that asks whether the
-	 * colony would be near capacity if additionalAssets amount of resources were added.
-	 */
-	private getRemainingSpace(
-		colony: Colony,
-		includeFactoryCapacity = false
-	): number {
-		let totalAssets = _.sum(colony.assets);
-		// Overfilled storage gets counted as just 100% full
-		if (
-			colony.storage &&
-			colony.storage.store.getUsedCapacity() > STORAGE_CAPACITY
-		) {
-			totalAssets -=
-				colony.storage.store.getUsedCapacity() - STORAGE_CAPACITY;
-		}
-
-		const roomCapacity =
-			(colony.terminal ? TERMINAL_CAPACITY : 0) +
-			(colony.storage ? STORAGE_CAPACITY : 0) +
-			(colony.factory && includeFactoryCapacity ? FACTORY_CAPACITY : 0);
-
-		return roomCapacity - totalAssets;
-	}
-
-	/**
 	 * Computes the dynamically-changing energy thresholds object
 	 */
 	private getEnergyThresholds(): Threshold {
@@ -511,8 +483,7 @@ export class TerminalNetwork {
 		if (
 			(surplus != undefined && amount > surplus) ||
 			(amount > target + tolerance &&
-				this.getRemainingSpace(colony) <
-					TerminalNetwork.settings.minColonySpace)
+				ResourceManager.getRemainingSpace(colony) < 0)
 		) {
 			return TN_STATE.activeProvider;
 		}
@@ -1188,8 +1159,9 @@ export class TerminalNetwork {
 					(partner) =>
 						partner.assets[resource] + sendAmount <=
 							this.thresholds(partner, resource).target &&
-						this.getRemainingSpace(partner) - sendAmount >=
-							TerminalNetwork.settings.minColonySpace
+						ResourceManager.getRemainingSpace(partner) -
+							sendAmount >=
+							0
 				);
 				// If that doesn't work, tfind partner where assets + sendAmount < target + tolerance and has space
 				if (validPartners.length == 0) {
@@ -1200,16 +1172,18 @@ export class TerminalNetwork {
 								this.thresholds(partner, resource).target +
 									this.thresholds(colony, resource)
 										.tolerance &&
-							this.getRemainingSpace(partner) - sendAmount >=
-								TerminalNetwork.settings.minColonySpace
+							ResourceManager.getRemainingSpace(partner) -
+								sendAmount >=
+								0
 					);
 				}
 				// If that doesn't work, just try to find any room with space that won't become an activeProvider
 				if (validPartners.length == 0) {
 					validPartners = _.filter(partners, (partner) => {
 						if (
-							this.getRemainingSpace(partner) - sendAmount <
-							TerminalNetwork.settings.minColonySpace
+							ResourceManager.getRemainingSpace(partner) -
+								sendAmount <
+							0
 						) {
 							return false;
 						}
@@ -1282,10 +1256,7 @@ export class TerminalNetwork {
 				resource == RESOURCE_ENERGY ||
 				Abathur.isBaseMineral(resource)
 			) {
-				if (
-					this.getRemainingSpace(colony) <
-					TerminalNetwork.settings.minColonySpace
-				) {
+				if (ResourceManager.getRemainingSpace(colony) < 0) {
 					sellOpts.preferDirect = true;
 					sellOpts.ignorePriceChecksForDirect = true;
 				}
@@ -1490,8 +1461,7 @@ export class TerminalNetwork {
 		if (Game.time % 10 == 0) {
 			for (const colony of this.colonies) {
 				if (
-					this.getRemainingSpace(colony) <
-						TerminalNetwork.settings.minColonySpace &&
+					ResourceManager.getRemainingSpace(colony) < 0 &&
 					!colony.state.isRebuilding
 				) {
 					log.warning(

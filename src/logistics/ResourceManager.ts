@@ -4,7 +4,10 @@ import { log } from "console/log";
 import { RESOURCE_IMPORTANCE_ALL } from "resources/map_resources";
 import { isStructure } from "declarations/typeGuards";
 
-type ManagedResourceStructure = StructureStorage | StructureTerminal;
+type ManagedResourceStructure =
+	| StructureStorage
+	| StructureTerminal
+	| StructureFactory;
 
 const TERMINAL_THRESHOLDS = {
 	energy: {
@@ -95,6 +98,10 @@ export class ResourceManager {
 		terminal: {
 			overfill: 50000,
 			dump: 5000,
+		},
+		factory: {
+			overfill: 2000,
+			dump: 500,
 		},
 	};
 
@@ -225,6 +232,38 @@ export class ResourceManager {
 		}
 
 		return target;
+	}
+
+	/**
+	 * Returns the remaining amount of capacity in a colony.
+	 *
+	 * Optionally takes an additionalAssets argument that asks whether the
+	 * colony would be near capacity if additionalAssets amount of resources were added.
+	 */
+	static getRemainingSpace(
+		colony: Colony,
+		includeFactoryCapacity = false
+	): number {
+		let totalAssets = _.sum(colony.assets);
+		// Overfilled storage gets counted as just 100% full
+		if (
+			colony.storage &&
+			colony.storage.store.getUsedCapacity() >
+				this.getSafeCapacity(colony.storage)
+		) {
+			totalAssets -=
+				colony.storage.store.getUsedCapacity() -
+				this.getSafeCapacity(colony.storage);
+		}
+
+		const roomCapacity =
+			(colony.terminal ? this.getSafeCapacity(colony.terminal) : 0) +
+			(colony.storage ? this.getSafeCapacity(colony.storage) : 0) +
+			(colony.factory && includeFactoryCapacity ?
+				this.getSafeCapacity(colony.factory)
+			:	0);
+
+		return roomCapacity - totalAssets;
 	}
 }
 
