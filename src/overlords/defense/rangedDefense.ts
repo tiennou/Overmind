@@ -58,7 +58,7 @@ export class RangedDefenseOverlord extends CombatOverlord {
 		);
 		const hydraliskDamage =
 			RANGED_ATTACK_POWER *
-			CombatIntel.getMyCombatPotentials(this.hydralisks).ranged;
+			CombatIntel.getCombatPotentials(this.hydralisks).ranged;
 		const maxDamageReceived =
 			worstDamageMultiplier * (hydraliskDamage + towerDamage + 1);
 		const needAdditionalDamage = Math.max(

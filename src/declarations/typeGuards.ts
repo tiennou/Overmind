@@ -49,11 +49,11 @@ export function hasPos(
 	return (<_HasRoomPosition>obj).pos != undefined;
 }
 
-export function isCreep(obj: RoomObject): obj is Creep {
+export function isCreep(obj: unknown): obj is Creep {
 	return (<Creep>obj).fatigue != undefined;
 }
 
-export function isPowerCreep(obj: RoomObject): obj is PowerCreep {
+export function isPowerCreep(obj: unknown): obj is PowerCreep {
 	return (<PowerCreep>obj).powers != undefined;
 }
 

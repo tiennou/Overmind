@@ -4,6 +4,7 @@ import { RANGES } from "zerg/ranges";
 import { Colony } from "../Colony";
 import { log } from "../console/log";
 import {
+	isAnyZerg,
 	isCreep,
 	isOwnedStructure,
 	isStandardZerg,
@@ -22,6 +23,7 @@ import { Cartographer } from "../utilities/Cartographer";
 import { Visualizer } from "../visuals/Visualizer";
 import { toCreep, Zerg } from "../zerg/Zerg";
 import { RoomIntel } from "./RoomIntel";
+import { BodyGeneratorReturn } from "creepSetups/CombatCreepSetup";
 
 interface CombatIntelMemory {
 	cache: {
@@ -817,38 +819,34 @@ export class CombatIntel {
 	/**
 	 * Total attack/rangedAttack/heal potentials for a group of creeps
 	 */
-	static getCombatPotentials(creeps: Creep[]): CombatPotentials {
-		const attack = _.sum(creeps, (creep) => this.getAttackPotential(creep));
-		const rangedAttack = _.sum(creeps, (creep) =>
-			this.getRangedAttackPotential(creep)
-		);
-		const heal = _.sum(creeps, (creep) => this.getHealPotential(creep));
-		const dismantle = _.sum(creeps, (creep) =>
-			this.getDismantlePotential(creep)
-		);
-		return { attack, ranged: rangedAttack, heal, dismantle };
-	}
-
-	/**
-	 * Total attack/rangedAttack/heal potentials for a group of creeps
-	 */
-	static getMyCombatPotentials(
-		zergs: Zerg[],
+	static getCombatPotentials(
+		creeps: (Zerg | Creep | BodyGeneratorReturn)[],
 		countIntendedBoosts = true
 	): CombatPotentials {
-		const attack = _.sum(zergs, (zerg) =>
-			this.getAttackPotential(zerg.creep, countIntendedBoosts)
+		const attack = _.sum(creeps, (unit) =>
+			isAnyZerg(unit) || isCreep(unit) ?
+				this.getAttackPotential(toCreep(unit)!, countIntendedBoosts)
+			:	this.getBodyPartPotential(unit.body, ATTACK, unit.boosts)
 		);
-		const rangedAttack = _.sum(zergs, (zerg) =>
-			this.getRangedAttackPotential(zerg.creep, countIntendedBoosts)
+		const ranged = _.sum(creeps, (unit) =>
+			isAnyZerg(unit) || isCreep(unit) ?
+				this.getRangedAttackPotential(
+					toCreep(unit)!,
+					countIntendedBoosts
+				)
+			:	this.getBodyPartPotential(unit.body, "ranged", unit.boosts)
 		);
-		const heal = _.sum(zergs, (zerg) =>
-			this.getHealPotential(zerg.creep, countIntendedBoosts)
+		const heal = _.sum(creeps, (unit) =>
+			isAnyZerg(unit) || isCreep(unit) ?
+				this.getHealPotential(toCreep(unit)!, countIntendedBoosts)
+			:	this.getBodyPartPotential(unit.body, HEAL, unit.boosts)
 		);
-		const dismantle = _.sum(zergs, (zerg) =>
-			this.getDismantlePotential(zerg.creep, countIntendedBoosts)
+		const dismantle = _.sum(creeps, (unit) =>
+			isAnyZerg(unit) || isCreep(unit) ?
+				this.getDismantlePotential(toCreep(unit)!, countIntendedBoosts)
+			:	this.getBodyPartPotential(unit.body, "dismantle", unit.boosts)
 		);
-		return { attack, ranged: rangedAttack, heal, dismantle };
+		return { attack, ranged, heal, dismantle };
 	}
 
 	/**

@@ -122,7 +122,7 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 			(col) => col.room.energyCapacityAvailable < 800
 		);
 
-		const myPotentials = CombatIntel.getMyCombatPotentials([
+		const myPotentials = CombatIntel.getCombatPotentials([
 			...this.zerglings,
 			...this.hydralisks,
 			...this.healers,
