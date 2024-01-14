@@ -1,13 +1,17 @@
 import { ReservingOverlord } from "overlords/colonization/reserver";
 import { Colony, ColonyMemory, getAllColonies } from "../Colony";
 import { Directive } from "../directives/Directive";
-import { ROOMINTEL_DEFAULT_VISUALS_RANGE, RoomIntel } from "../intel/RoomIntel";
+import {
+	PortalInfo,
+	ROOMINTEL_DEFAULT_VISUALS_RANGE,
+	RoomIntel,
+} from "../intel/RoomIntel";
 import { Overlord } from "../overlords/Overlord";
 import { ExpansionEvaluator } from "../strategy/ExpansionEvaluator";
 import { Cartographer } from "../utilities/Cartographer";
 import { EmpireAnalysis } from "../utilities/EmpireAnalysis";
 import { alignedNewline, bullet } from "../utilities/stringConstants";
-import { color, dump, printRoomName, toColumns } from "../utilities/utils";
+import { color, dump, toColumns } from "../utilities/utils";
 import { asciiLogoRL, asciiLogoSmall } from "../visuals/logos";
 import { log } from "./log";
 import { DirectiveOutpost } from "directives/colony/outpost";
@@ -232,7 +236,7 @@ export class OvermindConsole {
 				),
 		},
 		{
-			name: "getPortals(rangeFromColonies)",
+			name: "listPortals(rangeFromColonies)",
 			description: "returns active portals within colony range",
 			command: OvermindConsole.listPortals.bind(OvermindConsole),
 		},
@@ -883,32 +887,54 @@ export class OvermindConsole {
 
 	static listPortals(
 		rangeFromColonies: number = 5,
-		_includeIntershard: boolean = false
-	): SavedPortal[] {
+		includeIntershard: boolean = false
+	): PortalInfo[] {
 		const colonies = getAllColonies();
-		const portalsByColony = colonies.map((colony) =>
-			RoomIntel.findPortalsInRange(colony.name, rangeFromColonies)
-		);
-		const allPortals = [];
-		let msg = `Empire Portal Census \n`;
-		for (const [colonyId, portals] of Object.entries(portalsByColony)) {
-			if (_.keys(portals).length > 0) {
-				msg += `Colony ${Overmind.colonies[colonyId].print}: \n`;
-			}
+		const portalsByColony = colonies.map<
+			[string, { [portalRoom: string]: PortalInfo[] }]
+		>((colony) => [
+			colony.name,
+			RoomIntel.findPortalsInRange(
+				colony.name,
+				rangeFromColonies,
+				includeIntershard
+			),
+		]);
+		const allPortals = new Set<PortalInfo>();
+		let msg = `Empire Portal Census\n`;
+		const table = [];
+		for (const [colonyName, portals] of portalsByColony) {
 			for (const portalRoomName of _.keys(portals)) {
-				const samplePortal = _.first(portals[portalRoomName]); // don't need to list all 8 in a room
-				allPortals.push(samplePortal);
-				msg +=
-					`\t\t Room ${printRoomName(portalRoomName)} Destination ${
-						samplePortal.dest
-					} ` +
-					`Expiration ${
-						samplePortal[MEM.EXPIRATION] - Game.time
-					}] \n`;
+				for (const portal of portals[portalRoomName]) {
+					let dest;
+					if (portal.roomDestination) {
+						dest = portal.roomDestination.print;
+					} else {
+						const { shard, room } = portal.shardDestination!;
+						dest = `<a href="#!/room/${shard}/${room}">[${room}@${shard}]</a>`;
+					}
+
+					const data = {
+						colony: colonyName,
+						expiration:
+							portal.expiration ?
+								portal.expiration - Game.time
+							:	"stable",
+						portal: portal.pos.print,
+						destination: dest,
+					};
+
+					table.push(data);
+
+					allPortals.add(portal);
+				}
 			}
 		}
+
+		msg += columnify(table);
 		console.log(msg);
-		return allPortals;
+
+		return [...allPortals];
 	}
 
 	static evaluateOutpostEfficiencies(): void {

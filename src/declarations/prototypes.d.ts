@@ -430,6 +430,11 @@ interface StructureTower extends _StoreLike {
 	// preventRampartDecay(): number;
 }
 
+interface StructurePortal {
+	shardDestination: { shard: string; room: string } | undefined;
+	roomDestination: RoomPosition | undefined;
+}
+
 // eslint-disable-next-line
 interface String {
 	padRight(length: number, char?: string): string;

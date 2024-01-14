@@ -270,3 +270,23 @@ Object.defineProperty(Room.prototype, "walls", {
 	},
 	configurable: true,
 });
+
+Object.defineProperty(StructurePortal.prototype, "shardDestination", {
+	get(this: StructurePortal) {
+		if (!(this.destination instanceof RoomPosition)) {
+			return this.destination;
+		}
+		return undefined;
+	},
+	configurable: true,
+});
+
+Object.defineProperty(StructurePortal.prototype, "roomDestination", {
+	get(this: StructurePortal) {
+		if (this.destination instanceof RoomPosition) {
+			return this.destination;
+		}
+		return undefined;
+	},
+	configurable: true,
+});

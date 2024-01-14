@@ -166,9 +166,9 @@ export class Pathing {
 				const usedPortal = _.find(portals, (portal) =>
 					portal.pos.isEqualTo(lastPosInPath)
 				);
-				if (usedPortal) {
+				if (usedPortal && usedPortal.roomDestination) {
 					portalUsed = usedPortal;
-					const portalDest = usedPortal.destination;
+					const portalDest = usedPortal.roomDestination;
 					const path2ret = PathFinder.search(
 						portalDest,
 						destinationGoal,
@@ -176,7 +176,7 @@ export class Pathing {
 					);
 					ret = {
 						path: path1ret.path
-							.concat([usedPortal.destination])
+							.concat([usedPortal.roomDestination])
 							.concat(path2ret.path),
 						ops: path1ret.ops + path2ret.ops,
 						cost: path1ret.ops + path2ret.ops,
@@ -257,6 +257,32 @@ export class Pathing {
 	}
 
 	/**
+	 * This takes a room name and spits out the portal exit closest to the destination
+	 */
+	private static getBestPortalDestination(
+		portalRoom: string,
+		destination: string
+	): string | undefined {
+		const portalInfo = RoomIntel.getPortalInfo(portalRoom);
+		if (portalInfo.length == 0) {
+			return;
+		}
+		const portals = _.unique(
+			portalInfo
+				.filter((portal) => portal.roomDestination)
+				.map((portal) => portal.roomDestination!.roomName)
+		);
+		const bestPortalDest = minBy(portals, (portalDest) => {
+			const dist = Game.map.getRoomLinearDistance(
+				portalDest,
+				destination
+			);
+			return dist;
+		});
+		return bestPortalDest;
+	}
+
+	/**
 	 * Find a viable sequence of rooms to narrow down Pathfinder algorithm
 	 */
 	static findRoute(
@@ -278,23 +304,6 @@ export class Pathing {
 		) {
 			return ERR_NO_PATH;
 		}
-
-		// This takes a portal room near the origin and spits out the best destination room of all portals in the room
-		const getBestPortalDestination: (
-			portalRoom: string
-		) => string | undefined = (portalRoom) => {
-			const portalInfo = RoomIntel.getPortalInfo(portalRoom);
-			if (portalInfo.length == 0) {
-				return;
-			}
-			const bestPortalDest = _(portalInfo)
-				.map((portal) => portal.destination.roomName)
-				.unique()
-				.min((portalDest) =>
-					Game.map.getRoomLinearDistance(portalDest, destination)
-				);
-			return bestPortalDest;
-		};
 
 		// Route finder callback for portal searching
 		const callback = (roomName: string) => {
@@ -356,8 +365,15 @@ export class Pathing {
 					}
 
 					// Are there intra-shard portals here?
-					const bestPortalDestination =
-						getBestPortalDestination(roomName);
+					const bestPortalDestination = this.getBestPortalDestination(
+						roomName,
+						destination
+					);
+					if (opts.debug) {
+						log.info(
+							`getBestPortalDestination: o: ${origin}, d: ${destination}, r: ${roomName} => ${bestPortalDestination}`
+						);
+					}
 					if (!bestPortalDestination) {
 						return false;
 					}
@@ -392,10 +408,12 @@ export class Pathing {
 				}
 				return 1;
 			};
+
 			const bestPortalRoom = minBy(validPortalRooms, (portalRoom) => {
-				const bestPortalDestination = getBestPortalDestination(
-					portalRoom
-				) as string; // room def has portal
+				const bestPortalDestination = this.getBestPortalDestination(
+					portalRoom,
+					destination
+				)!;
 				const originToPortalRoute = Game.map.findRoute(
 					origin,
 					portalRoom,
@@ -428,9 +446,10 @@ export class Pathing {
 			});
 
 			if (bestPortalRoom) {
-				const portalDest = getBestPortalDestination(
-					bestPortalRoom
-				) as string;
+				const portalDest = this.getBestPortalDestination(
+					bestPortalRoom,
+					destination
+				)!;
 				const originToPortalRoute = Game.map.findRoute(
 					origin,
 					bestPortalRoom,

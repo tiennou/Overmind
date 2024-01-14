@@ -2,7 +2,7 @@
 
 import { profile } from "../profiler/decorator";
 import { ExpansionEvaluator } from "../strategy/ExpansionEvaluator";
-import { Cartographer, ROOMTYPE_CORE } from "../utilities/Cartographer";
+import { Cartographer } from "../utilities/Cartographer";
 import {
 	packCoord,
 	packCoordList,
@@ -14,6 +14,7 @@ import {
 } from "../utilities/packrat";
 import {
 	ema,
+	entries,
 	getCacheExpiration,
 	interpolateColor,
 	isAlly,
@@ -40,14 +41,9 @@ export interface RoomObjectInfo {
 	pos: RoomPosition;
 }
 
-export interface PortalInfoInterShard {
-	pos: RoomPosition;
-	destination: { shard: string; room: string };
-	expiration: number | undefined;
-}
-
 export interface PortalInfo extends RoomObjectInfo {
-	destination: RoomPosition;
+	shardDestination?: { shard: string; room: string } | undefined;
+	roomDestination?: RoomPosition | undefined;
 	expiration: number | undefined;
 }
 
@@ -217,27 +213,29 @@ export class RoomIntel {
 	}
 
 	/**
-	 * Returns information about intra-shard portals in a given room
+	 * Returns information about known portals in a given room
 	 */
 	static getPortalInfo(roomName: string): PortalInfo[] {
-		if (!Memory.rooms[roomName] || !Memory.rooms[roomName][RMEM.PORTALS]) {
+		let portalData = Memory.rooms[roomName]?.[RMEM.PORTALS];
+		if (!portalData) {
 			return [];
 		}
-		const localPortals = _.filter(
-			Memory.rooms[roomName][RMEM.PORTALS]!,
-			(savedPortal) => typeof savedPortal.dest == "string"
-		);
-		const nonExpiredPortals = _.filter(
-			localPortals,
+		portalData = _.filter(
+			portalData,
 			(portal) => Game.time < portal[MEM.EXPIRATION]
 		);
-		return _.map(nonExpiredPortals, (savedPortal) => {
+		return _.map(portalData, (savedPortal) => {
 			const pos = unpackCoordAsPos(savedPortal.c, roomName);
-			const destinationPos = unpackPos(<string>savedPortal.dest)!;
+			let dest;
+			if (typeof savedPortal.dest === "string") {
+				dest = unpackPos(savedPortal.dest)!;
+			} else {
+				dest = savedPortal.dest;
+			}
 			const expiration = savedPortal[MEM.EXPIRATION];
 			return {
 				pos: pos,
-				destination: destinationPos,
+				destination: dest,
 				expiration: expiration,
 			};
 		});
@@ -556,11 +554,6 @@ export class RoomIntel {
 					[MEM.EXPIRATION]: expiration,
 				};
 			});
-			const _uniquePortals = _.unique(room.portals, (portal) =>
-				portal.destination instanceof RoomPosition ?
-					packPos(portal.destination)
-				:	portal.destination
-			);
 			if (!this.memory.portalRooms.includes(room.name)) {
 				this.memory.portalRooms.push(room.name);
 			}
@@ -1043,30 +1036,50 @@ export class RoomIntel {
 	}
 
 	/**
+	 * Get the list of all known portals.
+	 *
+	 * @param includeIntershard Whether to include intershard portals
+	 */
+	static findAllPortals(includeIntershard = false) {
+		const roomNames = [];
+		for (const [name, mem] of entries(Memory.rooms)) {
+			if (!mem[RMEM.PORTALS] || mem[RMEM.PORTALS].length === 0) {
+				continue;
+			}
+			roomNames.push(name);
+		}
+
+		const portals = [];
+		for (const roomName of roomNames) {
+			let portalInfos = this.getPortalInfo(roomName);
+			if (!includeIntershard) {
+				portalInfos = portalInfos.filter((p) => p.roomDestination);
+			}
+			portals.push(...portalInfos);
+		}
+		return portals;
+	}
+
+	/**
 	 * Returns the portals that are within a specified range of a colony indexed by their room
 	 */
 	static findPortalsInRange(
 		roomName: string,
 		range: number,
-		_includeIntershard = false
-	): { [roomName: string]: SavedPortal[] } {
-		const potentialPortalRooms = Cartographer.findRoomsInRange(
-			roomName,
-			range
-		).filter(
-			(roomName) => Cartographer.roomType(roomName) == ROOMTYPE_CORE
-		);
-		// Examine for portals
-		const portalRooms = potentialPortalRooms.filter(
-			(roomName) =>
-				Memory.rooms[roomName] && !!Memory.rooms[roomName][RMEM.PORTALS]
-		);
-		const rooms: { [name: string]: SavedPortal[] } = {};
-		for (const roomName of portalRooms) {
-			const roomPortals = Memory.rooms[roomName][RMEM.PORTALS]; // to prevent TS errors
-			if (roomPortals != undefined && roomPortals.length > 0) {
-				rooms[roomName] = roomPortals;
+		includeIntershard = false
+	): { [roomName: string]: PortalInfo[] } {
+		const portals = this.findAllPortals(includeIntershard);
+
+		const rooms: { [name: string]: PortalInfo[] } = {};
+		for (const portal of portals) {
+			if (
+				Game.map.getRoomLinearDistance(roomName, portal.pos.roomName) >
+				range
+			) {
+				continue;
 			}
+			rooms[roomName] ??= [];
+			rooms[roomName].push(portal);
 		}
 		return rooms;
 	}
@@ -1206,7 +1219,7 @@ export class RoomIntel {
 			if (portals) {
 				if (allowPortals === "interOnly") {
 					portals = portals.filter(
-						(portal) => portal.destination instanceof RoomPosition
+						(portal) => portal.roomDestination
 					);
 				}
 
