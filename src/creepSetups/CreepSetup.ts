@@ -93,7 +93,7 @@ export class CreepSetup {
 		const body = this.generateBody(availableEnergy);
 		const bodyCounts = _.countBy(body);
 
-		const boosts: ResourceConstant[] = [];
+		const boosts: MineralBoostConstant[] = [];
 
 		if (this.boosts.length > 0 && colony.evolutionChamber) {
 			for (const boostType of this.boosts) {

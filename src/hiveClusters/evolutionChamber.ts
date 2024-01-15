@@ -522,7 +522,7 @@ export class EvolutionChamber extends HiveCluster {
 	bestBoostAvailable(
 		boostType: BoostType,
 		amount: number
-	): ResourceConstant | undefined {
+	): MineralBoostConstant | undefined {
 		if (PHASE != "run") {
 			log.trace(
 				new Error(

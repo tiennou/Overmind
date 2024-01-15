@@ -171,7 +171,7 @@ interface CreepMemory {
 	role: string;
 	task: ProtoTask | null;
 	sleepUntil?: number;
-	needBoosts?: ResourceConstant[];
+	needBoosts?: MineralBoostConstant[];
 	data: {
 		origin: string;
 		/** Bunker Queens only */

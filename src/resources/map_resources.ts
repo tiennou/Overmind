@@ -239,31 +239,73 @@ export const BOOST_PARTS: { [boost: string]: BodyPartConstant } = {
 	XGHO2: TOUGH,
 };
 
+export type HARVEST = "harvest";
+export type CONSTRUCT = "construct";
+export type DISMANTLE = "dismantle";
+export type UPGRADE = "upgrade";
+export const HARVEST: HARVEST = "harvest";
+export const CONSTRUCT: CONSTRUCT = "construct";
+export const DISMANTLE: DISMANTLE = "dismantle";
+export const UPGRADE: UPGRADE = "upgrade";
+
 export type BoostType =
-	| "attack"
-	| "carry"
-	| "ranged"
-	| "heal"
-	| "move"
-	| "tough"
-	| "harvest"
-	| "construct"
-	| "dismantle"
-	| "upgrade";
+	| ATTACK
+	| CARRY
+	| RANGED_ATTACK
+	| HEAL
+	| MOVE
+	| TOUGH
+	| HARVEST
+	| CONSTRUCT
+	| DISMANTLE
+	| UPGRADE;
 
 export const BoostTypeBodyparts: {
 	[boostType in BoostType]: BodyPartConstant;
 } = {
-	attack: ATTACK,
-	carry: CARRY,
-	ranged: RANGED_ATTACK,
-	heal: HEAL,
-	move: MOVE,
-	tough: TOUGH,
-	harvest: WORK,
-	construct: WORK,
-	dismantle: WORK,
-	upgrade: WORK,
+	[ATTACK]: ATTACK,
+	[CARRY]: CARRY,
+	[RANGED_ATTACK]: RANGED_ATTACK,
+	[HEAL]: HEAL,
+	[MOVE]: MOVE,
+	[TOUGH]: TOUGH,
+	[HARVEST]: WORK,
+	[CONSTRUCT]: WORK,
+	[DISMANTLE]: WORK,
+	[UPGRADE]: WORK,
+};
+
+/** Subkeys of the BOOST object spec */
+export type BoostModifier =
+	| "harvest"
+	| "build"
+	| "repair"
+	| "dismantle"
+	| "upgradeController"
+	| "attack"
+	| "rangedAttack"
+	| "rangedMassAttack"
+	| "heal"
+	| "rangedHeal"
+	| "capacity"
+	| "fatigue"
+	| "damage";
+
+export const BoostTypeToBoostArray: {
+	[boostType in BoostType]: BoostModifier;
+} = {
+	[ATTACK]: ATTACK,
+	[CARRY]: "capacity",
+	[RANGED_ATTACK]: "rangedAttack",
+	// [RANGED_MASS_ATTACK]: "rangedMassAttack",
+	[HEAL]: HEAL,
+	[MOVE]: "fatigue",
+	[TOUGH]: "damage",
+	[HARVEST]: "harvest",
+	[CONSTRUCT]: "build",
+	// [REPAIR]: "repair",
+	[DISMANTLE]: "dismantle",
+	[UPGRADE]: "upgradeController",
 };
 
 export type BoostTier = "T1" | "T2" | "T3";
@@ -284,7 +326,9 @@ export function isBoostType(str: string): str is BoostType {
 }
 
 export const BOOST_TIERS: {
-	[boostType in BoostType]: { [boostTier in BoostTier]: ResourceConstant };
+	[boostType in BoostType]: {
+		[boostTier in BoostTier]: MineralBoostConstant;
+	};
 } = {
 	attack: {
 		T1: "UH",
@@ -296,7 +340,7 @@ export const BOOST_TIERS: {
 		T2: "KH2O",
 		T3: "XKH2O",
 	},
-	ranged: {
+	ranged_attack: {
 		T1: "KO",
 		T2: "KHO2",
 		T3: "XKHO2",

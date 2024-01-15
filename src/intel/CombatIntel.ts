@@ -16,8 +16,12 @@ import { Pathing } from "../movement/Pathing";
 import { profile } from "../profiler/decorator";
 import {
 	BOOST_TIERS,
+	BoostModifier,
 	BoostType,
 	BoostTypeBodyparts,
+	BoostTypeToBoostArray,
+	CONSTRUCT,
+	DISMANTLE,
 } from "../resources/map_resources";
 import { Cartographer } from "../utilities/Cartographer";
 import { Visualizer } from "../visuals/Visualizer";
@@ -509,15 +513,15 @@ export class CombatIntel {
 	static getBodyPotential(
 		body: BodyPartDefinition[],
 		type: BoostType,
-		intendedBoosts: ResourceConstant[] = []
+		intendedBoosts: MineralBoostConstant[] = []
 	): number {
+		const bodyPart = BoostTypeBodyparts[type];
 		return _.sum(body, function (part) {
 			if (part.hits == 0) {
 				return 0;
 			}
-			const bodyPart = BoostTypeBodyparts[type];
 			if (part.type === bodyPart) {
-				let boost = part.boost as ResourceConstant | undefined;
+				let boost = part.boost as MineralBoostConstant | undefined;
 				if (!boost && intendedBoosts) {
 					boost = _.find(
 						intendedBoosts,
@@ -527,14 +531,13 @@ export class CombatIntel {
 							boost == BOOST_TIERS[type].T3
 					);
 				}
-				// @ts-expect-error mumble-mumble boost type names
 				const boosts: Partial<
 					Record<
 						BodyPartConstant,
 						Partial<
 							Record<
-								ResourceConstant,
-								Partial<Record<BoostType, number>>
+								MineralBoostConstant,
+								Partial<Record<BoostModifier, number>>
 							>
 						>
 					>
@@ -542,7 +545,8 @@ export class CombatIntel {
 				if (!boost) {
 					return 1;
 				}
-				return boosts[bodyPart]?.[boost]?.[type] ?? 0;
+				const key = BoostTypeToBoostArray[type];
+				return boosts[bodyPart]?.[boost]?.[key] ?? 0;
 			}
 			return 0;
 		});
@@ -560,7 +564,7 @@ export class CombatIntel {
 	static getBodyPartPotential(
 		body: BodyPartConstant[],
 		type: BoostType,
-		intendedBoosts: ResourceConstant[] = []
+		intendedBoosts: MineralBoostConstant[] = []
 	) {
 		const bodyDef = body.map((part) => ({
 			type: part,
@@ -578,7 +582,7 @@ export class CombatIntel {
 				creep.memory.needBoosts
 			:	[];
 		return this.cache(creep, "healPotential", () =>
-			this.getBodyPotential(creep.body, "heal", intendedBoosts)
+			this.getBodyPotential(creep.body, HEAL, intendedBoosts)
 		);
 	}
 
@@ -621,7 +625,7 @@ export class CombatIntel {
 				creep.memory.needBoosts
 			:	[];
 		return this.cache(creep, "attackPotential", () =>
-			this.getBodyPotential(creep.body, "attack", intendedBoosts)
+			this.getBodyPotential(creep.body, ATTACK, intendedBoosts)
 		);
 	}
 
@@ -641,7 +645,7 @@ export class CombatIntel {
 				creep.memory.needBoosts
 			:	[];
 		return this.cache(creep, "rangedAttackPotential", () =>
-			this.getBodyPotential(creep.body, "ranged", intendedBoosts)
+			this.getBodyPotential(creep.body, RANGED_ATTACK, intendedBoosts)
 		);
 	}
 
@@ -663,7 +667,7 @@ export class CombatIntel {
 				creep.memory.needBoosts
 			:	[];
 		return this.cache(creep, "dismantlePotential", () =>
-			this.getBodyPotential(creep.body, "dismantle", intendedBoosts)
+			this.getBodyPotential(creep.body, DISMANTLE, intendedBoosts)
 		);
 	}
 
@@ -680,7 +684,7 @@ export class CombatIntel {
 				creep.memory.needBoosts
 			:	[];
 		return this.cache(creep, "repairPotential", () =>
-			this.getBodyPotential(creep.body, "construct", intendedBoosts)
+			this.getBodyPotential(creep.body, CONSTRUCT, intendedBoosts)
 		);
 	}
 
@@ -700,7 +704,7 @@ export class CombatIntel {
 				creep.memory.needBoosts
 			:	[];
 		return this.cache(creep, "carryPotential", () =>
-			this.getBodyPotential(creep.body, "carry", intendedBoosts)
+			this.getBodyPotential(creep.body, CARRY, intendedBoosts)
 		);
 	}
 
@@ -834,7 +838,7 @@ export class CombatIntel {
 					toCreep(unit)!,
 					countIntendedBoosts
 				)
-			:	this.getBodyPartPotential(unit.body, "ranged", unit.boosts)
+			:	this.getBodyPartPotential(unit.body, RANGED_ATTACK, unit.boosts)
 		);
 		const heal = _.sum(creeps, (unit) =>
 			isAnyZerg(unit) || isCreep(unit) ?
@@ -844,7 +848,7 @@ export class CombatIntel {
 		const dismantle = _.sum(creeps, (unit) =>
 			isAnyZerg(unit) || isCreep(unit) ?
 				this.getDismantlePotential(toCreep(unit)!, countIntendedBoosts)
-			:	this.getBodyPartPotential(unit.body, "dismantle", unit.boosts)
+			:	this.getBodyPartPotential(unit.body, DISMANTLE, unit.boosts)
 		);
 		return { attack, ranged, heal, dismantle };
 	}

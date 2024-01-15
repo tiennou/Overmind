@@ -22,7 +22,7 @@ export const REACTION_PRIORITIES = [
 	// T1 Boosts
 	BOOST_TIERS.attack.T1,
 	BOOST_TIERS.heal.T1,
-	BOOST_TIERS.ranged.T1,
+	BOOST_TIERS.ranged_attack.T1,
 	BOOST_TIERS.move.T1,
 	BOOST_TIERS.construct.T1,
 	BOOST_TIERS.dismantle.T1,
@@ -40,7 +40,7 @@ export const REACTION_PRIORITIES = [
 	// T2 Boosts
 	BOOST_TIERS.attack.T2,
 	BOOST_TIERS.heal.T2,
-	BOOST_TIERS.ranged.T2,
+	BOOST_TIERS.ranged_attack.T2,
 	BOOST_TIERS.move.T2,
 	// BOOST_TIERS.construct.T2,
 	BOOST_TIERS.dismantle.T2,
@@ -52,7 +52,7 @@ export const REACTION_PRIORITIES = [
 	// T3 Boosts
 	BOOST_TIERS.attack.T3,
 	BOOST_TIERS.heal.T3,
-	BOOST_TIERS.ranged.T3,
+	BOOST_TIERS.ranged_attack.T3,
 	BOOST_TIERS.move.T3,
 	// BOOST_TIERS.construct.T3,
 	BOOST_TIERS.dismantle.T3,
@@ -266,7 +266,7 @@ export class _Abathur {
 	}
 
 	isRangedBoost(resource: ResourceConstant): boolean {
-		return !!_boostTypesTierLookup.ranged[resource];
+		return !!_boostTypesTierLookup.ranged_attack[resource];
 	}
 
 	isHealBoost(resource: ResourceConstant): boolean {

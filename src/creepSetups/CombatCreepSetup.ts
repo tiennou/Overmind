@@ -55,7 +55,7 @@ export interface SimpleBodyOpts {
 
 export interface BodyGeneratorReturn {
 	body: BodyPartConstant[];
-	boosts: ResourceConstant[];
+	boosts: MineralBoostConstant[];
 }
 
 interface AvailableBoosts {
@@ -165,7 +165,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 					LAB_BOOST_MINERAL * (opts.maxParts.tough || 0);
 				availableBoosts.tough =
 					colony.evolutionChamber.bestBoostAvailable(
-						"tough",
+						TOUGH,
 						toughBoostNeeded
 					);
 			}
@@ -174,7 +174,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 					LAB_BOOST_MINERAL * (opts.maxParts.heal || 0);
 				availableBoosts.heal =
 					colony.evolutionChamber.bestBoostAvailable(
-						"heal",
+						HEAL,
 						healBoostNeeded
 					);
 			}
@@ -183,7 +183,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 					LAB_BOOST_MINERAL * (opts.maxParts.ranged || 0);
 				availableBoosts.ranged =
 					colony.evolutionChamber.bestBoostAvailable(
-						"ranged",
+						RANGED_ATTACK,
 						rangedBoostNeeded
 					);
 			}
@@ -192,7 +192,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 					LAB_BOOST_MINERAL * (opts.maxParts.attack || 0);
 				availableBoosts.attack =
 					colony.evolutionChamber.bestBoostAvailable(
-						"attack",
+						ATTACK,
 						attackBoostNeeded
 					);
 			}
@@ -201,7 +201,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 					LAB_BOOST_MINERAL * (opts.maxParts.carry || 0);
 				availableBoosts.carry =
 					colony.evolutionChamber.bestBoostAvailable(
-						"carry",
+						CARRY,
 						carryBoostNeeded
 					);
 			}
@@ -245,7 +245,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 				const moveBoostNeeded = (LAB_BOOST_MINERAL * 50) / 3; // T1 most boost lets you do move ratio of 2 : 1
 				availableBoosts.move =
 					colony.evolutionChamber.bestBoostAvailable(
-						"move",
+						MOVE,
 						moveBoostNeeded
 					);
 			}
@@ -477,7 +477,9 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		);
 
 		const body = CombatCreepSetup.arrangeBodyParts(bodyCounts, opts);
-		const boosts = _.compact(_.values<ResourceConstant>(availableBoosts));
+		const boosts = _.compact(
+			_.values<MineralBoostConstant>(availableBoosts)
+		);
 		return { body: body, boosts: boosts };
 	}
 
@@ -545,7 +547,9 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		);
 
 		const body = CombatCreepSetup.arrangeBodyParts(bodyCounts, opts);
-		const boosts = _.compact<ResourceConstant>(_.values(availableBoosts));
+		const boosts = _.compact<MineralBoostConstant>(
+			_.values(availableBoosts)
+		);
 		return { body: body, boosts: boosts };
 	}
 
@@ -612,7 +616,9 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		);
 
 		const body = CombatCreepSetup.arrangeBodyParts(bodyCounts, opts);
-		const boosts = _.compact<ResourceConstant>(_.values(availableBoosts));
+		const boosts = _.compact<MineralBoostConstant>(
+			_.values(availableBoosts)
+		);
 		return { body: body, boosts: boosts };
 	}
 
@@ -681,7 +687,9 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		);
 
 		const body = CombatCreepSetup.arrangeBodyParts(bodyCounts, opts);
-		const boosts = _.compact<ResourceConstant>(_.values(availableBoosts));
+		const boosts = _.compact<MineralBoostConstant>(
+			_.values(availableBoosts)
+		);
 		return { body: body, boosts: boosts };
 	}
 
@@ -746,7 +754,9 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		);
 
 		const body = CombatCreepSetup.arrangeBodyParts(bodyCounts, opts);
-		const boosts = _.compact<ResourceConstant>(_.values(availableBoosts));
+		const boosts = _.compact<MineralBoostConstant>(
+			_.values(availableBoosts)
+		);
 		return { body: body, boosts: boosts };
 	}
 
@@ -804,7 +814,9 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		);
 
 		const body = CombatCreepSetup.arrangeBodyParts(bodyCounts, opts);
-		const boosts = _.compact<ResourceConstant>(_.values(availableBoosts));
+		const boosts = _.compact<MineralBoostConstant>(
+			_.values(availableBoosts)
+		);
 		return { body: body, boosts: boosts };
 	}
 }
@@ -871,7 +883,7 @@ export class HydraliskSetup extends CombatCreepSetup {
 				heal: opts.healing ? 4 : 0,
 			},
 			maxParts: { ranged: 30, tough: 8, heal: 10 },
-			boosts: opts.boosted ? ["ranged", "tough", "heal", "move"] : [],
+			boosts: opts.boosted ? [RANGED_ATTACK, TOUGH, HEAL, MOVE] : [],
 		};
 		const bodyOpts: Full<BodyOpts> = _.defaults(
 			opts.bodyOpts || {},
@@ -908,7 +920,7 @@ export class TransfuserSetup extends CombatCreepSetup {
 				ranged: opts.withRanged ? 4 : 0,
 			},
 			maxParts: { heal: 30, tough: 8, ranged: 10 },
-			boosts: opts.boosted ? ["ranged", "tough", "heal", "move"] : [],
+			boosts: opts.boosted ? [RANGED_ATTACK, TOUGH, HEAL, MOVE] : [],
 		};
 		const bodyOpts: Full<BodyOpts> = _.defaults(
 			opts.bodyOpts || {},
@@ -949,7 +961,7 @@ export class LurkerSetup extends CombatCreepSetup {
 			maxParts: { work: 30, tough: 10, ranged: 10, heal: 2 },
 			boosts:
 				opts.boosted ?
-					["dismantle", "ranged", "tough", "heal", "move"]
+					["dismantle", RANGED_ATTACK, TOUGH, HEAL, MOVE]
 				:	[],
 		};
 		const bodyOpts: Full<BodyOpts> = _.defaults(
