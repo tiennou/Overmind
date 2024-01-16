@@ -312,16 +312,16 @@ export type BoostTier = "T1" | "T2" | "T3";
 
 export function isBoostType(str: string): str is BoostType {
 	return (
-		str === "attack" ||
-		str === "carry" ||
-		str === "ranged" ||
-		str === "heal" ||
-		str === "move" ||
-		str === "tough" ||
-		str === "harvest" ||
-		str === "construct" ||
-		str === "dismantle" ||
-		str === "upgrade"
+		str === ATTACK ||
+		str === CARRY ||
+		str === RANGED_ATTACK ||
+		str === HEAL ||
+		str === MOVE ||
+		str === TOUGH ||
+		str === HARVEST ||
+		str === CONSTRUCT ||
+		str === DISMANTLE ||
+		str === UPGRADE
 	);
 }
 
