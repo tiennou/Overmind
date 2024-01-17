@@ -1,15 +1,16 @@
-import { Abathur } from "resources/Abathur";
 import { Colony } from "../Colony";
 import { log } from "console/log";
 import { RESOURCE_IMPORTANCE_ALL } from "resources/map_resources";
 import { isStructure } from "declarations/typeGuards";
+import { AnyZerg } from "zerg/AnyZerg";
 
 type ManagedResourceStructure =
 	| StructureStorage
 	| StructureTerminal
 	| StructureFactory;
 
-const TERMINAL_THRESHOLDS = {
+/** Thresholds blueprint for storage/terminal balancing */
+const TERMINAL_BALANCE_THRESHOLDS = {
 	energy: {
 		target: 50000,
 		tolerance: 5000,
@@ -49,30 +50,30 @@ function getTerminalThresholds(
 ): { target: number; tolerance: number } | undefined {
 	let thresholds;
 	if (resource == RESOURCE_ENERGY) {
-		thresholds = TERMINAL_THRESHOLDS.energy;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.energy;
 	} else if (resource == RESOURCE_POWER) {
-		thresholds = TERMINAL_THRESHOLDS.power;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.power;
 	} else if (resource == RESOURCE_OPS) {
-		thresholds = TERMINAL_THRESHOLDS.ops;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.ops;
 	} else if (Abathur.isBaseMineral(resource)) {
-		thresholds = TERMINAL_THRESHOLDS.baseMinerals;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.baseMinerals;
 	} else if (
 		Abathur.isIntermediateReactant(resource) ||
 		resource == RESOURCE_GHODIUM
 	) {
-		thresholds = TERMINAL_THRESHOLDS.intermediateReactants;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.intermediateReactants;
 	} else if (Abathur.isBoost(resource)) {
-		thresholds = TERMINAL_THRESHOLDS.boosts;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.boosts;
 	} else if (Abathur.isRawCommodity(resource)) {
-		thresholds = TERMINAL_THRESHOLDS.commodities_raw;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.commodities_raw;
 	} else if (Abathur.isCommodity(resource)) {
-		thresholds = TERMINAL_THRESHOLDS.commodities;
+		thresholds = TERMINAL_BALANCE_THRESHOLDS.commodities;
 	}
 	return thresholds;
 }
 
-// Needs to be after class declaration because fuck lack of class hoisting
-const TERMINAL_THRESHOLDS_ALL: {
+/** Per-resource thresholds for storage/terminal balancing */
+const TERMINAL_BALANCE_THRESHOLDS_ALL: {
 	[resource: string]: { target: number; tolerance: number } | undefined;
 } = _.zipObject(
 	RESOURCES_ALL,
@@ -132,21 +133,38 @@ export class ResourceManager {
 		);
 	}
 
+	static shouldDumpResource(
+		colony: Colony,
+		resource: ResourceConstant,
+		amount = 0
+	) {
+		if (colony.storage && !this.shouldDump(colony.storage)) {
+			// No need to dump if our storage isn't full
+			return false;
+		}
+		if (colony.terminal && this.shouldDump(colony.terminal)) {
+			// Terminal is over dump threshold, just dump the resource
+			return true;
+		}
+		// Otherwise check the terminal network threshold
+		const threshold = Overmind.terminalNetwork.thresholds(colony, resource);
+		return (
+			colony.assets[resource] + amount >= (threshold.surplus ?? Infinity)
+		);
+	}
+
 	/** Get the next resource that can be dumped from the given structure */
-	static getNextResourceToDump(store: { store: StoreDefinition }) {
+	static getNextResourceToDump(
+		colony: Colony,
+		target: AnyZerg | ManagedResourceStructure
+	) {
 		// Gather the list of resource that aren't tracked or are over threshold and reverse-sort them by importance
-		const contents = store.store.contents
+		const contents = target.store.contents
 			.filter(([resource, amount]) => {
-				const threshold =
-					(
-						isStructure(store) &&
-						store.structureType === STRUCTURE_TERMINAL
-					) ?
-						this.getTerminalThresholdForResource(resource)
-					:	undefined;
-				return (
-					!threshold ||
-					threshold.target + threshold.tolerance <= amount
+				return this.shouldDumpResource(
+					colony,
+					resource,
+					!isStructure(target) ? amount : 0
 				);
 			})
 			.map<[ResourceConstant, number, number]>(([res, amount]) => [
@@ -161,8 +179,11 @@ export class ResourceManager {
 		return contents.length > 0 ? contents[0][0] : undefined;
 	}
 
-	static getTerminalThresholdForResource(resource: ResourceConstant) {
-		return TERMINAL_THRESHOLDS_ALL[resource];
+	static getBalancedThresholdForResource(
+		colony: Colony,
+		resource: ResourceConstant
+	) {
+		return TERMINAL_BALANCE_THRESHOLDS_ALL[resource];
 	}
 
 	/**
@@ -176,7 +197,7 @@ export class ResourceManager {
 		let target: StructureStorage | StructureTerminal | undefined;
 		// Check if the terminal is below its target
 		if (colony.terminal) {
-			const thresholds = TERMINAL_THRESHOLDS_ALL[resource];
+			const thresholds = TERMINAL_BALANCE_THRESHOLDS_ALL[resource];
 			if (!thresholds) {
 				log.warning(
 					`${colony.print}: ${colony.terminal} doesn't want ${resource}!`
@@ -204,7 +225,7 @@ export class ResourceManager {
 					target = colony.terminal;
 				}
 			}
-			if (ResourceManager.isOverCapacity(colony.terminal)) {
+			if (this.isOverCapacity(colony.terminal)) {
 				if (colony.memory.debug) {
 					log.alert(
 						`${colony.terminal.print} overfilled; can't accept ${amount} of ${resource}`
@@ -215,7 +236,7 @@ export class ResourceManager {
 		}
 		// Check storage if it's below the cap
 		if (!target && colony.storage) {
-			if (ResourceManager.isOverCapacity(colony.storage)) {
+			if (this.isOverCapacity(colony.storage)) {
 				if (colony.memory.debug) {
 					log.alert(
 						`${colony.storage.print} overfilled; can't accept ${amount} of ${resource}`

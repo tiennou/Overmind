@@ -374,14 +374,17 @@ export class CommandCenterOverlord extends Overlord {
 		target: StructureTerminal | StructureStorage
 	): boolean {
 		// Start by dumping unimportant stuff from the manager
-		let resource = ResourceManager.getNextResourceToDump(manager);
+		let resource = ResourceManager.getNextResourceToDump(
+			this.colony,
+			manager
+		);
 		if (resource) {
 			manager.drop(resource);
 			return true;
 		}
 
 		// Then go through the target and do the same thing
-		resource = ResourceManager.getNextResourceToDump(target);
+		resource = ResourceManager.getNextResourceToDump(this.colony, target);
 		if (resource) {
 			manager.task = Tasks.drop(manager.pos, resource).fork(
 				Tasks.withdraw(target, resource)

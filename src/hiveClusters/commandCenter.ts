@@ -275,8 +275,10 @@ export class CommandCenter extends HiveCluster {
 
 		for (const [resource, amount] of entries(this.colony.assets)) {
 			// Get target and tolerance for the resource and skip if you don't care about it or have none of it
-			const thresholds =
-				ResourceManager.getTerminalThresholdForResource(resource);
+			const thresholds = ResourceManager.getBalancedThresholdForResource(
+				this.colony,
+				resource
+			);
 			if (amount <= 0 || !thresholds) {
 				this.debug(() =>
 					this.colony.assets[resource] <= 0 ?
