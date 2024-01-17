@@ -1,21 +1,5 @@
 import { PERMACACHE } from "caching/PermaCache";
 
-String.prototype.padRight = function (
-	this: string,
-	length: number,
-	char = " "
-): string {
-	return this + char.repeat(Math.max(length - this.length, 0));
-};
-
-String.prototype.padLeft = function (
-	this: string,
-	length: number,
-	char = " "
-): string {
-	return char.repeat(Math.max(length - this.length, 0)) + this;
-};
-
 Number.prototype.toPercent = function (this: number, decimals = 0): string {
 	return (this * 100).toFixed(decimals) + "%";
 };

@@ -286,11 +286,11 @@ export function toColumns(
 	for (const key in obj) {
 		if (opts.justify) {
 			ret.push(
-				key.padRight(keyPadding, opts.padChar) +
-					obj[key].padLeft(valPadding, opts.padChar)
+				key.padEnd(keyPadding, opts.padChar) +
+					obj[key].padStart(valPadding, opts.padChar)
 			);
 		} else {
-			ret.push(key.padRight(keyPadding, opts.padChar) + obj[key]);
+			ret.push(key.padEnd(keyPadding, opts.padChar) + obj[key]);
 		}
 	}
 

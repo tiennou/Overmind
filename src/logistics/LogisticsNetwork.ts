@@ -812,16 +812,16 @@ export class LogisticsNetwork {
 				transporter.name + " " + transporter.pos.print;
 			const request = this._matching![transporter.name]!;
 			const requestStr = request.target.print;
-			console.log(`${transporterStr.padRight(35)} : ${requestStr}`);
+			console.log(`${transporterStr.padEnd(35)} : ${requestStr}`);
 		}
 		for (const transporter of unmatchedTransporters) {
 			const transporterStr =
 				transporter.name + " " + transporter.pos.print;
-			console.log(`${transporterStr.padRight(35)} : ${""}`);
+			console.log(`${transporterStr.padEnd(35)} : ${""}`);
 		}
 		for (const request of unmatchedRequests) {
 			const requestStr = request.target.print;
-			console.log(`${"".padRight(35)} : ${requestStr}`);
+			console.log(`${"".padEnd(35)} : ${requestStr}`);
 		}
 		console.log();
 	}

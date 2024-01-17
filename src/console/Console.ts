@@ -336,7 +336,7 @@ export class OvermindConsole {
 		const descrMsg = toColumns(descr, { justify: true, padChar: "." });
 		const maxLineLength = _.max(_.map(descrMsg, (line) => line.length)) + 2;
 		msg +=
-			"Console Commands: ".padRight(maxLineLength, "=") +
+			"Console Commands: ".padEnd(maxLineLength, "=") +
 			"\n" +
 			descrMsg.join("\n");
 
@@ -679,8 +679,8 @@ export class OvermindConsole {
 		} construction sites currently present: \n`;
 		for (const site of sites) {
 			msg +=
-				`${bullet}Type: ${site.structureType}`.padRight(20) +
-				`Pos: ${site.pos.print}`.padRight(65) +
+				`${bullet}Type: ${site.structureType}`.padEnd(20) +
+				`Pos: ${site.pos.print}`.padEnd(65) +
 				`Progress: ${site.progress} / ${site.progressTotal} \n`;
 		}
 		console.log(msg);
@@ -703,8 +703,8 @@ export class OvermindConsole {
 		let msg = "";
 		for (const dir of matches) {
 			msg +=
-				`${bullet}Name: ${dir.print}`.padRight(70) +
-				`Colony: ${dir.colony.print}`.padRight(55) +
+				`${bullet}Name: ${dir.print}`.padEnd(70) +
+				`Colony: ${dir.colony.print}`.padEnd(55) +
 				`Pos: ${dir.pos.print}\n`;
 		}
 		console.log(msg);
@@ -732,8 +732,8 @@ export class OvermindConsole {
 		let msg = "";
 		for (const dir of directives) {
 			msg +=
-				`Type: ${dir.directiveName}`.padRight(20) +
-				`Name: ${dir.name}`.padRight(15) +
+				`Type: ${dir.directiveName}`.padEnd(20) +
+				`Name: ${dir.name}`.padEnd(15) +
 				`Pos: ${dir.pos.print}\n`;
 		}
 		console.log(msg);
@@ -987,7 +987,7 @@ export class OvermindConsole {
 					outpost
 				);
 
-				msg += `\t - ${d.room} ${`(${d.type})`.padLeft(6)}: `;
+				msg += `\t - ${d.room} ${`(${d.type})`.padStart(6)}: `;
 				msg += `${(
 					(d.energyPerSource * d.sources) /
 					ENERGY_REGEN_TIME

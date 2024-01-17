@@ -1277,9 +1277,7 @@ export class TraderJoe implements ITradeNetwork {
 				).toFixed(2);
 				// I am selling to another person's buy order
 				if (transaction.order.type == ORDER_BUY) {
-					const coststr = `[+${cost}c]`.padRight(
-						"[-10000.00c]".length
-					);
+					const coststr = `[+${cost}c]`.padEnd("[-10000.00c]".length);
 					msg =
 						coststr +
 						` sell direct: ${printRoomName(
@@ -1297,9 +1295,7 @@ export class TraderJoe implements ITradeNetwork {
 					}
 				} else {
 					// Someone else is buying from by sell order
-					const coststr = `[+${cost}c]`.padRight(
-						"[-10000.00c]".length
-					);
+					const coststr = `[+${cost}c]`.padEnd("[-10000.00c]".length);
 					msg =
 						coststr +
 						` sell order: ${printRoomName(
@@ -1335,9 +1331,7 @@ export class TraderJoe implements ITradeNetwork {
 				).toFixed(2);
 				// I am receiving resources from a direct purchase of someone else's sell order
 				if (transaction.order.type == ORDER_SELL) {
-					const coststr = `[-${cost}c]`.padRight(
-						"[-10000.00c]".length
-					);
+					const coststr = `[-${cost}c]`.padEnd("[-10000.00c]".length);
 					msg =
 						coststr +
 						` buy direct: ${printRoomName(
@@ -1355,9 +1349,7 @@ export class TraderJoe implements ITradeNetwork {
 					}
 				} else {
 					// Another person is selling to my buy order
-					const coststr = `[-${cost}c]`.padRight(
-						"[-10000.00c]".length
-					);
+					const coststr = `[-${cost}c]`.padEnd("[-10000.00c]".length);
 					msg =
 						coststr +
 						` buy order: ${printRoomName(

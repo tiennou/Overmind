@@ -436,13 +436,6 @@ interface StructurePortal {
 }
 
 // eslint-disable-next-line
-interface String {
-	padRight(length: number, char?: string): string;
-
-	padLeft(length: number, char?: string): string;
-}
-
-// eslint-disable-next-line
 interface Number {
 	toPercent(decimals?: number): string;
 
