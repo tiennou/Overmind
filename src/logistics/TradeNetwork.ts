@@ -28,6 +28,8 @@ import {
 import { entries, maxBy, minBy, printRoomName } from "../utilities/utils";
 import { config } from "config";
 
+const MAX_CANCELLED_ORDER_BACKLOG = 100;
+
 interface MarketCache {
 	sell: { [resourceType: string]: { high: number; low: number } };
 	buy: { [resourceType: string]: { high: number; low: number } };
@@ -803,8 +805,12 @@ export class TraderJoe implements ITradeNetwork {
 				);
 				(<any>order).lifetime = Game.time - order.created;
 				this.memory.canceledOrders.push(order);
-				if (this.memory.canceledOrders.length > 300) {
-					this.memory.canceledOrders.shift(); // only keep this many orders in memory
+				// only keep this many orders in memory
+				while (
+					this.memory.canceledOrders.length >
+					MAX_CANCELLED_ORDER_BACKLOG
+				) {
+					this.memory.canceledOrders.shift();
 				}
 			}
 		}
