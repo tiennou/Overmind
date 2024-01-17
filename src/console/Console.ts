@@ -11,7 +11,7 @@ import { ExpansionEvaluator } from "../strategy/ExpansionEvaluator";
 import { Cartographer } from "../utilities/Cartographer";
 import { EmpireAnalysis } from "../utilities/EmpireAnalysis";
 import { alignedNewline, bullet } from "../utilities/stringConstants";
-import { color, dump, toColumns } from "../utilities/utils";
+import { color, dump, maxBy, toColumns } from "../utilities/utils";
 import { asciiLogoRL, asciiLogoSmall } from "../visuals/logos";
 import { log } from "./log";
 import { DirectiveOutpost } from "directives/colony/outpost";
@@ -1084,35 +1084,62 @@ export class OvermindConsole {
 	}
 
 	private static recursiveMemoryProfile(
+		prefix: string,
 		memoryObject: any,
-		sizes: RecursiveObject,
+		sizes: { [key: string]: number },
 		currentDepth: number
-	): void {
+	): number {
+		let total = 0;
 		for (const key in memoryObject) {
+			const fullKey = `${prefix}.${key}`;
 			if (
 				currentDepth == 0 ||
 				!_.keys(memoryObject[key]) ||
 				_.keys(memoryObject[key]).length == 0
 			) {
-				sizes[key] = JSON.stringify(memoryObject[key]).length;
+				let len = NaN;
+				try {
+					len = JSON.stringify(memoryObject[key]).length; // 2 for the brackets
+				} catch (e) {
+					if (memoryObject[key] !== undefined) {
+						console.log(
+							`failed to get JSON for ${fullKey}: ${memoryObject[key]}`
+						);
+					}
+				}
+				sizes[fullKey] = len;
+				if (!isNaN(len)) {
+					total += len;
+				}
 			} else {
-				sizes[key] = {};
-				OvermindConsole.recursiveMemoryProfile(
+				total += OvermindConsole.recursiveMemoryProfile(
+					fullKey,
 					memoryObject[key],
-					sizes[key] as RecursiveObject,
+					sizes,
 					currentDepth - 1
 				);
+				sizes[`${prefix}.TOTAL`] = total;
 			}
 		}
+		return total;
 	}
 
 	static profileMemory(root = Memory, depth = 1): RecursiveObject {
-		const sizes: RecursiveObject = {};
+		const sizes: { [key: string]: number } = {};
 		console.log(`Profiling memory...`);
 		const start = Game.cpu.getUsed();
-		OvermindConsole.recursiveMemoryProfile(root, sizes, depth);
+		OvermindConsole.recursiveMemoryProfile("ROOT", root, sizes, depth);
+		const sortedSizes = _.sortBy(Object.entries(sizes), (val) => -val[1]);
 		console.log(`Time elapsed: ${Game.cpu.getUsed() - start}`);
-		console.log(JSON.stringify(sizes, undefined, "\t"));
+		const maxKeyLen =
+			maxBy(sortedSizes, ([k, _v]) => k.length)?.[0].length ?? 0;
+		console.log(
+			sortedSizes
+				.map(
+					([k, v]) => `${k}:${"".padStart(maxKeyLen - k.length)}${v}`
+				)
+				.join("\n")
+		);
 		return sizes;
 	}
 
