@@ -797,7 +797,13 @@ export class _Abathur {
 					// Otherwise, we're allowed to make more of this, so figure out what we should and can make
 					const globalShortage =
 						globalAssets[resource] / numColonies < amount;
-					const localShortage = colony.assets[resource] < amount;
+					const localShortage =
+						colony.assets[resource] -
+							Overmind.terminalNetwork.lockedAmount(
+								colony,
+								resource
+							) <
+						amount;
 					if (globalShortage || localShortage) {
 						// Do we have enough ingredients (or can we obtain enough) to make this step of the reaction?
 						if (

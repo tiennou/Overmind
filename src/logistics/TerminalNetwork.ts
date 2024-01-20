@@ -560,7 +560,10 @@ export class TerminalNetwork {
 		}
 	}
 
-	private lockedAmount(colony: Colony, resource: ResourceConstant): number {
+	/**
+	 * Gets the locked amount for a given resource for a specific colony
+	 */
+	lockedAmount(colony: Colony, resource: ResourceConstant): number {
 		if (
 			this.colonyLockedAmounts[colony.name] &&
 			this.colonyLockedAmounts[colony.name][resource]
