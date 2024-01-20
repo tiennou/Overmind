@@ -224,21 +224,25 @@ export class RoomIntel {
 			portalData,
 			(portal) => Game.time < portal[MEM.EXPIRATION]
 		);
-		return _.map(portalData, (savedPortal) => {
+		const portals = portalData.map((savedPortal) => {
 			const pos = unpackCoordAsPos(savedPortal.c, roomName);
-			let dest;
+			let portal: PortalInfo;
 			if (typeof savedPortal.dest === "string") {
-				dest = unpackPos(savedPortal.dest)!;
+				portal = {
+					pos: pos,
+					roomDestination: unpackPos(savedPortal.dest)!,
+					expiration: savedPortal[MEM.EXPIRATION],
+				};
 			} else {
-				dest = savedPortal.dest;
+				portal = {
+					pos: pos,
+					shardDestination: savedPortal.dest,
+					expiration: savedPortal[MEM.EXPIRATION],
+				};
 			}
-			const expiration = savedPortal[MEM.EXPIRATION];
-			return {
-				pos: pos,
-				destination: dest,
-				expiration: expiration,
-			};
+			return portal;
 		});
+		return portals;
 	}
 
 	/**
