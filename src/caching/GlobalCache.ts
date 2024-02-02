@@ -36,6 +36,7 @@ export class $ { // $ = cash = cache... get it? :D
 		return _cache.structures[cacheKey] as T[];
 	}
 
+	// eslint-disable-next-line
 	static number(saver: { ref: string }, key: string, callback: () => number, timeout = SHORT_CACHE_TIMEOUT): number {
 		const cacheKey = saver.ref + NUMBER_KEY + key;
 		if (_cache.numbers[cacheKey] == undefined || Game.time > _cache.expiration[cacheKey]) {
@@ -71,7 +72,7 @@ export class $ { // $ = cash = cache... get it? :D
 			_cache.lists[cacheKey] = callback();
 			_cache.expiration[cacheKey] = getCacheExpiration(timeout, Math.ceil(timeout / 10));
 		}
-		return _cache.lists[cacheKey];
+		return _cache.lists[cacheKey] as T[];
 	}
 
 	/**
@@ -143,10 +144,12 @@ export class $ { // $ = cash = cache... get it? :D
 			if (_.isObject(thing[key])) {
 				for (const prop in thing[key]) {
 					if (_.isArray(thing[key][prop])) {
-						thing[key][prop] = _.compact(_.map(thing[key][prop] as _HasId[],
-														   s => Game.getObjectById(s.id))) as _HasId[];
+						// @ts-expect-error
+						thing[key][prop] = <_HasId[]>_.compact(_.map(thing[key][prop] as _HasId[],
+														   s => Game.getObjectById(s.id)));
 					} else {
-						thing[key][prop] = Game.getObjectById((<_HasId>thing[key][prop]).id) as undefined | _HasId;
+						// @ts-expect-error
+						thing[key][prop] = <_HasId>Game.getObjectById((<_HasId>thing[key][prop]).id);
 					}
 				}
 			}

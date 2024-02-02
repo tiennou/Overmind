@@ -62,7 +62,7 @@ export interface BunkerData {
 
 export interface ColonyMemory {
 	defcon: {
-		level: number,
+		level: DEFCON,
 		tick: number,
 	};
 	expansionData: ColonyExpansionData;
@@ -70,6 +70,22 @@ export interface ColonyMemory {
 	outposts: { [roomName: string]: OutpostData };
 	suspend?: boolean;
 	debug?: boolean;
+	persistent?: boolean;
+	evolutionChamber?: {
+		activeReaction: never;
+		reactionQueue: never;
+		status: never;
+		statusTick: never;
+	};
+	roomPlanner?: {
+		lastGenerated: number;
+	};
+	roadPlanner?: {
+		roadCoordsPacked: { [roomName: string]: string };
+	};
+	barrierPlanner?: {
+		barrierCoordsPacked: string;
+	}
 }
 
 // Outpost that is currently not being maintained
@@ -225,7 +241,9 @@ export class Colony {
 			}
 		});
 		// Register colony globally to allow 'W1N1' and 'w1n1' to refer to Overmind.colonies.W1N1
+		// @ts-expect-error global getter for Colonies
 		global[this.name] = this;
+		// @ts-expect-error global getter for Colonies
 		global[this.name.toLowerCase()] = this;
 		// Build the colony
 		this.build(roomName, outposts);
