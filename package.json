@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "lint": "tslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\"",
     "clean": "rm -rf tsc-out && rm -rf dist",
     "obfuscate": "tsc && javascript-obfuscator --config obfuscator.config.json tsc-out/Overmind.js --output src/Overmind_obfuscated.js && javascript-obfuscator --config obfuscator.config.json tsc-out/assimilation/Assimilator.js --output src/assimilation/Assimilator_obfuscated.js",
     "compile": "rollup -c",
@@ -24,6 +24,7 @@
     "push-screepsplus": "rollup -c --environment DEST:screepsplus",
     "test": "npm run clean && npm run build"
   },
+  "type": "module",
   "engines": {
     "node": "^20.11"
   },
@@ -34,6 +35,12 @@
     "@types/lodash": "3.10.2",
     "@types/node": "^20.11.16",
     "@types/screeps": "^3.3.7",
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
+    "eslint": "^8.46.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-jsdoc": "^46.4.5",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
     "javascript-obfuscator": "^4.1.0",
     "rollup": "^3.27.1",
     "rollup-plugin-progress": "^1.1.2",
