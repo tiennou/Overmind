@@ -161,6 +161,11 @@ export class RandomWalkerScoutOverlord extends Overlord {
 	}
 
 	init() {
+		if (this.colony.level === 1 || this.colony.state.bootstrapping) {
+			// At such low-level, or in an economic emergency, we don't really care
+			// about scouts
+			return;
+		}
 		this.wishlist(DEFAULT_NUM_SCOUTS, Setups.scout);
 	}
 
