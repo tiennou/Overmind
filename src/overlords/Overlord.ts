@@ -245,8 +245,8 @@ export abstract class Overlord {
 	 */
 	get profilingActive(): boolean {
 		if (this.memory[MEM.STATS]) {
-			if (this.memory[MEM.STATS]!.end) {
-				if (Game.time > this.memory[MEM.STATS]!.end) {
+			if (this.memory[MEM.STATS].end) {
+				if (Game.time > this.memory[MEM.STATS].end) {
 					this.finishProfiling();
 					return false;
 				}
@@ -268,7 +268,7 @@ export abstract class Overlord {
 				deaths: 0,
 			};
 			if (ticks) {
-				this.memory[MEM.STATS]!.end = Game.time + ticks;
+				this.memory[MEM.STATS].end = Game.time + ticks;
 			}
 		} else {
 			log.alert(`Overlord ${this.print} is already being profiled!`);

@@ -96,7 +96,7 @@ export class PowerHaulingOverlord extends Overlord {
 					const pb = this.room.ruins.filter(
 						(ruin) =>
 							!!ruin.store[RESOURCE_POWER] &&
-							ruin.store[RESOURCE_POWER]! > 0
+							ruin.store[RESOURCE_POWER] > 0
 					);
 					if (pb.length > 0) {
 						hauler.task = Tasks.withdraw(pb[0], RESOURCE_POWER);

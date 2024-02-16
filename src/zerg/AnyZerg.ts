@@ -309,7 +309,7 @@ export abstract class AnyZerg {
 
 	get overlord(): Overlord | null {
 		if (this.memory[MEM.OVERLORD]) {
-			return Overmind.overlords[this.memory[MEM.OVERLORD]!] || null;
+			return Overmind.overlords[this.memory[MEM.OVERLORD]] || null;
 		} else {
 			return null;
 		}

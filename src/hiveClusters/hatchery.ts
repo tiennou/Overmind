@@ -480,7 +480,7 @@ export class Hatchery extends HiveCluster {
 						`${this.print} successfully spawned creep ${protoCreep.name} for ${overlord?.print}`
 					);
 					if (overlord.memory[MEM.STATS]) {
-						overlord.memory[MEM.STATS]!.spawnCost += bodyCost(
+						overlord.memory[MEM.STATS].spawnCost += bodyCost(
 							protoCreep.body
 						);
 					}
@@ -667,7 +667,7 @@ export class Hatchery extends HiveCluster {
 					const spawningCreep = Memory.creeps[spawn.spawning!.name];
 					const overlord =
 						spawningCreep[MEM.OVERLORD] ?
-							Overmind.overlords[spawningCreep[MEM.OVERLORD]!]
+							Overmind.overlords[spawningCreep[MEM.OVERLORD]]
 						:	undefined;
 					if (
 						overlord &&

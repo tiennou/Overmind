@@ -222,7 +222,7 @@ export class DirectivePowerMine extends Directive {
 			this.room.ruins.filter(
 				(ruin) =>
 					!!ruin.store[RESOURCE_POWER] &&
-					ruin.store[RESOURCE_POWER]! > 0
+					ruin.store[RESOURCE_POWER] > 0
 			).length == 0
 		) {
 			Game.notify(

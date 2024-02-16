@@ -230,7 +230,7 @@ export class RoomIntel {
 			if (typeof savedPortal.dest === "string") {
 				portal = {
 					pos: pos,
-					roomDestination: unpackPos(savedPortal.dest)!,
+					roomDestination: unpackPos(savedPortal.dest),
 					expiration: savedPortal[MEM.EXPIRATION],
 				};
 			} else {
@@ -302,11 +302,9 @@ export class RoomIntel {
 				ctlr[RMEM_CTRL.RESERVATION] ?
 					{
 						username:
-							ctlr[RMEM_CTRL.RESERVATION]![
-								RMEM_CTRL.RES_USERNAME
-							],
+							ctlr[RMEM_CTRL.RESERVATION][RMEM_CTRL.RES_USERNAME],
 						ticksToEnd:
-							ctlr[RMEM_CTRL.RESERVATION]![
+							ctlr[RMEM_CTRL.RESERVATION][
 								RMEM_CTRL.RES_TICKSTOEND
 							],
 					}
@@ -332,11 +330,11 @@ export class RoomIntel {
 		return {
 			storagePos:
 				data[RMEM_STRUCTS.STORAGE] ?
-					unpackCoordAsPos(data[RMEM_STRUCTS.STORAGE]!, roomName)
+					unpackCoordAsPos(data[RMEM_STRUCTS.STORAGE], roomName)
 				:	undefined,
 			terminalPos:
 				data[RMEM_STRUCTS.TERMINAL] ?
-					unpackCoordAsPos(data[RMEM_STRUCTS.TERMINAL]!, roomName)
+					unpackCoordAsPos(data[RMEM_STRUCTS.TERMINAL], roomName)
 				:	undefined,
 			towerPositions: unpackCoordListAsPosList(
 				data[RMEM_STRUCTS.TOWERS],
@@ -657,7 +655,7 @@ export class RoomIntel {
 			};
 		}
 		const sources = room.sources;
-		const invasionData = room.memory[RMEM.INVASION_DATA]!;
+		const invasionData = room.memory[RMEM.INVASION_DATA];
 		for (const source of sources) {
 			if (source.ticksToRegeneration == 1) {
 				invasionData[RMEM_INVASION.HARVESTED] +=
@@ -834,7 +832,7 @@ export class RoomIntel {
 					[COMBAT_POTENTIALS.HEAL]: potentials.heal,
 				};
 				if (potentials.dismantle) {
-					safetyData[RMEM_SAFETY.COMBAT_POTENTIALS]![
+					safetyData[RMEM_SAFETY.COMBAT_POTENTIALS][
 						COMBAT_POTENTIALS.DISMANTLE
 					] = potentials.dismantle;
 				}

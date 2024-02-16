@@ -445,7 +445,7 @@ export class LogisticsNetwork {
 								carry[resourceType] +=
 									resourceAmount * resourceFraction;
 								carry[resourceType] = minMax(
-									carry[resourceType]!,
+									carry[resourceType],
 									0,
 									remainingCapacity
 								);
@@ -459,9 +459,9 @@ export class LogisticsNetwork {
 						}
 					} else {
 						if (carry[request.resourceType]) {
-							carry[request.resourceType]! += resourceAmount;
+							carry[request.resourceType] += resourceAmount;
 							carry[request.resourceType] = minMax(
-								carry[request.resourceType]!,
+								carry[request.resourceType],
 								0,
 								remainingCapacity
 							);

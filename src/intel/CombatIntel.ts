@@ -829,25 +829,25 @@ export class CombatIntel {
 	): CombatPotentials {
 		const attack = _.sum(creeps, (unit) =>
 			isAnyZerg(unit) || isCreep(unit) ?
-				this.getAttackPotential(toCreep(unit)!, countIntendedBoosts)
+				this.getAttackPotential(toCreep(unit), countIntendedBoosts)
 			:	this.getBodyPartPotential(unit.body, ATTACK, unit.boosts)
 		);
 		const ranged = _.sum(creeps, (unit) =>
 			isAnyZerg(unit) || isCreep(unit) ?
 				this.getRangedAttackPotential(
-					toCreep(unit)!,
+					toCreep(unit),
 					countIntendedBoosts
 				)
 			:	this.getBodyPartPotential(unit.body, RANGED_ATTACK, unit.boosts)
 		);
 		const heal = _.sum(creeps, (unit) =>
 			isAnyZerg(unit) || isCreep(unit) ?
-				this.getHealPotential(toCreep(unit)!, countIntendedBoosts)
+				this.getHealPotential(toCreep(unit), countIntendedBoosts)
 			:	this.getBodyPartPotential(unit.body, HEAL, unit.boosts)
 		);
 		const dismantle = _.sum(creeps, (unit) =>
 			isAnyZerg(unit) || isCreep(unit) ?
-				this.getDismantlePotential(toCreep(unit)!, countIntendedBoosts)
+				this.getDismantlePotential(toCreep(unit), countIntendedBoosts)
 			:	this.getBodyPartPotential(unit.body, DISMANTLE, unit.boosts)
 		);
 		return { attack, ranged, heal, dismantle };

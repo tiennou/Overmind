@@ -78,7 +78,7 @@ export abstract class Directive {
 		if (
 			this.memory[MEM.EXPIRATION] &&
 			!this.memory.persistent &&
-			Game.time > this.memory[MEM.EXPIRATION]!
+			Game.time > this.memory[MEM.EXPIRATION]
 		) {
 			log.alert(`Removing expired directive ${this.print}!`);
 			flag.remove();
@@ -235,7 +235,7 @@ export abstract class Directive {
 	get distanceFromPOI(): { unweighted: number; terrainWeighted: number } {
 		if (
 			!this.memory[MEM.DISTANCE] ||
-			Game.time >= this.memory[MEM.DISTANCE]![MEM.EXPIRATION]
+			Game.time >= this.memory[MEM.DISTANCE][MEM.EXPIRATION]
 		) {
 			const ret = Pathing.findPath(this.POI, this.pos, {
 				maxOps: DIRECTIVE_PATH_TIMEOUT,
@@ -248,10 +248,10 @@ export abstract class Directive {
 				[MEM.EXPIRATION]: getCacheExpiration(10000, randint(0, 100)),
 			};
 			if (ret.incomplete) {
-				this.memory[MEM.DISTANCE]!.incomplete = true;
+				this.memory[MEM.DISTANCE].incomplete = true;
 			}
 		}
-		const memDistance = this.memory[MEM.DISTANCE]!;
+		const memDistance = this.memory[MEM.DISTANCE];
 		if (memDistance.incomplete) {
 			log.warning(`${this.print}: distanceFromColony() info incomplete!`);
 		}
@@ -296,7 +296,7 @@ export abstract class Directive {
 	): Colony | undefined {
 		// If something is written to flag.colony, use that as the colony
 		if (this.memory[MEM.COLONY] && !forceRecalc) {
-			return Overmind.colonies[this.memory[MEM.COLONY]!];
+			return Overmind.colonies[this.memory[MEM.COLONY]];
 		} else {
 			// If flag contains a colony name as a substring, assign to that colony, regardless of RCL
 			const colonyNames = _.keys(Overmind.colonies);
@@ -531,7 +531,7 @@ export abstract class Directive {
 					let createAtPos: RoomPosition;
 					if (opts.memory && opts.memory[MEM.COLONY]) {
 						createAtPos = Pathing.findPathablePosition(
-							opts.memory[MEM.COLONY]!
+							opts.memory[MEM.COLONY]
 						);
 					} else {
 						createAtPos = Pathing.findPathablePosition(
@@ -551,7 +551,7 @@ export abstract class Directive {
 					let createAtPos: RoomPosition;
 					if (opts.memory && opts.memory[MEM.COLONY]) {
 						createAtPos = Pathing.findPathablePosition(
-							opts.memory[MEM.COLONY]!
+							opts.memory[MEM.COLONY]
 						);
 					} else {
 						createAtPos = Pathing.findPathablePosition(

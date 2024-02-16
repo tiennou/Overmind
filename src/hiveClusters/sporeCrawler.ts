@@ -210,7 +210,7 @@ export class SporeCrawler extends HiveCluster {
 			let possibleTargets = _.filter(this.room.hostiles, (hostile) => {
 				// let healing = HEAL_FUDGE_FACTOR * CombatIntel.maxHostileHealingTo(hostile);
 				const damageTaken =
-					CombatIntel.towerDamageAtPos(hostile.pos)! + myCreepDamage;
+					CombatIntel.towerDamageAtPos(hostile.pos) + myCreepDamage;
 				const damageMultiplier =
 					CombatIntel.minimumDamageTakenMultiplier(hostile);
 				return damageTaken * damageMultiplier > avgHealing;
@@ -235,7 +235,7 @@ export class SporeCrawler extends HiveCluster {
 			possibleTargets = _.filter(possibleTargets, (hostile) => {
 				if (CombatIntel.isEdgeDancing(hostile)) {
 					const netDPS =
-						CombatIntel.towerDamageAtPos(hostile.pos)! +
+						CombatIntel.towerDamageAtPos(hostile.pos) +
 						myCreepDamage -
 						HEAL_FUDGE_FACTOR *
 							CombatIntel.maxHostileHealingTo(hostile);

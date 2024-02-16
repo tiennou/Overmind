@@ -159,7 +159,7 @@ export class StrongholdOverlord extends CombatOverlord {
 			} else {
 				for (const pos of posToRampartMap) {
 					const res = this.findAttackingPositionAndTarget(
-						pos[1][0]!,
+						pos[1][0],
 						range - 1,
 						myCreep
 					);
