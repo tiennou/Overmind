@@ -28,22 +28,32 @@ export class BootstrappingOverlord extends Overlord {
 	constructor(directive: DirectiveBootstrap, priority = OverlordPriority.emergency.bootstrap) {
 		super(directive, 'bootstrap', priority);
 		this.fillers = this.zerg(Roles.filler);
-		// Calculate structures fillers can supply / withdraw from
+		this.updateStructures();
+	}
+
+	refresh(): void {
+		this.updateStructures();
+	}
+
+	/** Calculate structures fillers can supply / withdraw from */
+	updateStructures() {
 		this.supplyStructures = _.filter([...this.colony.spawns, ...this.colony.extensions],
-										 structure => structure.energy < structure.energyCapacity);
-		this.withdrawStructures = _.filter(_.compact([this.colony.storage!,
-													  this.colony.terminal!,
-													  this.colony.powerSpawn!,
-													  ...this.room.containers,
-													  ...this.room.links,
-													  ...this.room.towers,
-													  ...this.room.labs]), structure => structure.energy > 0);
+			structure => structure.energy < structure.energyCapacity);
+		this.withdrawStructures = _.filter(
+			_.compact([this.colony.storage!,
+				this.colony.terminal!,
+				this.colony.powerSpawn!,
+				...this.room.containers,
+				...this.room.links,
+				...this.room.towers,
+				...this.room.labs]),
+			structure => structure.energy > 0);
 	}
 
 	private spawnBootstrapMiners() {
 		// Isolate mining site overlords in the room
-		let miningSitesInRoom = _.filter(_.values(this.colony.miningSites),
-										 site => site.room == this.colony.room) as DirectiveHarvest[];
+		let miningSitesInRoom = _.filter(_.values<DirectiveHarvest>(this.colony.miningSites),
+										 site => site.room == this.colony.room);
 		if (this.colony.spawns[0]) {
 			miningSitesInRoom = _.sortBy(miningSitesInRoom, site => site.pos.getRangeTo(this.colony.spawns[0]));
 		}
@@ -63,6 +73,9 @@ export class BootstrappingOverlord extends Overlord {
 			pattern  : pattern,
 			sizeLimit: sizeLimit,
 		});
+
+		this.debug(`found ${miningOverlordsInRoom.length} mining overlords for ${miningSitesInRoom.length} mines, `
+			+ `at ${miningSitesInRoom.map(s => `${s.pos}`).join(', ')}`);
 
 		// Create a bootstrapMiners and donate them to the miningSite overlords as needed
 		for (const overlord of miningOverlordsInRoom) {
@@ -91,6 +104,7 @@ export class BootstrappingOverlord extends Overlord {
 											   + patternCost(Setups.filler); // costs 1000
 		if (totalEnergyInRoom < costToMakeNormalMinerAndFiller) {
 			if (this.colony.getCreepsByRole(Roles.drone).length == 0) {
+				this.debug(`no drones, bootstrapping miners`)
 				this.spawnBootstrapMiners();
 				return;
 			}
@@ -99,14 +113,16 @@ export class BootstrappingOverlord extends Overlord {
 		if (this.colony.getCreepsByRole(Roles.queen).length == 0 && this.colony.hatchery) { // no queen
 			const transporter = _.first(this.colony.getZergByRole(Roles.transport));
 			if (transporter) {
-				// reassign transporter to be queen
+				this.debug(`no queen, reassigning transporter`)
 				transporter.reassign(this.colony.hatchery.overlord, Roles.queen);
 			} else {
 				// wish for a filler
+				this.debug(`no queen, wishlisting a filler`)
 				this.wishlist(1, Setups.filler);
 			}
 		}
 		// Then spawn the rest of the needed miners
+		this.debug(`bootstrapping miners`)
 		this.spawnBootstrapMiners();
 		// const energyInStructures = _.sum(_.map(this.withdrawStructures, structure => structure.energy));
 		// const droppedEnergy = _.sum(this.room.droppedEnergy, drop => drop.amount);
@@ -118,6 +134,7 @@ export class BootstrappingOverlord extends Overlord {
 	private supplyActions(filler: Zerg) {
 		const target = filler.pos.findClosestByRange(this.supplyStructures);
 		if (target) {
+			this.debug(`${filler.print}: going to get supply from ${target.structureType} at ${target.pos}`);
 			filler.task = Tasks.transfer(target);
 		} else {
 			this.rechargeActions(filler);
@@ -127,8 +144,10 @@ export class BootstrappingOverlord extends Overlord {
 	private rechargeActions(filler: Zerg) {
 		const target = filler.pos.findClosestByRange(this.withdrawStructures);
 		if (target) {
+			this.debug(`${filler.print}: withdrawing from ${target.structureType} at ${target.pos}`);
 			filler.task = Tasks.withdraw(target);
 		} else {
+			this.debug(`${filler.print}: recharging from anything`);
 			filler.task = Tasks.recharge();
 		}
 	}
@@ -142,8 +161,15 @@ export class BootstrappingOverlord extends Overlord {
 	}
 
 	run() {
+		let toUpdate = true;
 		for (const filler of this.fillers) {
 			if (filler.isIdle) {
+				if (toUpdate) {
+					toUpdate = false
+					// Filter valid structures fillers can supply / withdraw from
+					this.supplyStructures = _.filter(this.supplyStructures, structure => structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+					this.withdrawStructures = _.filter(this.withdrawStructures, structure => structure.store.energy > 0);
+				}
 				this.handleFiller(filler);
 			}
 			filler.run();
