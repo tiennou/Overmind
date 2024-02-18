@@ -1,16 +1,19 @@
 import columnify from "columnify";
 import { log } from "../../console/log";
-import { isResource } from "../../declarations/typeGuards";
+import { isResource, isStandardZerg } from "../../declarations/typeGuards";
 import { profile } from "../../profiler/decorator";
 import { maxBy, minMax } from "../../utilities/utils";
-import { Zerg } from "../../zerg/Zerg";
 import { Task } from "../Task";
 import { TaskHarvest } from "./harvest";
 import { pickupTaskName, TaskPickup } from "./pickup";
 import { TaskWithdraw, withdrawTaskName } from "./withdraw";
+import { Roles } from "creepSetups/setups";
+import { Zerg } from "zerg/Zerg";
 
 export type rechargeTargetType = null;
 export const rechargeTaskName = "recharge";
+
+const RECHARGE_MAX_DISTANCE = 40;
 
 // This is a "dispenser task" which is not itself a valid task, but dispenses a task when assigned to a creep.
 
@@ -121,6 +124,21 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		if (this._parent) {
 			this.parent!.creep = creep;
 		}
+		let task: Task<any> | undefined = this.goRecharge(creep);
+
+		if (!task) {
+			task = this.goHarvest(creep);
+		}
+
+		if (!task) {
+			log.debugCreep(creep, `No valid recharge target!`);
+			creep.task = null;
+		}
+
+		creep.task = task!;
+	}
+
+	goRecharge(creep: Zerg) {
 		// Choose the target to maximize your energy gain subject to other targeting workers
 		const possibleTargets =
 			creep.colony && creep.inColonyRoom ?
@@ -130,64 +148,64 @@ export class TaskRecharge extends Task<rechargeTargetType> {
 		const target = maxBy(possibleTargets, (o) =>
 			this.rechargeRateForCreep(creep, o)
 		);
+
 		log.debugCreep(
 			creep,
 			`selected ${target?.print} from targets ${possibleTargets
 				.map((t) => t.print)
 				.join(", ")}`
 		);
-		if (!target || creep.pos.getMultiRoomRangeTo(target.pos) > 40) {
-			// workers shouldn't harvest; let drones do it (disabling this check can destabilize early economy)
-			const canHarvest =
-				creep.getActiveBodyparts(WORK) > 0 &&
-				creep.roleName != "worker";
-			if (canHarvest) {
-				// Harvest from a source if there is no recharge target available
-				const availableSources = _.filter(
-					this.sources,
-					function (source) {
-						const filledSource =
-							source.energy > 0 ||
-							source.ticksToRegeneration < 20;
-						// Only harvest from sources which aren't surrounded by creeps excluding yourself
-						const isSurrounded =
-							source.pos.availableNeighbors(false).length == 0;
-						return (
-							filledSource &&
-							(!isSurrounded || creep.pos.isNearTo(source))
-						);
-					}
-				);
-				const availableSource =
-					creep.pos.findClosestByMultiRoomRange(availableSources);
-				if (availableSource) {
-					creep.task = new TaskHarvest(availableSource);
-					return;
-				}
-			}
+
+		if (
+			!target ||
+			creep.pos.getMultiRoomRangeTo(target.pos) > RECHARGE_MAX_DISTANCE
+		) {
+			return undefined;
 		}
-		if (target) {
-			if (isResource(target)) {
-				log.debugCreep(
-					creep,
-					`selected pickup target ${target.print} for ${creep.print}`
-				);
-				creep.task = new TaskPickup(target);
-				return;
-			} else {
-				log.debugCreep(
-					creep,
-					`selected withdraw target ${target.print} for ${creep.print}`
-				);
-				creep.task = new TaskWithdraw(target);
-				return;
-			}
+
+		if (isResource(target)) {
+			log.debugCreep(
+				creep,
+				`selected pickup target ${target.print} for ${creep.print}`
+			);
+			return new TaskPickup(target);
 		} else {
-			// if (creep.roleName == 'queen') {
-			log.debugCreep(creep, `No valid withdraw target!`);
-			// }
-			creep.task = null;
+			log.debugCreep(
+				creep,
+				`selected withdraw target ${target.print} for ${creep.print}`
+			);
+			return new TaskWithdraw(target);
 		}
+	}
+
+	goHarvest(creep: Zerg) {
+		// workers shouldn't harvest; let drones do it (disabling this check can destabilize early economy)
+		const canHarvest =
+			isStandardZerg(creep) &&
+			creep.getActiveBodyparts(WORK) > 0 &&
+			creep.roleName !== Roles.worker;
+		if (!canHarvest) {
+			return undefined;
+		}
+
+		// Harvest from a source if there is no recharge target available
+		const availableSources = _.filter(this.sources, function (source) {
+			const filledSource =
+				source.energy > 0 || source.ticksToRegeneration < 20;
+			// Only harvest from sources which aren't surrounded by creeps excluding yourself
+			const isSurrounded =
+				source.pos.availableNeighbors(false).length == 0;
+			return (
+				filledSource && (!isSurrounded || creep.pos.isNearTo(source))
+			);
+		});
+
+		const availableSource =
+			creep.pos.findClosestByMultiRoomRange(availableSources);
+		if (!availableSource) {
+			return undefined;
+		}
+		return new TaskHarvest(availableSource);
 	}
 
 	isValid(): boolean {
