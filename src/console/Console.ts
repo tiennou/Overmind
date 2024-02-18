@@ -1,5 +1,5 @@
 import { ReservingOverlord } from "overlords/colonization/reserver";
-import { Colony, ColonyMemory, getAllColonies } from "../Colony";
+import { Colony, ColonyMemory, getAllColonies, isColony } from "../Colony";
 import { Directive } from "../directives/Directive";
 import {
 	PortalInfo,
@@ -32,6 +32,14 @@ interface ConsoleCommand {
 	description: string;
 	command: (...args: any[]) => any;
 }
+
+type ResourceTallyState = "!" | "-" | "~" | "+";
+type ResourceTally = {
+	resource: ResourceConstant;
+	total: number;
+	[colonyThreshold: `S-${string}`]: ResourceTallyState;
+	[colonyTotal: `T-${string}`]: number;
+};
 
 /**
  * OvermindConsole registers a number of global methods for direct use in the Screeps console
@@ -1308,28 +1316,85 @@ export class OvermindConsole {
 		);
 	}
 
-	static showAssets() {
-		let count = 0;
-		let data: { resourceType: ResourceConstant; count: number }[] = [];
-		for (const resourceType of RESOURCES_ALL) {
-			count = 0;
-			_.forEach(Game.rooms, (room) => {
-				if (room.my) {
-					count += room.storage?.store[resourceType] ?? 0;
-					count += room.terminal?.store[resourceType] ?? 0;
-					count += room.factory?.store[resourceType] ?? 0;
+	static showAssets(...args: (string | Colony)[]) {
+		const colonyFilter = new Set();
+		const resourceFilter = new Set();
+		for (const arg of args) {
+			if (typeof arg === "string" && RESOURCES_ALL.includes(arg)) {
+				resourceFilter.add(arg);
+			} else if (typeof arg === "string" && Overmind.colonies[arg]) {
+				colonyFilter.add(arg);
+			} else if (isColony(arg)) {
+				colonyFilter.add(arg.name);
+			}
+		}
+
+		let data: ResourceTally[] = [];
+		const columnifyOpts: columnify.GlobalOptions = {
+			config: { resource: { align: "right" }, total: { align: "right" } },
+			headingTransform(header) {
+				if (header.startsWith("S-")) {
+					return "";
+				} else if (header.startsWith("T-")) {
+					return header.substring(2);
+				} else {
+					return header.toUpperCase();
 				}
-			});
-			if (count > 0) {
-				data.push({ resourceType, count });
+			},
+		};
+		for (const resourceType of RESOURCES_ALL) {
+			if (resourceFilter.size > 0 && !resourceFilter.has(resourceType)) {
+				continue;
+			}
+			let total = 0;
+			const resourceTally: ResourceTally = {
+				resource: resourceType,
+				total: 0,
+			};
+			for (const colony of Object.values(Overmind.colonies)) {
+				let count = 0;
+
+				count += colony.storage?.store[resourceType] ?? 0;
+				count += colony.terminal?.store[resourceType] ?? 0;
+				count += colony.factory?.store[resourceType] ?? 0;
+				total += count;
+
+				const threshold = TerminalNetwork.thresholds(
+					colony,
+					resourceType
+				);
+				const min = threshold.target - threshold.tolerance;
+				const max = threshold.target + threshold.tolerance;
+				let status: ResourceTallyState = "~";
+				if (count > 0 && count >= (threshold.surplus ?? Infinity)) {
+					status = "!";
+				} else if (count < min) {
+					status = "-";
+				} else if (count > max) {
+					status = "+";
+				}
+
+				columnifyOpts.config![`T-${colony.name}`] ??= {};
+				columnifyOpts.config![`T-${colony.name}`].align = "right";
+				resourceTally[`S-${colony.name}`] = status;
+				resourceTally[`T-${colony.name}`] = count;
+			}
+			resourceTally.total = total;
+			// We only display the row if there's any stored amount, unless we're filtering
+			if (
+				total > 0 ||
+				resourceFilter.has(resourceType) ||
+				colonyFilter.size
+			) {
+				data.push(resourceTally);
 			}
 		}
 
 		data = data.sort((a, b) => {
-			const a_prio = RESOURCE_IMPORTANCE.indexOf(a.resourceType);
-			const b_prio = RESOURCE_IMPORTANCE.indexOf(b.resourceType);
+			const a_prio = RESOURCE_IMPORTANCE.indexOf(a.resource);
+			const b_prio = RESOURCE_IMPORTANCE.indexOf(b.resource);
 			if (a_prio === b_prio) {
-				return b.count - a.count;
+				return b.total - a.total;
 			}
 			if (a_prio === -1) {
 				return 1;
@@ -1340,7 +1405,32 @@ export class OvermindConsole {
 			return a_prio - b_prio;
 		});
 
-		const msg = "Reporting all assets:\n" + columnify(data);
+		if (colonyFilter.size > 0) {
+			data = data.map((tally) => {
+				const filteredTally: ResourceTally = {
+					resource: tally.resource,
+					total: tally.total,
+				};
+				colonyFilter.forEach((name) => {
+					filteredTally[`S-${name}`] = tally[`S-${name}`];
+					filteredTally[`T-${name}`] = tally[`T-${name}`];
+				});
+				return filteredTally;
+			});
+		}
+
+		let type = "all";
+		if (colonyFilter.size || resourceFilter.size) {
+			const filters = [
+				...colonyFilter.values(),
+				...resourceFilter.values(),
+			];
+			type = `filtered on ${filters.join(", ")}`;
+		}
+		const msg =
+			`Reporting ${type} assets:\n` +
+			`\tThresholds markers: <b>!</b> - surplus, <b>+</b> - above, <b>~</b> - between, <b>-</b> - under\n` +
+			columnify(data, columnifyOpts);
 		console.log(msg);
 		return data;
 	}

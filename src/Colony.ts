@@ -71,6 +71,10 @@ export function getAllColonies(): Colony[] {
 	return _.values(Overmind.colonies);
 }
 
+export function isColony(thing: unknown): thing is Colony {
+	return thing instanceof Colony;
+}
+
 export interface BunkerData {
 	anchor: RoomPosition;
 	topSpawn: StructureSpawn | undefined;
