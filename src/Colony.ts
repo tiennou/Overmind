@@ -45,7 +45,14 @@ import {
 	ExpansionEvaluator,
 } from "./strategy/ExpansionEvaluator";
 import { Cartographer, ROOMTYPE_CONTROLLER } from "./utilities/Cartographer";
-import { derefRoomPosition, maxBy, mergeSum, minBy } from "./utilities/utils";
+import {
+	derefRoomPosition,
+	ema,
+	maxBy,
+	mergeSum,
+	minBy,
+	values,
+} from "./utilities/utils";
 import { Visualizer } from "./visuals/Visualizer";
 import { Zerg } from "./zerg/Zerg";
 import { CombatCreepSetup } from "creepSetups/CombatCreepSetup";
@@ -114,6 +121,7 @@ export interface ColonyMemory {
 	upgradeSite?: any;
 	logisticsNetwork?: LogisticsNetworkMemory;
 	infestedFactory?: import("hiveClusters/infestedFactory").InfestedFactoryMemory;
+	averageEnergyUse: Record<EnergyUse, number>;
 }
 
 interface Destination {
@@ -144,6 +152,7 @@ const getDefaultColonyMemory: () => ColonyMemory = () => ({
 	},
 	maxLevel: 0,
 	outposts: {},
+	averageEnergyUse: {} as Record<EnergyUse, number>,
 });
 
 /**
@@ -294,7 +303,7 @@ export class Colony {
 	roomPlanner: RoomPlanner;
 	// abathur: Abathur;
 	/** Energy use across the colony */
-	private energyUseStats: Record<EnergyUse, number>;
+	instantEnergyUse: Record<EnergyUse, number>;
 
 	static settings = {
 		remoteSourcesByLevel: {
@@ -402,7 +411,7 @@ export class Colony {
 			this.creeps,
 			(creep) => creep.memory.role
 		);
-		this.energyUseStats = <Record<EnergyUse, number>>{};
+		this.instantEnergyUse = <Record<EnergyUse, number>>{};
 
 		// Register the rest of the colony components; the order in which these are called is important!
 		this.registerRoomObjects_cached(); // Register real colony components
@@ -433,6 +442,7 @@ export class Colony {
 			this.creeps,
 			(creep) => creep.memory.role
 		);
+		this.instantEnergyUse = {} as Record<EnergyUse, number>;
 		// Register the rest of the colony components; the order in which these are called is important!
 		this.refreshRoomObjects();
 		this.registerOperationalState();
@@ -1080,14 +1090,22 @@ export class Colony {
 	}
 
 	trackEnergyUse(type: EnergyUse, amount: number) {
-		this.energyUseStats[type] ??= 0;
-		this.energyUseStats[type] += amount;
+		this.instantEnergyUse[type] ??= 0;
+		this.instantEnergyUse[type] += amount;
 	}
 
 	/**
 	 * Register colony-wide statistics
 	 */
 	stats(): void {
+		const ENERGY_USE_EMA_WINDOW = CREEP_LIFE_TIME;
+		for (const key of values(EnergyUse)) {
+			this.memory.averageEnergyUse[key] = ema(
+				this.instantEnergyUse[key] ?? 0,
+				this.memory.averageEnergyUse[key] ?? 0,
+				ENERGY_USE_EMA_WINDOW
+			);
+		}
 		if (!Stats.shouldLog) {
 			return;
 		}
@@ -1127,7 +1145,10 @@ export class Colony {
 			energyInPerTick
 		);
 
-		Stats.set(`colonies.${this.name}.energyUsage`, this.averageEnergyUse);
+		Stats.set(
+			`colonies.${this.name}.energyUsage`,
+			this.memory.averageEnergyUse
+		);
 
 		Stats.log(`colonies.${this.name}.assets`, this.assets);
 		// Log defensive properties
