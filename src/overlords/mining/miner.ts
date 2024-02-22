@@ -10,6 +10,7 @@ import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
 import {
 	Cartographer,
+	ROOMTYPE_CORE,
 	ROOMTYPE_SOURCEKEEPER,
 } from "../../utilities/Cartographer";
 import { ema, getCacheExpiration, maxBy, minBy } from "../../utilities/utils";
@@ -67,8 +68,15 @@ export class MiningOverlord extends Overlord {
 	constructionSite: ConstructionSite | undefined;
 	harvestPos: RoomPosition | undefined;
 	miners: Zerg[];
-	energyPerTickEstimate: number;
-	_energyPerTickAverage: number;
+	/**
+	 * An estimate of the maximum energy/tick this miner can hope for
+	 */
+	_maxEnergyPerTick: number;
+	/**
+	 * The average energy/tick actually observed
+	 */
+	// _avgEnergyPerTick: number;
+	_energyMinedThisTick: number;
 	miningPowerNeeded: number;
 	setup: CreepSetup;
 	minersNeeded: number;
@@ -113,21 +121,24 @@ export class MiningOverlord extends Overlord {
 		}
 
 		// Compute energy output
-		if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_SOURCEKEEPER) {
-			this.energyPerTickEstimate =
+		this._energyMinedThisTick = 0;
+		const roomType = Cartographer.roomType(this.pos.roomName);
+		if (roomType === ROOMTYPE_SOURCEKEEPER || roomType === ROOMTYPE_CORE) {
+			this._maxEnergyPerTick =
 				SOURCE_ENERGY_KEEPER_CAPACITY / ENERGY_REGEN_TIME;
 		} else if (
+			// This is a colony mine, or we can spawn reservers
+			this.pos.roomName === this.colony.room.name ||
 			this.colony.level >=
-			DirectiveOutpost.settings.canSpawnReserversAtRCL
+				DirectiveOutpost.settings.canSpawnReserversAtRCL
 		) {
-			this.energyPerTickEstimate =
-				SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME;
+			this._maxEnergyPerTick = SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME;
 		} else {
-			this.energyPerTickEstimate =
+			this._maxEnergyPerTick =
 				SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
 		}
 		this.miningPowerNeeded =
-			Math.ceil(this.energyPerTickEstimate / HARVEST_POWER) + 1;
+			Math.ceil(this._maxEnergyPerTick / HARVEST_POWER) + 1;
 
 		const canAffordStandardMiner =
 			this.colony.room.energyCapacityAvailable >= StandardMinerSetupCost;
@@ -213,22 +224,12 @@ export class MiningOverlord extends Overlord {
 		this.minersNeeded = this.isDisabled ? 0 : this.minersNeeded;
 	}
 
-	estimatedEnergyPerTick(estimate = false) {
-		if (estimate) {
-			return this.energyPerTickEstimate;
-		}
-		return this.energyPerTick;
+	get maxEnergyPerTick() {
+		return this._maxEnergyPerTick;
 	}
 
-	get energyPerTick() {
-		return this.memory.avgEnergy ?? this.estimatedEnergyPerTick(true);
-	}
-
-	set energyPerTick(amount: number) {
-		if (Game.time % ENERGY_AVERAGE_WINDOW === 0) {
-			const avg = ema(amount, this.energyPerTick, ENERGY_AVERAGE_WINDOW);
-			this.memory.avgEnergy = avg;
-		}
+	get avgEnergyPerTick() {
+		return this.memory.avgEnergy ?? 0;
 	}
 
 	/**
@@ -401,6 +402,8 @@ export class MiningOverlord extends Overlord {
 			"link",
 			"constructionSite"
 		);
+		// Set back to 0 so we get an accurate reading
+		this._energyMinedThisTick = 0;
 
 		if (this.colony.state.isOverfilled && !this.isSuspended) {
 			log.alert(
@@ -572,7 +575,7 @@ export class MiningOverlord extends Overlord {
 			) {
 				this.colony.logisticsNetwork.requestOutput(this.container, {
 					resourceType: "all",
-					dAmountdt: this.energyPerTickEstimate,
+					dAmountdt: this.avgEnergyPerTick,
 				});
 			}
 		}
@@ -716,9 +719,7 @@ export class MiningOverlord extends Overlord {
 		const inRange = miner.pos.inRangeTo(this.pos, 1);
 		if (result === OK) {
 			// All good!
-			const amount = 2 * miner.bodypartCounts[WORK];
-			this.energyPerTick = amount;
-			this.colony.trackEnergyUse(EnergyUse.MINED, amount);
+			this._energyMinedThisTick += 2 * miner.bodypartCounts[WORK];
 		} else if (result === ERR_NOT_ENOUGH_RESOURCES && inRange) {
 			// Do one last transfer before going to sleep so we're empty when resuming
 
@@ -913,6 +914,12 @@ export class MiningOverlord extends Overlord {
 		this.handleTransfer(miner);
 	}
 
+	tryRun(): void {
+		super.tryRun();
+
+		this.stats();
+	}
+
 	run() {
 		this.autoRun(
 			this.miners,
@@ -926,5 +933,14 @@ export class MiningOverlord extends Overlord {
 		if (Game.time % SUICIDE_CHECK_FREQUENCY == 0) {
 			this.suicideOldMiners();
 		}
+	}
+
+	stats() {
+		this.memory.avgEnergy = ema(
+			this._energyMinedThisTick,
+			this.memory.avgEnergy ?? 0,
+			ENERGY_AVERAGE_WINDOW
+		);
+		this.colony.trackEnergyUse(EnergyUse.MINED, this._energyMinedThisTick);
 	}
 }

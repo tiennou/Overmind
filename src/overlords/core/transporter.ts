@@ -101,7 +101,9 @@ export class TransportOverlord extends Overlord {
 					}
 					if ((o.container && !o.link) || o.allowDropMining) {
 						neededForMining +=
-							o.energyPerTick * scaling * o.distance;
+							Math.max(o.maxEnergyPerTick, o.avgEnergyPerTick) *
+							scaling *
+							o.distance;
 					}
 				}
 

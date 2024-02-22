@@ -1012,13 +1012,7 @@ export class Colony {
 				return _.sum(
 					_.map(this.miningSites, (site) => {
 						const overlord = site.overlords.mine;
-						const miningPowerAssigned = _.sum(
-							overlord.miners,
-							(miner) => miner.getActiveBodyparts(WORK)
-						);
-						const saturation =
-							miningPowerAssigned / overlord.miningPowerNeeded;
-						return overlord.energyPerTick * saturation;
+						return overlord.avgEnergyPerTick;
 					})
 				);
 			},
@@ -1124,9 +1118,7 @@ export class Colony {
 			numSites;
 		const energyInPerTick = _.sum(
 			this.miningSites,
-			(site) =>
-				site.overlords.mine.energyPerTick *
-				site.memory[HARVEST_MEM.USAGE]
+			(site) => site.overlords.mine.avgEnergyPerTick
 		);
 		Stats.log(`colonies.${this.name}.miningSites.avgDowntime`, avgDowntime);
 		Stats.log(`colonies.${this.name}.miningSites.avgUsage`, avgUsage);
@@ -1135,8 +1127,7 @@ export class Colony {
 			energyInPerTick
 		);
 
-		Stats.set(`colonies.${this.name}.energyUsage`, this.energyUseStats);
-		this.energyUseStats = <Record<EnergyUse, number>>{};
+		Stats.set(`colonies.${this.name}.energyUsage`, this.averageEnergyUse);
 
 		Stats.log(`colonies.${this.name}.assets`, this.assets);
 		// Log defensive properties

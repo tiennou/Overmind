@@ -462,7 +462,7 @@ export class CommandCenter extends HiveCluster {
 
 	visuals(coord: Coord): Coord {
 		let { x, y } = coord;
-		const height = this.storage && this.terminal ? 4 : 3;
+		const height = this.storage && this.terminal ? 5 : 4;
 		const titleCoords = Visualizer.section(
 			`${this.colony.name} Command Center`,
 			{ x, y, roomName: this.room.name },
@@ -504,6 +504,19 @@ export class CommandCenter extends HiveCluster {
 			undefined,
 			fmt
 		);
+		y += 1;
+
+		Visualizer.text("Mined", {
+			x: boxX,
+			y: y,
+			roomName: this.room.name,
+		});
+		const energyPerTick = this.colony.energyMinedPerTick.toFixed(3);
+		Visualizer.text(`${energyPerTick} e/t`, {
+			x: boxX + 4,
+			y,
+			roomName: this.room.name,
+		});
 		y += 1;
 
 		if (this.storage) {
