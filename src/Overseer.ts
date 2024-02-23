@@ -39,7 +39,6 @@ import {
 	minBy,
 	onPublicServer,
 } from "./utilities/utils";
-import { config } from "config";
 import { DirectiveGather } from "directives/resource/gather";
 import { DEPOSIT_COOLDOWN_CUTOFF } from "overlords/mining/gatherer";
 import {
@@ -95,35 +94,6 @@ export class Overseer implements IOverseer {
 	refresh() {
 		this.memory = Mem.wrap(Memory, "overseer", getDefaultOverseerMemory);
 		this.notifier.clear();
-	}
-
-	private try(callback: () => any, identifier?: string): void {
-		if (config.USE_TRY_CATCH) {
-			try {
-				callback();
-			} catch (e) {
-				if (e instanceof Error) {
-					if (identifier) {
-						e.name =
-							`Caught unhandled exception at ${callback} (identifier: ${identifier}): \n` +
-							e.name +
-							"\n" +
-							e.stack;
-					} else {
-						e.name =
-							`Caught unhandled exception at ${callback}: \n` +
-							e.name +
-							"\n" +
-							e.stack;
-					}
-					Overmind.exceptions.push(e);
-				} else {
-					log.error(`Got a non-Error exception`, String(e));
-				}
-			}
-		} else {
-			callback();
-		}
 	}
 
 	registerDirective(directive: Directive): void {
@@ -271,21 +241,7 @@ export class Overseer implements IOverseer {
 
 		// Initialize overlords
 		for (const overlord of this.overlords) {
-			if (overlord.isSuspended) {
-				overlord.debug(
-					`is suspended because ${overlord.suspensionReason}, skipping init!`
-				);
-				continue;
-			}
-			if (overlord.profilingActive) {
-				const start = Game.cpu.getUsed();
-				overlord.preInit();
-				this.try(() => overlord.init());
-				overlord.memory[MEM.STATS]!.cpu += Game.cpu.getUsed() - start;
-			} else {
-				overlord.preInit();
-				this.try(() => overlord.init());
-			}
+			overlord.tryInit();
 		}
 
 		// Register cleanup requests to logistics network
@@ -818,19 +774,7 @@ export class Overseer implements IOverseer {
 			directive.run();
 		}
 		for (const overlord of this.overlords) {
-			if (overlord.isSuspended) {
-				overlord.debug(
-					`is suspended because ${overlord.suspensionReason}, skipping run!`
-				);
-				continue;
-			}
-			if (overlord.profilingActive) {
-				const start = Game.cpu.getUsed();
-				this.try(() => overlord.run());
-				overlord.memory[MEM.STATS]!.cpu += Game.cpu.getUsed() - start;
-			} else {
-				this.try(() => overlord.run());
-			}
+			overlord.tryRun();
 		}
 		for (const colony of getAllColonies()) {
 			this.handleSafeMode(colony);

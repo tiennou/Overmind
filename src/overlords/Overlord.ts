@@ -20,6 +20,7 @@ import { Abathur } from "../resources/Abathur";
 import { Tasks } from "../tasks/Tasks";
 import { CombatZerg } from "../zerg/CombatZerg";
 import { Zerg } from "../zerg/Zerg";
+import { config } from "config";
 
 export interface OverlordInitializer {
 	ref: string;
@@ -649,8 +650,98 @@ export abstract class Overlord {
 		}
 	}
 
+	/**
+	 * Executes a callback safely by catching any exceptions it might throw
+	 *
+	 * Exceptions caught are bubbled up to Overmind so that it knows about potential problems
+	 *
+	 * @param callback The callback to execute
+	 */
+	private try(callback: () => any): void {
+		if (config.USE_TRY_CATCH) {
+			try {
+				callback();
+			} catch (e) {
+				if (e instanceof Error) {
+					e.name =
+						`Caught unhandled exception at ${callback}: \n` +
+						e.name +
+						"\n" +
+						e.stack;
+					Overmind.exceptions.push(e);
+				} else {
+					log.error(`Got a non-Error exception`, String(e));
+				}
+			}
+		} else {
+			callback();
+		}
+	}
+
+	/**
+	 * Executes the overlord's init phase code.
+	 *
+	 * This is the main entry point for running an overlord's init code,
+	 * and handles things like suspension and profiling.
+	 *
+	 * Most subclasses don't need to override this, unless they have a
+	 * specific need to *always* run some code in the init phase.
+	 *
+	 * @returns {void}
+	 */
+	tryInit() {
+		if (this.isSuspended) {
+			this.debug(
+				`is suspended because ${this.suspensionReason}, skipping init!`
+			);
+			return;
+		}
+		if (this.profilingActive) {
+			const start = Game.cpu.getUsed();
+			this.preInit();
+			this.try(() => this.init());
+			this.memory[MEM.STATS]!.cpu += Game.cpu.getUsed() - start;
+		} else {
+			this.preInit();
+			this.try(() => this.init());
+		}
+	}
+
+	/**
+	 * Implementation of the overlord's init phase
+	 */
 	abstract init(): void;
 
+	/**
+	 * Executes the overlord's init phase code.
+	 *
+	 * This is the main entry point for running an overlord's run code,
+	 * and handles things like suspension and profiling.
+	 *
+	 * Most subclasses don't need to override this, unless they have a
+	 * specific need to *always* run some code in the run phase.
+	 *
+	 * @returns
+	 */
+	tryRun() {
+		if (this.isSuspended) {
+			this.debug(
+				`is suspended because ${this.suspensionReason}, skipping run!`
+			);
+			return;
+		}
+		if (this.profilingActive) {
+			const start = Game.cpu.getUsed();
+			this.try(() => this.run());
+			this.memory[MEM.STATS]!.cpu += Game.cpu.getUsed() - start;
+		} else {
+			this.try(() => this.run());
+		}
+	}
+
+	/**
+	 * Implementation of the overlord's run phase
+	 */
 	abstract run(): void;
 
 	/**
