@@ -210,7 +210,7 @@ export class TransportOverlord extends Overlord {
 				request
 			)}, predicted: ${amount}`;
 			this.debug(
-				() => `${prefix} buffer choices:\n` + +columnify(choices)
+				() => `${prefix} buffer choices:\n` + columnify(choices)
 			);
 			// Target is requesting input
 			if (amount > 0) {
