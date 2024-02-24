@@ -137,14 +137,17 @@ export class MiningOverlord extends Overlord {
 		// Calculate optimal location for mining
 		// We'll redisable below if there's a second source
 		this.isDisabled = false;
-		const secondSourcePos = this.canDoubleMine();
+		const canDoubleMine = this.canDoubleMine();
 		if (!this.earlyMode && !this.allowDropMining) {
-			if (canAffordDoubleMiner && secondSourcePos) {
+			if (canAffordDoubleMiner && canDoubleMine) {
 				// Disable mining from the source with greater id
 				if (this.source!.id > this.secondSource!.id) {
 					this.isDisabled = true;
 				}
-				this.harvestPos = secondSourcePos;
+				this.harvestPos = this.getMiningPos(
+					this.source!.pos,
+					this.secondSource!.pos
+				);
 			} else if (this.container) {
 				this.harvestPos = this.container.pos;
 			} else if (this.link) {
@@ -161,9 +164,9 @@ export class MiningOverlord extends Overlord {
 			return (
 				`capacity: ${this.colony.room.energyCapacityAvailable}, standard: ${canAffordStandardMiner}, double: ${canAffordDoubleMiner}, ` +
 				`early mode: ${this.earlyMode}, drop mining: ${this.allowDropMining}, ` +
-				(this.canDoubleMine() ?
+				(canDoubleMine ?
 					`other source is mineable from ${
-						this.canDoubleMine()!.print
+						this.secondSource!.print
 					}, ${this.isDisabled ? "disabling" : "handling"}, `
 				:	"") +
 				`optimal harvest position: ${
@@ -205,15 +208,32 @@ export class MiningOverlord extends Overlord {
 	}
 
 	/**
+	 * Returns the best position to mine both sources
+	 *
+	 * @param first Position of the first source
+	 * @param second Position of the second source
+	 * @returns
+	 */
+	private getMiningPos(first: RoomPosition, second: RoomPosition) {
+		// If its over 1 spot away, is there spot in between to mine?
+		const myNeighbors = first.availableNeighbors(true);
+		const theirNeighbors = second.availableNeighbors(true);
+		return myNeighbors.find((pos) =>
+			theirNeighbors.some((oPos) => pos.x === oPos.x && pos.y === oPos.y)
+		);
+	}
+
+	/**
 	 * Calculates if this source has another one very nearby that should be handled by the same miner
+	 * @returns {boolean}
 	 */
 	private canDoubleMine() {
 		if (this.secondSource) {
-			return null;
+			return true;
 		}
 		const room = Game.rooms[this.pos.roomName];
 		if (!room || !this.source) {
-			return null;
+			return false;
 		}
 
 		const secondSource = _.find(
@@ -221,27 +241,22 @@ export class MiningOverlord extends Overlord {
 			(source) => source.id != (this.source ? this.source.id : "")
 		);
 		if (!secondSource) {
-			return null;
+			return false;
 		}
 		this.debug(
 			`found other source 2 away from ${this.source.print}: ${secondSource?.print}`
 		);
-		// If its over 1 spot away, is there spot in between to mine?
-		const myNeighbors = this.source.pos.availableNeighbors(true);
-		const theirNeighbors = secondSource.pos.availableNeighbors(true);
-		const miningPos = myNeighbors.find((pos) =>
-			theirNeighbors.some((oPos) => pos.x === oPos.x && pos.y === oPos.y)
-		);
+		const miningPos = this.getMiningPos(this.source.pos, secondSource.pos);
 		if (!miningPos) {
 			this.debug(
 				`Double mining found but there is no spot between ${this.source.print} and ${secondSource.print}`
 			);
-			return null;
+			return false;
 		}
 
 		// Grab the second source and store it
 		this.secondSource = secondSource;
-		return miningPos;
+		return true;
 	}
 
 	/**
