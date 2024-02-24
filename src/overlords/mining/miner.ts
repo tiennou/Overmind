@@ -176,6 +176,10 @@ export class MiningOverlord extends Overlord {
 				this.harvestPos = this.containerPos;
 			}
 		}
+		// In case of dual mining, we double our estimated output to cater for the other miner being disabled
+		if (canDoubleMine) {
+			this._maxEnergyPerTick *= this.isDisabled ? 0 : 2;
+		}
 
 		this.debug(() => {
 			return (
@@ -230,6 +234,25 @@ export class MiningOverlord extends Overlord {
 
 	get avgEnergyPerTick() {
 		return this.memory.avgEnergy ?? 0;
+	}
+
+	get isRegenerating() {
+		if (this.canDoubleMine()) {
+			return (
+				Math.min(
+					(this.source?.energy ?? 0) === 0 ?
+						this.source?.ticksToRegeneration ?? 0
+					:	0,
+					(this.secondSource?.energy ?? 0) === 0 ?
+						this.secondSource?.ticksToRegeneration ?? 0
+					:	0
+				) > 0
+			);
+		}
+		return (
+			(this.source?.energy ?? 0) === 0 &&
+			(this.source?.ticksToRegeneration ?? 0) > 0
+		);
 	}
 
 	/**
@@ -936,11 +959,13 @@ export class MiningOverlord extends Overlord {
 	}
 
 	stats() {
-		this.memory.avgEnergy = ema(
-			this._energyMinedThisTick,
-			this.memory.avgEnergy ?? 0,
-			ENERGY_AVERAGE_WINDOW
-		);
+		if (!this.isRegenerating) {
+			this.memory.avgEnergy = ema(
+				this._energyMinedThisTick,
+				this.memory.avgEnergy ?? 0,
+				ENERGY_AVERAGE_WINDOW
+			);
+		}
 		this.colony.trackEnergyUse(EnergyUse.MINED, this._energyMinedThisTick);
 	}
 }
