@@ -22,7 +22,7 @@ import {
 import { ema, maxBy, mergeSum, minBy, printRoomName } from "../utilities/utils";
 import { TraderJoe } from "./TradeNetwork";
 import { errorForCode } from "utilities/errors";
-import { ResourceManager } from "./ResourceManager";
+import { ResourceManager, getThresholds } from "./ResourceManager";
 
 export interface TerminalNetworkMemory {
 	debug?: boolean;
@@ -81,92 +81,14 @@ export const enum TN_STATE {
 const DEFAULT_TARGET = config.TERMINAL_NETWORK_DEFAULT_TARGET;
 const DEFAULT_TOLERANCE = config.TERMINAL_NETWORK_DEFAULT_TOLERANCE;
 
-function getThresholds(resource: _ResourceConstantSansEnergy): Threshold {
-	// Energy gets special treatment - see TradeNetwork.getEnergyThresholds()
-	// Power and ops get their own treatment
-
-	const thresholds = config.TERMINAL_NETWORK_THRESHOLDS;
-	if (thresholds[resource]) {
-		return thresholds[resource]!;
-	}
-
-	// All mineral compounds below
-	if (Abathur.isBaseMineral(resource)) {
-		// base minerals get default treatment
-		return thresholds.default;
-	}
-	if (Abathur.isIntermediateReactant(resource)) {
-		// reaction intermediates get default
-		return thresholds.intermediates!;
-	}
-	if (Abathur.isBoost(resource)) {
-		const tier = Abathur.getBoostTier(resource);
-		if (tier == "T3") {
-			return thresholds.boosts_t3!;
-		} else if (tier == "T2") {
-			return thresholds.boosts_t2!;
-		} else if (tier == "T1") {
-			return thresholds.boosts_t1!;
-		}
-	}
-	// if (Abathur.isHealBoost(resource)) { // heal boosts are really important and commonly used
-	// 	return {
-	// 		target   : 1.5 * DEFAULT_TARGET,
-	// 		surplus  : DEFAULT_SURPLUS,
-	// 		tolerance: DEFAULT_TOLERANCE,
-	// 	};
-	// }
-	// if (Abathur.isCarryBoost(resource) || Abathur.isHarvestBoost(resource)) { // I don't use these
-	// 	return THRESHOLDS_DONT_WANT;
-	// }
-	if (Abathur.isMineralOrCompound(resource)) {
-		// all other boosts and resources are default
-		return thresholds.default;
-	}
-	// Base deposit resources
-	if (Abathur.isRawCommodity(resource)) {
-		return thresholds.commodities_raw ?? thresholds.dont_care;
-	}
-	// Everything else should be a commodity
-	if (Abathur.isCommodity(resource)) {
-		const tier = Abathur.getCommodityTier(resource);
-		let threshold: Threshold | undefined;
-		switch (tier) {
-			case 0:
-				threshold = thresholds.commodities_t0;
-				break;
-			case 1:
-				threshold = thresholds.commodities_t1;
-				break;
-			case 2:
-				threshold = thresholds.commodities_t1;
-				break;
-			case 3:
-				threshold = thresholds.commodities_t1;
-				break;
-			case 4:
-				threshold = thresholds.commodities_t1;
-				break;
-			case 5:
-				threshold = thresholds.commodities_t1;
-				break;
-		}
-
-		return threshold ?? thresholds.dont_care;
-	}
-
-	// Shouldn't reach here since I've handled everything above
-	log.error(
-		`Shouldn't reach here! Unhandled resource ${resource} in getThresholds()!`
-	);
-	return thresholds.dont_care;
-}
-
 // Contains threshold values to use for all non-execeptional colonies so we don't recompute this every time
-const ALL_THRESHOLDS: { [resourceType: string]: Threshold } = _.object(
-	RESOURCES_ALL_EXCEPT_ENERGY,
-	_.map(RESOURCES_ALL_EXCEPT_ENERGY, (res) => getThresholds(res))
-);
+const ALL_THRESHOLDS: { [resourceType: string]: TerminalNetworkThreshold } =
+	_.object(
+		RESOURCES_ALL_EXCEPT_ENERGY,
+		_.map(RESOURCES_ALL_EXCEPT_ENERGY, (res) =>
+			getThresholds(res, config.TERMINAL_NETWORK_THRESHOLDS)
+		)
+	);
 
 // The order in which resources are handled within the network
 const _resourcePrioritiesOrdered = [
@@ -267,12 +189,12 @@ export class TerminalNetwork {
 
 	private colonies: Colony[];
 	private colonyThresholds: {
-		[colName: string]: { [resourceType: string]: Threshold };
+		[colName: string]: { [resourceType: string]: TerminalNetworkThreshold };
 	};
 	private colonyLockedAmounts: {
 		[colName: string]: { [resourceType: string]: number };
 	};
-	private _energyThresholds: Threshold | undefined;
+	private _energyThresholds: TerminalNetworkThreshold | undefined;
 
 	private colonyStates: {
 		[colName: string]: { [resourceType: string]: TN_STATE };
@@ -441,7 +363,7 @@ export class TerminalNetwork {
 	/**
 	 * Computes the dynamically-changing energy thresholds object
 	 */
-	private getEnergyThresholds(): Threshold {
+	private getEnergyThresholds(): TerminalNetworkThreshold {
 		if (!this._energyThresholds) {
 			const nonExceptionalColonies = _.filter(
 				this.colonies,
@@ -516,7 +438,10 @@ export class TerminalNetwork {
 	/**
 	 * Gets the thresholds for a given resource for a specific colony
 	 */
-	thresholds(colony: Colony, resource: ResourceConstant): Threshold {
+	thresholds(
+		colony: Colony,
+		resource: ResourceConstant
+	): TerminalNetworkThreshold {
 		if (
 			this.colonyThresholds[colony.name] &&
 			this.colonyThresholds[colony.name][resource]
@@ -629,7 +554,8 @@ export class TerminalNetwork {
 	exportResource(
 		provider: Colony,
 		resource: ResourceConstant,
-		thresholds: Threshold = config.TERMINAL_NETWORK_THRESHOLDS.dont_want
+		threshold: TerminalNetworkThreshold = config.TERMINAL_NETWORK_THRESHOLDS
+			.dontWant
 	): void {
 		if (PHASE != "init") {
 			log.error(
@@ -650,7 +576,7 @@ export class TerminalNetwork {
 		}
 		// Set the thresholds, but in this case we don't set the state to activeProvider - this is automatically done
 		this.colonyThresholds[provider.name] ??= {};
-		this.colonyThresholds[provider.name][resource] = thresholds;
+		this.colonyThresholds[provider.name][resource] = threshold;
 	}
 
 	/**

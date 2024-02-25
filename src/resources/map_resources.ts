@@ -45,7 +45,7 @@ export const INTERMEDIATE_REACTANTS: ResourceConstant[] = [
 	RESOURCE_HYDROXIDE,
 	RESOURCE_ZYNTHIUM_KEANITE,
 	RESOURCE_UTRIUM_LEMERGITE,
-	// RESOURCE_GHODIUM,
+	RESOURCE_GHODIUM,
 ];
 
 export const BASE_RESOURCES: ResourceConstant[] = [
@@ -396,7 +396,7 @@ export const _boostTierLookupAllTypes: {
 } = _.extend({}, ..._.values(_boostTypesTierLookup));
 
 export const COMMODITIES_DATA: {
-	[resource: string]: { lvl: number; chain?: string };
+	[resource: string]: { lvl: 0 | 1 | 2 | 3 | 4 | 5; chain?: string };
 } = {
 	// Compressed mineral compounds
 	[RESOURCE_UTRIUM_BAR]: { lvl: 0 },

@@ -9,8 +9,27 @@ type ManagedResourceStructure =
 	| StructureTerminal
 	| StructureFactory;
 
+interface TerminalBalance {
+	target: number;
+	tolerance: number;
+}
+
+type TerminalBalanceThresholds = Thresholds<TerminalBalance>;
+
 /** Thresholds blueprint for storage/terminal balancing */
-const TERMINAL_BALANCE_THRESHOLDS = {
+const TERMINAL_BALANCE_THRESHOLDS: TerminalBalanceThresholds = {
+	default: {
+		target: 1000,
+		tolerance: 1000,
+	},
+	dontCare: {
+		target: 1000,
+		tolerance: 1000,
+	},
+	dontWant: {
+		target: 0,
+		tolerance: 0,
+	},
 	energy: {
 		target: 50000,
 		tolerance: 5000,
@@ -27,7 +46,7 @@ const TERMINAL_BALANCE_THRESHOLDS = {
 		target: 6500, // 2 * LAB_MINERAL_CAPACITY + 500
 		tolerance: 500,
 	},
-	intermediateReactants: {
+	intermediates: {
 		target: 3500, // LAB_MINERAL_CAPACITY + 500
 		tolerance: 500,
 	},
@@ -35,7 +54,7 @@ const TERMINAL_BALANCE_THRESHOLDS = {
 		target: 3500, // LAB_MINERAL_CAPACITY + 500
 		tolerance: 500,
 	},
-	commodities_raw: {
+	commoditiesRaw: {
 		target: 5000,
 		tolerance: 1000,
 	},
@@ -45,31 +64,58 @@ const TERMINAL_BALANCE_THRESHOLDS = {
 	},
 };
 
-function getTerminalThresholds(
-	resource: ResourceConstant
-): { target: number; tolerance: number } | undefined {
-	let thresholds;
-	if (resource == RESOURCE_ENERGY) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.energy;
-	} else if (resource == RESOURCE_POWER) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.power;
-	} else if (resource == RESOURCE_OPS) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.ops;
-	} else if (Abathur.isBaseMineral(resource)) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.baseMinerals;
-	} else if (
-		Abathur.isIntermediateReactant(resource) ||
-		resource == RESOURCE_GHODIUM
-	) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.intermediateReactants;
-	} else if (Abathur.isBoost(resource)) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.boosts;
-	} else if (Abathur.isRawCommodity(resource)) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.commodities_raw;
-	} else if (Abathur.isCommodity(resource)) {
-		thresholds = TERMINAL_BALANCE_THRESHOLDS.commodities;
+/**
+ * Returns the threshold for a given resource from a generic threshold repository
+ * @param resource The resource
+ * @param thresholds The threshold repository
+ * @returns
+ */
+export function getThresholds<T extends object>(
+	resource: ResourceConstant,
+	thresholds: Thresholds<T>
+): T {
+	// If we have an explicit threshold for that resource, use it
+	if (thresholds[resource]) {
+		return thresholds[resource]!;
 	}
-	return thresholds;
+
+	// All mineral compounds below
+	if (Abathur.isBaseMineral(resource)) {
+		// base minerals get default treatment
+		return thresholds.baseMinerals ?? thresholds.default;
+	}
+	if (Abathur.isIntermediateReactant(resource)) {
+		// reaction intermediates get default
+		return thresholds.intermediates ?? thresholds.default;
+	}
+	if (Abathur.isBoost(resource)) {
+		const tier = Abathur.getBoostTier(resource);
+		if (!tier) {
+			return thresholds.dontCare;
+		}
+		const threshold = thresholds[`boosts${tier}`];
+		return threshold ?? thresholds.dontCare;
+	}
+	if (Abathur.isMineralOrCompound(resource)) {
+		// all other boosts and resources are default
+		return thresholds.default;
+	}
+	// Base deposit resources
+	if (Abathur.isRawCommodity(resource)) {
+		return thresholds.commoditiesRaw ?? thresholds.dontCare;
+	}
+	// Everything else should be a commodity
+	if (Abathur.isCommodity(resource)) {
+		const tier = Abathur.getCommodityTier(resource);
+		const threshold: T | undefined = thresholds[`commoditiesT${tier}`];
+		return threshold ?? thresholds.dontCare;
+	}
+
+	// Shouldn't reach here since I've handled everything above
+	log.error(
+		`Shouldn't reach here! Unhandled resource ${resource} in getThresholds()!`
+	);
+	return thresholds.dontCare;
 }
 
 /** Per-resource thresholds for storage/terminal balancing */
@@ -77,7 +123,9 @@ const TERMINAL_BALANCE_THRESHOLDS_ALL: {
 	[resource: string]: { target: number; tolerance: number } | undefined;
 } = _.zipObject(
 	RESOURCES_ALL,
-	_.map(RESOURCES_ALL, (resource) => getTerminalThresholds(resource))
+	_.map(RESOURCES_ALL, (resource) =>
+		getThresholds(resource, TERMINAL_BALANCE_THRESHOLDS)
+	)
 );
 
 interface StructureOverfillThresholds {

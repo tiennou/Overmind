@@ -321,12 +321,12 @@ export class _Abathur {
 		return chain && chain === resourceChain ? chain : resourceChain;
 	}
 
-	getCommodityTier(resource: ResourceConstant): number | undefined {
+	getCommodityTier(resource: ResourceConstant) {
 		return COMMODITIES_DATA[resource].lvl ?? undefined;
 	}
 
-	getBoostTier(boost: ResourceConstant): BoostTier | "notaboost" {
-		return _boostTierLookupAllTypes[boost] || "notaboost";
+	getBoostTier(boost: ResourceConstant): BoostTier | undefined {
+		return _boostTierLookupAllTypes[boost] ?? undefined;
 	}
 
 	/**

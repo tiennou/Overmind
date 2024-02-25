@@ -202,31 +202,39 @@ interface IOverseer {
 // 	tolerance: number;
 // }
 
-interface Threshold {
+interface TerminalNetworkThreshold {
 	/** Amount we want to have */
 	target: number;
-	/** Max amount we're willing to have */
-	surplus: number | undefined;
-	/** Quantity we could have ±target and still be satisfied with */
+	/**
+	 * Quantity we could have ±target and still be satisfied with
+	 * Setting this to be equal to {@link target} will prevent active buying
+	 */
 	tolerance: number;
+	/**
+	 * Max amount we're willing to have
+	 * Setting this to 0 means a colony will always be set as an activeProvider for it if it has any
+	 */
+	surplus: number | undefined;
 }
 
-type TerminalNetworkThresholdSpecial = "default" | "dont_care" | "dont_want";
+type ThresholdSpecialType = "default" | "dontCare" | "dontWant";
 
-type TerminalNetworkThresholdResourceType =
+type ThresholdResourceType =
 	| ResourceConstant
-	| "boosts_t1"
-	| "boosts_t2"
-	| "boosts_t3"
+	| "baseMinerals"
+	| "boosts"
+	| "boostsT1"
+	| "boostsT2"
+	| "boostsT3"
 	| "intermediates"
-	| "commodities_raw"
-	| `commodities_t${0 | 1 | 2 | 3 | 4 | 5}`;
+	| "commoditiesRaw"
+	| "commodities"
+	| `commoditiesT${0 | 1 | 2 | 3 | 4 | 5}`;
 
-type TerminalNetworkThresholds = Record<
-	TerminalNetworkThresholdSpecial,
-	Threshold
-> &
-	Partial<Record<TerminalNetworkThresholdResourceType, Threshold>>;
+type Thresholds<T extends object> = Record<ThresholdSpecialType, T> &
+	Partial<Record<ThresholdResourceType, T>>;
+
+type TerminalNetworkThresholds = Thresholds<TerminalNetworkThreshold>;
 
 type TradeOpts = import("logistics/TradeNetwork").TradeOpts;
 

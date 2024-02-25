@@ -129,47 +129,47 @@ export const TERMINAL_NETWORK_DEFAULT_TOLERANCE = LAB_MINERAL_CAPACITY / 3; // 1
 export const TERMINAL_NETWORK_THRESHOLDS: TerminalNetworkThresholds = {
 	default: {
 		target: TERMINAL_NETWORK_DEFAULT_TARGET,
-		surplus: TERMINAL_NETWORK_DEFAULT_SURPLUS,
 		tolerance: TERMINAL_NETWORK_DEFAULT_TOLERANCE,
+		surplus: TERMINAL_NETWORK_DEFAULT_SURPLUS,
 	},
 	/** thresholds for stuff you don't need but don't not want */
-	dont_care: {
+	dontCare: {
 		target: 0,
-		surplus: undefined,
 		tolerance: 0,
+		surplus: undefined,
 	},
 	/** thresholds for stuff you actively don't want */
-	dont_want: {
+	dontWant: {
 		target: 0,
-		surplus: 0, // surplus = 0 means colony will always be at activeProvider if it has any, else
 		tolerance: 0,
+		surplus: 0,
 	},
-	boosts_t1: {
+	boostsT1: {
 		target: TERMINAL_NETWORK_DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY, // max: 7000 + 2*6000 = 19000 -> 14% capacity for all T1
-		tolerance: TERMINAL_NETWORK_DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY,
 		surplus: 25000,
+		tolerance: TERMINAL_NETWORK_DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY,
 	},
-	boosts_t2: {
+	boostsT2: {
 		target: TERMINAL_NETWORK_DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY, // max: 7000 + 2*6000 = 19000 -> 14% capacity for all T2
-		tolerance: TERMINAL_NETWORK_DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY,
 		surplus: 25000,
+		tolerance: TERMINAL_NETWORK_DEFAULT_TARGET + 2 * LAB_MINERAL_CAPACITY,
 	},
-	boosts_t3: {
+	boostsT3: {
 		target: TERMINAL_NETWORK_DEFAULT_TARGET + 10 * LAB_MINERAL_CAPACITY, // max: 7000 + 2*30000 = 67000 -> 51% capacity for all T3
+		surplus: 75000,
 		tolerance:
 			TERMINAL_NETWORK_DEFAULT_TOLERANCE + 10 * LAB_MINERAL_CAPACITY,
-		surplus: 75000,
 	},
 	intermediates: {
 		target: LAB_MINERAL_CAPACITY + 1000,
-		tolerance: LAB_MINERAL_CAPACITY / 3,
 		surplus: 3 * LAB_MINERAL_CAPACITY,
+		tolerance: LAB_MINERAL_CAPACITY / 3,
 	},
 	/** this takes a long time to make so let's keep a bit more of it around */
 	[RESOURCE_HYDROXIDE]: {
 		target: TERMINAL_NETWORK_DEFAULT_TARGET,
-		surplus: TERMINAL_NETWORK_DEFAULT_SURPLUS,
 		tolerance: TERMINAL_NETWORK_DEFAULT_TOLERANCE,
+		surplus: TERMINAL_NETWORK_DEFAULT_SURPLUS,
 	},
 	[RESOURCE_GHODIUM]: {
 		target: 10000,
@@ -178,14 +178,14 @@ export const TERMINAL_NETWORK_THRESHOLDS: TerminalNetworkThresholds = {
 	},
 	[RESOURCE_POWER]: {
 		// low target ensures power gets spread among room (cheaper than shipping energy)
-		target: 2500, // should be equal to tolerance
+		target: 2500,
+		tolerance: 2500,
 		surplus: undefined,
-		tolerance: 2500, // should be equal to target to prevent active buying
 	},
 	[RESOURCE_OPS]: {
-		target: 2500, // should be equal to tolerance
+		target: 2500,
+		tolerance: 2500,
 		surplus: undefined,
-		tolerance: 2500, // should be equal to target to prevent active buying
 	},
 };
 
