@@ -245,7 +245,7 @@ export class VersionMigration {
 	}
 
 	static migrate_050_051_part3() {
-		const mem = <{ users: any }>(<unknown>Memory.assimilator);
+		const mem = <{ users: any }>(<any>Memory).assimilator;
 		if (mem && mem.users) {
 			delete mem.users;
 		}
