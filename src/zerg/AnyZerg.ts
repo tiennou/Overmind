@@ -297,6 +297,10 @@ export abstract class AnyZerg {
 		return false;
 	}
 
+	goHome() {
+		return this.goToRoom(this.memory.data.origin);
+	}
+
 	// Custom creep methods ============================================================================================
 
 	get isDamaged() {
