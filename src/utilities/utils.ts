@@ -350,6 +350,13 @@ export function equalXYR(pos1: ProtoPos, pos2: ProtoPos): boolean {
 	);
 }
 
+/** Equivalent to Object.values, but preserving the types */
+export function values<K extends string, V extends {}>(
+	obj: Partial<Record<K, V>>
+): V[] {
+	return <V[]>Object.values(obj);
+}
+
 /** Equivalent to Object.entries, but preserving the types */
 export function entries<K extends string, V extends {}>(
 	obj: Partial<Record<K, V>>
