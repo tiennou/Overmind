@@ -76,6 +76,38 @@ export class GatheringOverlord extends Overlord {
 		$.refresh(this, "deposit");
 		this.updateMemory();
 
+		this.handleSuspension();
+	}
+
+	/**
+	 * Handles suspending the overlord depending on the state of the colony
+	 */
+	handleSuspension() {
+		if (this.isSuspended) {
+			return;
+		}
+
+		if (this.deposit) {
+			const resourceType = this.deposit?.depositType;
+			const threshold = Overmind.terminalNetwork.thresholds(
+				this.colony,
+				resourceType
+			);
+			if (
+				this.colony.assets[resourceType] >=
+				(threshold.surplus ?? Infinity)
+			) {
+				log.alert(
+					`${this.colony.print} has too much of ${resourceType}, suspending ${this.print} for ${SUSPENSION_OVERFILL_DEFAULT_DURATION}`
+				);
+				this.suspend({
+					reason: SuspensionReason.overfilled,
+					duration: SUSPENSION_OVERFILL_DEFAULT_DURATION,
+				});
+				return true;
+			}
+		}
+
 		if (this.colony.state.isOverfilled && !this.isSuspended) {
 			log.alert(
 				`${this.colony.print} overfilled, suspending ${this.print} for ${SUSPENSION_OVERFILL_DEFAULT_DURATION}`
@@ -84,7 +116,9 @@ export class GatheringOverlord extends Overlord {
 				reason: SuspensionReason.overfilled,
 				duration: SUSPENSION_OVERFILL_DEFAULT_DURATION,
 			});
+			return true;
 		}
+		return false;
 	}
 
 	updateMemory() {
