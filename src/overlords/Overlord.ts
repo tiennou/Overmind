@@ -566,6 +566,11 @@ export abstract class Overlord {
 		setup: CreepSetup | CombatCreepSetup,
 		opts: CreepRequestOptions = {}
 	): void {
+		this.debug(
+			`wishlisting ${quantity} ${setup.role} to ${this.spawner
+				?.print}: ${JSON.stringify(opts)}`
+		);
+
 		_.defaults(opts, {
 			priority: this.priority,
 			prespawn: DEFAULT_PRESPAWN,
@@ -614,6 +619,10 @@ export abstract class Overlord {
 				spawnQuantity--;
 			}
 		}
+
+		this.debug(
+			`requesting ${quantity} ${setup.role}@${opts.priority}, current: ${creepQuantity}, to spawn: ${spawnQuantity}`
+		);
 
 		// A bug in outpostDefenseOverlord caused infinite requests and cost me two botarena rounds before I found it...
 		if (spawnQuantity > MAX_SPAWN_REQUESTS) {
