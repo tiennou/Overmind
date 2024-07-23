@@ -345,7 +345,6 @@ export class InfestedFactory extends HiveCluster {
 	}
 
 	init(): void {
-		this.debug(`init`);
 		this.initFactoryStatus();
 
 		this.registerRequests();

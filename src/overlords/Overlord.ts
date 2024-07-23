@@ -442,6 +442,12 @@ export abstract class Overlord {
 		this.creepUsageReport[role] = [currentAmt, neededAmt];
 	}
 
+	get spawner() {
+		return (
+			this.spawnGroup || this.colony.spawnGroup || this.colony.hatchery
+		);
+	}
+
 	/**
 	 * Requests a group of (2-3) creeps from a hatchery to be spawned at the same time. Using this with low-priority
 	 * operations can result in a long time
@@ -455,8 +461,7 @@ export abstract class Overlord {
 			priority: this.priority,
 			prespawn: DEFAULT_PRESPAWN,
 		});
-		const spawner =
-			this.spawnGroup || this.colony.spawnGroup || this.colony.hatchery;
+		const spawner = this.spawner;
 		if (spawner) {
 			if (setups.length > 3) {
 				log.warning(`Requesting squads of >3 is not advisable`);
@@ -491,8 +496,7 @@ export abstract class Overlord {
 			priority: this.priority,
 			prespawn: DEFAULT_PRESPAWN,
 		});
-		const spawner =
-			this.spawnGroup || this.colony.spawnGroup || this.colony.hatchery;
+		const spawner = this.spawner;
 		if (spawner) {
 			const request: SpawnRequest = {
 				setup: setup,
@@ -697,6 +701,7 @@ export abstract class Overlord {
 			);
 			return;
 		}
+		this.debug(`init`);
 		if (this.profilingActive) {
 			const start = Game.cpu.getUsed();
 			this.preInit();
@@ -731,6 +736,7 @@ export abstract class Overlord {
 			);
 			return;
 		}
+		this.debug(`run`);
 		if (this.profilingActive) {
 			const start = Game.cpu.getUsed();
 			this.try(() => this.run());

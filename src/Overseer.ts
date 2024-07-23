@@ -236,6 +236,7 @@ export class Overseer implements IOverseer {
 
 		// Initialize directives
 		for (const directive of this.directives) {
+			directive.debug(`init`);
 			directive.init();
 		}
 
@@ -771,6 +772,7 @@ export class Overseer implements IOverseer {
 
 	run(): void {
 		for (const directive of this.directives) {
+			directive.debug(`run`);
 			directive.run();
 		}
 		for (const overlord of this.overlords) {
