@@ -428,9 +428,17 @@ export abstract class AnyZerg {
 	 */
 	retire() {
 		if (this.colony && !isPowerCreep(this.creep)) {
-			log.info(`${this.print} is retiring from duty`);
-			this.overlord = this.colony.overlords.default;
-			this.memory.retired = true;
+			const colonySpawns = this.colony?.hatchery?.spawns ?? [];
+			const nearbySpawn =
+				this.pos.findClosestByMultiRoomRange(colonySpawns);
+
+			if (nearbySpawn) {
+				log.info(
+					`${this.print} is retiring from duty to ${nearbySpawn.print}`
+				);
+				this.overlord = this.colony.overlords.default;
+				this.task = Tasks.retire(nearbySpawn);
+			}
 			return;
 		}
 

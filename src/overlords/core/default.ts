@@ -1,4 +1,3 @@
-import { TaskRetire } from "tasks/instances/retire";
 import { Colony } from "../../Colony";
 import { OverlordPriority } from "../../priorities/priorities_overlords";
 import { profile } from "../../profiler/decorator";
@@ -36,7 +35,10 @@ export class DefaultOverlord extends Overlord {
 			this.refreshZerg.set(zerg.id, zerg);
 		}
 
-		this.retiredZerg = _.filter(colonyZergs, (zerg) => zerg.memory.retired);
+		this.retiredZerg = _.filter(
+			colonyZergs,
+			(zerg) => zerg.task?.name === "retire"
+		);
 
 		for (const zerg of this.retiredZerg) {
 			this.refreshZerg.set(zerg.id, zerg);
@@ -59,23 +61,8 @@ export class DefaultOverlord extends Overlord {
 		// We do nothing here, this only exists so manually scheduled tasks to idle creeps get to run
 	}
 
-	private handleRetired(zerg: Zerg) {
-		if (zerg.memory.retired) {
-			const colonySpawns = this.colony?.hatchery?.spawns ?? [];
-			const nearbySpawn =
-				zerg.pos.findClosestByMultiRoomRange(colonySpawns);
-
-			this.debug(
-				`retiring ${zerg.print}@${zerg.pos.print} to ${nearbySpawn?.print}`
-			);
-			if (!nearbySpawn) {
-				zerg.suicide();
-				return;
-			}
-
-			zerg.task = new TaskRetire(nearbySpawn);
-			return;
-		}
+	private handleRetired(_zerg: Zerg) {
+		// We do nothing here, this only exists so manually scheduled tasks to idle creeps get to run
 	}
 
 	run() {
