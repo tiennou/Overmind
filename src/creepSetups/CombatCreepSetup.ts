@@ -305,7 +305,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 			[WORK]: bodyRatio.work > 0 ? 1 : 0,
 			[CARRY]: bodyRatio.carry > 0 ? 1 : 0,
 			[CLAIM]: bodyRatio.claim > 0 ? 1 : 0,
-		} as { [part in BodyPartConstant]: number };
+		} as Full<BodyCounts>;
 
 		// Initialize cost of starting body counts
 		let cost = 0;
@@ -352,7 +352,7 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 			}
 		}
 
-		return bodyCounts as Full<BodyCounts>;
+		return bodyCounts;
 	}
 
 	/**
@@ -365,16 +365,20 @@ export class CombatCreepSetup /* extends CreepSetup */ {
 		partialBodyCounts: BodyCounts,
 		opts: BodyOpts
 	): BodyPartConstant[] {
-		const bodyCounts = _.defaults<Full<BodyCounts>>(partialBodyCounts, {
+		const defaultCounts: Full<BodyCounts> = {
 			move: 1,
 			attack: 0,
-			ranged: 0,
+			ranged_attack: 0,
 			heal: 0,
 			tough: 0,
 			work: 0,
 			carry: 0,
 			claim: 0,
-		});
+		};
+		const bodyCounts: Full<BodyCounts> = _.defaults(
+			partialBodyCounts,
+			defaultCounts
+		);
 
 		const body: BodyPartConstant[] = [];
 		_.forEach(_.range(bodyCounts.tough), () => body.push(TOUGH));
