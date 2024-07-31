@@ -300,6 +300,16 @@ export class OvermindConsole {
 			description: "activate or deactivate a given room",
 			command: OvermindConsole.toggleRoomActive.bind(OvermindConsole),
 		},
+		{
+			name: "listFactories()",
+			description: "list all factories and their status",
+			command: OvermindConsole.listFactories.bind(OvermindConsole),
+		},
+		{
+			name: "resetFactories()",
+			description: "reset all factories production queues",
+			command: OvermindConsole.resetFactories.bind(OvermindConsole),
+		},
 	];
 
 	static init() {
@@ -1451,6 +1461,27 @@ export class OvermindConsole {
 			`Toggled room ${roomName} of colony ${colony.name} ${
 				state ? "online" : "offline"
 			}`
+		);
+	}
+
+	static listFactories() {
+		const status = getAllColonies()
+			.filter((c) => c.infestedFactory)
+			.map((c) => {
+				return Object.assign(
+					{ colony: c.name },
+					c.infestedFactory?.memory.activeProduction,
+					{ produced: c.infestedFactory?.memory.produced }
+				);
+			});
+		log.info(`Factory status:\n${columnify(status)}`);
+	}
+
+	static resetFactories() {
+		_.each(
+			_.filter(Overmind.colonies, (c) => c.infestedFactory),
+			(c) =>
+				(c.infestedFactory!.memory.suspendProductionUntil = Game.time)
 		);
 	}
 }
