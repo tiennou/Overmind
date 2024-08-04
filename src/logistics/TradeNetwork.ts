@@ -454,7 +454,7 @@ export class TraderJoe {
 			// energy is 44% what is is normally. This is a bit pessimistic, so let's bump it to 55%, which currently
 			// is what computeCompetitivePrice(sell, energy) is telling me it should be around...
 			const energyPriceGuess =
-				0.55 * this.memory.cache.history.energy.avg14;
+				0.55 * (this.memory.cache.history?.energy?.avg14 ?? Infinity);
 			const energyToCreditMultiplier = Math.min(energyPriceGuess, 0.1);
 			return transferCost * energyToCreditMultiplier;
 		} else {
@@ -509,8 +509,8 @@ export class TraderJoe {
 			Game.market.getAllOrders({ resourceType: resource }),
 			"type"
 		);
-		const allBuyOrders = allOrdersOfResource[ORDER_BUY];
-		const allSellOrders = allOrdersOfResource[ORDER_SELL];
+		const allBuyOrders = allOrdersOfResource[ORDER_BUY] ?? [];
+		const allSellOrders = allOrdersOfResource[ORDER_SELL] ?? [];
 
 		// Find most competitive orders, ignoring small orders and orders which are mine
 		const highestBuyOrder = maxBy(allBuyOrders, (o) =>
